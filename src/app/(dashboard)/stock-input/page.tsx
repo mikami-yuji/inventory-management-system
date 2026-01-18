@@ -15,13 +15,14 @@ import {
     Undo2,
     ChevronUp,
     ChevronDown,
-    BarChart3
+    BarChart3,
+    Loader2
 } from "lucide-react";
-import { inventoryService } from "@/lib/services";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/types";
 import { StockCheckConfirmation } from "@/components/inventory/stock-check-confirmation";
 import { ProductAnalysisDialog } from "@/components/inventory/product-analysis-dialog";
+import { useProducts, useInventory, useUpdateInventory } from "@/hooks/use-supabase-data";
 
 // 編集中のアイテム型
 type EditingItem = {
@@ -39,13 +40,23 @@ export default function StockInputPage(): React.ReactElement {
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // 商品リストを取得
-    const allProducts = inventoryService.getProducts();
+    // Supabase Hooks
+    const { products: allProducts, loading: productsLoading } = useProducts();
+    const { inventory, loading: inventoryLoading, refetch: refetchInventory } = useInventory();
+    const { updateStock, loading: updateLoading } = useUpdateInventory();
+
+    const isLoading = productsLoading || inventoryLoading;
 
     // ヘルパー: IDから商品取得
     const getProduct = useCallback((id: string) => {
         return allProducts.find(p => p.id === id);
     }, [allProducts]);
+
+    // ヘルパー: IDから在庫数取得
+    const getInventoryCount = useCallback((productId: string) => {
+        const item = inventory.find(i => i.productId === productId);
+        return item ? item.quantity : 0;
+    }, [inventory]);
 
     // 検索でフィルタ
     const filteredProducts = useMemo(() => {
@@ -65,16 +76,16 @@ export default function StockInputPage(): React.ReactElement {
         if (existing) {
             setInputValue(existing.newQuantity.toString());
         } else {
-            const currentQty = inventoryService.getInventoryCount(product.id);
+            const currentQty = getInventoryCount(product.id);
             setInputValue(currentQty.toString());
         }
-    }, [editedItems]);
+    }, [editedItems, getInventoryCount]);
 
     // 数量変更を確定（メモリ上）
     const handleConfirmQuantity = useCallback((): void => {
         if (!selectedProduct) return;
         const newQty = parseInt(inputValue) || 0;
-        const originalQty = inventoryService.getInventoryCount(selectedProduct.id);
+        const originalQty = getInventoryCount(selectedProduct.id);
 
         const newMap = new Map(editedItems);
         newMap.set(selectedProduct.id, {
@@ -85,7 +96,7 @@ export default function StockInputPage(): React.ReactElement {
         setEditedItems(newMap);
         setSelectedProduct(null);
         setInputValue("");
-    }, [selectedProduct, inputValue, editedItems]);
+    }, [selectedProduct, inputValue, editedItems, getInventoryCount]);
 
     // 入力キャンセル
     const handleCancel = useCallback((): void => {
@@ -121,15 +132,18 @@ export default function StockInputPage(): React.ReactElement {
     const handleFinalConfirm = useCallback(async () => {
         setIsSubmitting(true);
         try {
-            // 各アイテムを更新
+            // 各アイテムを更新 (順次実行)
             for (const item of Array.from(editedItems.values())) {
-                inventoryService.updateStock(
+                await updateStock(
                     item.productId,
                     item.newQuantity,
-                    'check', // 棚卸として記録
+                    'adjustment', // 棚卸調整として記録
                     `実在庫入力: 前${item.originalQuantity} -> 後${item.newQuantity}`
                 );
             }
+
+            // 最新の在庫情報を再取得
+            refetchInventory();
 
             // UI更新
             setShowConfirmation(false);
@@ -145,7 +159,7 @@ export default function StockInputPage(): React.ReactElement {
         } finally {
             setIsSubmitting(false);
         }
-    }, [editedItems]);
+    }, [editedItems, updateStock, refetchInventory]);
 
     // 編集をリセット
     const handleReset = useCallback((): void => {
@@ -222,56 +236,64 @@ export default function StockInputPage(): React.ReactElement {
 
                     {/* 商品リスト - 大きなカード */}
                     <div className="space-y-2">
-                        {filteredProducts.map(product => {
-                            const currentQty = inventoryService.getInventoryCount(product.id);
-                            const edited = editedItems.get(product.id);
-                            const isEdited = !!edited;
-                            const displayQty = edited ? edited.newQuantity : currentQty;
+                        {isLoading ? (
+                            <div className="flex justify-center py-8">
+                                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                            </div>
+                        ) : (
+                            <>
+                                {filteredProducts.map(product => {
+                                    const currentQty = getInventoryCount(product.id);
+                                    const edited = editedItems.get(product.id);
+                                    const isEdited = !!edited;
+                                    const displayQty = edited ? edited.newQuantity : currentQty;
 
-                            return (
-                                <Card
-                                    key={product.id}
-                                    className={cn(
-                                        "cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors",
-                                        isEdited && "border-blue-400 bg-blue-50"
-                                    )}
-                                    onClick={() => handleSelectProduct(product)}
-                                >
-                                    <CardContent className="py-4">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="font-medium text-base truncate">
-                                                    {product.name}
+                                    return (
+                                        <Card
+                                            key={product.id}
+                                            className={cn(
+                                                "cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors",
+                                                isEdited && "border-blue-400 bg-blue-50"
+                                            )}
+                                            onClick={() => handleSelectProduct(product)}
+                                        >
+                                            <CardContent className="py-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-medium text-base truncate">
+                                                            {product.name}
+                                                        </div>
+                                                        <div className="text-sm text-muted-foreground">
+                                                            {product.weight}kg / {product.shape || '-'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right ml-4">
+                                                        <div className={cn(
+                                                            "text-2xl font-bold",
+                                                            displayQty === 0 && "text-red-600",
+                                                            displayQty > 0 && displayQty < 50 && "text-amber-600"
+                                                        )}>
+                                                            {displayQty}
+                                                        </div>
+                                                        {isEdited && (
+                                                            <Badge variant="secondary" className="text-xs">
+                                                                変更済
+                                                            </Badge>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div className="text-sm text-muted-foreground">
-                                                    {product.weight}kg / {product.shape || '-'}
-                                                </div>
-                                            </div>
-                                            <div className="text-right ml-4">
-                                                <div className={cn(
-                                                    "text-2xl font-bold",
-                                                    displayQty === 0 && "text-red-600",
-                                                    displayQty > 0 && displayQty < 50 && "text-amber-600"
-                                                )}>
-                                                    {displayQty}
-                                                </div>
-                                                {isEdited && (
-                                                    <Badge variant="secondary" className="text-xs">
-                                                        変更済
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                        {filteredProducts.length === 0 && (
-                            <Card>
-                                <CardContent className="py-8 text-center text-muted-foreground">
-                                    該当する商品がありません
-                                </CardContent>
-                            </Card>
+                                            </CardContent>
+                                        </Card>
+                                    );
+                                })}
+                                {filteredProducts.length === 0 && (
+                                    <Card>
+                                        <CardContent className="py-8 text-center text-muted-foreground">
+                                            該当する商品がありません
+                                        </CardContent>
+                                    </Card>
+                                )}
+                            </>
                         )}
                     </div>
                 </>
@@ -285,7 +307,7 @@ export default function StockInputPage(): React.ReactElement {
                                     {selectedProduct.name}
                                     <ProductAnalysisDialog
                                         product={selectedProduct}
-                                        currentStock={inventoryService.getInventoryCount(selectedProduct.id)}
+                                        currentStock={getInventoryCount(selectedProduct.id)}
                                         trigger={
                                             <Button variant="outline" size="sm" className="h-6 text-xs px-2">
                                                 <BarChart3 className="h-3 w-3 mr-1" />
@@ -311,7 +333,7 @@ export default function StockInputPage(): React.ReactElement {
                                 {inputValue || "0"}
                             </div>
                             <div className="text-sm text-muted-foreground mt-2">
-                                現在: {inventoryService.getInventoryCount(selectedProduct.id)}個
+                                現在: {getInventoryCount(selectedProduct.id)}個
                             </div>
                         </div>
 
