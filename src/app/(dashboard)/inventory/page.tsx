@@ -314,8 +314,8 @@ function InventoryTable({ products, onEdit, onDelete }: InventoryTableProps): Re
                                         </TableCell>
                                         <TableCell>
                                             <div className="font-medium">{product.name}</div>
-                                            <div className="text-sm text-gray-500">JAN: {product.janCode || '-'}</div>
-                                            <div className="text-xs text-gray-400">{product.id}</div>
+                                            <div className="text-sm text-gray-500">商品CD: {product.sku || '-'}</div>
+                                            <div className="text-xs text-gray-400">JAN: {product.janCode || '-'}</div>
                                             {product.category !== 'bag' && <Badge variant="outline" className="mt-1 text-xs">{product.category}</Badge>}
                                         </TableCell>
                                         <TableCell>
