@@ -123,3 +123,41 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 印刷用スタイル */
+@media print {
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:p-0 {
+    padding: 0 !important;
+  }
+
+  .print\:border-0 {
+    border: 0 !important;
+  }
+
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+
+  /* サイドバーを非表示 */
+  aside,
+  nav,
+  .sidebar {
+    display: none !important;
+  }
+
+  /* メインコンテンツを全幅 */
+  main {
+    margin: 0 !important;
+    padding: 1rem !important;
+    width: 100% !important;
+  }
+}

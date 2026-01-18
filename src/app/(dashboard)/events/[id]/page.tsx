@@ -1,35 +1,28 @@
 "use client";
 
+import React from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { MOCK_EVENTS, MOCK_EVENT_STOCK, MOCK_PRODUCTS, MOCK_INVENTORY } from "@/lib/mock-data";
+import { eventService } from "@/lib/services";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 
-export default function EventDetailPage() {
+export default function EventDetailPage(): React.ReactElement {
     const { id } = useParams();
-    const event = MOCK_EVENTS.find(e => e.id === id);
-    const [eventStocks, setEventStocks] = useState(
-        MOCK_EVENT_STOCK.filter(es => es.eventId === id)
+    const eventId = typeof id === 'string' ? id : id?.[0] || '';
+
+    // サービスからイベントデータを取得
+    const event = eventService.getEventById(eventId);
+    const [eventStocks, _setEventStocks] = useState(
+        eventService.getEventStocks(eventId)
     );
 
     if (!event) {
         return <div>イベントが見つかりません</div>;
     }
-
-    // 商品名を取得するヘルパー
-    const getProductName = (productId: string) => {
-        return MOCK_PRODUCTS.find(p => p.id === productId)?.name || productId;
-    };
-
-    // 通常在庫を取得するヘルパー
-    const getStandardInventory = (productId: string) => {
-        return MOCK_INVENTORY.find(i => i.productId === productId)?.quantity || 0;
-    };
 
     return (
         <div className="space-y-6">
@@ -67,7 +60,7 @@ export default function EventDetailPage() {
                                 {eventStocks.map((stock) => (
                                     <TableRow key={stock.productId}>
                                         <TableCell className="font-medium">
-                                            {getProductName(stock.productId)}
+                                            {eventService.getProductName(stock.productId)}
                                         </TableCell>
                                         <TableCell className="text-right font-mono">
                                             {stock.allocatedQuantity}
@@ -76,7 +69,7 @@ export default function EventDetailPage() {
                                             {stock.currentQuantity}
                                         </TableCell>
                                         <TableCell className="text-right text-gray-400 font-mono">
-                                            {getStandardInventory(stock.productId)}
+                                            {eventService.getStandardInventory(stock.productId)}
                                         </TableCell>
                                     </TableRow>
                                 ))}

@@ -10,6 +10,9 @@ import {
     ShoppingCart,
     Settings,
     Menu,
+    BarChart3,
+    ClipboardEdit,
+    FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -23,10 +26,28 @@ const routes = [
         color: "text-sky-500",
     },
     {
-        label: "在庫一覧",
+        label: "米袋在庫",
         icon: Package,
-        href: "/inventory",
+        href: "/inventory?tab=bag",
         color: "text-violet-500",
+    },
+    {
+        label: "シール在庫",
+        icon: Package,
+        href: "/inventory?tab=sticker",
+        color: "text-green-500",
+    },
+    {
+        label: "その他在庫",
+        icon: Package,
+        href: "/inventory?tab=other",
+        color: "text-gray-400",
+    },
+    {
+        label: "在庫入力",
+        icon: ClipboardEdit,
+        href: "/stock-input",
+        color: "text-cyan-500",
     },
     {
         label: "特売イベント",
@@ -39,6 +60,24 @@ const routes = [
         icon: ShoppingCart,
         href: "/orders",
         color: "text-orange-700",
+    },
+    {
+        label: "レポート",
+        icon: BarChart3,
+        href: "/reports",
+        color: "text-emerald-500",
+    },
+    {
+        label: "米袋報告書",
+        icon: FileText,
+        href: "/reports/stock-report?category=bag",
+        color: "text-violet-400",
+    },
+    {
+        label: "シール報告書",
+        icon: FileText,
+        href: "/reports/stock-report?category=sticker",
+        color: "text-green-400",
     },
     {
         label: "設定",

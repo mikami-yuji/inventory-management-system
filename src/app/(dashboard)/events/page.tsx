@@ -1,12 +1,14 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { MOCK_EVENTS } from "@/lib/mock-data";
+import { eventService } from "@/lib/services";
 import { Badge } from "@/components/ui/badge";
 
-export default function EventsPage() {
-    const events = MOCK_EVENTS;
+export default function EventsPage(): React.ReactElement {
+    // サービスからイベントデータを取得
+    const events = eventService.getEvents();
 
     return (
         <div className="space-y-6">

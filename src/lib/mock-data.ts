@@ -6,6 +6,7 @@ import {
   EventStock,
   User,
   Order,
+  StockHistory,
 } from '@/types';
 
 // ユーザー
@@ -8213,3 +8214,8 @@ export const MOCK_EVENT_STOCK: EventStock[] = [];
 
 // 注文履歴
 export const MOCK_ORDERS: Order[] = [];
+
+// その他データ（在庫履歴など）
+export const MOCK_DATA = {
+  stockHistory: [] as StockHistory[],
+};
