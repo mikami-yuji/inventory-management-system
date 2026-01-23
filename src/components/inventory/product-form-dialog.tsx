@@ -25,6 +25,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { ImageUpload } from "@/components/ui/image-upload";
 import type { Product } from "@/types";
 
 // フォームデータの型
@@ -40,6 +41,7 @@ type ProductFormData = {
     category: string;
     description: string;
     minStockAlert: string;
+    imageUrl: string;
 };
 
 type ProductFormDialogProps = {
@@ -61,6 +63,7 @@ const initialFormData: ProductFormData = {
     category: "bag",
     description: "",
     minStockAlert: "100",
+    imageUrl: "",
 };
 
 export function ProductFormDialog({
@@ -90,6 +93,7 @@ export function ProductFormDialog({
                 category: product.category || "bag",
                 description: product.description || "",
                 minStockAlert: product.minStockAlert?.toString() || "100",
+                imageUrl: product.imageUrl || "",
             });
         } else {
             setFormData(initialFormData);
@@ -120,6 +124,7 @@ export function ProductFormDialog({
                 category: formData.category,
                 description: formData.description || undefined,
                 minStockAlert: formData.minStockAlert ? Number(formData.minStockAlert) : 100,
+                imageUrl: formData.imageUrl || undefined,
             };
 
             const response = await fetch("/api/products", {
@@ -294,6 +299,16 @@ export function ProductFormDialog({
                             value={formData.description}
                             onChange={(e) => handleChange("description", e.target.value)}
                             placeholder="商品の説明"
+                        />
+                    </div>
+
+                    {/* 商品画像 */}
+                    <div className="space-y-2">
+                        <Label>商品画像</Label>
+                        <ImageUpload
+                            value={formData.imageUrl || undefined}
+                            onChange={(url) => handleChange("imageUrl", url || "")}
+                            disabled={loading}
                         />
                     </div>
 
