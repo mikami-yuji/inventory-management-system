@@ -462,6 +462,7 @@ function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap,
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-[60px]">画像</TableHead>
                                 <TableHead>商品情報</TableHead>
                                 <TableHead>スペック</TableHead>
                                 <TableHead className="text-right">現在庫</TableHead>
@@ -509,9 +510,24 @@ function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap,
                                 return (
                                     <TableRow key={product.id} className={cn(isOutOfStock && "bg-red-50")}>
                                         <TableCell>
-                                            <div className="font-medium">{product.name}</div>
-                                            <div className="text-sm text-gray-500">商品CD: {product.sku || '-'}</div>
-                                            <div className="text-xs text-gray-400">JAN: {product.janCode || '-'}</div>
+                                            {product.imageUrl ? (
+                                                <img
+                                                    src={product.imageUrl}
+                                                    alt={product.name}
+                                                    className="w-12 h-12 object-cover rounded border"
+                                                />
+                                            ) : (
+                                                <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
+                                                    <Package className="h-5 w-5 text-gray-400" />
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="max-w-[180px]">
+                                                <div className="font-medium truncate" title={product.name}>{product.name}</div>
+                                                <div className="text-sm text-gray-500 truncate">商品CD: {product.sku || '-'}</div>
+                                                <div className="text-xs text-gray-400 truncate">JAN: {product.janCode || '-'}</div>
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <div className="text-sm">
