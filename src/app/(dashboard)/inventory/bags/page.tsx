@@ -1,0 +1,672 @@
+"use client";
+
+import React, { useState, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import {
+    Search,
+    X,
+    Filter,
+    Check,
+    Loader2,
+    Plus,
+    Pencil,
+    Trash2,
+    Package,
+    TrendingDown,
+    Calendar,
+    AlertTriangle
+} from "lucide-react";
+import {
+    inventoryService,
+    getPitch,
+    isRollBag,
+    getApproxBagCount
+} from "@/lib/services";
+import { useCart } from "@/contexts/cart-context";
+import { useProducts, useInventory } from "@/hooks/use-supabase-data";
+import { useSaleEvents } from "@/hooks/use-sale-events";
+import { useWorkInProgress, calculateWIPByProduct } from "@/hooks/use-work-in-progress";
+import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
+import type { Product } from "@/types";
+import { SupplierStockDialog } from "@/components/inventory/supplier-stock-dialog";
+import { WIPDialog } from "@/components/inventory/wip-dialog";
+
+// 枚数からメートルに変換
+const bagsToMeters = (bags: number, weight: number): number => {
+    const pitch = getPitch(weight);
+    return (bags * pitch) / 1000;
+};
+
+// メートルから枚数に変換
+const metersToBags = (meters: number, weight: number): number => {
+    const pitch = getPitch(weight);
+    return Math.floor((meters * 1000) / pitch);
+};
+
+export default function BagsInventoryPage(): React.ReactElement {
+    const [searchQuery, setSearchQuery] = useState("");
+    const [weightFilter, setWeightFilter] = useState("all");
+    const [shapeFilter, setShapeFilter] = useState("all");
+    const [stockFilter, setStockFilter] = useState("all");
+
+    // Supabase APIから商品と在庫を取得
+    const { products: allProducts, loading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
+    const { inventory: inventoryData, loading: inventoryLoading, refetch: refetchInventory } = useInventory();
+    const { events: saleEvents, loading: eventsLoading } = useSaleEvents();
+    const { items: wipItems, loading: wipLoading, refetch: refetchWIP } = useWorkInProgress({ status: 'in_progress' });
+
+    const loading = productsLoading || inventoryLoading || eventsLoading || wipLoading;
+    const error = productsError;
+
+    // 米袋カテゴリのみをフィルタ (bag + new_rice)
+    const bagProducts = useMemo(() =>
+        allProducts.filter(p => p.category === 'bag' || p.category === 'new_rice'),
+        [allProducts]
+    );
+
+    // 在庫マップを作成
+    const inventoryMap = useMemo(() => {
+        const map = new Map<string, number>();
+        inventoryData?.forEach(item => {
+            map.set(item.productId, item.quantity);
+        });
+        return map;
+    }, [inventoryData]);
+
+    // 特売引当マップを作成
+    const saleAllocationMap = useMemo(() => {
+        const map = new Map<string, { bags: number; meters: number }>();
+        saleEvents
+            .filter(e => e.status === 'upcoming' || e.status === 'active')
+            .forEach(event => {
+                event.items.forEach(item => {
+                    const current = map.get(item.productId) || { bags: 0, meters: 0 };
+                    const product = allProducts.find(p => p.id === item.productId);
+                    const weight = product?.weight || 5;
+                    const allocatedMeters = bagsToMeters(item.allocatedQuantity, weight);
+                    map.set(item.productId, {
+                        bags: current.bags + item.allocatedQuantity,
+                        meters: current.meters + allocatedMeters
+                    });
+                });
+            });
+        return map;
+    }, [saleEvents, allProducts]);
+
+    // 仕掛中マップを作成
+    const wipMap = useMemo(() => calculateWIPByProduct(wipItems), [wipItems]);
+
+    // メーカー在庫マップを作成
+    const supplierStockMap = useMemo(() => {
+        const map = new Map<string, number>();
+        allProducts.forEach(product => {
+            const supplierStock = (product as unknown as { supplier_stock?: number }).supplier_stock || 0;
+            map.set(product.id, supplierStock);
+        });
+        return map;
+    }, [allProducts]);
+
+    // 入荷予定マップ
+    const incomingMap = useMemo(() => new Map<string, { quantity: number; nextDate: string | null }>(), []);
+
+    const refetch = (): void => {
+        refetchProducts();
+        refetchInventory();
+        refetchWIP();
+    };
+
+    // 商品フォームダイアログの状態
+    const [formDialogOpen, setFormDialogOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+    const handleAddProduct = (): void => {
+        setEditingProduct(null);
+        setFormDialogOpen(true);
+    };
+
+    const handleEditProduct = (product: Product): void => {
+        setEditingProduct(product);
+        setFormDialogOpen(true);
+    };
+
+    const handleDeleteProduct = async (productId: string): Promise<void> => {
+        if (!confirm("この商品を削除しますか？")) return;
+        try {
+            const response = await fetch(`/api/products?id=${productId}`, { method: "DELETE" });
+            if (response.ok) {
+                refetch();
+            } else {
+                const result = await response.json();
+                alert(result.error || "削除に失敗しました");
+            }
+        } catch (err) {
+            console.error("Delete error:", err);
+            alert("削除中にエラーが発生しました");
+        }
+    };
+
+    // 利用可能な重量リストを取得
+    const availableWeights = useMemo(() => {
+        const weights = new Set(bagProducts.map(p => p.weight).filter(Boolean));
+        return Array.from(weights).sort((a, b) => (a || 0) - (b || 0)) as number[];
+    }, [bagProducts]);
+
+    // 利用可能な形状リストを取得
+    const availableShapes = useMemo(() => {
+        const shapes = new Set(bagProducts.map(p => p.shape).filter(Boolean));
+        return Array.from(shapes) as string[];
+    }, [bagProducts]);
+
+    // フィルタリングされた商品
+    const filteredProducts = useMemo(() => {
+        let products = bagProducts;
+
+        // 検索フィルター
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            products = products.filter(p =>
+                p.name.toLowerCase().includes(query) ||
+                p.janCode?.toLowerCase().includes(query) ||
+                p.id.includes(query) ||
+                p.sku?.toLowerCase().includes(query)
+            );
+        }
+
+        // 重量フィルター
+        if (weightFilter !== "all") {
+            const weight = parseFloat(weightFilter);
+            products = products.filter(p => p.weight === weight);
+        }
+
+        // 形状フィルター
+        if (shapeFilter !== "all") {
+            products = products.filter(p => p.shape === shapeFilter);
+        }
+
+        // 在庫フィルター
+        if (stockFilter === "low") {
+            products = products.filter(p => {
+                const qty = inventoryMap.get(p.id) || 0;
+                const allocated = saleAllocationMap.get(p.id)?.meters || 0;
+                const available = qty - allocated;
+                return available > 0 && available < 50;
+            });
+        } else if (stockFilter === "out") {
+            products = products.filter(p => {
+                const qty = inventoryMap.get(p.id) || 0;
+                const allocated = saleAllocationMap.get(p.id)?.meters || 0;
+                return qty - allocated <= 0;
+            });
+        } else if (stockFilter === "reserved") {
+            products = products.filter(p => (saleAllocationMap.get(p.id)?.bags || 0) > 0);
+        }
+
+        return products;
+    }, [bagProducts, searchQuery, weightFilter, shapeFilter, stockFilter, inventoryMap, saleAllocationMap]);
+
+    // サマリー計算
+    const summary = useMemo(() => {
+        let lowStock = 0;
+        let outOfStock = 0;
+        let hasReservation = 0;
+
+        bagProducts.forEach(p => {
+            const qty = inventoryMap.get(p.id) || 0;
+            const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
+            const available = qty - allocation.meters;
+
+            if (available <= 0) outOfStock++;
+            else if (available < 50) lowStock++;
+            if (allocation.bags > 0) hasReservation++;
+        });
+
+        return { total: bagProducts.length, lowStock, outOfStock, hasReservation };
+    }, [bagProducts, inventoryMap, saleAllocationMap]);
+
+    const hasActiveFilters = searchQuery || weightFilter !== "all" || shapeFilter !== "all" || stockFilter !== "all";
+
+    const clearFilters = (): void => {
+        setSearchQuery("");
+        setWeightFilter("all");
+        setShapeFilter("all");
+        setStockFilter("all");
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-8 text-center">
+                <p className="text-red-500">{error}</p>
+                <Button onClick={refetch} className="mt-4">再読み込み</Button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6 p-6">
+            {/* ヘッダー */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold">米袋在庫管理</h1>
+                    <p className="text-muted-foreground">米袋・新米関連商品の在庫を確認・管理します</p>
+                </div>
+                <Button onClick={handleAddProduct} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    商品追加
+                </Button>
+            </div>
+
+            {/* サマリーカード */}
+            <div className="grid gap-4 md:grid-cols-4">
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Package className="h-4 w-4" />
+                            総商品数
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{summary.total}</div>
+                    </CardContent>
+                </Card>
+                <Card className="border-red-200">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-red-600 flex items-center gap-2">
+                            <TrendingDown className="h-4 w-4" />
+                            欠品
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-red-600">{summary.outOfStock}</div>
+                    </CardContent>
+                </Card>
+                <Card className="border-amber-200">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-amber-600 flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4" />
+                            低在庫
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-amber-600">{summary.lowStock}</div>
+                    </CardContent>
+                </Card>
+                <Card className="border-blue-200">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-blue-600 flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            特売引当中
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-blue-600">{summary.hasReservation}</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* 検索・フィルターエリア */}
+            <Card>
+                <CardContent className="pt-6">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-end">
+                        <div className="flex-1">
+                            <label className="text-sm font-medium mb-2 block">商品検索</label>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="商品名、JANコード、商品IDで検索..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="w-full md:w-32">
+                            <label className="text-sm font-medium mb-2 block">重量</label>
+                            <Select value={weightFilter} onValueChange={setWeightFilter}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="すべて" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">すべて</SelectItem>
+                                    {availableWeights.map(w => (
+                                        <SelectItem key={w} value={w.toString()}>
+                                            {w}kg
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="w-full md:w-40">
+                            <label className="text-sm font-medium mb-2 block">形状</label>
+                            <Select value={shapeFilter} onValueChange={setShapeFilter}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="すべて" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">すべて</SelectItem>
+                                    {availableShapes.map(s => (
+                                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="w-full md:w-40">
+                            <label className="text-sm font-medium mb-2 block">在庫状態</label>
+                            <Select value={stockFilter} onValueChange={setStockFilter}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="すべて" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">すべて</SelectItem>
+                                    <SelectItem value="low">低在庫</SelectItem>
+                                    <SelectItem value="out">欠品</SelectItem>
+                                    <SelectItem value="reserved">特売引当あり</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {hasActiveFilters && (
+                            <Button variant="outline" onClick={clearFilters} className="gap-2">
+                                <X className="h-4 w-4" />
+                                クリア
+                            </Button>
+                        )}
+                    </div>
+
+                    {hasActiveFilters && (
+                        <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                            <Filter className="h-4 w-4" />
+                            <span>フィルター適用中:</span>
+                            {searchQuery && <Badge variant="secondary">検索: &quot;{searchQuery}&quot;</Badge>}
+                            {weightFilter !== "all" && <Badge variant="secondary">{weightFilter}kg</Badge>}
+                            {shapeFilter !== "all" && <Badge variant="secondary">{shapeFilter}</Badge>}
+                            {stockFilter !== "all" && (
+                                <Badge variant="secondary">
+                                    {stockFilter === "low" ? "低在庫" : stockFilter === "out" ? "欠品" : "特売引当あり"}
+                                </Badge>
+                            )}
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* 在庫テーブル */}
+            <BagsInventoryTable
+                products={filteredProducts}
+                inventoryMap={inventoryMap}
+                saleAllocationMap={saleAllocationMap}
+                wipMap={wipMap}
+                supplierStockMap={supplierStockMap}
+                incomingMap={incomingMap}
+                onEdit={handleEditProduct}
+                onDelete={handleDeleteProduct}
+                onRefetch={refetch}
+            />
+
+            {/* 商品フォームダイアログ */}
+            <ProductFormDialog
+                open={formDialogOpen}
+                onOpenChange={setFormDialogOpen}
+                product={editingProduct}
+                onSuccess={refetch}
+            />
+        </div>
+    );
+}
+
+// 米袋専用テーブルコンポーネント
+type BagsInventoryTableProps = {
+    products: Product[];
+    inventoryMap: Map<string, number>;
+    saleAllocationMap: Map<string, { bags: number; meters: number }>;
+    wipMap: Map<string, number>;
+    supplierStockMap: Map<string, number>;
+    incomingMap: Map<string, { quantity: number; nextDate: string | null }>;
+    onEdit: (product: Product) => void;
+    onDelete: (productId: string) => Promise<void>;
+    onRefetch: () => void;
+};
+
+function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch }: BagsInventoryTableProps): React.ReactElement {
+    const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
+    const [editWIP, setEditWIP] = useState<Product | null>(null);
+    const { addToCart, items } = useCart();
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>米袋在庫状況 ({products.length}件)</CardTitle>
+            </CardHeader>
+            <CardContent>
+                {products.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                        該当する商品がありません
+                    </div>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>商品情報</TableHead>
+                                <TableHead>スペック</TableHead>
+                                <TableHead className="text-right">現在庫</TableHead>
+                                <TableHead className="text-right">特売引当</TableHead>
+                                <TableHead className="text-right">有効在庫</TableHead>
+                                <TableHead className="text-right">メーカー在庫</TableHead>
+                                <TableHead className="text-right">仕掛中</TableHead>
+                                <TableHead className="text-right">入荷予定</TableHead>
+                                <TableHead className="text-center">状態</TableHead>
+                                <TableHead className="w-[100px]">操作</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {products.map((product) => {
+                                const currentStock = inventoryMap.get(product.id) || 0;
+                                const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
+                                const incoming = incomingMap.get(product.id);
+                                const wipQuantity = wipMap.get(product.id) || 0;
+                                const supplierStock = supplierStockMap.get(product.id) || 0;
+
+                                const isRoll = product.shape && isRollBag(product.shape);
+
+                                let availableStock: number;
+                                let currentBags: number;
+                                let availableBags: number;
+
+                                if (isRoll) {
+                                    availableStock = Math.max(0, currentStock - allocation.meters);
+                                    currentBags = metersToBags(currentStock, product.weight || 5);
+                                    availableBags = metersToBags(availableStock, product.weight || 5);
+                                } else {
+                                    availableStock = Math.max(0, currentStock - allocation.bags);
+                                    currentBags = currentStock;
+                                    availableBags = availableStock;
+                                }
+
+                                const isOutOfStock = availableStock <= 0;
+                                const isLowStock = isRoll
+                                    ? (availableStock > 0 && availableStock < 50)
+                                    : (availableStock > 0 && availableStock < 100);
+                                const hasAllocation = allocation.bags > 0;
+
+                                const isInCart = items.some(item => item.product.id === product.id);
+
+                                return (
+                                    <TableRow key={product.id} className={cn(isOutOfStock && "bg-red-50")}>
+                                        <TableCell>
+                                            <div className="font-medium">{product.name}</div>
+                                            <div className="text-sm text-gray-500">商品CD: {product.sku || '-'}</div>
+                                            <div className="text-xs text-gray-400">JAN: {product.janCode || '-'}</div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="text-sm">
+                                                <span className="font-medium">{product.weight}kg</span> / {product.shape}
+                                                {isRoll && (
+                                                    <div className="text-xs text-blue-600 mt-1">
+                                                        ピッチ: {getPitch(product.weight || 0)}mm
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {isRoll ? (
+                                                <>
+                                                    <div className="font-bold text-lg">{currentStock.toLocaleString()}m</div>
+                                                    <div className="text-xs text-muted-foreground">約{currentBags.toLocaleString()}枚</div>
+                                                </>
+                                            ) : (
+                                                <div className="font-bold text-lg">{currentStock.toLocaleString()}枚</div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {hasAllocation ? (
+                                                <div className="text-blue-600">
+                                                    <div className="font-medium">{allocation.bags.toLocaleString()}本</div>
+                                                    {isRoll && (
+                                                        <div className="text-xs">({allocation.meters.toFixed(1)}m)</div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-muted-foreground">-</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {isRoll ? (
+                                                <>
+                                                    <div className={cn(
+                                                        "font-bold text-lg",
+                                                        isOutOfStock && "text-red-600",
+                                                        isLowStock && "text-amber-600"
+                                                    )}>
+                                                        {availableStock.toLocaleString()}m
+                                                    </div>
+                                                    <div className={cn(
+                                                        "text-xs",
+                                                        isOutOfStock && "text-red-500",
+                                                        isLowStock && "text-amber-500"
+                                                    )}>
+                                                        約{availableBags.toLocaleString()}枚
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className={cn(
+                                                    "font-bold text-lg",
+                                                    isOutOfStock && "text-red-600",
+                                                    isLowStock && "text-amber-600"
+                                                )}>
+                                                    {availableStock.toLocaleString()}枚
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell
+                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
+                                            onClick={() => setEditSupplierStock(product)}
+                                        >
+                                            {supplierStock > 0 ? (
+                                                <div className="text-orange-600">
+                                                    <div className="font-medium">{supplierStock.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
+                                                    <div className="text-xs">メーカー</div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-end">
+                                                    <span className="text-muted-foreground group-hover:hidden">-</span>
+                                                    <Pencil className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell
+                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
+                                            onClick={() => setEditWIP(product)}
+                                        >
+                                            {wipQuantity > 0 ? (
+                                                <div className="text-purple-600">
+                                                    <div className="font-medium">{wipQuantity.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
+                                                    <div className="text-xs">加工中</div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-end">
+                                                    <span className="text-muted-foreground group-hover:hidden">-</span>
+                                                    <Plus className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {incoming ? (
+                                                <div className="text-emerald-600">
+                                                    <div className="font-medium">{incoming.quantity.toLocaleString()}m</div>
+                                                    {incoming.nextDate && <div className="text-xs">{incoming.nextDate}</div>}
+                                                </div>
+                                            ) : (
+                                                <span className="text-muted-foreground">-</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            {isOutOfStock ? (
+                                                <Badge variant="destructive">欠品</Badge>
+                                            ) : isLowStock ? (
+                                                <Badge variant="outline" className="border-amber-500 text-amber-600">低在庫</Badge>
+                                            ) : hasAllocation ? (
+                                                <Badge variant="outline" className="border-blue-500 text-blue-600">引当中</Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="border-green-500 text-green-600">正常</Badge>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    size="sm"
+                                                    variant={isInCart ? "secondary" : "outline"}
+                                                    onClick={() => addToCart(product, 1)}
+                                                    disabled={isOutOfStock}
+                                                    className="gap-1"
+                                                >
+                                                    {isInCart ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                                                </Button>
+                                                <Button size="sm" variant="ghost" onClick={() => onEdit(product)} title="編集">
+                                                    <Pencil className="h-3 w-3" />
+                                                </Button>
+                                                <Button size="sm" variant="ghost" onClick={() => onDelete(product.id)} title="削除" className="text-red-500 hover:text-red-600">
+                                                    <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                )}
+            </CardContent>
+
+            <SupplierStockDialog
+                product={editSupplierStock}
+                open={!!editSupplierStock}
+                onOpenChange={(open) => !open && setEditSupplierStock(null)}
+                currentStock={editSupplierStock ? (supplierStockMap.get(editSupplierStock.id) || 0) : 0}
+                onSuccess={onRefetch}
+            />
+
+            <WIPDialog
+                product={editWIP}
+                open={!!editWIP}
+                onOpenChange={(open) => !open && setEditWIP(null)}
+                onSuccess={onRefetch}
+            />
+        </Card>
+    );
+}

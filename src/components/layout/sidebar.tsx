@@ -28,19 +28,19 @@ const routes = [
     {
         label: "米袋在庫",
         icon: Package,
-        href: "/inventory?tab=bag",
+        href: "/inventory/bags",
         color: "text-violet-500",
     },
     {
         label: "シール在庫",
         icon: Package,
-        href: "/inventory?tab=sticker",
+        href: "/inventory/stickers",
         color: "text-green-500",
     },
     {
         label: "その他在庫",
         icon: Package,
-        href: "/inventory?tab=other",
+        href: "/inventory/others",
         color: "text-gray-400",
     },
     {
