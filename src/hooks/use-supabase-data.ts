@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Supabase API データ取得フック
  * クライアントコンポーネントからSupabase APIを呼び出すためのカスタムフック
@@ -104,7 +106,16 @@ export function useInventory(options?: {
                 throw new Error(result.error);
             }
 
-            setInventory(result.data || []);
+            // APIレスポンスのスネークケースをキャメルケースに変換
+            const mappedData = (result.data || [])
+                .filter((item: { product_id?: string; productId?: string; quantity: number; product?: Product }) => item.product !== undefined)
+                .map((item: { product_id?: string; productId?: string; quantity: number; updated_at?: string; updatedAt?: string; product: Product }) => ({
+                    productId: item.product_id || item.productId || '',
+                    quantity: item.quantity,
+                    updatedAt: item.updated_at || item.updatedAt || '',
+                    product: item.product
+                }));
+            setInventory(mappedData);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'データの取得に失敗しました');
         } finally {

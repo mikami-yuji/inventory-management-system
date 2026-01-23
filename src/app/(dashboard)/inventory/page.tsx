@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,8 +9,23 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState, useMemo } from "react";
-import { Search, X, Filter, ShoppingCart, Check, Loader2, Plus, Pencil, Trash2, BarChart3 } from "lucide-react";
+import {
+    Search,
+    X,
+    Filter,
+    ShoppingCart,
+    Check,
+    Loader2,
+    Plus,
+    Pencil,
+    Trash2,
+    BarChart3,
+    Package,
+    TrendingDown,
+    TrendingUp,
+    Calendar,
+    AlertTriangle
+} from "lucide-react";
 import {
     inventoryService,
     getPitch,
@@ -18,10 +33,28 @@ import {
     getApproxBagCount
 } from "@/lib/services";
 import { useCart } from "@/contexts/cart-context";
-import { useProducts } from "@/hooks/use-supabase-data";
+import { useProducts, useInventory } from "@/hooks/use-supabase-data";
+import { useSaleEvents } from "@/hooks/use-sale-events";
+import { useWorkInProgress, calculateWIPByProduct, useWIPActions } from "@/hooks/use-work-in-progress";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import { ProductAnalysisDialog } from "@/components/inventory/product-analysis-dialog";
 import type { Product } from "@/types";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
+import { SupplierStockDialog } from "@/components/inventory/supplier-stock-dialog";
+import { WIPDialog } from "@/components/inventory/wip-dialog";
+
+// 枚数からメートルに変換
+const bagsToMeters = (bags: number, weight: number): number => {
+    const pitch = getPitch(weight);
+    return (bags * pitch) / 1000;
+};
+
+// メートルから枚数に変換
+const metersToBags = (meters: number, weight: number): number => {
+    const pitch = getPitch(weight);
+    return Math.floor((meters * 1000) / pitch);
+};
 
 export default function InventoryPage(): React.ReactElement {
     const [currentTab, setCurrentTab] = useState("all");
@@ -29,8 +62,73 @@ export default function InventoryPage(): React.ReactElement {
     const [weightFilter, setWeightFilter] = useState("all");
     const [stockFilter, setStockFilter] = useState("all");
 
-    // Supabase APIから商品を取得
-    const { products: allProducts, loading, error, refetch } = useProducts();
+    // Supabase APIから商品と在庫を取得
+    const { products: allProducts, loading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
+    const { inventory: inventoryData, loading: inventoryLoading, refetch: refetchInventory } = useInventory();
+    const { events: saleEvents, loading: eventsLoading } = useSaleEvents();
+    const { items: wipItems, loading: wipLoading, refetch: refetchWIP } = useWorkInProgress({ status: 'in_progress' });
+
+    const loading = productsLoading || inventoryLoading || eventsLoading || wipLoading;
+    const error = productsError;
+
+    // 在庫マップを作成 (productId -> quantity in meters)
+    const inventoryMap = useMemo(() => {
+        const map = new Map<string, number>();
+        inventoryData?.forEach(item => {
+            map.set(item.productId, item.quantity);
+        });
+        return map;
+    }, [inventoryData]);
+
+    // 特売引当マップを作成 (productId -> { allocatedBags, allocatedMeters })
+    const saleAllocationMap = useMemo(() => {
+        const map = new Map<string, { bags: number; meters: number }>();
+
+        saleEvents
+            .filter(e => e.status === 'upcoming' || e.status === 'active')
+            .forEach(event => {
+                event.items.forEach(item => {
+                    const current = map.get(item.productId) || { bags: 0, meters: 0 };
+                    const product = allProducts.find(p => p.id === item.productId);
+                    const weight = product?.weight || 5;
+                    const allocatedMeters = bagsToMeters(item.allocatedQuantity, weight);
+
+                    map.set(item.productId, {
+                        bags: current.bags + item.allocatedQuantity,
+                        meters: current.meters + allocatedMeters
+                    });
+                });
+            });
+
+        return map;
+    }, [saleEvents, allProducts]);
+
+    // 仕掛中マップを作成 (productId -> quantity)
+    const wipMap = useMemo(() => calculateWIPByProduct(wipItems), [wipItems]);
+
+    // メーカー在庫マップを作成 (productId -> supplierStock)
+    const supplierStockMap = useMemo(() => {
+        const map = new Map<string, number>();
+        allProducts.forEach(product => {
+            // supplier_stock カラムがあれば使う（型拡張が必要な場合は後で対応）
+            const supplierStock = (product as unknown as { supplier_stock?: number }).supplier_stock || 0;
+            map.set(product.id, supplierStock);
+        });
+        return map;
+    }, [allProducts]);
+
+    // 入荷予定マップを作成 (productId -> { quantity, nextDate })
+    const incomingMap = useMemo(() => {
+        const map = new Map<string, { quantity: number; nextDate: string | null }>();
+        // TODO: incoming_stockテーブルからデータを取得
+        return map;
+    }, []);
+
+    const refetch = (): void => {
+        refetchProducts();
+        refetchInventory();
+        refetchWIP();
+    };
 
     // 商品フォームダイアログの状態
     const [formDialogOpen, setFormDialogOpen] = useState(false);
@@ -88,21 +186,30 @@ export default function InventoryPage(): React.ReactElement {
             products = products.filter(p => p.weight === weight);
         }
 
-        // 在庫フィルター
+        // 在庫フィルター（有効在庫ベース）
         if (stockFilter === "low") {
             products = products.filter(p => {
-                const qty = inventoryService.getInventoryCount(p.id);
-                return qty > 0 && qty < 50;
+                const qty = inventoryMap.get(p.id) || 0;
+                const allocated = saleAllocationMap.get(p.id)?.meters || 0;
+                const available = qty - allocated;
+                return available > 0 && available < 50;
             });
         } else if (stockFilter === "out") {
             products = products.filter(p => {
-                const qty = inventoryService.getInventoryCount(p.id);
-                return qty === 0;
+                const qty = inventoryMap.get(p.id) || 0;
+                const allocated = saleAllocationMap.get(p.id)?.meters || 0;
+                const available = qty - allocated;
+                return available <= 0;
+            });
+        } else if (stockFilter === "reserved") {
+            products = products.filter(p => {
+                const allocated = saleAllocationMap.get(p.id);
+                return allocated && allocated.bags > 0;
             });
         }
 
         return products;
-    }, [allProducts, currentTab, searchQuery, weightFilter, stockFilter]);
+    }, [allProducts, currentTab, searchQuery, weightFilter, stockFilter, inventoryMap, saleAllocationMap]);
 
     // ユニークな重量リスト
     const availableWeights = useMemo(() => {
@@ -118,6 +225,28 @@ export default function InventoryPage(): React.ReactElement {
     };
 
     const hasActiveFilters = searchQuery || weightFilter !== "all" || stockFilter !== "all";
+
+    // サマリー統計
+    const summary = useMemo(() => {
+        const totalProducts = allProducts.length;
+        const outOfStock = allProducts.filter(p => {
+            const qty = inventoryMap.get(p.id) || 0;
+            const allocated = saleAllocationMap.get(p.id)?.meters || 0;
+            return (qty - allocated) <= 0;
+        }).length;
+        const lowStock = allProducts.filter(p => {
+            const qty = inventoryMap.get(p.id) || 0;
+            const allocated = saleAllocationMap.get(p.id)?.meters || 0;
+            const available = qty - allocated;
+            return available > 0 && available < 50;
+        }).length;
+        const hasReservation = allProducts.filter(p => {
+            const allocated = saleAllocationMap.get(p.id);
+            return allocated && allocated.bags > 0;
+        }).length;
+
+        return { totalProducts, outOfStock, lowStock, hasReservation };
+    }, [allProducts, inventoryMap, saleAllocationMap]);
 
     return (
         <div className="space-y-6">
@@ -147,6 +276,54 @@ export default function InventoryPage(): React.ReactElement {
                     </CardContent>
                 </Card>
             )}
+
+            {/* サマリーカード */}
+            <div className="grid gap-4 md:grid-cols-4">
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Package className="h-4 w-4" />
+                            総商品数
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{summary.totalProducts}</div>
+                    </CardContent>
+                </Card>
+                <Card className="border-red-200">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-red-600 flex items-center gap-2">
+                            <TrendingDown className="h-4 w-4" />
+                            欠品
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-red-600">{summary.outOfStock}</div>
+                    </CardContent>
+                </Card>
+                <Card className="border-amber-200">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-amber-600 flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4" />
+                            低在庫
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-amber-600">{summary.lowStock}</div>
+                    </CardContent>
+                </Card>
+                <Card className="border-blue-200">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-blue-600 flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            特売引当中
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-blue-600">{summary.hasReservation}</div>
+                    </CardContent>
+                </Card>
+            </div>
 
             {/* 検索・フィルターエリア */}
             <Card>
@@ -185,7 +362,7 @@ export default function InventoryPage(): React.ReactElement {
                         </div>
 
                         {/* 在庫状態フィルター */}
-                        <div className="w-full md:w-40">
+                        <div className="w-full md:w-48">
                             <label className="text-sm font-medium mb-2 block">在庫状態</label>
                             <Select value={stockFilter} onValueChange={setStockFilter}>
                                 <SelectTrigger>
@@ -195,6 +372,7 @@ export default function InventoryPage(): React.ReactElement {
                                     <SelectItem value="all">すべて</SelectItem>
                                     <SelectItem value="low">低在庫</SelectItem>
                                     <SelectItem value="out">欠品</SelectItem>
+                                    <SelectItem value="reserved">特売引当あり</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -214,14 +392,14 @@ export default function InventoryPage(): React.ReactElement {
                             <Filter className="h-4 w-4" />
                             <span>フィルター適用中:</span>
                             {searchQuery && (
-                                <Badge variant="secondary">検索: "{searchQuery}"</Badge>
+                                <Badge variant="secondary">検索: &quot;{searchQuery}&quot;</Badge>
                             )}
                             {weightFilter !== "all" && (
                                 <Badge variant="secondary">{weightFilter}kg</Badge>
                             )}
                             {stockFilter !== "all" && (
                                 <Badge variant="secondary">
-                                    {stockFilter === "low" ? "低在庫" : "欠品"}
+                                    {stockFilter === "low" ? "低在庫" : stockFilter === "out" ? "欠品" : "特売引当あり"}
                                 </Badge>
                             )}
                         </div>
@@ -240,19 +418,69 @@ export default function InventoryPage(): React.ReactElement {
                 </TabsList>
 
                 <TabsContent value="all" className="mt-4">
-                    <InventoryTable products={filteredProducts} onEdit={handleEditProduct} onDelete={handleDeleteProduct} />
+                    <InventoryTable
+                        products={filteredProducts}
+                        inventoryMap={inventoryMap}
+                        saleAllocationMap={saleAllocationMap}
+                        wipMap={wipMap}
+                        supplierStockMap={supplierStockMap}
+                        incomingMap={incomingMap}
+                        onEdit={handleEditProduct}
+                        onDelete={handleDeleteProduct}
+                        onRefetch={refetch}
+                    />
                 </TabsContent>
                 <TabsContent value="bag" className="mt-4">
-                    <InventoryTable products={filteredProducts} onEdit={handleEditProduct} onDelete={handleDeleteProduct} />
+                    <InventoryTable
+                        products={filteredProducts}
+                        inventoryMap={inventoryMap}
+                        saleAllocationMap={saleAllocationMap}
+                        wipMap={wipMap}
+                        supplierStockMap={supplierStockMap}
+                        incomingMap={incomingMap}
+                        onEdit={handleEditProduct}
+                        onDelete={handleDeleteProduct}
+                        onRefetch={refetch}
+                    />
                 </TabsContent>
                 <TabsContent value="sticker" className="mt-4">
-                    <InventoryTable products={filteredProducts} onEdit={handleEditProduct} onDelete={handleDeleteProduct} />
+                    <InventoryTable
+                        products={filteredProducts}
+                        inventoryMap={inventoryMap}
+                        saleAllocationMap={saleAllocationMap}
+                        wipMap={wipMap}
+                        supplierStockMap={supplierStockMap}
+                        incomingMap={incomingMap}
+                        onEdit={handleEditProduct}
+                        onDelete={handleDeleteProduct}
+                        onRefetch={refetch}
+                    />
                 </TabsContent>
                 <TabsContent value="other" className="mt-4">
-                    <InventoryTable products={filteredProducts} onEdit={handleEditProduct} onDelete={handleDeleteProduct} />
+                    <InventoryTable
+                        products={filteredProducts}
+                        inventoryMap={inventoryMap}
+                        saleAllocationMap={saleAllocationMap}
+                        wipMap={wipMap}
+                        supplierStockMap={supplierStockMap}
+                        incomingMap={incomingMap}
+                        onEdit={handleEditProduct}
+                        onDelete={handleDeleteProduct}
+                        onRefetch={refetch}
+                    />
                 </TabsContent>
                 <TabsContent value="new_rice" className="mt-4">
-                    <InventoryTable products={filteredProducts} onEdit={handleEditProduct} onDelete={handleDeleteProduct} />
+                    <InventoryTable
+                        products={filteredProducts}
+                        inventoryMap={inventoryMap}
+                        saleAllocationMap={saleAllocationMap}
+                        wipMap={wipMap}
+                        supplierStockMap={supplierStockMap}
+                        incomingMap={incomingMap}
+                        onEdit={handleEditProduct}
+                        onDelete={handleDeleteProduct}
+                        onRefetch={refetch}
+                    />
                 </TabsContent>
             </Tabs>
 
@@ -269,11 +497,20 @@ export default function InventoryPage(): React.ReactElement {
 
 type InventoryTableProps = {
     products: Product[];
+    inventoryMap: Map<string, number>;
+    saleAllocationMap: Map<string, { bags: number; meters: number }>;
+    wipMap: Map<string, number>;
+    supplierStockMap: Map<string, number>;
+    incomingMap: Map<string, { quantity: number; nextDate: string | null }>;
     onEdit: (product: Product) => void;
     onDelete: (productId: string) => Promise<void>;
+    onRefetch: () => void;
 };
 
-function InventoryTable({ products, onEdit, onDelete }: InventoryTableProps): React.ReactElement {
+function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch }: InventoryTableProps): React.ReactElement {
+    const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
+    const [editWIP, setEditWIP] = useState<Product | null>(null);
+
     return (
         <Card>
             <CardHeader>
@@ -288,35 +525,61 @@ function InventoryTable({ products, onEdit, onDelete }: InventoryTableProps): Re
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[80px]">画像</TableHead>
                                 <TableHead>商品情報</TableHead>
                                 <TableHead>スペック</TableHead>
-                                <TableHead className="text-right">単価 (円)</TableHead>
                                 <TableHead className="text-right">現在庫</TableHead>
-                                <TableHead>入荷予定</TableHead>
+                                <TableHead className="text-right">特売引当</TableHead>
+                                <TableHead className="text-right">有効在庫</TableHead>
+                                <TableHead className="text-right">メーカー在庫</TableHead>
+                                <TableHead className="text-right">仕掛中</TableHead>
+                                <TableHead className="text-right">入荷予定</TableHead>
+                                <TableHead className="text-center">状態</TableHead>
                                 <TableHead className="w-[100px]">操作</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {products.map((product) => {
-                                // サービスから在庫情報を取得
-                                const quantity = inventoryService.getInventoryCount(product.id);
-                                const incomingInfo = inventoryService.getIncomingInfo(product.id);
-                                const isLowStock = quantity < 50;
-                                const isOutOfStock = quantity === 0;
+                                // 在庫情報を取得
+                                const currentStock = inventoryMap.get(product.id) || 0;
+                                const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
+                                const incoming = incomingMap.get(product.id);
+                                const wipQuantity = wipMap.get(product.id) || 0;
+                                const supplierStock = supplierStockMap.get(product.id) || 0;
+
+                                // ロール袋かどうか判定
+                                const isRoll = product.shape && isRollBag(product.shape);
+
+                                // 単袋の場合：在庫は枚数、特売引当も枚数
+                                // ロール袋の場合：在庫はメートル、特売引当は枚数→メートル換算
+                                let availableStock: number;
+                                let currentBags: number;
+                                let availableBags: number;
+
+                                if (isRoll) {
+                                    // ロール袋: 在庫はメートル
+                                    availableStock = Math.max(0, currentStock - allocation.meters);
+                                    currentBags = metersToBags(currentStock, product.weight || 5);
+                                    availableBags = metersToBags(availableStock, product.weight || 5);
+                                } else {
+                                    // 単袋: 在庫は枚数
+                                    availableStock = Math.max(0, currentStock - allocation.bags);
+                                    currentBags = currentStock;
+                                    availableBags = availableStock;
+                                }
+
+                                // ステータス判定
+                                const isOutOfStock = availableStock <= 0;
+                                const isLowStock = isRoll
+                                    ? (availableStock > 0 && availableStock < 50)  // ロール: 50m未満
+                                    : (availableStock > 0 && availableStock < 100); // 単袋: 100枚未満
+                                const hasAllocation = allocation.bags > 0;
 
                                 return (
                                     <TableRow key={product.id} className={cn(isOutOfStock && "bg-red-50")}>
                                         <TableCell>
-                                            <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center text-xs text-gray-400">
-                                                {product.imageUrl ? "Img" : "No Img"}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
                                             <div className="font-medium">{product.name}</div>
                                             <div className="text-sm text-gray-500">商品CD: {product.sku || '-'}</div>
                                             <div className="text-xs text-gray-400">JAN: {product.janCode || '-'}</div>
-                                            {product.category !== 'bag' && <Badge variant="outline" className="mt-1 text-xs">{product.category}</Badge>}
                                         </TableCell>
                                         <TableCell>
                                             <div className="text-sm">
@@ -325,9 +588,7 @@ function InventoryTable({ products, onEdit, onDelete }: InventoryTableProps): Re
                                                         <span className="font-medium">{product.weight}kg</span> / {product.shape}
                                                         {product.shape && isRollBag(product.shape) && (
                                                             <div className="text-xs text-blue-600 mt-1">
-                                                                ロール袋 (ピッチ: {getPitch(product.weight || 0)}mm)
-                                                                <br />
-                                                                約{getApproxBagCount(product.weight || 0).toLocaleString()}枚/ロール
+                                                                ピッチ: {getPitch(product.weight || 0)}mm
                                                             </div>
                                                         )}
                                                     </>
@@ -335,50 +596,134 @@ function InventoryTable({ products, onEdit, onDelete }: InventoryTableProps): Re
                                                     <span className="text-gray-500">-</span>
                                                 )}
                                             </div>
-                                            <div className="flex items-center mt-2">
-                                                <ProductAnalysisDialog
-                                                    product={product}
-                                                    currentStock={quantity}
-                                                    trigger={
-                                                        <Button variant="ghost" size="sm">
-                                                            <BarChart3 className="h-4 w-4 mr-1" />
-                                                            分析
-                                                        </Button>
-                                                    }
-                                                />
-                                            </div>
-                                            <div className="text-sm text-muted-foreground mt-1">
-                                                {product.category === 'bag' ? '米袋' :
-                                                    product.category === 'sticker' ? 'シール' : 'その他'}
-                                            </div>
-                                            <div className="text-xs text-gray-500 truncate max-w-[200px]">
-                                                {product.material}
-                                            </div>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <div className="font-medium">@{product.unitPrice}</div>
-                                            {product.printingCost > 0 && (
-                                                <div className="text-xs text-gray-500">+印 {product.printingCost}</div>
+                                            {isRoll ? (
+                                                <>
+                                                    <div className="font-bold text-lg">
+                                                        {currentStock.toLocaleString()}m
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        約{currentBags.toLocaleString()}枚
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="font-bold text-lg">
+                                                    {currentStock.toLocaleString()}枚
+                                                </div>
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <span className={cn(
-                                                "font-bold text-lg",
-                                                isOutOfStock && "text-red-700",
-                                                isLowStock && !isOutOfStock && "text-amber-600"
-                                            )}>
-                                                {quantity.toLocaleString()}
-                                            </span>
-                                            {isOutOfStock && <span className="text-xs text-red-600 block font-medium">欠品</span>}
-                                            {isLowStock && !isOutOfStock && <span className="text-xs text-amber-600 block">残りわずか</span>}
-                                        </TableCell>
-                                        <TableCell>
-                                            {incomingInfo ? (
-                                                <span className="text-sm text-emerald-600 font-medium">
-                                                    {incomingInfo}
-                                                </span>
+                                            {hasAllocation ? (
+                                                <div className="text-blue-600">
+                                                    <div className="font-medium">
+                                                        {allocation.bags.toLocaleString()}本
+                                                    </div>
+                                                    {isRoll && (
+                                                        <div className="text-xs">
+                                                            ({allocation.meters.toFixed(1)}m)
+                                                        </div>
+                                                    )}
+                                                </div>
                                             ) : (
-                                                <span className="text-sm text-gray-400">-</span>
+                                                <span className="text-muted-foreground">-</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {isRoll ? (
+                                                <>
+                                                    <div className={cn(
+                                                        "font-bold text-lg",
+                                                        isOutOfStock && "text-red-600",
+                                                        isLowStock && "text-amber-600"
+                                                    )}>
+                                                        {availableStock.toLocaleString()}m
+                                                    </div>
+                                                    <div className={cn(
+                                                        "text-xs",
+                                                        isOutOfStock && "text-red-500",
+                                                        isLowStock && "text-amber-500"
+                                                    )}>
+                                                        約{availableBags.toLocaleString()}枚
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className={cn(
+                                                    "font-bold text-lg",
+                                                    isOutOfStock && "text-red-600",
+                                                    isLowStock && "text-amber-600"
+                                                )}>
+                                                    {availableStock.toLocaleString()}枚
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell
+                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative"
+                                            onClick={() => setEditSupplierStock(product)}
+                                        >
+                                            {supplierStock > 0 ? (
+                                                <div className="text-orange-600">
+                                                    <div className="font-medium">
+                                                        {supplierStock.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                                    </div>
+                                                    <div className="text-xs">メーカー</div>
+                                                </div>
+                                            ) : (
+                                                <div className="h-full w-full flex items-center justify-end">
+                                                    <span className="text-muted-foreground group-hover:hidden">-</span>
+                                                    <Pencil className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell
+                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative"
+                                            onClick={() => setEditWIP(product)}
+                                        >
+                                            {wipQuantity > 0 ? (
+                                                <div className="text-purple-600">
+                                                    <div className="font-medium">
+                                                        {wipQuantity.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                                    </div>
+                                                    <div className="text-xs">加工中</div>
+                                                </div>
+                                            ) : (
+                                                <div className="h-full w-full flex items-center justify-end">
+                                                    <span className="text-muted-foreground group-hover:hidden">-</span>
+                                                    <Plus className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {incoming ? (
+                                                <div className="text-emerald-600">
+                                                    <div className="font-medium">
+                                                        {incoming.quantity.toLocaleString()}m
+                                                    </div>
+                                                    {incoming.nextDate && (
+                                                        <div className="text-xs">
+                                                            {incoming.nextDate}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-muted-foreground">-</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            {isOutOfStock ? (
+                                                <Badge variant="destructive">欠品</Badge>
+                                            ) : isLowStock ? (
+                                                <Badge variant="outline" className="border-amber-500 text-amber-600">
+                                                    低在庫
+                                                </Badge>
+                                            ) : hasAllocation ? (
+                                                <Badge variant="outline" className="border-blue-500 text-blue-600">
+                                                    引当中
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="border-green-500 text-green-600">
+                                                    正常
+                                                </Badge>
                                             )}
                                         </TableCell>
                                         <TableCell>
@@ -399,6 +744,21 @@ function InventoryTable({ products, onEdit, onDelete }: InventoryTableProps): Re
                     </Table>
                 )}
             </CardContent>
+
+            <SupplierStockDialog
+                product={editSupplierStock}
+                open={!!editSupplierStock}
+                onOpenChange={(open) => !open && setEditSupplierStock(null)}
+                currentStock={editSupplierStock ? (supplierStockMap.get(editSupplierStock.id) || 0) : 0}
+                onSuccess={onRefetch}
+            />
+
+            <WIPDialog
+                product={editWIP}
+                open={!!editWIP}
+                onOpenChange={(open) => !open && setEditWIP(null)}
+                onSuccess={onRefetch}
+            />
         </Card>
     );
 }

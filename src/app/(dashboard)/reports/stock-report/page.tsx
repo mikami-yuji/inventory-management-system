@@ -16,8 +16,8 @@ import {
     ArrowLeft,
     Loader2
 } from "lucide-react";
-import { useProducts } from "@/hooks/use-supabase-data";
-import { stockHistoryService, inventoryService } from "@/lib/services";
+import { useProducts, useInventory } from "@/hooks/use-supabase-data";
+import { stockHistoryService } from "@/lib/services";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -28,8 +28,20 @@ export default function StockReportPage(): React.ReactElement {
     const [categoryFilter, setCategoryFilter] = useState<string>(categoryParam || "all");
     const reportRef = useRef<HTMLDivElement>(null);
 
-    // Supabase APIから商品を取得
-    const { products, loading, error, refetch } = useProducts();
+    // Supabase APIから商品と在庫を取得
+    const { products, loading: productsLoading, error } = useProducts();
+    const { inventory: inventoryData, loading: inventoryLoading } = useInventory();
+
+    const loading = productsLoading || inventoryLoading;
+
+    // 在庫マップを作成 (productId -> quantity)
+    const inventoryMap = useMemo(() => {
+        const map = new Map<string, number>();
+        inventoryData?.forEach(item => {
+            map.set(item.productId, item.quantity);
+        });
+        return map;
+    }, [inventoryData]);
 
     // フィルターされた商品
     const filteredProducts = useMemo(() => {
@@ -40,7 +52,8 @@ export default function StockReportPage(): React.ReactElement {
     // レポートデータを生成
     const reportData = useMemo(() => {
         return filteredProducts.map(product => {
-            const currentStock = inventoryService.getInventoryCount(product.id);
+            // inventoryMapから在庫数を取得（Supabase連携）
+            const currentStock = inventoryMap.get(product.id) || 0;
             const analysis = stockHistoryService.getUsageAnalysis(product.id, currentStock);
 
             return {
@@ -53,7 +66,7 @@ export default function StockReportPage(): React.ReactElement {
                 trend: analysis.trend,
             };
         }).filter(item => item.currentStock > 0 || item.monthlyUsage > 0); // 在庫があるか使用履歴があるもののみ
-    }, [filteredProducts]);
+    }, [filteredProducts, inventoryMap]);
 
     // サマリー統計
     const summary = useMemo(() => {
@@ -109,6 +122,7 @@ export default function StockReportPage(): React.ReactElement {
                         <SelectContent>
                             <SelectItem value="all">すべて</SelectItem>
                             <SelectItem value="bag">米袋</SelectItem>
+                            <SelectItem value="new_rice">新米</SelectItem>
                             <SelectItem value="sticker">シール</SelectItem>
                             <SelectItem value="other">その他</SelectItem>
                         </SelectContent>
@@ -119,6 +133,14 @@ export default function StockReportPage(): React.ReactElement {
                     </Button>
                 </div>
             </div>
+
+            {error && (
+                <Card className="border-red-200 bg-red-50">
+                    <CardContent className="pt-6">
+                        <p className="text-red-600">エラー: {error}</p>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* レポート本体 */}
             <div ref={reportRef} className="print:p-0">
@@ -197,66 +219,73 @@ export default function StockReportPage(): React.ReactElement {
                         <CardDescription>
                             {categoryFilter === "all" ? "全カテゴリ" :
                                 categoryFilter === "bag" ? "米袋" :
-                                    categoryFilter === "sticker" ? "シール" : "その他"} の在庫状況
+                                    categoryFilter === "new_rice" ? "新米" :
+                                        categoryFilter === "sticker" ? "シール" : "その他"} の在庫状況
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>商品名</TableHead>
-                                    <TableHead>スペック</TableHead>
-                                    <TableHead className="text-right">現在庫</TableHead>
-                                    <TableHead className="text-right">週間使用</TableHead>
-                                    <TableHead className="text-right">月間使用</TableHead>
-                                    <TableHead className="text-right">在庫日数</TableHead>
-                                    <TableHead className="text-right">推奨発注数</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {reportData.map(item => {
-                                    const isLowStock = item.daysUntilStockout !== null && item.daysUntilStockout < 14;
-                                    const isOutOfStock = item.currentStock === 0;
+                        {reportData.length === 0 ? (
+                            <div className="text-center py-8 text-muted-foreground">
+                                該当するデータがありません
+                            </div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>商品名</TableHead>
+                                        <TableHead>スペック</TableHead>
+                                        <TableHead className="text-right">現在庫</TableHead>
+                                        <TableHead className="text-right">週間使用</TableHead>
+                                        <TableHead className="text-right">月間使用</TableHead>
+                                        <TableHead className="text-right">在庫日数</TableHead>
+                                        <TableHead className="text-right">推奨発注数</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {reportData.map(item => {
+                                        const isLowStock = item.daysUntilStockout !== null && item.daysUntilStockout < 14;
+                                        const isOutOfStock = item.currentStock === 0;
 
-                                    return (
-                                        <TableRow
-                                            key={item.product.id}
-                                            className={isOutOfStock ? "bg-red-50" : isLowStock ? "bg-amber-50" : ""}
-                                        >
-                                            <TableCell>
-                                                <div className="font-medium">{item.product.name}</div>
-                                                <div className="text-xs text-muted-foreground">{item.product.id}</div>
-                                            </TableCell>
-                                            <TableCell>
-                                                {item.product.weight && <span>{item.product.weight}kg</span>}
-                                                {item.product.shape && <span> / {item.product.shape}</span>}
-                                            </TableCell>
-                                            <TableCell className="text-right font-bold">
-                                                {item.currentStock.toLocaleString()}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {item.weeklyUsage}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {item.monthlyUsage}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {item.daysUntilStockout !== null ? (
-                                                    <Badge variant={isLowStock ? "destructive" : "secondary"}>
-                                                        {item.daysUntilStockout}日
-                                                    </Badge>
-                                                ) : (
-                                                    <span className="text-muted-foreground">-</span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-right text-blue-600 font-medium">
-                                                {item.suggestedOrder > 0 ? item.suggestedOrder.toLocaleString() : '-'}
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })}
-                            </TableBody>
-                        </Table>
+                                        return (
+                                            <TableRow
+                                                key={item.product.id}
+                                                className={isOutOfStock ? "bg-red-50" : isLowStock ? "bg-amber-50" : ""}
+                                            >
+                                                <TableCell>
+                                                    <div className="font-medium">{item.product.name}</div>
+                                                    <div className="text-xs text-muted-foreground">{item.product.sku || item.product.id}</div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {item.product.weight && <span>{item.product.weight}kg</span>}
+                                                    {item.product.shape && <span> / {item.product.shape}</span>}
+                                                </TableCell>
+                                                <TableCell className="text-right font-bold">
+                                                    {item.currentStock.toLocaleString()}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {item.weeklyUsage}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {item.monthlyUsage}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {item.daysUntilStockout !== null ? (
+                                                        <Badge variant={isLowStock ? "destructive" : "secondary"}>
+                                                            {item.daysUntilStockout}日
+                                                        </Badge>
+                                                    ) : (
+                                                        <span className="text-muted-foreground">-</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right text-blue-600 font-medium">
+                                                    {item.suggestedOrder > 0 ? item.suggestedOrder.toLocaleString() : '-'}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        )}
                     </CardContent>
                 </Card>
 

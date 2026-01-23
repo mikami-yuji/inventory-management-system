@@ -7,12 +7,16 @@ import { dataSource } from './data-source';
 import type { Product, Inventory, IncomingStock, StockHistory } from '@/types';
 
 // ロール袋のピッチ計算 (mm)
+// 重量ごとの正確なピッチ表
 export const getPitch = (weight: number): number => {
     if (weight >= 10) return 570;
+    if (weight >= 8) return 530;
     if (weight >= 5) return 470;
+    if (weight >= 4) return 450;
     if (weight >= 3) return 400;
     if (weight >= 2) return 350;
-    return 250; // 1kg以下
+    if (weight >= 1.4) return 320; // 1.4kg, 1.5kg
+    return 280; // 1kg
 };
 
 // ロール袋かどうか判定
