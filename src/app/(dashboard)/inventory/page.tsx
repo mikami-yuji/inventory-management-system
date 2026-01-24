@@ -56,6 +56,47 @@ const metersToBags = (meters: number, weight: number): number => {
     return Math.floor((meters * 1000) / pitch);
 };
 
+
+
+// 都道府県リスト（北から南、最後に国内産）
+const PREFECTURES = [
+    "北海道", "青森", "岩手", "宮城", "秋田", "山形", "福島",
+    "茨城", "栃木", "群馬", "埼玉", "千葉", "東京", "神奈川",
+    "新潟", "富山", "石川", "福井", "山梨", "長野", "岐阜", "静岡", "愛知",
+    "三重", "滋賀", "京都", "大阪", "兵庫", "奈良", "和歌山",
+    "鳥取", "島根", "岡山", "広島", "山口",
+    "徳島", "香川", "愛媛", "高知",
+    "福岡", "佐賀", "長崎", "熊本", "大分", "宮崎", "鹿児島", "沖縄",
+    "国内産", "国産" // 国内産を最後に追加
+];
+
+// 都道府県インデックスを取得
+const getPrefectureIndex = (text: string | undefined): number => {
+    if (!text) return 999;
+    for (let i = 0; i < PREFECTURES.length; i++) {
+        if (text.includes(PREFECTURES[i])) {
+            return i;
+        }
+    }
+    return 999;
+};
+
+// 商品のグループ分け
+// 0: 通常
+// 1: NB (NBかつ新米でない)
+// 2: 新米 (新米を含む、NB・新米も含む)
+const getProductGroup = (p: Product): number => {
+    const name = p.name || "";
+    const prefix = p.prefix || "";
+    // カテゴリ判定ロジック強化
+    const isNewRice = name.includes("新米") || prefix.includes("新米") || p.category === "new_rice" || name.includes("ＮＢ・新米") || prefix.includes("ＮＢ・新米");
+    const isNB = name.includes("NB") || name.includes("ＮＢ") || prefix.includes("NB") || prefix.includes("ＮＢ");
+
+    if (isNewRice) return 2;
+    if (isNB) return 1;
+    return 0;
+};
+
 export default function InventoryPage(): React.ReactElement {
     const [currentTab, setCurrentTab] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
@@ -124,10 +165,15 @@ export default function InventoryPage(): React.ReactElement {
         return map;
     }, []);
 
+    // スクロール位置を保持したままデータを再取得
     const refetch = (): void => {
-        refetchProducts();
-        refetchInventory();
-        refetchWIP();
+        const scrollY = window.scrollY;
+        Promise.all([refetchProducts(), refetchInventory(), refetchWIP()]).then(() => {
+            // データ取得後にスクロール位置を復元
+            requestAnimationFrame(() => {
+                window.scrollTo(0, scrollY);
+            });
+        });
     };
 
     // 商品フォームダイアログの状態
@@ -186,7 +232,7 @@ export default function InventoryPage(): React.ReactElement {
             products = products.filter(p => p.weight === weight);
         }
 
-        // 在庫フィルター（有効在庫ベース）
+        // 在庫フィルター
         if (stockFilter === "low") {
             products = products.filter(p => {
                 const qty = inventoryMap.get(p.id) || 0;
@@ -208,7 +254,21 @@ export default function InventoryPage(): React.ReactElement {
             });
         }
 
-        return products;
+        // ソート実行（filter後の配列をソート）
+        return products.sort((a, b) => {
+            // 1. グループ順 (通常 -> NB -> 新米)
+            const groupA = getProductGroup(a);
+            const groupB = getProductGroup(b);
+            if (groupA !== groupB) return groupA - groupB;
+
+            // 2. 産地順 (北 -> 南 -> 国内産)
+            const prefA = getPrefectureIndex(a.origin || a.name);
+            const prefB = getPrefectureIndex(b.origin || b.name);
+            if (prefA !== prefB) return prefA - prefB;
+
+            // 3. 重量順 (小さい順)
+            return (a.weight || 0) - (b.weight || 0);
+        });
     }, [allProducts, currentTab, searchQuery, weightFilter, stockFilter, inventoryMap, saleAllocationMap]);
 
     // ユニークな重量リスト
@@ -574,11 +634,33 @@ function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, sup
                                     : (availableStock > 0 && availableStock < 100); // 単袋: 100枚未満
                                 const hasAllocation = allocation.bags > 0;
 
+                                // デバッグ用情報
+                                const debugGroup = getProductGroup(product);
+                                const debugPrefIndex = getPrefectureIndex(product.origin || product.name);
+
                                 return (
                                     <TableRow key={product.id} className={cn(isOutOfStock && "bg-red-50")}>
                                         <TableCell>
                                             <div className="font-medium">{product.name}</div>
-                                            <div className="text-sm text-gray-500">商品CD: {product.sku || '-'}</div>
+                                            {/* デバッグ情報表示 */}
+                                            <div className="text-[10px] text-red-600 font-mono bg-red-50 inline-block px-1 rounded border border-red-200 mb-1">
+                                                G:{debugGroup} P:{debugPrefIndex} W:{product.weight}
+                                            </div>
+                                            <div className="flex flex-wrap gap-1 mt-1 mb-1">
+                                                {product.prefix && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-slate-50">{product.prefix}</Badge>}
+                                                {product.origin && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-green-50 text-green-700 border-green-200">{product.origin}</Badge>}
+                                                {product.variety && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-amber-50 text-amber-700 border-amber-200">{product.variety}</Badge>}
+                                                {product.suffix && <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 bg-slate-50">{product.suffix}</Badge>}
+                                            </div>
+                                            {(product.frontColorCount !== undefined || product.backColorCount !== undefined) && (
+                                                <div className="text-xs text-slate-500 mb-1">
+                                                    色数: <span className="font-medium">表{product.frontColorCount || 0}</span> /
+                                                    <span className="font-medium">裏{product.backColorCount || 0}</span>
+                                                    {product.totalColorCount !== undefined && <span className="ml-1 text-slate-400">(総{product.totalColorCount})</span>}
+                                                </div>
+                                            )}
+                                            <div className="text-sm text-gray-500">受注№: {product.sku || '-'}</div>
+                                            {product.productCode && <div className="text-sm text-gray-500">商品コード: {product.productCode}</div>}
                                             <div className="text-xs text-gray-400">JAN: {product.janCode || '-'}</div>
                                         </TableCell>
                                         <TableCell>

@@ -49,6 +49,46 @@ const metersToBags = (meters: number, weight: number): number => {
     return Math.floor((meters * 1000) / pitch);
 };
 
+// 都道府県リスト（北から南、最後に国内産）
+const PREFECTURES = [
+    "北海道", "青森", "岩手", "宮城", "秋田", "山形", "福島",
+    "茨城", "栃木", "群馬", "埼玉", "千葉", "東京", "神奈川",
+    "新潟", "富山", "石川", "福井", "山梨", "長野", "岐阜", "静岡", "愛知",
+    "三重", "滋賀", "京都", "大阪", "兵庫", "奈良", "和歌山",
+    "鳥取", "島根", "岡山", "広島", "山口",
+    "徳島", "香川", "愛媛", "高知",
+    "福岡", "佐賀", "長崎", "熊本", "大分", "宮崎", "鹿児島", "沖縄",
+    "国内産", "国産" // 国内産を最後に追加
+];
+
+// 都道府県インデックスを取得
+const getPrefectureIndex = (text: string | undefined): number => {
+    if (!text) return 999;
+    for (let i = 0; i < PREFECTURES.length; i++) {
+        if (text.includes(PREFECTURES[i])) {
+            return i;
+        }
+    }
+    return 999;
+};
+
+// 商品のグループ分け
+// 0: 通常
+// 1: NB (NBかつ新米でない)
+// 2: 新米 (新米を含む、NB・新米も含む)
+const getProductGroup = (p: Product): number => {
+    const name = p.name || "";
+    const prefix = p.prefix || "";
+
+    // カテゴリ判定ロジック強化
+    const isNewRice = name.includes("新米") || prefix.includes("新米") || p.category === "new_rice" || name.includes("ＮＢ・新米") || prefix.includes("ＮＢ・新米");
+    const isNB = name.includes("NB") || name.includes("ＮＢ") || prefix.includes("NB") || prefix.includes("ＮＢ");
+
+    if (isNewRice) return 2;
+    if (isNB) return 1;
+    return 0;
+};
+
 export default function BagsInventoryPage(): React.ReactElement {
     const [searchQuery, setSearchQuery] = useState("");
     const [weightFilter, setWeightFilter] = useState("all");
@@ -207,7 +247,26 @@ export default function BagsInventoryPage(): React.ReactElement {
             products = products.filter(p => (saleAllocationMap.get(p.id)?.bags || 0) > 0);
         }
 
-        return products;
+        // ソート実行（filter後の配列をソート）
+        return [...products].sort((a, b) => {
+            // 1. グループ順 (通常 -> NB -> 新米)
+            const groupA = getProductGroup(a);
+            const groupB = getProductGroup(b);
+            if (groupA !== groupB) return groupA - groupB;
+
+            // 2. 産地順 (北 -> 南 -> 国内産)
+            const prefA = getPrefectureIndex(a.origin || a.name);
+            const prefB = getPrefectureIndex(b.origin || b.name);
+            if (prefA !== prefB) return prefA - prefB;
+
+            // 3. 品種順 (五十音順)
+            const varA = a.variety || "";
+            const varB = b.variety || "";
+            if (varA !== varB) return varA.localeCompare(varB, "ja");
+
+            // 4. 重量順 (小さい順)
+            return (a.weight || 0) - (b.weight || 0);
+        });
     }, [bagProducts, searchQuery, weightFilter, shapeFilter, stockFilter, inventoryMap, saleAllocationMap]);
 
     // サマリー計算
@@ -220,9 +279,11 @@ export default function BagsInventoryPage(): React.ReactElement {
             const qty = inventoryMap.get(p.id) || 0;
             const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
             const available = qty - allocation.meters;
+            // minStockAlertを使って低在庫判定（設定がない場合はデフォルト100）
+            const alertThreshold = p.minStockAlert || 100;
 
             if (available <= 0) outOfStock++;
-            else if (available < 50) lowStock++;
+            else if (available <= alertThreshold) lowStock++;
             if (allocation.bags > 0) hasReservation++;
         });
 
@@ -500,9 +561,9 @@ function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap,
                                 }
 
                                 const isOutOfStock = availableStock <= 0;
-                                const isLowStock = isRoll
-                                    ? (availableStock > 0 && availableStock < 50)
-                                    : (availableStock > 0 && availableStock < 100);
+                                // minStockAlertを使って低在庫判定（設定がない場合はデフォルト100）
+                                const alertThreshold = product.minStockAlert || 100;
+                                const isLowStock = availableStock > 0 && availableStock <= alertThreshold;
                                 const hasAllocation = allocation.bags > 0;
 
                                 const isInCart = items.some(item => item.product.id === product.id);
@@ -525,7 +586,8 @@ function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap,
                                         <TableCell>
                                             <div className="max-w-[180px]">
                                                 <div className="font-medium truncate" title={product.name}>{product.name}</div>
-                                                <div className="text-sm text-gray-500 truncate">商品CD: {product.sku || '-'}</div>
+                                                <div className="text-sm text-gray-500 truncate">受注№: {product.sku || '-'}</div>
+                                                {product.productCode && <div className="text-sm text-gray-500 truncate">商品コード: {product.productCode}</div>}
                                                 <div className="text-xs text-gray-400 truncate">JAN: {product.janCode || '-'}</div>
                                             </div>
                                         </TableCell>
@@ -656,7 +718,7 @@ function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap,
                                                 <Button size="sm" variant="ghost" onClick={() => onEdit(product)} title="編集">
                                                     <Pencil className="h-3 w-3" />
                                                 </Button>
-                                                <Button size="sm" variant="ghost" onClick={() => onDelete(product.id)} title="削除" className="text-red-500 hover:text-red-600">
+                                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onDelete(product.id); }} title="削除" className="text-red-500 hover:text-red-600">
                                                     <Trash2 className="h-3 w-3" />
                                                 </Button>
                                             </div>

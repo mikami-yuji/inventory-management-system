@@ -24,7 +24,8 @@ export async function GET(): Promise<NextResponse> {
         const products = data.map(item => ({
             id: item.id,
             name: item.name,
-            sku: item.sku,
+            sku: item.sku, // 受注№ (Col A)
+            productCode: item.product_code, // 商品コード (Col D)
             janCode: item.jan_code,
             weight: item.weight ? Number(item.weight) : undefined,
             shape: item.shape,
@@ -36,6 +37,12 @@ export async function GET(): Promise<NextResponse> {
             description: item.description,
             status: item.status,
             minStockAlert: item.min_stock_alert,
+            // 商品名構造化フィールド
+            prefix: item.prefix,
+            origin: item.origin,
+            variety: item.variety,
+            suffix: item.suffix,
+            productType: item.product_type, // Excel Column Type
         }));
 
         return NextResponse.json(products);
@@ -61,7 +68,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         // Supabase用のフォーマットに変換
         const productData = {
             name: body.name,
-            sku: body.sku || null,
+            sku: body.sku || null, // 受注№
+            product_code: body.productCode || null, // 商品コード
             jan_code: body.janCode || null,
             weight: body.weight || null,
             shape: body.shape || null,
@@ -73,6 +81,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             description: body.description || null,
             status: 'active',
             min_stock_alert: body.minStockAlert || 100,
+            // 商品名構造化フィールド
+            prefix: body.prefix || null,
+            origin: body.origin || null,
+            variety: body.variety || null,
+            suffix: body.suffix || null,
+            product_type: body.productType || null,
         };
 
         const { data, error } = await supabase
@@ -120,6 +134,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         const updateData: Record<string, unknown> = {};
         if (body.name !== undefined) updateData.name = body.name;
         if (body.sku !== undefined) updateData.sku = body.sku;
+        if (body.productCode !== undefined) updateData.product_code = body.productCode;
         if (body.janCode !== undefined) updateData.jan_code = body.janCode;
         if (body.weight !== undefined) updateData.weight = body.weight;
         if (body.shape !== undefined) updateData.shape = body.shape;
@@ -130,6 +145,12 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         if (body.imageUrl !== undefined) updateData.image_url = body.imageUrl;
         if (body.description !== undefined) updateData.description = body.description;
         if (body.minStockAlert !== undefined) updateData.min_stock_alert = body.minStockAlert;
+        // 商品名構造化フィールド
+        if (body.prefix !== undefined) updateData.prefix = body.prefix;
+        if (body.origin !== undefined) updateData.origin = body.origin;
+        if (body.variety !== undefined) updateData.variety = body.variety;
+        if (body.suffix !== undefined) updateData.suffix = body.suffix;
+        if (body.productType !== undefined) updateData.product_type = body.productType;
 
         const { data, error } = await supabase
             .from('products')

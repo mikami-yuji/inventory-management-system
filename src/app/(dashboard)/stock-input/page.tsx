@@ -16,7 +16,8 @@ import {
     ChevronUp,
     ChevronDown,
     BarChart3,
-    Loader2
+    Loader2,
+    Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/types";
@@ -41,7 +42,7 @@ export default function StockInputPage(): React.ReactElement {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Supabase Hooks
-    const { products: allProducts, loading: productsLoading } = useProducts();
+    const { products: allProducts, loading: productsLoading, refetch: refetchProducts } = useProducts();
     const { inventory, loading: inventoryLoading, refetch: refetchInventory } = useInventory();
     const { updateStock, loading: updateLoading } = useUpdateInventory();
 
@@ -60,9 +61,36 @@ export default function StockInputPage(): React.ReactElement {
 
     // 検索でフィルタ
     const filteredProducts = useMemo(() => {
-        if (!searchQuery.trim()) return allProducts.slice(0, 20); // 最初は20件表示
+        // 袋カテゴリのみを表示（シール、その他を除外）
+        let targetProducts = allProducts.filter(p => p.category === 'bag' || p.category === 'new_rice');
+
+        // ソート順定義: アメリカ産 -> 既製品 -> その他 (NB)
+        const getPriority = (p: Product) => {
+            // Priority 1: アメリカ産
+            if (p.name.includes('アメリカ') || p.name.includes('米国') || p.name.includes('カルローズ')) {
+                return 1;
+            }
+            // Priority 2: 既製品
+            if (p.productType === '既製品') {
+                return 2;
+            }
+            // Priority 3: その他 (NB等)
+            return 3;
+        };
+
+        targetProducts.sort((a, b) => {
+            const priorityA = getPriority(a);
+            const priorityB = getPriority(b);
+
+            if (priorityA !== priorityB) {
+                return priorityA - priorityB;
+            }
+            return 0; // 同じ優先度の場合は元の順序を維持
+        });
+
+        if (!searchQuery.trim()) return targetProducts.slice(0, 20); // 最初は20件表示
         const query = searchQuery.toLowerCase();
-        return allProducts.filter(p =>
+        return targetProducts.filter(p =>
             p.name.toLowerCase().includes(query) ||
             p.janCode?.toLowerCase().includes(query) ||
             p.id.includes(query)
@@ -168,6 +196,38 @@ export default function StockInputPage(): React.ReactElement {
         }
     }, []);
 
+    // 削除処理
+    const handleDelete = useCallback(async (e: React.MouseEvent, product: Product) => {
+        e.stopPropagation();
+        if (!window.confirm(`「${product.name}」を削除してもよろしいですか？\n※この操作は元に戻せません。`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/products?id=${product.id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || '削除に失敗しました');
+            }
+
+            // 成功したらリストを再取得
+            await refetchProducts();
+
+            // 編集中のものがあれば削除
+            if (editedItems.has(product.id)) {
+                const newMap = new Map(editedItems);
+                newMap.delete(product.id);
+                setEditedItems(newMap);
+            }
+        } catch (error) {
+            console.error('Delete failed:', error);
+            alert('削除に失敗しました: ' + (error instanceof Error ? error.message : '不明なエラー'));
+        }
+    }, [refetchProducts, editedItems]);
+
     return (
         <div className="space-y-4 pb-20">
             {/* ヘッダー */}
@@ -267,19 +327,34 @@ export default function StockInputPage(): React.ReactElement {
                                                             {product.weight}kg / {product.shape || '-'}
                                                         </div>
                                                     </div>
-                                                    <div className="text-right ml-4">
-                                                        <div className={cn(
-                                                            "text-2xl font-bold",
-                                                            displayQty === 0 && "text-red-600",
-                                                            displayQty > 0 && displayQty < 50 && "text-amber-600"
-                                                        )}>
-                                                            {displayQty}
+                                                    <div className="flex items-center gap-3 ml-4">
+                                                        <div className="text-right">
+                                                            <div className={cn(
+                                                                "text-2xl font-bold",
+                                                                displayQty === 0 && "text-red-600",
+                                                                displayQty > 0 && displayQty < 50 && "text-amber-600"
+                                                            )}>
+                                                                {displayQty}
+                                                            </div>
+                                                            {isEdited && (
+                                                                <Badge variant="secondary" className="text-xs">
+                                                                    変更済
+                                                                </Badge>
+                                                            )}
                                                         </div>
-                                                        {isEdited && (
-                                                            <Badge variant="secondary" className="text-xs">
-                                                                変更済
-                                                            </Badge>
-                                                        )}
+                                                        <div
+                                                            className="relative z-50"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="text-muted-foreground hover:text-red-600 hover:bg-red-50"
+                                                                onClick={(e) => handleDelete(e, product)}
+                                                            >
+                                                                <Trash2 className="h-5 w-5" />
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </CardContent>

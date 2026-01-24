@@ -342,7 +342,8 @@ function StickersInventoryTable({ products, inventoryMap, onEdit, onDelete }: St
                                         </TableCell>
                                         <TableCell>
                                             <div className="font-medium">{product.name}</div>
-                                            <div className="text-sm text-gray-500">商品CD: {product.sku || '-'}</div>
+                                            <div className="text-sm text-gray-500">受注№: {product.sku || '-'}</div>
+                                            {product.productCode && <div className="text-sm text-gray-500">商品コード: {product.productCode}</div>}
                                             <div className="text-xs text-gray-400">JAN: {product.janCode || '-'}</div>
                                         </TableCell>
                                         <TableCell className="text-right">

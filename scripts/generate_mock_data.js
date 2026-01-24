@@ -60,6 +60,10 @@ function generate() {
       status: 'active',
       description: row['タイトル'] || '',
       imageUrl: '', // No image URL in Excel
+      // 色数フィールド
+      frontColorCount: typeof row['表色数'] === 'number' ? row['表色数'] : undefined,
+      backColorCount: typeof row['裏色数'] === 'number' ? row['裏色数'] : undefined,
+      totalColorCount: typeof row['総色数'] === 'number' ? row['総色数'] : undefined,
     };
   }).filter(p => p.id !== ''); // Filter out empty IDs
 

@@ -30,7 +30,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【有機】２ｋ石坂さんの北海道旭川ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1055429",
@@ -45,7 +48,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●NO.596メッセージライス　金賞健康米（北海道ゆめぴりか３００ｇ）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1195368",
@@ -60,7 +66,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【金賞健康米】300G北海道ゆめぴりか【住友生命VITALITY】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1260946",
@@ -75,7 +84,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール中300G北海道ゆめぴりか【WHITYうめだ】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1241993",
@@ -90,7 +102,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●別注1K真空ラミ北海道ゆめぴりか（海外輸出用）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1159781",
@@ -105,7 +120,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール小【ガイドライン】雪室貯蔵米・北海道ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1033117",
@@ -120,7 +138,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王】１Ｋ金賞健康米・北海道ゆめぴりか（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1238765",
@@ -135,7 +156,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中【うれしいギフト】１Ｋ北海道ゆめぴりか（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1032949",
@@ -150,7 +174,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王】１Ｋ北海道ななつぼし（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1195366",
@@ -165,7 +192,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【金賞健康米】１Ｋ北海道ゆめぴりか【住友生命VITALITY】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1028246",
@@ -180,7 +210,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【食味王】１Ｋ北海道ゆめぴりか【ＪＡＮなし】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1206752",
@@ -195,7 +228,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【食味王・脱酸】１Ｋ北海道ゆめぴりか（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1118986",
@@ -210,7 +246,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注2K SFﾎﾟﾘDH北海道ななつぼしRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1212143",
@@ -225,7 +264,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】２Ｋ特栽米・北海道ゆめぴりか（ＪＡＮなし・新すながわ農協）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1029609",
@@ -240,7 +282,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】２Ｋ北海道ゆめぴりか（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1024473",
@@ -255,7 +300,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王ＪＡＮ】２Ｋ北海道ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1212345",
@@ -270,7 +318,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大【高度クリーン】２ＫJAたきかわ指定北海道ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1195365",
@@ -285,7 +336,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【金賞健康米】２Ｋ北海道ゆめぴりか【住友生命VITALITY】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1243714",
@@ -300,7 +354,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【食味王・年産あり】２Ｋ北海道ゆめぴりか（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1220586",
@@ -315,7 +372,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王・脱酸】２Ｋ北海道ななつぼし（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1087919",
@@ -330,7 +390,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【食味王】２Ｋ北海道ななつぼし（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1183944",
@@ -345,7 +408,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【食味王・脱酸】２Ｋ北海道ゆめぴりか（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1212344",
@@ -360,7 +426,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【改版】シール大【高度クリーン・ガイドライン・表示】２ＫJAたきかわ指定北海道ななつぼし",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1253485",
@@ -375,7 +444,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール大【家紋・表示】２Ｋ北海道ななつぼし",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "79865",
@@ -390,7 +462,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【改版】シール大【家紋・表示】２Ｋ北海道ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1256031",
@@ -405,7 +480,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール大【高度クリーン・ガイドライン・表示・脱酸素なし】２ＫJAたきかわ指定北海道ななつぼし",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1234215",
@@ -420,7 +498,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示・有機】２Ｋ北海道旭川市産ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "80536",
@@ -435,7 +516,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】シール小【表示】２Ｋ北海道ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1212351",
@@ -450,7 +534,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【ガイドライン表示・高度クリーン】２ＫJAたきかわ指定北海道ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1212349",
@@ -465,7 +552,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】シール中【ガイドライン表示・高度クリーン】２ＫJAたきかわ指定北海道ななつぼし",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1246748",
@@ -480,7 +570,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●【新版】3K SFMﾎﾟﾘDH北海道ななつぼし（米匠庵）RZＳＰ雲竜柄無地",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 2,
+    "backColorCount": 0,
+    "totalColorCount": 2
   },
   {
     "id": "1244578",
@@ -495,7 +588,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【家紋・表示】３Ｋ北海道ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1149926",
@@ -510,7 +606,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5K SFMﾎﾟﾘDH【ＮＢ】北海道ななつぼしRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1197305",
@@ -525,7 +624,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●【構成変更】（ロゴ無）別注【スギ薬局】ＴＳ5K SFMﾎﾟﾘDH北海道ゆめぴりかRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 0,
+    "totalColorCount": 5
   },
   {
     "id": "1212346",
@@ -540,7 +642,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大【高度クリーン】５Ｋ　ＪＡたきかわ指定・北海道ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1245344",
@@ -555,7 +660,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【家紋・表示】５Ｋ北海道ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1179002",
@@ -570,7 +678,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】５Ｋ特栽米・北海道ゆめぴりか（ＪＡＮなし・新すながわ農協）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1040427",
@@ -585,7 +696,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】△シール大【家紋】５Ｋ北海道ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1227420",
@@ -600,7 +714,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【高度クリーン】５Ｋハッピーバースデイ北海道ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1175834",
@@ -615,7 +732,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【改版】シール大【家紋・表示】５Ｋ北海道ななつぼし",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1212343",
@@ -630,7 +750,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【改版】シール大【高度クリーン・ガイドライン・表示・脱酸素なし】５ＫＪＡたきかわ指定北海道ななつぼし",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1022595",
@@ -645,7 +768,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】●シール小【表示】５Ｋ北海道ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1175836",
@@ -660,7 +786,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール小【表示】５Ｋ北海道ななつぼし",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1212352",
@@ -675,7 +804,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【ガイド表示・高度クリーン】５Ｋ北海道ゆめぴりか",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1212348",
@@ -690,7 +822,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】●シール中【ガイドライン表示・高度クリーン】５ＫJAたきかわ指定北海道ななつぼし",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1213463",
@@ -705,7 +840,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中　【味の素様分】３００ｇ青森青天の霹靂",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1218219",
@@ -720,7 +858,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール小１Ｋ（表示）青森県まっしぐら（ダスキン用）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1238247",
@@ -735,7 +876,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【食味王・脱酸】１Ｋ青森県青天の霹靂【ＪＡＮなし】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1096306",
@@ -750,7 +894,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【食味王】１Ｋ青森県青天の霹靂【ＪＡＮなし】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1226855",
@@ -765,7 +912,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【改版】シール小1.2K【ダスキン表示】青森県青天の霹靂",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1226199",
@@ -780,7 +930,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "2K SFMﾎﾟﾘDHシギ・青森県産はれわたりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1212148",
@@ -795,7 +948,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆2K SFMﾎﾟﾘDHシギ・青森県産はれわたり（店名）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 1,
+    "totalColorCount": 2
   },
   {
     "id": "1068809",
@@ -810,7 +966,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】２Ｋ青森県まっしぐら（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1252614",
@@ -825,7 +984,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール大【家紋・表示】青森県青天の霹靂",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1087585",
@@ -840,7 +1002,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大　２Ｋ【食味王】青森県青天の霹靂（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1191417",
@@ -855,7 +1020,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール小【ガイドライン】特栽米・青森県青天の霹靂（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "63676",
@@ -870,7 +1038,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5KﾎﾟﾘDH【楮紙柄】青森つがるロマン（キリン堂様）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 1,
+    "totalColorCount": 7
   },
   {
     "id": "81019",
@@ -885,7 +1056,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5KﾎﾟﾘDH青森まっしぐらRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1256900",
@@ -900,7 +1074,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "【新版】（ロゴ無）別注5KﾎﾟﾘDH無洗米青森県まっしぐら（販売者：銀シャリ）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1259412",
@@ -915,7 +1092,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "【新版】（ロゴ無）別注5KﾎﾟﾘDH青森県まっしぐら（販売者：銀シャリ）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1231463",
@@ -930,7 +1110,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5K SFMﾎﾟﾘDHウミネコ・青森県産はれわたりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1235509",
@@ -945,7 +1128,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●5K SFMﾎﾟﾘDHウミネコ・青森県産はれわたり（店名）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 1,
+    "totalColorCount": 1
   },
   {
     "id": "1228161",
@@ -960,7 +1146,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△【新版】シール大【家紋】５Ｋ青森県はれわたり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1228163",
@@ -975,7 +1164,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール小【表示】５Ｋ青森県はれわたり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "63675",
@@ -990,7 +1182,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注10KﾎﾟﾘDH【楮紙柄】青森つがるロマン（キリン堂様）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 1,
+    "totalColorCount": 7
   },
   {
     "id": "81422",
@@ -1005,7 +1200,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注10KﾎﾟﾘDH青森まっしぐらRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1257390",
@@ -1020,7 +1218,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "【新版】10K ﾎﾟﾘDHハクチョウ・青森県産はれわたりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 1,
+    "totalColorCount": 7
   },
   {
     "id": "1213433",
@@ -1035,7 +1236,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中　【味の素様分】３００ｇ岩手銀河のしずく",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1217992",
@@ -1050,7 +1254,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【ライフフーズ】１Ｋ岩手県ひとめぼれ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1216574",
@@ -1065,7 +1272,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール小１Ｋ（表示）岩手県銀河のしずく（ダスキン用）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1096305",
@@ -1080,7 +1290,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王】１Ｋ岩手県銀河のしずく【ＪＡＮなし】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1224191",
@@ -1095,7 +1308,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【食味王・脱酸素剤】２Ｋ岩手県金色の風（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1087583",
@@ -1110,7 +1326,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】２Ｋ岩手県銀河のしずく（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1183948",
@@ -1125,7 +1344,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王・脱酸】２Ｋ岩手銀河のしずく（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1178868",
@@ -1140,7 +1362,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　３Ｋ特栽米・岩手県産ひとめぼれ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1154393",
@@ -1155,7 +1380,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●（ロゴ無）別注5K SFMﾎﾟﾘDHＴＳ岩手ひとめぼれRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1212754",
@@ -1170,7 +1398,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "●◆（別注後刷）10KﾎﾟﾘﾎﾟﾘDH【新米・万代ＰＢ】宮城ひとめぼれ（ベース1202002-7）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 0,
+    "totalColorCount": 1
   },
   {
     "id": "1213434",
@@ -1185,7 +1416,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中　【味の素様分】３００ｇ宮城だて正夢",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1220982",
@@ -1200,7 +1434,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール小１Ｋ（表示）宮城県ひとめぼれ（ダスキン用）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1149609",
@@ -1215,7 +1452,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王】１Ｋ宮城県だて正夢【ＪＡＮなし】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1206754",
@@ -1230,7 +1470,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【食味王・脱酸素剤】１Ｋ宮城県産ひとめぼれ（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1034120",
@@ -1245,7 +1488,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【食味王】１Ｋ宮城ひとめぼれ【ＪＡＮなし】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1037926",
@@ -1260,7 +1506,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【食味王】１Ｋ宮城ささにしき【ＪＡＮなし】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1193813",
@@ -1275,7 +1524,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　２Ｋ【有機米】宮城県石巻産ササニシキ（JAいしのまき指定）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1139843",
@@ -1290,7 +1542,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【改版】シール大【食味王】２Ｋ宮城県だて正夢（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1243715",
@@ -1305,7 +1560,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王・年産あり】２Ｋ宮城県ひとめぼれ（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1247193",
@@ -1320,7 +1578,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【家紋・一括表示あり・脱酸素剤】２Ｋ有機栽培米・宮城県ひとめぼれ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1183947",
@@ -1335,7 +1596,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【食味王・脱酸】２Ｋ宮城ひとめぼれ（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1250904",
@@ -1350,7 +1614,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール大【家紋・表示】３Ｋ宮城県ひとめぼれ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1202104",
@@ -1365,7 +1632,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5KｿﾌｸﾗS【万代ＰＢ・特栽】宮城ひとめぼれRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 0,
+    "totalColorCount": 4
   },
   {
     "id": "1202001",
@@ -1380,7 +1650,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5KﾎﾟﾘﾎﾟﾘDHＴＳ【万代ＰＢ】ＪＡ加美よつば・宮城ひとめぼれRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1208259",
@@ -1395,7 +1668,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5K真空ラミ【単】宮城県金のいぶき",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 0,
+    "totalColorCount": 4
   },
   {
     "id": "1166319",
@@ -1410,7 +1686,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5K SFMﾎﾟﾘDH【ＮＢ】宮城ひとめぼれRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1102808",
@@ -1425,7 +1704,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大【家紋】５Ｋ宮城県ひとめぼれ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1102809",
@@ -1440,7 +1722,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】５Ｋ宮城ひとめぼれ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1202002",
@@ -1455,7 +1740,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注10KﾎﾟﾘﾎﾟﾘDH【万代ＰＢ】ＪＡ加美よつば宮城ひとめぼれRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1226051",
@@ -1470,7 +1758,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "●◆【新・兼版】別注10KﾎﾟﾘﾎﾟﾘDH【新米・万代ＰＢ】ＪＡ加美よつば宮城ひとめぼれRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1158413",
@@ -1485,7 +1776,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●別注10K SFMﾎﾟﾘDH【ＮＢ】宮城ひとめぼれRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1028119",
@@ -1500,7 +1794,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール小【ガイドライン】特栽米・秋田県大潟村あきたこまち（１・２Ｋ兼用）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1214371",
@@ -1515,7 +1812,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●【新版】NO.596【３００ｇ】メッセージライス秋田県あきたこまち（渋谷スクランブルスクエアテナント会",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1213429",
@@ -1530,7 +1830,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中　【味の素様分】３００ｇ秋田あきたこまち",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1222115",
@@ -1545,7 +1848,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中【食味王ＪＡＮ】１Ｋ特栽米・秋田県大潟村あきたこまち",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1032950",
@@ -1560,7 +1866,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王】１Ｋ特栽米・秋田県大潟村あきたこまち（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1227164",
@@ -1575,7 +1884,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王・脱酸】１Ｋ・秋田県あきたこまち",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1240058",
@@ -1590,7 +1902,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王・ガイド】１Ｋ特栽米・秋田県大潟村あきたこまち（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1229383",
@@ -1605,7 +1920,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【改版】シール小1.4K【ダスキン・表示】秋田県あきたこまち",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1120389",
@@ -1620,7 +1938,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注2KﾎﾟﾘﾎﾟﾘDH【玄米】秋田あきたこまちRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 0,
+    "totalColorCount": 4
   },
   {
     "id": "1155387",
@@ -1635,7 +1956,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注2K SFMﾎﾟﾘDH【ＮＢ】秋田あきたこまちRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1240056",
@@ -1650,7 +1974,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王・ガイド】２Ｋ特栽米・秋田県大潟村あきたこまち（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1180696",
@@ -1665,7 +1992,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【スギ薬局】２Ｋ無洗米・秋田あきたこまち",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1252746",
@@ -1680,7 +2010,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール大【食味王】２Ｋ秋田県あきたこまち（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1149925",
@@ -1695,7 +2028,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5K SFMﾎﾟﾘDH【ＮＢ】秋田あきたこまちRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1164798",
@@ -1710,7 +2046,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "●◆別注5K SFMﾎﾟﾘDH【ＮＢ・新米】秋田あきたこまちRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1235632",
@@ -1725,7 +2064,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●【新版】5K MﾗﾐDH 秋田県産サキホコレTS（店名）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 1,
+    "totalColorCount": 1
   },
   {
     "id": "1189312",
@@ -1740,7 +2082,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　５Ｋ特栽米・秋田県大潟村あきたこまち",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1240057",
@@ -1755,7 +2100,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【家紋・ガイド表示】５Ｋ特栽米・秋田県大潟村あきたこまち（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1245346",
@@ -1770,7 +2118,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【家紋・表示】５Ｋ秋田あきたこまち",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1040428",
@@ -1785,7 +2136,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】△シール大【家紋】５Ｋ秋田県あきたこまち",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1180697",
@@ -1800,7 +2154,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【スギ薬局】５Ｋ無洗米・秋田あきたこまち",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1040413",
@@ -1815,7 +2172,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】●シール小【表示】５Ｋ秋田県あきたこまち",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1149923",
@@ -1830,7 +2190,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注10K SFMﾎﾟﾘDH【ＮＢ】秋田あきたこまちRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1164799",
@@ -1845,7 +2208,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "●◆別注10K SFMﾎﾟﾘDH【ＮＢ・新米】秋田あきたこまちRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1213431",
@@ -1860,7 +2226,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中　【味の素様分】３００ｇ山形つや姫",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1219883",
@@ -1875,7 +2244,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△【新版】シール小【ガイドライン】特栽山形県つや姫",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1225010",
@@ -1890,7 +2262,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中【食味王・脱酸素剤】１Ｋ山形つや姫（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1028247",
@@ -1905,7 +2280,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王】１Ｋ山形つや姫（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1037520",
@@ -1920,7 +2298,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】２Ｋ山形県つや姫（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1183946",
@@ -1935,7 +2316,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王・脱酸】２Ｋ山形つや姫（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1179909",
@@ -1950,7 +2334,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【ガイドライン・おきたま産】２Ｋ特栽米・山形県つや姫(スギ薬局用）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1245338",
@@ -1965,7 +2352,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール小【表示】３Ｋ山形つや姫",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1018293",
@@ -1980,7 +2370,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5K SFﾎﾟﾘDH山形はえぬきRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1020438",
@@ -1995,7 +2388,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆5KﾎﾟﾘﾎﾟﾘDH【無洗米】山形はえぬきRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 2,
+    "backColorCount": 0,
+    "totalColorCount": 2
   },
   {
     "id": "1245345",
@@ -2010,7 +2406,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【家紋・ガイド表示・おきたま産】５Ｋ特栽米・山形つや姫",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1021313",
@@ -2025,7 +2424,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【改版】シール大【家紋・ＪＡ庄内みどり】５Ｋ特栽米・山形つや姫",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1021315",
@@ -2040,7 +2442,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【ガイドライン表示・おきたま産】５Ｋ特栽米・山形県つや姫",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1213464",
@@ -2055,7 +2460,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中　【味の素様分】３００ｇ福島こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1144084",
@@ -2070,7 +2478,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5KﾎﾟﾘDH【Ｒ】栃木あさひの夢RA",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1174528",
@@ -2085,7 +2496,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5KﾎﾟﾘDH栃木こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1195653",
@@ -2100,7 +2514,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大【家紋】５Ｋ埼玉県こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1195655",
@@ -2115,7 +2532,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】５Ｋ埼玉県産こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1252921",
@@ -2130,7 +2550,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "別注5K ﾎﾟﾘDH【新米】千葉県産ふさこがねRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1252885",
@@ -2145,7 +2568,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "【新版】5K ﾎﾟﾘDH【新米】千葉県産ふさこがねRZＳＰ彩り七色新米",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 0,
+    "totalColorCount": 1
   },
   {
     "id": "1194468",
@@ -2160,7 +2586,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●NO.596【３００ｇ】メッセージライス感謝をこめて新潟県こしひかり積水ハウス不動産東京㈱様分",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1238087",
@@ -2175,7 +2604,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【貼り賃】シール貼り賃【１枚（小シール）】１ｋ新潟こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1217642",
@@ -2190,7 +2622,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】小袋シール中300G新潟県上越こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1226944",
@@ -2205,7 +2640,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中　３００ｇ【GLBBJAPAN】新潟県こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1227303",
@@ -2220,7 +2658,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中　３００ｇ記念品　新潟魚沼こしひかり【ティジー株式会社】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1217405",
@@ -2235,7 +2676,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●小袋シール中300G新潟県産新之助",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "78658",
@@ -2250,7 +2694,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注1KﾗﾐDH新潟県こしひかり（米匠庵）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 0,
+    "totalColorCount": 4
   },
   {
     "id": "1080058",
@@ -2265,7 +2712,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】１Ｋ新潟県魚沼こしひかり（アピデ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1080057",
@@ -2280,7 +2730,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール中　１Ｋ新潟県魚沼こしひかり（アピデ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1037934",
@@ -2295,7 +2748,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王】１Ｋ特栽米・新潟県こしひかり・ＪＡ北越後産（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1236451",
@@ -2310,7 +2766,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中　１Ｋ新潟こしひかり（ＪＡＮあり）【受78658の間に合わせ】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1250387",
@@ -2325,7 +2784,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール中【家紋】１Ｋ新潟県こしひかり【ＪＡＮなし】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1240055",
@@ -2340,7 +2802,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【食味王・ガイド表示】１Ｋ特栽米・新潟こしひかり・ＪＡ北新潟産（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1080059",
@@ -2355,7 +2820,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大　1.3Ｋ　新潟県魚沼こしひかり（アピデ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1080060",
@@ -2370,7 +2838,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】1.3Ｋ　新潟県魚沼こしひかり（アピデ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1038858",
@@ -2385,7 +2856,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注2KﾎﾟﾘﾎﾟﾘDHＴＳ【玄米】特栽米・新潟こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 0,
+    "totalColorCount": 5
   },
   {
     "id": "1125442",
@@ -2400,7 +2874,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注2KﾎﾟﾘDH【コーヨー様】新潟こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1149933",
@@ -2415,7 +2892,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注2K SFMﾎﾟﾘDH【ＮＢ】新潟こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1024474",
@@ -2430,7 +2910,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王ＪＡＮ】２Ｋ新潟県魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1239546",
@@ -2445,7 +2928,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【食味王・特栽米・脱酸】２Ｋ特栽米・新潟県佐渡産こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1244577",
@@ -2460,7 +2946,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【家紋・ガイド表示】２Ｋ特栽米・新潟こしひかり・ＪＡ北新潟産（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1240053",
@@ -2475,7 +2964,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王・ガイド】２Ｋ特栽米・新潟県こしひかり・ＪＡ北新潟産（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1249348",
@@ -2490,7 +2982,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【家紋・表示】２Ｋ新潟県こしひかり（エディオン×象印）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1200558",
@@ -2505,7 +3000,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【スギ薬局】２Ｋ無洗米・新潟こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1086772",
@@ -2520,7 +3018,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【食味王】２Ｋ新潟県魚沼こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1028118",
@@ -2535,7 +3036,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール小【食味王ガイドライン】特栽米・新潟県ＪＡ北越後こしひかり（１・２Ｋ兼用）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1239547",
@@ -2550,7 +3054,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△【新版】シール小【ガイドライン】特栽米・新潟県佐渡産こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1080063",
@@ -2565,7 +3072,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大2.5Ｋ新潟県魚沼こしひかり（アピデ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1080064",
@@ -2580,7 +3090,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】2.5Ｋ新潟県魚沼こしひかり（アピデ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1080065",
@@ -2595,7 +3108,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大　３Ｋ新潟県魚沼こしひかり（アピデ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1198312",
@@ -2610,7 +3126,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大【家紋】３Ｋ新潟県魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1198315",
@@ -2625,7 +3144,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】△シール大【家紋】３Ｋ特栽米・新潟県魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1080066",
@@ -2640,7 +3162,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】３Ｋ新潟県魚沼こしひかり（アピデ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1198700",
@@ -2655,7 +3180,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】●シール中【ガイドライン表示・金澤さん】３Ｋ特栽米・新潟県魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1128145",
@@ -2670,7 +3198,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　４Ｋ新潟県北魚沼こしひかり（ＪＡ北魚沼）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1129866",
@@ -2685,7 +3216,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　４Ｋ新潟県見附市あきだわら",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1131770",
@@ -2700,7 +3234,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　４Ｋ特栽米・新潟県北越後産こしひか（ＪＡ北越後指定）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1133086",
@@ -2715,7 +3252,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　４Ｋ新潟県南魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1080067",
@@ -2730,7 +3270,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大　４Ｋ新潟県魚沼こしひかり（アピデ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1134507",
@@ -2745,7 +3288,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　４Ｋ新潟県見附市えみのあき",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1135927",
@@ -2760,7 +3306,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【雪室貯蔵米】４Ｋ新潟県北魚沼産こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1137938",
@@ -2775,7 +3324,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　４Ｋ新潟県上越産みずほの輝き",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1198316",
@@ -2790,7 +3342,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大【家紋】４Ｋ特栽米・新潟県魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1139112",
@@ -2805,7 +3360,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　４Ｋ新潟県佐渡産・棚田米こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1140586",
@@ -2820,7 +3378,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　４Ｋ新潟県上越産ちほみのり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1142056",
@@ -2835,7 +3396,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　４Ｋ新潟県北魚沼新之助（ＪＡ北魚沼）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1080068",
@@ -2850,7 +3414,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】４Ｋ新潟県魚沼こしひかり（アピデ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1198698",
@@ -2865,7 +3432,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【ガイドライン表示・金澤さん】４Ｋ特栽米・新潟県魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1233884",
@@ -2880,7 +3450,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△【新版】別注シール【家紋】４ｋ無洗米・新潟県魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 2,
+    "backColorCount": 0,
+    "totalColorCount": 2
   },
   {
     "id": "77656",
@@ -2895,7 +3468,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5K MﾎﾟﾘDH新潟こしいぶきRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1124421",
@@ -2910,7 +3486,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5KﾎﾟﾘDH【新米・コーヨー様】新潟こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1129939",
@@ -2925,7 +3504,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5KﾎﾟﾘDH【通常・コーヨー様】新潟こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1149928",
@@ -2940,7 +3522,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5K SFMﾎﾟﾘDH【ＮＢ】新潟こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1164796",
@@ -2955,7 +3540,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "別注5K SFMﾎﾟﾘDH【ＮＢ・新米】新潟こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1040424",
@@ -2970,7 +3558,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大【家紋】５Ｋ新潟県魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1240054",
@@ -2985,7 +3576,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【家紋・ガイド表示】５Ｋ特栽米・新潟県こしひかり・ＪＡ北新潟産（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1040422",
@@ -3000,7 +3594,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】△シール大【家紋】５Ｋ新潟県こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1200559",
@@ -3015,7 +3612,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【スギ薬局】５Ｋ無洗米・新潟こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1245349",
@@ -3030,7 +3630,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【家紋・表示】５Ｋ新潟こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1040410",
@@ -3045,7 +3648,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】●シール小【表示】５Ｋ新潟県こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1022510",
@@ -3060,7 +3666,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "別注シール【家紋】５Ｋ無洗米・新潟県魚沼こしひかり（一括表示あり）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 2,
+    "backColorCount": 0,
+    "totalColorCount": 2
   },
   {
     "id": "1151684",
@@ -3075,7 +3684,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注10K SFMﾎﾟﾘDH【ＮＢ】新潟こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1037935",
@@ -3090,7 +3702,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王】１Ｋ富山県こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1151675",
@@ -3105,7 +3720,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注2K SFMﾎﾟﾘDH【ＮＢ】富山こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1180700",
@@ -3120,7 +3738,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【スギ薬局】２Ｋ無洗米富山こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1149927",
@@ -3135,7 +3756,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5K SFMﾎﾟﾘDH【ＮＢ】富山こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1180701",
@@ -3150,7 +3774,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【スギ薬局】５Ｋ無洗米・富山こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1258049",
@@ -3165,7 +3792,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】丸型シール小　石川県能登地方復興応援こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1251123",
@@ -3180,7 +3810,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール中【食味王】１Ｋ石川県奥能登産こしひかり【ＪＡＮなし】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1088271",
@@ -3195,7 +3828,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】２Ｋ石川県こしひかり・能登の棚田米（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1110086",
@@ -3210,7 +3846,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】２Ｋ石川県ひゃくまん穀（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1225613",
@@ -3225,7 +3864,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【食味王・脱酸素剤】２Ｋ石川県こしひかり・能登の棚田米（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1260498",
@@ -3240,7 +3882,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール大　２Ｋ特栽米・石川県奥能登こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1240125",
@@ -3255,7 +3900,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【改版】シール大【食味王】２Ｋ石川県奥能登産こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1236917",
@@ -3270,7 +3918,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中【ガイドライン表示・ファーマー】２Ｋ特栽・石川県奥能登棚田米こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1088880",
@@ -3285,7 +3936,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5KﾎﾟﾘDH石川ゆめみづほRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1222498",
@@ -3300,7 +3954,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　５Ｋ特栽・石川奥能登棚田米こしひかり【スギ薬局】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1231018",
@@ -3315,7 +3972,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大【家紋】５Ｋ石川ひゃくまん穀",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1167265",
@@ -3330,7 +3990,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【スギ薬局】５Ｋ石川能登棚田米こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1250469",
@@ -3345,7 +4008,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール大【食味王】５Ｋ石川県奥能登産こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1231019",
@@ -3360,7 +4026,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】５Ｋ石川ひゃくまん穀",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1222499",
@@ -3375,7 +4044,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【ガイド表示・ファーマー】５Ｋ特栽・石川県奥能登棚田米こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1233558",
@@ -3390,7 +4062,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●NO.596メッセージライス　福井県華越前(㈱ヒーロー様分）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1258919",
@@ -3405,7 +4080,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール中  300ｇ福井県越南３１５号（JA越前たけふ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1258918",
@@ -3420,7 +4098,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール中  300ｇ福井県しきゆたか（JA越前たけふ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1234072",
@@ -3435,7 +4116,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中【家紋】450ｇ福井県産華越前（表示あり）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1234076",
@@ -3450,7 +4134,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【家紋】１Ｋ福井県産華越前（表示あり）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1219869",
@@ -3465,7 +4152,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【改版（品種等変更）】シール小１Ｋ（表示）福井県いちほまれ（ダスキン用）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1227108",
@@ -3480,7 +4170,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王・脱酸素剤】１Ｋ福井いちほまれ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1253318",
@@ -3495,7 +4188,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール中【家紋・新米】１Ｋ福井県産華越前（表示あり）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1167270",
@@ -3510,7 +4206,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【食味王】１Ｋ福井いちほまれ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1225457",
@@ -3525,7 +4224,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール小1.2Ｋ（表示）福井県いちほまれ（ダスキン用）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1106955",
@@ -3540,7 +4242,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注2K SFﾎﾟﾘDH【黒】福井こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 0,
+    "totalColorCount": 5
   },
   {
     "id": "1251234",
@@ -3555,7 +4260,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "【新版】別注2K SFMﾎﾟﾘDH福井県坂井市産華越前RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1167279",
@@ -3570,7 +4278,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】２Ｋ福井いちほまれ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1188556",
@@ -3585,7 +4296,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王ＪＡＮ】２Ｋ福井いちほまれ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1222502",
@@ -3600,7 +4314,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【食味王・省農薬米】２Ｋ福井県あきさかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1222500",
@@ -3615,7 +4332,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【食味王】２Ｋ特栽・福井県JA越前たけふこしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1175838",
@@ -3630,7 +4350,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】２Ｋ福井県華越前（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1230813",
@@ -3645,7 +4368,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【食味王・新米】２Ｋ福井県華越前（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1222501",
@@ -3660,7 +4386,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△【新版】シール小【食味王ガイドライン】特栽・福井県ＪＡ越前たけふこしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1178867",
@@ -3675,7 +4404,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　３Ｋ特栽米・福井県産こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1244584",
@@ -3690,7 +4422,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【家紋・ガイド表示】３Ｋ特栽米・福井こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1106953",
@@ -3705,7 +4440,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "【構成・仕様変更】別注5K SFﾎﾟﾘDH【黒・通常】福井こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 0,
+    "totalColorCount": 5
   },
   {
     "id": "1149929",
@@ -3720,7 +4458,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5K SFMﾎﾟﾘDH【ＮＢ】福井こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1163041",
@@ -3735,7 +4476,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "●◆別注5K SFMﾎﾟﾘDH【ＮＢ・新米】福井こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1168363",
@@ -3750,7 +4494,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】５Ｋ福井いちほまれ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1146936",
@@ -3765,7 +4512,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注10K SFﾎﾟﾘDH【黒】福井県こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 0,
+    "totalColorCount": 5
   },
   {
     "id": "1149924",
@@ -3780,7 +4530,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注10K SFMﾎﾟﾘDH【ＮＢ】福井こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1163052",
@@ -3795,7 +4548,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "●◆別注10K SFMﾎﾟﾘDH【ＮＢ・新米】福井こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1214034",
@@ -3810,7 +4566,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●【新版】NO.596【３００ｇ】メッセージライス長野県上伊那こしひかり（KOA株式会社様分）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1037927",
@@ -3825,7 +4584,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王】１Ｋ岐阜県こしひかり・飛騨高山産（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1109366",
@@ -3840,7 +4602,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【食味王】２Ｋ岐阜県こしひかり・飛騨高山産（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1167274",
@@ -3855,7 +4620,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【家紋】５Ｋ岐阜飛騨高山こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1168071",
@@ -3870,7 +4638,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール小【表示】５Ｋ岐阜高山市コシヒカリ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1233233",
@@ -3885,7 +4656,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【ライフフーズ】１Ｋ愛知県あいちのかおり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1261483",
@@ -3900,7 +4674,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【有機米】２Ｋ愛知県あいちのかおり（JAなごや）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1232193",
@@ -3915,7 +4692,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【新米】300ｇ三重こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1259965",
@@ -3930,7 +4710,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール中【食味王】１Ｋ三重県こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1028123",
@@ -3945,7 +4728,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王ＪＡＮ】２Ｋ三重県伊賀こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1233127",
@@ -3960,7 +4746,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大２Ｋ新米三重こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1259964",
@@ -3975,7 +4764,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール大【食味王】２Ｋ三重県こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1039988",
@@ -3990,7 +4782,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5K MﾎﾟﾘDH【通常】三重こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1214304",
@@ -4005,7 +4800,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5K MﾎﾟﾘDH【無洗米】三重こしひかりRZ (JA鈴鹿指定）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1162327",
@@ -4020,7 +4818,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "別注5K SFMﾎﾟﾘDH【ＮＢ・新米】三重あきたこまちRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1164483",
@@ -4035,7 +4836,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5K SFMﾎﾟﾘDH【ＮＢ】三重こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1166010",
@@ -4050,7 +4854,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "別注5K SFMﾎﾟﾘDH【ＮＢ・新米】三重こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1132090",
@@ -4065,7 +4872,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●（ロゴ無）5KﾎﾟﾘﾎﾟﾘDH伊賀の米・三重伊賀こしひかりRZＳＰ黄昏筆柄",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 0,
+    "totalColorCount": 1
   },
   {
     "id": "1039986",
@@ -4080,7 +4890,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注10K MﾎﾟﾘDH【通常】三重こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1229994",
@@ -4095,7 +4908,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●（ロゴ無）別注10KﾎﾟﾘDH三重県こしひかり（ロピア用）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1163055",
@@ -4110,7 +4926,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "●◆別注10K SFMﾎﾟﾘDH【ＮＢ・新米】三重こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1169744",
@@ -4125,7 +4944,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注10K SFMﾎﾟﾘDH【ＮＢ】三重こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1155931",
@@ -4140,7 +4962,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●（ロゴ無）10KﾎﾟﾘﾎﾟﾘDH伊賀の米・三重県伊賀こしひかりRZＳＰ黄昏筆柄",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 0,
+    "totalColorCount": 1
   },
   {
     "id": "1213711",
@@ -4155,7 +4980,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール小１Ｋ（表示）滋賀県こしひかり（ダスキン用）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1217751",
@@ -4170,7 +4998,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王・脱酸素剤】１Ｋ滋賀みずかがみ（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1037939",
@@ -4185,7 +5016,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【食味王】１Ｋ滋賀みずかがみ【ＪＡＮなし】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1089491",
@@ -4200,7 +5034,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注1.4KﾎﾟﾘDH滋賀羽二重糯(220MM幅）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1206683",
@@ -4215,7 +5052,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注2K MﾎﾟﾘDH【無洗米】滋賀こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 1,
+    "totalColorCount": 7
   },
   {
     "id": "1149932",
@@ -4230,7 +5070,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注2K SFMﾎﾟﾘDH【ＮＢ】滋賀こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1222582",
@@ -4245,7 +5088,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】２Ｋ特栽・魚のゆりかご水田米滋賀こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1089948",
@@ -4260,7 +5106,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【改版】シール大【食味王】２Ｋ滋賀県みずかがみ（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1098698",
@@ -4275,7 +5124,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大　２Ｋ有機栽培米・滋賀県ミルキークイーン",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1099720",
@@ -4290,7 +5142,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大　２Ｋ有機栽培米・滋賀こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1098697",
@@ -4305,7 +5160,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示ＪＡＮ】２Ｋ有機栽培米・滋賀県ミルキークイーン",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1099721",
@@ -4320,7 +5178,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示ＪＡＮ】２Ｋ有機栽培米・滋賀県こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1197414",
@@ -4335,7 +5196,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【ガイドライン表示】２Ｋ特栽・魚のゆりかご水田米滋賀こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1114868",
@@ -4350,7 +5214,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5K MﾎﾟﾘDH【無洗米】滋賀こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 1,
+    "totalColorCount": 7
   },
   {
     "id": "1149930",
@@ -4365,7 +5232,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5K SFMﾎﾟﾘDH【ＮＢ】滋賀こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1258070",
@@ -4380,7 +5250,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール中150ｇ京都府産きぬむすめ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1215985",
@@ -4395,7 +5268,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中【表示・ガイドライン】300G特別栽培米京都府やましろの恵（販売者：京都やましろ）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1192710",
@@ -4410,7 +5286,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【改版】シール中【食味王・特別栽培米】１ｋ京都府京式部（ＪＡＮなし・ガイドラインあり）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1037937",
@@ -4425,7 +5304,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【食味王】１Ｋ京都府京丹後こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1028137",
@@ -4440,7 +5322,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王ＪＡＮ】２Ｋ京都府京丹後こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1211838",
@@ -4455,7 +5340,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　２Ｋ【食味王・脱酸・特栽米】京都府京式部（表示なし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1170330",
@@ -4470,7 +5358,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大【家紋】２Ｋ京都ひのひかり（ＪＡ京都やましろ指定）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1191418",
@@ -4485,7 +5376,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【改版】シール大　２Ｋ【食味王・特栽米】京都府京式部（ＪＡＮなし・ガイドラインあり）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1170333",
@@ -4500,7 +5394,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】２Ｋ京都ひのひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1212018",
@@ -4515,7 +5412,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "【新版】別注3K SFMﾎﾟﾘDH金賞健康米京都丹後コシRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1166883",
@@ -4530,7 +5430,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "（ロゴ無）5K SFMﾎﾟﾘDH特栽米・ＪＡ京都やましろ産ひのひかりRAＳＰ雲竜柄無地",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 0,
+    "totalColorCount": 1
   },
   {
     "id": "1242848",
@@ -4545,7 +5448,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△【新版】シール大【家紋】５Ｋ京の豆っこ米こしひかり（京都府与謝野町産こしひかり）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1242849",
@@ -4560,7 +5466,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール小【表示】５Ｋ京の豆っこ米こしひかり（京都府与謝野町産こしひかり）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1216571",
@@ -4575,7 +5484,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△【新版】シール小【ガイドライン】特別栽培米【ちくさの舞】兵庫県宍粟市こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1034118",
@@ -4590,7 +5502,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール小【ガイドライン】特栽米・コウノトリ兵庫県但馬こし（１・２Ｋ兼用）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1034119",
@@ -4605,7 +5520,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王】１Ｋ特栽米・兵庫県但馬こしひかり・コウノトリ育むお米（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1246063",
@@ -4620,7 +5538,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王・ガイドライン】１Ｋ特栽米・兵庫県但馬こしひかり・コウノトリ育むお米",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1251284",
@@ -4635,7 +5556,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール中【食味王・脱酸素剤】１Ｋ特栽米・兵庫県但馬こしひかり・コウノトリ育むお米",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1158106",
@@ -4650,7 +5574,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注2K SFMﾎﾟﾘDH兵庫丹波こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1216570",
@@ -4665,7 +5592,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【食味王】２Ｋ特栽米【ちくさの舞】兵庫県宍粟市こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1193795",
@@ -4680,7 +5610,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　２Ｋ【有機米】兵庫県丹波ひかみ産こしひかり（ＪＡ丹波ひかみ指定）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1080750",
@@ -4695,7 +5628,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大【家紋】２Ｋ有機栽培米・兵庫県丹波ひかみこしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1095151",
@@ -4710,7 +5646,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】２Ｋ特栽米・兵庫県但馬こしひかり・コウノトリ育むお米（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1173852",
@@ -4725,7 +5664,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王・脱酸】２Ｋ特栽米・兵庫県但馬こしひかり・コウノトリ育むお米表示なし",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1259861",
@@ -4740,7 +5682,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール大　２Ｋ有機精米・兵庫県丹波産こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1080753",
@@ -4755,7 +5700,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】２Ｋ有機栽培米・兵庫県丹波ひかみこしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1178866",
@@ -4770,7 +5718,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　３Ｋ特栽米・兵庫県丹波産こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1145760",
@@ -4785,7 +5736,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5K MﾎﾟﾘﾎﾟﾘDH兵庫丹波こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1228239",
@@ -4800,7 +5754,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール中【食味王・脱酸素剤】１Ｋ奈良ヒノヒカリ（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1100236",
@@ -4815,7 +5772,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】２Ｋ奈良県ひのひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1183945",
@@ -4830,7 +5790,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【食味王・脱酸】２Ｋ島根仁多米こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1022593",
@@ -4845,7 +5808,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】●シール小【表示】３Ｋ無洗米・島根県仁多米こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1022509",
@@ -4860,7 +5826,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【改版】別注シール【家紋】３Ｋ無洗米・島根県仁多米こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 3,
+    "backColorCount": 0,
+    "totalColorCount": 3
   },
   {
     "id": "1246064",
@@ -4875,7 +5844,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【家紋・表示あり】５Ｋ島根県仁多米こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1201498",
@@ -4890,7 +5862,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】△シール大【家紋】５Ｋ島根県仁多米こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1201499",
@@ -4905,7 +5880,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】●シール小【表示】５Ｋ島根県仁多米こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1220111",
@@ -4920,7 +5898,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中　３００ｇ【通常】やまぐち米　山口県こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1204167",
@@ -4935,7 +5916,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王】１Ｋ山口県こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1217753",
@@ -4950,7 +5934,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【金賞健康米・特別栽培米】３Ｋ山口県こしひかり（コープやまぐち様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1060495",
@@ -4965,7 +5952,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "【厚み変更】別注5K SFﾎﾟﾘDH【通常】徳島こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1189957",
@@ -4980,7 +5970,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "●◆別注5K SFﾎﾟﾘDH【新米】徳島こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1001035",
@@ -4995,7 +5988,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注10K SFﾎﾟﾘDH【通常】徳島こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1031960",
@@ -5010,7 +6006,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "●◆別注10K SFﾎﾟﾘDH【新米】徳島こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1217991",
@@ -5025,7 +6024,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【ライフフーズ】１Ｋ香川県ひのひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1226856",
@@ -5040,7 +6042,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【改版】シール小【ダスキン表示】１Ｋ香川おいでまい",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1217643",
@@ -5055,7 +6060,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【食味王・脱酸素剤】１Ｋ香川おいでまい（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1244594",
@@ -5070,7 +6078,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【家紋・表示】２Ｋ香川姫ごのみ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1046533",
@@ -5085,7 +6096,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5K SFﾎﾟﾘDH香川おいでまい（マルナカ様）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1149931",
@@ -5100,7 +6114,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5K SFMﾎﾟﾘDH【ＮＢ】香川こしひかりRA",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 7,
+    "backColorCount": 0,
+    "totalColorCount": 7
   },
   {
     "id": "1244598",
@@ -5115,7 +6132,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【家紋・表示】５Ｋ香川姫ごのみ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1252589",
@@ -5130,7 +6150,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール大【新米】２Ｋ高知南国そだち（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1229058",
@@ -5145,7 +6168,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△【新版】シール大【家紋・新米】５Ｋ高知県こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1229059",
@@ -5160,7 +6186,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール小【表示】５Ｋ高知県こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1243460",
@@ -5175,7 +6204,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【食味王】２Ｋ福岡夢つくし（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1243189",
@@ -5190,7 +6222,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●【改版】5K SFﾎﾟﾘDH福岡のお米夢つくし（店名）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 1,
+    "totalColorCount": 1
   },
   {
     "id": "1012298",
@@ -5205,7 +6240,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注1.4KﾎﾟﾘDH佐賀ひよくもち（赤飯）（サイズ220巾）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "80912",
@@ -5220,7 +6258,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注1.4KﾎﾟﾘDH熊本ひよくもちRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1016982",
@@ -5235,7 +6276,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "【カット】別注1.4KﾎﾟﾘDH熊本ひよくもち【原反80912-38】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1244704",
@@ -5250,7 +6294,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【改版】シール大【食味王】1.5K熊本森のくまさん（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1024475",
@@ -5265,7 +6312,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王】２Ｋ熊本県森のくまさん（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1244581",
@@ -5280,7 +6330,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【家紋・表示】２Ｋ熊本もりのくまさん（ひらがな）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1201496",
@@ -5295,7 +6348,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】△シール大【家紋】４Ｋ熊本森のくまさん",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1244585",
@@ -5310,7 +6366,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【家紋・表示】４Ｋ熊本森のくまさん",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1201497",
@@ -5325,7 +6384,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】●シール小【表示】４Ｋ熊本森のくまさん",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1116472",
@@ -5340,7 +6402,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大【家紋】５Ｋ熊本県森のくまさん",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1116470",
@@ -5355,7 +6420,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】５Ｋ熊本県森のくまさん",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1226391",
@@ -5370,7 +6438,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "new_rice",
     "status": "active",
     "description": "●◆別注5KﾎﾟﾘDH【新米】宮崎県産こしひかりRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1200722",
@@ -5385,7 +6456,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "other",
     "status": "active",
     "description": "△別注のぼり大　おくさま印（ポリエステル・防炎加工なし・左耳仕様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 0,
+    "totalColorCount": 4
   },
   {
     "id": "1232843",
@@ -5400,7 +6474,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【貼り賃】シール貼り賃【２枚（大シール・中シール）】８ｋ国内産こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1240553",
@@ -5415,7 +6492,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【貼り賃】シール貼り賃【１枚】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1241076",
@@ -5430,7 +6510,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【貼り賃】シール貼り賃【１枚】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1241079",
@@ -5445,7 +6528,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【貼り賃】シール貼り賃【１枚】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1260843",
@@ -5460,7 +6546,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【貼り賃】シール貼り賃【１枚】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1261047",
@@ -5475,7 +6564,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【貼り賃】シール貼り賃【１枚】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1222278",
@@ -5490,7 +6582,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△小袋シール（正方形）金賞健康米の新春キャンペーン",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1258004",
@@ -5505,7 +6600,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール小　NTT西日本ルセント様分",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1212145",
@@ -5520,7 +6618,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【金澤さん】こがね餅（杵つき）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1225594",
@@ -5535,7 +6636,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△【新版】別注シールエディオン・100満ボルト・象印ロゴ（84×54MM)",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 0,
+    "totalColorCount": 4
   },
   {
     "id": "1260040",
@@ -5550,7 +6654,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】別注シール　京式部ガイドライン",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 0,
+    "totalColorCount": 1
   },
   {
     "id": "1191210",
@@ -5565,7 +6672,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "【改版】NO.596【３００ｇ】メッセージライス【精白米】スクリーンの米",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 3,
+    "totalColorCount": 7
   },
   {
     "id": "1261205",
@@ -5580,7 +6690,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "【新版】NO.596【３００ｇ】メッセージライス　まぁるいマ米（藤交商事様分）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 2,
+    "totalColorCount": 6
   },
   {
     "id": "1191907",
@@ -5595,7 +6708,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注1K SFﾎﾟﾘDH扇・もち米（日之出物産様）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1255943",
@@ -5610,7 +6726,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【新版】シール小【ダスキン表示】１.4Ｋ国内産",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1243876",
@@ -5625,7 +6744,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【改版】シール小【ダスキン表示】１Ｋ国内産",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1225009",
@@ -5640,7 +6762,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【食味王・脱酸素剤】１Ｋ魚沼こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1032951",
@@ -5655,7 +6780,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール中【食味王】１Ｋ魚沼こしひかり【ＪＡＮなし】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1167146",
@@ -5670,7 +6798,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "2KﾎﾟﾘﾎﾟﾘDH特栽米・金澤さんの魚沼産こしひかりRZＳＰ雲竜柄無地",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 2,
+    "backColorCount": 0,
+    "totalColorCount": 2
   },
   {
     "id": "1246138",
@@ -5685,7 +6816,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●【新版】2K MﾎﾟﾘﾎﾟﾘDH白い宝石（米匠庵）RZＳＰ丸窓雲竜柄無地",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 3,
+    "backColorCount": 1,
+    "totalColorCount": 4
   },
   {
     "id": "1243716",
@@ -5700,7 +6834,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【食味王・年産あり】２Ｋ魚沼こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1183949",
@@ -5715,7 +6852,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大【食味王・脱酸】２Ｋ魚沼こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "80535",
@@ -5730,7 +6870,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】シール大【家紋】２Ｋ無洗米・魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1244607",
@@ -5745,7 +6888,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【家紋・表示】２Ｋ無洗米・魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "80539",
@@ -5760,7 +6906,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】シール小【表示】２Ｋ無洗米・魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1236383",
@@ -5775,7 +6924,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△【新版】シール大　３Ｋあいちのかおり【陽娘】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1247513",
@@ -5790,7 +6942,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【家紋・表示】３Ｋあいちのかおり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1244579",
@@ -5805,7 +6960,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【家紋・ガイド表示】３Ｋ特栽米・魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1236385",
@@ -5820,7 +6978,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール小【表示】３Ｋあいちのかおり【陽娘】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1184643",
@@ -5835,7 +6996,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大　４Ｋあいちのかおり【陽娘】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1184642",
@@ -5850,7 +7014,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】４Ｋあいちのかおり【陽娘】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1249596",
@@ -5865,7 +7032,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5KﾎﾟﾘDH【万代】備蓄米精米RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 0,
+    "totalColorCount": 4
   },
   {
     "id": "75432",
@@ -5880,7 +7050,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5K MﾎﾟﾘDH【通常】近江の米・滋賀こしひかり（マンダイ様）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1007369",
@@ -5895,7 +7068,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5KﾎﾟﾘDH得々ごはん（販売者：日之出物産）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 3,
+    "backColorCount": 1,
+    "totalColorCount": 4
   },
   {
     "id": "1090502",
@@ -5910,7 +7086,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5KﾎﾟﾘDH【Ｚ】アメリカ産カルローズRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 1,
+    "totalColorCount": 7
   },
   {
     "id": "1121699",
@@ -5925,7 +7104,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5K MﾎﾟﾘDH【新米】近江の米・滋賀こしひかり（マンダイ様）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1132556",
@@ -5940,7 +7122,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5KﾎﾟﾘDH【無洗米】おくさま印「洗うなんてもういいんだよ」RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 3,
+    "backColorCount": 1,
+    "totalColorCount": 4
   },
   {
     "id": "1221173",
@@ -5955,7 +7140,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5KﾎﾟﾘDHあきたこまち複数原料米RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1223058",
@@ -5970,7 +7158,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●【新版】（ロゴ無）5KﾎﾟﾘDH無洗米・アメリカ産カルローズRZ米粒青",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1226862",
@@ -5985,7 +7176,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●（ロゴ無）別注5KﾎﾟﾘDH国内産【ブレンド】（ロピア用）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1230622",
@@ -6000,7 +7194,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5KﾎﾟﾘDH【万代】国内産ブレンドRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1244055",
@@ -6015,7 +7212,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5KﾎﾟﾘDH【Ａ】アメリカ産カルローズRA",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 1,
+    "totalColorCount": 7
   },
   {
     "id": "1084704",
@@ -6030,7 +7230,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注5K SFﾎﾟﾘDHささの金星・宮城東北１９４号RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 0,
+    "totalColorCount": 4
   },
   {
     "id": "1139903",
@@ -6045,7 +7248,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注5K SFﾎﾟﾘDHお家ごはんRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 0,
+    "totalColorCount": 6
   },
   {
     "id": "1170638",
@@ -6060,7 +7266,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●（ロゴ無）5KｿﾌｸﾗSつながるおこめRZＳＰソフクラ無地",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 1,
+    "totalColorCount": 2
   },
   {
     "id": "1222876",
@@ -6075,7 +7284,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●（ロゴ無）5KﾎﾟﾘDH無洗米・アメリカ産カルローズRZＳＰ米粒青",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 1,
+    "totalColorCount": 2
   },
   {
     "id": "1219516",
@@ -6090,7 +7302,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●【新版】（ロゴ無）5KﾎﾟﾘDHアメリカ産カルローズRZＳＰ晴天青空グリーン",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 1,
+    "totalColorCount": 2
   },
   {
     "id": "1167149",
@@ -6105,7 +7320,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "5KﾎﾟﾘﾎﾟﾘDH特栽米・金澤さんの魚沼産こしひかりRZＳＰ雲竜柄無地",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 0,
+    "totalColorCount": 1
   },
   {
     "id": "57354",
@@ -6120,7 +7338,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "5KﾗﾐDH焼き餅・もち米（店名）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 1,
+    "totalColorCount": 1
   },
   {
     "id": "1227497",
@@ -6134,7 +7355,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "other",
     "status": "active",
     "description": "廃棄版代 受1226862 校正間違い分",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1163083",
@@ -6149,7 +7373,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大　５Ｋあいちのかおり【陽娘】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1212993",
@@ -6164,7 +7391,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール大　５Ｋ【食味王・特栽米】青天の霹靂（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1080069",
@@ -6179,7 +7409,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大　５Ｋ魚沼こしひかり（アピデ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1245342",
@@ -6194,7 +7427,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●【新版】シール大【家紋・表示】５Ｋ魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1243895",
@@ -6209,7 +7445,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "シール大【食味王・有機】５Ｋ魚沼こしひかり（ＪＡＮなし）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1163084",
@@ -6224,7 +7463,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】５Ｋあいちのかおり【陽娘】",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1080070",
@@ -6239,7 +7481,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール小【表示】５Ｋ魚沼こしひかり（アピデ様）",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1022594",
@@ -6254,7 +7499,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "【使用禁止】●シール小【表示】５Ｋ魚沼こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1007250",
@@ -6269,7 +7517,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆8K MﾎﾟﾘﾎﾟﾘDH国内産こしひかりRZＳＰ和紙調無地",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 0,
+    "totalColorCount": 1
   },
   {
     "id": "1232572",
@@ -6284,7 +7535,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "△シール大８Ｋ国内産こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1232571",
@@ -6299,7 +7553,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "sticker",
     "status": "active",
     "description": "●シール中【表示】８ｋ国内産こしひかり",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   },
   {
     "id": "1249543",
@@ -6314,7 +7571,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "【新版】別注10K乳白ﾎﾟﾘDH【万代】国内産備蓄米RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 0,
+    "totalColorCount": 1
   },
   {
     "id": "76186",
@@ -6329,7 +7589,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注10KﾎﾟﾘDH笑顔の食卓・稔りの輝きRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1090492",
@@ -6344,7 +7607,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●（ロゴ無）別注10KﾎﾟﾘDHアメリカ産カルローズRZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 6,
+    "backColorCount": 1,
+    "totalColorCount": 7
   },
   {
     "id": "1119954",
@@ -6359,7 +7625,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●（ロゴ無）別注10KﾎﾟﾘDHお買い得米RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 2,
+    "backColorCount": 1,
+    "totalColorCount": 3
   },
   {
     "id": "1121695",
@@ -6374,7 +7643,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●◆別注10K MﾎﾟﾘDH【新米】近江の米・滋賀こしひかり（マンダイ様）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1127583",
@@ -6389,7 +7661,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注10K MﾎﾟﾘDH【通常】近江の米・滋賀こしひかり（マンダイ様）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 5,
+    "backColorCount": 1,
+    "totalColorCount": 6
   },
   {
     "id": "1222691",
@@ -6404,7 +7679,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注10KﾎﾟﾘDH【ロピア用】アメリカ産カルローズRA",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 3,
+    "backColorCount": 1,
+    "totalColorCount": 4
   },
   {
     "id": "1226861",
@@ -6419,7 +7697,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●（ロゴ無）別注10KﾎﾟﾘDH国内産【ブレンド】（ロピア用）RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 4,
+    "backColorCount": 1,
+    "totalColorCount": 5
   },
   {
     "id": "1250213",
@@ -6434,7 +7715,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "別注10K SFﾎﾟﾘDH国産備蓄米RZ",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 0,
+    "totalColorCount": 1
   },
   {
     "id": "1219517",
@@ -6449,7 +7733,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "bag",
     "status": "active",
     "description": "●【新版】（ロゴ無）10KﾎﾟﾘDHアメリカ産カルローズRZＳＰ晴天青空グリーン",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 1,
+    "backColorCount": 1,
+    "totalColorCount": 2
   },
   {
     "id": "1227498",
@@ -6463,7 +7750,10 @@ export const MOCK_PRODUCTS: Product[] = [
     "category": "other",
     "status": "active",
     "description": "廃棄版代 受1226861 校正間違い分",
-    "imageUrl": ""
+    "imageUrl": "",
+    "frontColorCount": 0,
+    "backColorCount": 0,
+    "totalColorCount": 0
   }
 ];
 

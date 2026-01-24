@@ -17,15 +17,23 @@ try {
     console.log('Total Rows:', data.length);
 
     if (data.length > 0) {
-        console.log('Headers (Row 0):', data[0]);
-    }
+        // ヘッダーを除外してデータ行のみを処理
+        const dataRows = data.slice(1);
 
-    if (data.length > 1) {
-        console.log('Sample Row 1:', data[1]);
-    }
+        // 商品コード（インデックス3）がある行を探す
+        const rowsWithProductCode = dataRows.filter(row => row[3] && String(row[3]).trim() !== '');
 
-    if (data.length > 2) {
-        console.log('Sample Row 2:', data[2]);
+        console.log(`Total rows: ${dataRows.length}`);
+        console.log(`Rows with Product Code: ${rowsWithProductCode.length}`);
+
+        if (rowsWithProductCode.length > 0) {
+            console.log('Sample rows with Product Code:');
+            rowsWithProductCode.slice(0, 5).forEach((row, i) => {
+                console.log(`Sample ${i + 1}: Col A (OrderNo)=${row[0]}, Col D (ProductCode)=${row[3]}`);
+            });
+        } else {
+            console.log('No rows with Product Code found.');
+        }
     }
 
 } catch (error) {

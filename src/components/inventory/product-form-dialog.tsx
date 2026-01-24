@@ -32,6 +32,7 @@ import type { Product } from "@/types";
 type ProductFormData = {
     name: string;
     sku: string;
+    productCode: string; // 新規追加
     janCode: string;
     weight: string;
     shape: string;
@@ -42,6 +43,15 @@ type ProductFormData = {
     description: string;
     minStockAlert: string;
     imageUrl: string;
+    // 商品名構造化フィールド
+    prefix: string;
+    origin: string;
+    variety: string;
+    suffix: string;
+    // 色数フィールド
+    frontColorCount: string;
+    backColorCount: string;
+    totalColorCount: string;
 };
 
 type ProductFormDialogProps = {
@@ -54,6 +64,7 @@ type ProductFormDialogProps = {
 const initialFormData: ProductFormData = {
     name: "",
     sku: "",
+    productCode: "",
     janCode: "",
     weight: "",
     shape: "",
@@ -64,6 +75,13 @@ const initialFormData: ProductFormData = {
     description: "",
     minStockAlert: "100",
     imageUrl: "",
+    prefix: "",
+    origin: "",
+    variety: "",
+    suffix: "",
+    frontColorCount: "",
+    backColorCount: "",
+    totalColorCount: "",
 };
 
 export function ProductFormDialog({
@@ -84,6 +102,7 @@ export function ProductFormDialog({
             setFormData({
                 name: product.name || "",
                 sku: product.sku || "",
+                productCode: product.productCode || "",
                 janCode: product.janCode || "",
                 weight: product.weight?.toString() || "",
                 shape: product.shape || "",
@@ -94,6 +113,13 @@ export function ProductFormDialog({
                 description: product.description || "",
                 minStockAlert: product.minStockAlert?.toString() || "100",
                 imageUrl: product.imageUrl || "",
+                prefix: product.prefix || "",
+                origin: product.origin || "",
+                variety: product.variety || "",
+                suffix: product.suffix || "",
+                frontColorCount: product.frontColorCount?.toString() || "",
+                backColorCount: product.backColorCount?.toString() || "",
+                totalColorCount: product.totalColorCount?.toString() || "",
             });
         } else {
             setFormData(initialFormData);
@@ -111,10 +137,16 @@ export function ProductFormDialog({
         setError(null);
 
         try {
+            // 商品名を構造化フィールドから自動生成
+            const generatedName = [formData.prefix, formData.origin, formData.variety, formData.suffix]
+                .filter(Boolean)
+                .join(' ') || formData.name || '無題の商品';
+
             const payload = {
                 id: product?.id,
-                name: formData.name,
+                name: generatedName,
                 sku: formData.sku || undefined,
+                productCode: formData.productCode || undefined,
                 janCode: formData.janCode || undefined,
                 weight: formData.weight ? Number(formData.weight) : undefined,
                 shape: formData.shape || undefined,
@@ -125,6 +157,13 @@ export function ProductFormDialog({
                 description: formData.description || undefined,
                 minStockAlert: formData.minStockAlert ? Number(formData.minStockAlert) : 100,
                 imageUrl: formData.imageUrl || undefined,
+                prefix: formData.prefix || undefined,
+                origin: formData.origin || undefined,
+                variety: formData.variety || undefined,
+                suffix: formData.suffix || undefined,
+                frontColorCount: formData.frontColorCount ? Number(formData.frontColorCount) : undefined,
+                backColorCount: formData.backColorCount ? Number(formData.backColorCount) : undefined,
+                totalColorCount: formData.totalColorCount ? Number(formData.totalColorCount) : undefined,
             };
 
             const response = await fetch("/api/products", {
@@ -169,16 +208,54 @@ export function ProductFormDialog({
                         </div>
                     )}
 
-                    {/* 商品名 */}
-                    <div className="space-y-2">
-                        <Label htmlFor="name">商品名 *</Label>
-                        <Input
-                            id="name"
-                            value={formData.name}
-                            onChange={(e) => handleChange("name", e.target.value)}
-                            placeholder="商品名を入力"
-                            required
-                        />
+                    {/* 商品名 構造化フィールド（自動生成） */}
+                    <div className="border rounded-lg p-4 space-y-4 bg-slate-50">
+                        <div className="text-sm font-medium">商品名の詳細</div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="prefix">備考1（先頭注記）</Label>
+                                <Input
+                                    id="prefix"
+                                    value={formData.prefix}
+                                    onChange={(e) => handleChange("prefix", e.target.value)}
+                                    placeholder="（ロゴ無）、【使用禁止】"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="origin">産地</Label>
+                                <Input
+                                    id="origin"
+                                    value={formData.origin}
+                                    onChange={(e) => handleChange("origin", e.target.value)}
+                                    placeholder="JA京都やましろ、魚沼"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="variety">品種</Label>
+                                <Input
+                                    id="variety"
+                                    value={formData.variety}
+                                    onChange={(e) => handleChange("variety", e.target.value)}
+                                    placeholder="ひのひかり、コシヒカリ"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="suffix">備考2（末尾補足）</Label>
+                                <Input
+                                    id="suffix"
+                                    value={formData.suffix}
+                                    onChange={(e) => handleChange("suffix", e.target.value)}
+                                    placeholder="RASP雲竜柄無地"
+                                />
+                            </div>
+                        </div>
+                        {/* 生成される商品名プレビュー */}
+                        <div className="pt-2 border-t">
+                            <div className="text-xs text-muted-foreground mb-1">生成される商品名:</div>
+                            <div className="text-sm font-medium bg-white p-2 rounded border min-h-[32px]">
+                                {[formData.prefix, formData.origin, formData.variety, formData.suffix].filter(Boolean).join(' ') || '（詳細を入力してください）'}
+                            </div>
+                        </div>
                     </div>
 
                     {/* カテゴリ */}
@@ -200,15 +277,25 @@ export function ProductFormDialog({
                         </Select>
                     </div>
 
-                    {/* 2カラムレイアウト */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* 3カラムレイアウト: 受注№, 商品コード, JANコード */}
+                    <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="sku">商品コード</Label>
+                            <Label htmlFor="sku">受注№</Label>
                             <Input
                                 id="sku"
                                 value={formData.sku}
                                 onChange={(e) => handleChange("sku", e.target.value)}
-                                placeholder="SKU"
+                                placeholder="受注№"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="productCode">商品コード</Label>
+                            <Input
+                                id="productCode"
+                                value={formData.productCode}
+                                onChange={(e) => handleChange("productCode", e.target.value)}
+                                placeholder="商品コード"
                             />
                         </div>
 
@@ -292,6 +379,43 @@ export function ProductFormDialog({
                         </div>
                     </div>
 
+                    {/* 色数情報 */}
+                    <div className="border rounded-lg p-4 space-y-4 bg-slate-50">
+                        <div className="text-sm font-medium">色数情報</div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="frontColorCount">表色数</Label>
+                                <Input
+                                    id="frontColorCount"
+                                    type="number"
+                                    value={formData.frontColorCount}
+                                    onChange={(e) => handleChange("frontColorCount", e.target.value)}
+                                    placeholder="0"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="backColorCount">裏色数</Label>
+                                <Input
+                                    id="backColorCount"
+                                    type="number"
+                                    value={formData.backColorCount}
+                                    onChange={(e) => handleChange("backColorCount", e.target.value)}
+                                    placeholder="0"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="totalColorCount">総色数</Label>
+                                <Input
+                                    id="totalColorCount"
+                                    type="number"
+                                    value={formData.totalColorCount}
+                                    onChange={(e) => handleChange("totalColorCount", e.target.value)}
+                                    placeholder="0"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
                         <Label htmlFor="description">説明</Label>
                         <Input
@@ -328,6 +452,6 @@ export function ProductFormDialog({
                     </DialogFooter>
                 </form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

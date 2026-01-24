@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "migrate-data": "node scripts/migrate-to-supabase.js"
+    "migrate-data": "node scripts/migrate-to-supabase.js",
+    "sync-products": "node scripts/sync_product_codes.js",
+    "sync-types": "node scripts/sync_product_types.js"
   },
   "dependencies": {
     "@auth/supabase-adapter": "^1.11.1",

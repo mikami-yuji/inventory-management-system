@@ -19,7 +19,8 @@ export type ProductStatus = 'active' | 'inactive';
 export type Product = {
   id: string;
   name: string;
-  sku: string; // 商品コード
+  sku: string; // 商品コード (現在は受注№(Col A)として使用)
+  productCode?: string; // Excel Column D (本来の商品コード)
   janCode?: string; // JANコード
   weight?: number; // 重量 (kg) (例: 5)
   shape?: string; // 形状 (例: RZ)
@@ -31,6 +32,16 @@ export type Product = {
   description?: string;
   status: ProductStatus;
   minStockAlert?: number; // 在庫アラート閾値
+  // 商品名構造化フィールド
+  prefix?: string; // 備考1（先頭注記）例: （ロゴ無）、【使用禁止】
+  origin?: string; // 産地 例: JA京都やましろ、魚沼
+  variety?: string; // 品種 例: ひのひかり、コシヒカリ
+  suffix?: string; // 備考2（末尾補足）例: RASP雲竜柄無地
+  // 色数フィールド
+  frontColorCount?: number; // 表色数
+  backColorCount?: number; // 裏色数
+  totalColorCount?: number; // 総色数
+  productType?: string; // Excel Column Type (種別) 例: 既製品, 別注
 };
 
 // 在庫情報

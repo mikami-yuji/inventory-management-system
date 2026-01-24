@@ -314,7 +314,8 @@ function OthersInventoryTable({ products, inventoryMap, onEdit, onDelete }: Othe
                         <TableRow key={product.id} className={cn(isOutOfStock && "bg-red-50")}>
                             <TableCell>
                                 <div className="font-medium">{product.name}</div>
-                                <div className="text-sm text-gray-500">商品CD: {product.sku || '-'}</div>
+                                <div className="text-sm text-gray-500">受注№: {product.sku || '-'}</div>
+                                {product.productCode && <div className="text-sm text-gray-500">商品コード: {product.productCode}</div>}
                             </TableCell>
                             <TableCell className="text-right">
                                 <div className={cn(
