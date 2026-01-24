@@ -484,6 +484,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                 wipMap={wipMap}
                 supplierStockMap={supplierStockMap}
                 incomingMap={incomingMap}
+                saleEvents={saleEvents || []}
                 onEdit={handleEditProduct}
                 onDelete={handleDeleteClick}
                 onRefetch={refetch}

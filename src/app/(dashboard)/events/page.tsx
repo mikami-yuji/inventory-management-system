@@ -22,11 +22,13 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useSaleEvents } from "@/hooks/use-sale-events";
+import { SaleEventCalendar } from "@/components/events/sale-event-calendar";
 import type { SaleEvent } from "@/hooks/use-sale-events";
 
 export default function EventsPage(): React.ReactElement {
     const [searchQuery, setSearchQuery] = useState("");
     const [currentTab, setCurrentTab] = useState("all");
+    const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
 
     // APIからイベントを取得
     const { events, loading, error, refetch } = useSaleEvents();
@@ -35,8 +37,8 @@ export default function EventsPage(): React.ReactElement {
     const filteredEvents = useMemo(() => {
         let result = events;
 
-        // ステータスフィルター
-        if (currentTab !== "all") {
+        // ステータスフィルター (リスト表示時のみ適用、またはカレンダーでも適用？カレンダーでは全件見たいことが多いが、フィルタできた方が便利)
+        if (currentTab !== "all" && viewMode === "list") {
             result = result.filter(e => e.status === currentTab);
         }
 
@@ -50,7 +52,7 @@ export default function EventsPage(): React.ReactElement {
         }
 
         return result;
-    }, [events, currentTab, searchQuery]);
+    }, [events, currentTab, searchQuery, viewMode]);
 
     // ステータスごとの件数
     const statusCounts = useMemo(() => ({
@@ -69,6 +71,26 @@ export default function EventsPage(): React.ReactElement {
                     <p className="text-muted-foreground">特売先ごとの在庫管理と出荷予定を確認</p>
                 </div>
                 <div className="flex items-center gap-2">
+                    <div className="flex items-center rounded-md border bg-muted p-1 mr-2">
+                        <Button
+                            variant={viewMode === "list" ? "secondary" : "ghost"}
+                            size="sm"
+                            onClick={() => setViewMode("list")}
+                            className="gap-2"
+                        >
+                            <Store className="h-4 w-4" />
+                            リスト
+                        </Button>
+                        <Button
+                            variant={viewMode === "calendar" ? "secondary" : "ghost"}
+                            size="sm"
+                            onClick={() => setViewMode("calendar")}
+                            className="gap-2"
+                        >
+                            <Calendar className="h-4 w-4" />
+                            カレンダー
+                        </Button>
+                    </div>
                     <Button variant="outline" onClick={refetch} disabled={loading} className="gap-1">
                         <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                         更新
@@ -94,72 +116,84 @@ export default function EventsPage(): React.ReactElement {
                 </Card>
             )}
 
-            {/* 検索 */}
-            <div className="flex items-center gap-4">
-                <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="特売先名・商品名で検索..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
-                    />
+            {viewMode === "calendar" ? (
+                <div className="space-y-4">
+                    {/* カレンダー表示 */}
+                    <SaleEventCalendar events={events} />
                 </div>
-                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            </div>
-
-            {/* タブ */}
-            <Tabs defaultValue="all" onValueChange={setCurrentTab}>
-                <TabsList>
-                    <TabsTrigger value="all">
-                        すべて ({statusCounts.all})
-                    </TabsTrigger>
-                    <TabsTrigger value="upcoming">
-                        予定 ({statusCounts.upcoming})
-                    </TabsTrigger>
-                    <TabsTrigger value="active">
-                        進行中 ({statusCounts.active})
-                    </TabsTrigger>
-                    <TabsTrigger value="completed">
-                        完了 ({statusCounts.completed})
-                    </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value={currentTab} className="mt-4">
-                    {loading && events.length === 0 ? (
-                        <div className="flex items-center justify-center py-12">
-                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            ) : (
+                <>
+                    {/* 検索 */}
+                    <div className="flex items-center gap-4">
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="特売先名・商品名で検索..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-10"
+                            />
                         </div>
-                    ) : filteredEvents.length === 0 ? (
-                        <Card>
-                            <CardContent className="flex flex-col items-center justify-center py-12">
-                                <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-                                <p className="text-muted-foreground">
-                                    {events.length === 0
-                                        ? "イベントがありません"
-                                        : "該当するイベントがありません"
-                                    }
-                                </p>
-                                <Button asChild className="mt-4">
-                                    <Link href="/events/new">
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        新規作成
-                                    </Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {filteredEvents.map((event) => (
-                                <EventCard key={event.id} event={event} />
-                            ))}
-                        </div>
-                    )}
-                </TabsContent>
-            </Tabs>
+                        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                    </div>
+
+                    {/* タブ */}
+                    <Tabs defaultValue="all" value={currentTab} onValueChange={setCurrentTab}>
+                        <TabsList>
+                            <TabsTrigger value="all">
+                                すべて ({statusCounts.all})
+                            </TabsTrigger>
+                            <TabsTrigger value="upcoming">
+                                予定 ({statusCounts.upcoming})
+                            </TabsTrigger>
+                            <TabsTrigger value="active">
+                                進行中 ({statusCounts.active})
+                            </TabsTrigger>
+                            <TabsTrigger value="completed">
+                                完了 ({statusCounts.completed})
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value={currentTab} className="mt-4">
+                            {loading && events.length === 0 ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : filteredEvents.length === 0 ? (
+                                <Card>
+                                    <CardContent className="flex flex-col items-center justify-center py-12">
+                                        <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                                        <p className="text-muted-foreground">
+                                            {events.length === 0
+                                                ? "イベントがありません"
+                                                : "該当するイベントがありません"
+                                            }
+                                        </p>
+                                        <Button asChild className="mt-4">
+                                            <Link href="/events/new">
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                新規作成
+                                            </Link>
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                    {filteredEvents.map((event) => (
+                                        <EventCard key={event.id} event={event} />
+                                    ))}
+                                </div>
+                            )}
+                        </TabsContent>
+                    </Tabs>
+                </>
+            )}
         </div>
     );
 }
+
+// ... (EventCard component remains the same)
+
 
 // イベントカードコンポーネント
 function EventCard({ event }: { event: SaleEvent }): React.ReactElement {

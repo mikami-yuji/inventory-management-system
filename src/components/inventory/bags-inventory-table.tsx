@@ -21,6 +21,8 @@ import { useCart } from "@/contexts/cart-context";
 import type { Product } from "@/types";
 import { SupplierStockDialog } from "@/components/inventory/supplier-stock-dialog";
 import { WIPDialog } from "@/components/inventory/wip-dialog";
+import { StockAllocationDialog } from "@/components/inventory/stock-allocation-dialog";
+import type { SaleEvent } from "@/hooks/use-sale-events";
 
 // 枚数からメートルに変換
 const bagsToMeters = (bags: number, weight: number): number => {
@@ -41,14 +43,16 @@ export type BagsInventoryTableProps = {
     wipMap: Map<string, number>;
     supplierStockMap: Map<string, number>;
     incomingMap: Map<string, { quantity: number; nextDate: string | null }>;
+    saleEvents: SaleEvent[];
     onEdit: (product: Product) => void;
     onDelete: (product: Product) => void;
     onRefetch: () => void;
 };
 
-export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch }: BagsInventoryTableProps): React.ReactElement {
+export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, saleEvents, onEdit, onDelete, onRefetch }: BagsInventoryTableProps): React.ReactElement {
     const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
     const [editWIP, setEditWIP] = useState<Product | null>(null);
+    const [viewAllocation, setViewAllocation] = useState<Product | null>(null);
     const { addToCart, items } = useCart();
 
     return (
@@ -153,9 +157,12 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 <div className="font-bold text-lg">{currentStock.toLocaleString()}枚</div>
                                             )}
                                         </TableCell>
-                                        <TableCell className="text-right">
+                                        <TableCell
+                                            className={cn("text-right", hasAllocation && "cursor-pointer hover:bg-blue-50 transition-colors")}
+                                            onClick={() => hasAllocation && setViewAllocation(product)}
+                                        >
                                             {hasAllocation ? (
-                                                <div className="text-blue-600">
+                                                <div className="text-blue-600 underline decoration-dotted underline-offset-4">
                                                     <div className="font-medium">{allocation.bags.toLocaleString()}本</div>
                                                     {isRoll && (
                                                         <div className="text-xs">({allocation.meters.toFixed(1)}m)</div>
@@ -286,6 +293,13 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                 open={!!editWIP}
                 onOpenChange={(open) => !open && setEditWIP(null)}
                 onSuccess={onRefetch}
+            />
+
+            <StockAllocationDialog
+                product={viewAllocation}
+                isOpen={!!viewAllocation}
+                onClose={() => setViewAllocation(null)}
+                saleEvents={saleEvents}
             />
         </Card>
     );
