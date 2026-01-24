@@ -89,6 +89,17 @@ const getProductGroup = (p: Product): number => {
     return 0;
 };
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 export default function BagsInventoryPage(): React.ReactElement {
     const [searchQuery, setSearchQuery] = useState("");
     const [weightFilter, setWeightFilter] = useState("all");
@@ -165,6 +176,10 @@ export default function BagsInventoryPage(): React.ReactElement {
     const [formDialogOpen, setFormDialogOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
+    // 削除確認ダイアログの状態
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
     const handleAddProduct = (): void => {
         setEditingProduct(null);
         setFormDialogOpen(true);
@@ -175,12 +190,22 @@ export default function BagsInventoryPage(): React.ReactElement {
         setFormDialogOpen(true);
     };
 
-    const handleDeleteProduct = async (productId: string): Promise<void> => {
-        if (!confirm("この商品を削除しますか？")) return;
+    // 削除ボタンクリック時
+    const handleDeleteClick = (product: Product): void => {
+        setProductToDelete(product);
+        setDeleteConfirmOpen(true);
+    };
+
+    // 削除実行
+    const executeDelete = async (): Promise<void> => {
+        if (!productToDelete) return;
+
         try {
-            const response = await fetch(`/api/products?id=${productId}`, { method: "DELETE" });
+            const response = await fetch(`/api/products?id=${productToDelete.id}`, { method: "DELETE" });
             if (response.ok) {
                 refetch();
+                setDeleteConfirmOpen(false);
+                setProductToDelete(null);
             } else {
                 const result = await response.json();
                 alert(result.error || "削除に失敗しました");
@@ -476,7 +501,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                 supplierStockMap={supplierStockMap}
                 incomingMap={incomingMap}
                 onEdit={handleEditProduct}
-                onDelete={handleDeleteProduct}
+                onDelete={handleDeleteClick}
                 onRefetch={refetch}
             />
 
@@ -487,6 +512,23 @@ export default function BagsInventoryPage(): React.ReactElement {
                 product={editingProduct}
                 onSuccess={refetch}
             />
+
+            {/* 削除確認ダイアログ */}
+            <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>本当に削除しますか？</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            「{productToDelete?.name}」を削除してもよろしいですか？<br />
+                            この操作は元に戻せません。
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setDeleteConfirmOpen(false)}>キャンセル</AlertDialogCancel>
+                        <AlertDialogAction onClick={executeDelete} className="bg-red-600 hover:bg-red-700">削除する</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
@@ -500,7 +542,7 @@ type BagsInventoryTableProps = {
     supplierStockMap: Map<string, number>;
     incomingMap: Map<string, { quantity: number; nextDate: string | null }>;
     onEdit: (product: Product) => void;
-    onDelete: (productId: string) => Promise<void>;
+    onDelete: (product: Product) => void;
     onRefetch: () => void;
 };
 
@@ -718,7 +760,7 @@ function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap,
                                                 <Button size="sm" variant="ghost" onClick={() => onEdit(product)} title="編集">
                                                     <Pencil className="h-3 w-3" />
                                                 </Button>
-                                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onDelete(product.id); }} title="削除" className="text-red-500 hover:text-red-600">
+                                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onDelete(product); }} title="削除" className="text-red-500 hover:text-red-600">
                                                     <Trash2 className="h-3 w-3" />
                                                 </Button>
                                             </div>
