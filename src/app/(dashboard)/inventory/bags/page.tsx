@@ -3,50 +3,45 @@
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import {
     Search,
     X,
     Filter,
-    Check,
     Loader2,
     Plus,
-    Pencil,
-    Trash2,
     Package,
     TrendingDown,
     Calendar,
     AlertTriangle
 } from "lucide-react";
 import {
-    inventoryService,
     getPitch,
-    isRollBag,
-    getApproxBagCount
 } from "@/lib/services";
-import { useCart } from "@/contexts/cart-context";
 import { useProducts, useInventory } from "@/hooks/use-supabase-data";
 import { useSaleEvents } from "@/hooks/use-sale-events";
 import { useWorkInProgress, calculateWIPByProduct } from "@/hooks/use-work-in-progress";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import type { Product } from "@/types";
-import { SupplierStockDialog } from "@/components/inventory/supplier-stock-dialog";
-import { WIPDialog } from "@/components/inventory/wip-dialog";
+import { BagsInventoryTable } from "@/components/inventory/bags-inventory-table";
+
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // 枚数からメートルに変換
 const bagsToMeters = (bags: number, weight: number): number => {
     const pitch = getPitch(weight);
     return (bags * pitch) / 1000;
-};
-
-// メートルから枚数に変換
-const metersToBags = (meters: number, weight: number): number => {
-    const pitch = getPitch(weight);
-    return Math.floor((meters * 1000) / pitch);
 };
 
 // 都道府県リスト（北から南、最後に国内産）
@@ -88,17 +83,6 @@ const getProductGroup = (p: Product): number => {
     if (isNB) return 1;
     return 0;
 };
-
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 export default function BagsInventoryPage(): React.ReactElement {
     const [searchQuery, setSearchQuery] = useState("");
@@ -530,263 +514,5 @@ export default function BagsInventoryPage(): React.ReactElement {
                 </AlertDialogContent>
             </AlertDialog>
         </div>
-    );
-}
-
-// 米袋専用テーブルコンポーネント
-type BagsInventoryTableProps = {
-    products: Product[];
-    inventoryMap: Map<string, number>;
-    saleAllocationMap: Map<string, { bags: number; meters: number }>;
-    wipMap: Map<string, number>;
-    supplierStockMap: Map<string, number>;
-    incomingMap: Map<string, { quantity: number; nextDate: string | null }>;
-    onEdit: (product: Product) => void;
-    onDelete: (product: Product) => void;
-    onRefetch: () => void;
-};
-
-function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch }: BagsInventoryTableProps): React.ReactElement {
-    const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
-    const [editWIP, setEditWIP] = useState<Product | null>(null);
-    const { addToCart, items } = useCart();
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>米袋在庫状況 ({products.length}件)</CardTitle>
-            </CardHeader>
-            <CardContent>
-                {products.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                        該当する商品がありません
-                    </div>
-                ) : (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[60px]">画像</TableHead>
-                                <TableHead>商品情報</TableHead>
-                                <TableHead>スペック</TableHead>
-                                <TableHead className="text-right">現在庫</TableHead>
-                                <TableHead className="text-right">特売引当</TableHead>
-                                <TableHead className="text-right">有効在庫</TableHead>
-                                <TableHead className="text-right">メーカー在庫</TableHead>
-                                <TableHead className="text-right">仕掛中</TableHead>
-                                <TableHead className="text-right">入荷予定</TableHead>
-                                <TableHead className="text-center">状態</TableHead>
-                                <TableHead className="w-[100px]">操作</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {products.map((product) => {
-                                const currentStock = inventoryMap.get(product.id) || 0;
-                                const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
-                                const incoming = incomingMap.get(product.id);
-                                const wipQuantity = wipMap.get(product.id) || 0;
-                                const supplierStock = supplierStockMap.get(product.id) || 0;
-
-                                const isRoll = product.shape && isRollBag(product.shape);
-
-                                let availableStock: number;
-                                let currentBags: number;
-                                let availableBags: number;
-
-                                if (isRoll) {
-                                    availableStock = Math.max(0, currentStock - allocation.meters);
-                                    currentBags = metersToBags(currentStock, product.weight || 5);
-                                    availableBags = metersToBags(availableStock, product.weight || 5);
-                                } else {
-                                    availableStock = Math.max(0, currentStock - allocation.bags);
-                                    currentBags = currentStock;
-                                    availableBags = availableStock;
-                                }
-
-                                const isOutOfStock = availableStock <= 0;
-                                // minStockAlertを使って低在庫判定（設定がない場合はデフォルト100）
-                                const alertThreshold = product.minStockAlert || 100;
-                                const isLowStock = availableStock > 0 && availableStock <= alertThreshold;
-                                const hasAllocation = allocation.bags > 0;
-
-                                const isInCart = items.some(item => item.product.id === product.id);
-
-                                return (
-                                    <TableRow key={product.id} className={cn(isOutOfStock && "bg-red-50")}>
-                                        <TableCell>
-                                            {product.imageUrl ? (
-                                                <img
-                                                    src={product.imageUrl}
-                                                    alt={product.name}
-                                                    className="w-12 h-12 object-cover rounded border"
-                                                />
-                                            ) : (
-                                                <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
-                                                    <Package className="h-5 w-5 text-gray-400" />
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="max-w-[180px]">
-                                                <div className="font-medium truncate" title={product.name}>{product.name}</div>
-                                                <div className="text-sm text-gray-500 truncate">受注№: {product.sku || '-'}</div>
-                                                {product.productCode && <div className="text-sm text-gray-500 truncate">商品コード: {product.productCode}</div>}
-                                                <div className="text-xs text-gray-400 truncate">JAN: {product.janCode || '-'}</div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="text-sm">
-                                                <span className="font-medium">{product.weight}kg</span> / {product.shape}
-                                                {isRoll && (
-                                                    <div className="text-xs text-blue-600 mt-1">
-                                                        ピッチ: {getPitch(product.weight || 0)}mm
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {isRoll ? (
-                                                <>
-                                                    <div className="font-bold text-lg">{currentStock.toLocaleString()}m</div>
-                                                    <div className="text-xs text-muted-foreground">約{currentBags.toLocaleString()}枚</div>
-                                                </>
-                                            ) : (
-                                                <div className="font-bold text-lg">{currentStock.toLocaleString()}枚</div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {hasAllocation ? (
-                                                <div className="text-blue-600">
-                                                    <div className="font-medium">{allocation.bags.toLocaleString()}本</div>
-                                                    {isRoll && (
-                                                        <div className="text-xs">({allocation.meters.toFixed(1)}m)</div>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <span className="text-muted-foreground">-</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {isRoll ? (
-                                                <>
-                                                    <div className={cn(
-                                                        "font-bold text-lg",
-                                                        isOutOfStock && "text-red-600",
-                                                        isLowStock && "text-amber-600"
-                                                    )}>
-                                                        {availableStock.toLocaleString()}m
-                                                    </div>
-                                                    <div className={cn(
-                                                        "text-xs",
-                                                        isOutOfStock && "text-red-500",
-                                                        isLowStock && "text-amber-500"
-                                                    )}>
-                                                        約{availableBags.toLocaleString()}枚
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <div className={cn(
-                                                    "font-bold text-lg",
-                                                    isOutOfStock && "text-red-600",
-                                                    isLowStock && "text-amber-600"
-                                                )}>
-                                                    {availableStock.toLocaleString()}枚
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell
-                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
-                                            onClick={() => setEditSupplierStock(product)}
-                                        >
-                                            {supplierStock > 0 ? (
-                                                <div className="text-orange-600">
-                                                    <div className="font-medium">{supplierStock.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
-                                                    <div className="text-xs">メーカー</div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center justify-end">
-                                                    <span className="text-muted-foreground group-hover:hidden">-</span>
-                                                    <Pencil className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell
-                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
-                                            onClick={() => setEditWIP(product)}
-                                        >
-                                            {wipQuantity > 0 ? (
-                                                <div className="text-purple-600">
-                                                    <div className="font-medium">{wipQuantity.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
-                                                    <div className="text-xs">加工中</div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center justify-end">
-                                                    <span className="text-muted-foreground group-hover:hidden">-</span>
-                                                    <Plus className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {incoming ? (
-                                                <div className="text-emerald-600">
-                                                    <div className="font-medium">{incoming.quantity.toLocaleString()}m</div>
-                                                    {incoming.nextDate && <div className="text-xs">{incoming.nextDate}</div>}
-                                                </div>
-                                            ) : (
-                                                <span className="text-muted-foreground">-</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            {isOutOfStock ? (
-                                                <Badge variant="destructive">欠品</Badge>
-                                            ) : isLowStock ? (
-                                                <Badge variant="outline" className="border-amber-500 text-amber-600">低在庫</Badge>
-                                            ) : hasAllocation ? (
-                                                <Badge variant="outline" className="border-blue-500 text-blue-600">引当中</Badge>
-                                            ) : (
-                                                <Badge variant="outline" className="border-green-500 text-green-600">正常</Badge>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-1">
-                                                <Button
-                                                    size="sm"
-                                                    variant={isInCart ? "secondary" : "outline"}
-                                                    onClick={() => addToCart(product, 1)}
-                                                    disabled={isOutOfStock}
-                                                    className="gap-1"
-                                                >
-                                                    {isInCart ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-                                                </Button>
-                                                <Button size="sm" variant="ghost" onClick={() => onEdit(product)} title="編集">
-                                                    <Pencil className="h-3 w-3" />
-                                                </Button>
-                                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onDelete(product); }} title="削除" className="text-red-500 hover:text-red-600">
-                                                    <Trash2 className="h-3 w-3" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })}
-                        </TableBody>
-                    </Table>
-                )}
-            </CardContent>
-
-            <SupplierStockDialog
-                product={editSupplierStock}
-                open={!!editSupplierStock}
-                onOpenChange={(open) => !open && setEditSupplierStock(null)}
-                currentStock={editSupplierStock ? (supplierStockMap.get(editSupplierStock.id) || 0) : 0}
-                onSuccess={onRefetch}
-            />
-
-            <WIPDialog
-                product={editWIP}
-                open={!!editWIP}
-                onOpenChange={(open) => !open && setEditWIP(null)}
-                onSuccess={onRefetch}
-            />
-        </Card>
     );
 }
