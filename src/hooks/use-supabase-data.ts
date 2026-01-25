@@ -5,7 +5,7 @@
  * クライアントコンポーネントからSupabase APIを呼び出すためのカスタムフック
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Product, Inventory, StockHistory } from '@/types';
 
 // 商品情報付き在庫データの型
@@ -34,9 +34,10 @@ export function useProducts(): {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const loadedRef = useRef(false);
 
     const fetchProducts = useCallback(async (): Promise<void> => {
-        setLoading(true);
+        if (!loadedRef.current) setLoading(true);
         setError(null);
 
         try {
@@ -46,6 +47,7 @@ export function useProducts(): {
             }
             const data = await response.json();
             setProducts(data);
+            loadedRef.current = true;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'データの取得に失敗しました');
         } finally {
@@ -76,9 +78,10 @@ export function useInventory(options?: {
     const [inventory, setInventory] = useState<InventoryWithProduct[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const loadedRef = useRef(false);
 
     const fetchInventory = useCallback(async (): Promise<void> => {
-        setLoading(true);
+        if (!loadedRef.current) setLoading(true);
         setError(null);
 
         try {
@@ -116,6 +119,7 @@ export function useInventory(options?: {
                     product: item.product
                 }));
             setInventory(mappedData);
+            loadedRef.current = true;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'データの取得に失敗しました');
         } finally {
@@ -259,9 +263,10 @@ export function useStockHistory(options?: {
     const [history, setHistory] = useState<StockHistory[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const loadedRef = useRef(false);
 
     const fetchHistory = useCallback(async (): Promise<void> => {
-        setLoading(true);
+        if (!loadedRef.current) setLoading(true);
         setError(null);
 
         try {
@@ -290,6 +295,7 @@ export function useStockHistory(options?: {
             }
 
             setHistory(result.data || []);
+            loadedRef.current = true;
         } catch (err) {
             setError(err instanceof Error ? err.message : '在庫履歴の取得に失敗しました');
         } finally {

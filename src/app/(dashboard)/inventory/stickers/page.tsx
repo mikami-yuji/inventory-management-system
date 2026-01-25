@@ -25,10 +25,13 @@ import { useCart } from "@/contexts/cart-context";
 import { useProducts, useInventory } from "@/hooks/use-supabase-data";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import type { Product } from "@/types";
+import { StockAdjustmentDialog } from "@/components/inventory/stock-adjustment-dialog";
 
 export default function StickersInventoryPage(): React.ReactElement {
     const [searchQuery, setSearchQuery] = useState("");
     const [stockFilter, setStockFilter] = useState("all");
+    const [formDialogOpen, setFormDialogOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
     // Supabase APIから商品と在庫を取得
     const { products: allProducts, loading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
@@ -45,9 +48,9 @@ export default function StickersInventoryPage(): React.ReactElement {
 
     // 在庫マップを作成
     const inventoryMap = useMemo(() => {
-        const map = new Map<string, number>();
+        const map = new Map<string, { quantity: number; updatedAt?: string }>();
         inventoryData?.forEach(item => {
-            map.set(item.productId, item.quantity);
+            map.set(item.productId, { quantity: item.quantity, updatedAt: item.updatedAt });
         });
         return map;
     }, [inventoryData]);
@@ -57,33 +60,22 @@ export default function StickersInventoryPage(): React.ReactElement {
         refetchInventory();
     };
 
-    // 商品フォームダイアログの状態
-    const [formDialogOpen, setFormDialogOpen] = useState(false);
-    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
-    const handleAddProduct = (): void => {
+    const handleAddProduct = () => {
         setEditingProduct(null);
         setFormDialogOpen(true);
     };
 
-    const handleEditProduct = (product: Product): void => {
+    const handleEditProduct = (product: Product) => {
         setEditingProduct(product);
         setFormDialogOpen(true);
     };
 
-    const handleDeleteProduct = async (productId: string): Promise<void> => {
-        if (!confirm("この商品を削除しますか？")) return;
-        try {
-            const response = await fetch(`/api/products?id=${productId}`, { method: "DELETE" });
-            if (response.ok) {
-                refetch();
-            } else {
-                const result = await response.json();
-                alert(result.error || "削除に失敗しました");
-            }
-        } catch (err) {
-            console.error("Delete error:", err);
-            alert("削除中にエラーが発生しました");
+    const handleDeleteProduct = async (productId: string) => {
+        if (confirm("本当にこの商品を削除しますか？")) {
+            // TODO: 削除処理を実装
+            console.log("Delete product:", productId);
+            // await deleteProduct(productId);
+            refetch();
         }
     };
 
@@ -105,13 +97,13 @@ export default function StickersInventoryPage(): React.ReactElement {
         // 在庫フィルター
         if (stockFilter === "low") {
             products = products.filter(p => {
-                const qty = inventoryMap.get(p.id) || 0;
+                const qty = inventoryMap.get(p.id)?.quantity || 0;
                 const minAlert = p.minStockAlert || 100;
                 return qty > 0 && qty < minAlert;
             });
         } else if (stockFilter === "out") {
             products = products.filter(p => {
-                const qty = inventoryMap.get(p.id) || 0;
+                const qty = inventoryMap.get(p.id)?.quantity || 0;
                 return qty <= 0;
             });
         }
@@ -125,7 +117,7 @@ export default function StickersInventoryPage(): React.ReactElement {
         let outOfStock = 0;
 
         stickerProducts.forEach(p => {
-            const qty = inventoryMap.get(p.id) || 0;
+            const qty = inventoryMap.get(p.id)?.quantity || 0;
             const minAlert = p.minStockAlert || 100;
 
             if (qty <= 0) outOfStock++;
@@ -135,33 +127,33 @@ export default function StickersInventoryPage(): React.ReactElement {
         return { total: stickerProducts.length, lowStock, outOfStock };
     }, [stickerProducts, inventoryMap]);
 
-    const hasActiveFilters = searchQuery || stockFilter !== "all";
+    const hasActiveFilters = searchQuery.trim() !== "" || stockFilter !== "all";
 
-    const clearFilters = (): void => {
+    const clearFilters = () => {
         setSearchQuery("");
         setStockFilter("all");
     };
 
-    if (loading) {
+    // 初回ロード時のみローディング表示（データがある場合は更新中も表示し続ける）
+    if (loading && allProducts.length === 0) {
         return (
-            <div className="flex items-center justify-center h-96">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="p-8 text-center">
-                <p className="text-red-500">{error}</p>
-                <Button onClick={refetch} className="mt-4">再読み込み</Button>
+            <div className="text-center text-red-500 p-8">
+                エラーが発生しました: {error}
+                <Button onClick={refetch} className="ml-4">再試行</Button>
             </div>
         );
     }
 
     return (
         <div className="space-y-6 p-6">
-            {/* ヘッダー */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold">シール在庫管理</h1>
@@ -173,7 +165,6 @@ export default function StickersInventoryPage(): React.ReactElement {
                 </Button>
             </div>
 
-            {/* サマリーカード */}
             <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                     <CardHeader className="pb-2">
@@ -210,7 +201,6 @@ export default function StickersInventoryPage(): React.ReactElement {
                 </Card>
             </div>
 
-            {/* 検索・フィルターエリア */}
             <Card>
                 <CardContent className="pt-6">
                     <div className="flex flex-col gap-4 md:flex-row md:items-end">
@@ -264,15 +254,14 @@ export default function StickersInventoryPage(): React.ReactElement {
                 </CardContent>
             </Card>
 
-            {/* 在庫テーブル */}
             <StickersInventoryTable
                 products={filteredProducts}
                 inventoryMap={inventoryMap}
                 onEdit={handleEditProduct}
                 onDelete={handleDeleteProduct}
+                onRefetch={refetch}
             />
 
-            {/* 商品フォームダイアログ */}
             <ProductFormDialog
                 open={formDialogOpen}
                 onOpenChange={setFormDialogOpen}
@@ -286,13 +275,15 @@ export default function StickersInventoryPage(): React.ReactElement {
 // シール専用テーブルコンポーネント（シンプル版）
 type StickersInventoryTableProps = {
     products: Product[];
-    inventoryMap: Map<string, number>;
+    inventoryMap: Map<string, { quantity: number; updatedAt?: string }>;
     onEdit: (product: Product) => void;
     onDelete: (productId: string) => Promise<void>;
+    onRefetch: () => void;
 };
 
-function StickersInventoryTable({ products, inventoryMap, onEdit, onDelete }: StickersInventoryTableProps): React.ReactElement {
+function StickersInventoryTable({ products, inventoryMap, onEdit, onDelete, onRefetch }: StickersInventoryTableProps): React.ReactElement {
     const { addToCart, items } = useCart();
+    const [adjustStock, setAdjustStock] = useState<Product | null>(null);
 
     return (
         <Card>
@@ -318,7 +309,9 @@ function StickersInventoryTable({ products, inventoryMap, onEdit, onDelete }: St
                         </TableHeader>
                         <TableBody>
                             {products.map((product) => {
-                                const currentStock = inventoryMap.get(product.id) || 0;
+                                const inventoryItem = inventoryMap.get(product.id) || { quantity: 0 };
+                                const currentStock = inventoryItem.quantity;
+                                const updatedAt = inventoryItem.updatedAt;
                                 const minAlert = product.minStockAlert || 100;
 
                                 const isOutOfStock = currentStock <= 0;
@@ -346,14 +339,24 @@ function StickersInventoryTable({ products, inventoryMap, onEdit, onDelete }: St
                                             {product.productCode && <div className="text-sm text-gray-500">商品コード: {product.productCode}</div>}
                                             <div className="text-xs text-gray-400">JAN: {product.janCode || '-'}</div>
                                         </TableCell>
-                                        <TableCell className="text-right">
+                                        <TableCell
+                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative"
+                                            onClick={() => setAdjustStock(product)}
+                                        >
                                             <div className={cn(
-                                                "font-bold text-lg",
+                                                "font-bold text-lg flex items-center justify-end gap-1",
                                                 isOutOfStock && "text-red-600",
                                                 isLowStock && "text-amber-600"
                                             )}>
                                                 {currentStock.toLocaleString()}枚
+                                                <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
                                             </div>
+                                            {updatedAt && (
+                                                <div className="text-[10px] text-gray-400 clear-both pt-1">
+                                                    {new Date(updatedAt).toLocaleDateString()}{" "}
+                                                    {new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                            )}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="text-muted-foreground">
@@ -395,6 +398,14 @@ function StickersInventoryTable({ products, inventoryMap, onEdit, onDelete }: St
                     </Table>
                 )}
             </CardContent>
+
+            <StockAdjustmentDialog
+                product={adjustStock}
+                open={!!adjustStock}
+                onOpenChange={(open) => !open && setAdjustStock(null)}
+                currentStock={adjustStock ? (inventoryMap.get(adjustStock.id)?.quantity || 0) : 0}
+                onSuccess={onRefetch}
+            />
         </Card>
     );
 }

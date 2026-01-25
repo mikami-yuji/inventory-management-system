@@ -43,6 +43,7 @@ export async function GET(): Promise<NextResponse> {
             variety: item.variety,
             suffix: item.suffix,
             productType: item.product_type, // Excel Column Type
+            supplierStock: item.supplier_stock && !isNaN(Number(item.supplier_stock)) ? Number(item.supplier_stock) : 0,
         }));
 
         return NextResponse.json(products);

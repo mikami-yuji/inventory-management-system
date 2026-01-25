@@ -21,6 +21,7 @@ import { useCart } from "@/contexts/cart-context";
 import type { Product } from "@/types";
 import { SupplierStockDialog } from "@/components/inventory/supplier-stock-dialog";
 import { WIPDialog } from "@/components/inventory/wip-dialog";
+import { StockAdjustmentDialog } from "@/components/inventory/stock-adjustment-dialog";
 import { StockAllocationDialog } from "@/components/inventory/stock-allocation-dialog";
 import type { SaleEvent } from "@/hooks/use-sale-events";
 
@@ -38,7 +39,7 @@ const metersToBags = (meters: number, weight: number): number => {
 
 export type BagsInventoryTableProps = {
     products: Product[];
-    inventoryMap: Map<string, number>;
+    inventoryMap: Map<string, { quantity: number; updatedAt?: string }>;
     saleAllocationMap: Map<string, { bags: number; meters: number }>;
     wipMap: Map<string, number>;
     supplierStockMap: Map<string, number>;
@@ -53,6 +54,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
     const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
     const [editWIP, setEditWIP] = useState<Product | null>(null);
     const [viewAllocation, setViewAllocation] = useState<Product | null>(null);
+    const [adjustStock, setAdjustStock] = useState<Product | null>(null);
     const { addToCart, items } = useCart();
 
     return (
@@ -84,7 +86,10 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                         </TableHeader>
                         <TableBody>
                             {products.map((product) => {
-                                const currentStock = inventoryMap.get(product.id) || 0;
+                                const inventoryItem = inventoryMap.get(product.id) || { quantity: 0 };
+                                const currentStock = inventoryItem.quantity;
+                                const updatedAt = inventoryItem.updatedAt;
+
                                 const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
                                 const incoming = incomingMap.get(product.id);
                                 const wipQuantity = wipMap.get(product.id) || 0;
@@ -97,11 +102,11 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 let availableBags: number;
 
                                 if (isRoll) {
-                                    availableStock = Math.max(0, currentStock - allocation.meters);
+                                    availableStock = currentStock - allocation.meters; // マイナスも許容
                                     currentBags = metersToBags(currentStock, product.weight || 5);
                                     availableBags = metersToBags(availableStock, product.weight || 5);
                                 } else {
-                                    availableStock = Math.max(0, currentStock - allocation.bags);
+                                    availableStock = currentStock - allocation.bags; // マイナスも許容
                                     currentBags = currentStock;
                                     availableBags = availableStock;
                                 }
@@ -147,14 +152,29 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 )}
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-right">
+                                        <TableCell
+                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative"
+                                            onClick={() => setAdjustStock(product)}
+                                        >
                                             {isRoll ? (
                                                 <>
-                                                    <div className="font-bold text-lg">{currentStock.toLocaleString()}m</div>
-                                                    <div className="text-xs text-muted-foreground">約{currentBags.toLocaleString()}枚</div>
+                                                    <div className="font-bold text-lg flex items-center justify-end gap-1">
+                                                        {currentStock.toLocaleString()}m
+                                                        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground float-right">約{currentBags.toLocaleString()}枚</div>
                                                 </>
                                             ) : (
-                                                <div className="font-bold text-lg">{currentStock.toLocaleString()}枚</div>
+                                                <div className="font-bold text-lg flex items-center justify-end gap-1">
+                                                    {currentStock.toLocaleString()}枚
+                                                    <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                                                </div>
+                                            )}
+                                            {updatedAt && (
+                                                <div className="text-[10px] text-gray-400 clear-both pt-1">
+                                                    {new Date(updatedAt).toLocaleDateString()}{" "}
+                                                    {new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
                                             )}
                                         </TableCell>
                                         <TableCell
@@ -183,7 +203,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                         {availableStock.toLocaleString()}m
                                                     </div>
                                                     <div className={cn(
-                                                        "text-xs",
+                                                        "text-xs float-right",
                                                         isOutOfStock && "text-red-500",
                                                         isLowStock && "text-amber-500"
                                                     )}>
@@ -279,6 +299,14 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                     </Table>
                 )}
             </CardContent>
+
+            <StockAdjustmentDialog
+                product={adjustStock}
+                open={!!adjustStock}
+                onOpenChange={(open) => !open && setAdjustStock(null)}
+                currentStock={adjustStock ? (inventoryMap.get(adjustStock.id)?.quantity || 0) : 0}
+                onSuccess={onRefetch}
+            />
 
             <SupplierStockDialog
                 product={editSupplierStock}

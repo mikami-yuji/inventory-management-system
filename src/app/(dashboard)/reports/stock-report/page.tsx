@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,7 @@ import { stockHistoryService } from "@/lib/services";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-export default function StockReportPage(): React.ReactElement {
+function StockReportContent(): React.ReactElement {
     const searchParams = useSearchParams();
     const categoryParam = searchParams.get("category");
 
@@ -296,5 +296,13 @@ export default function StockReportPage(): React.ReactElement {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function StockReportPage(): React.ReactElement {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+            <StockReportContent />
+        </Suspense>
     );
 }

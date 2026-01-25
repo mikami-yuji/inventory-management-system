@@ -296,7 +296,7 @@ export default function StockInputPage(): React.ReactElement {
 
                     {/* 商品リスト - 大きなカード */}
                     <div className="space-y-2">
-                        {isLoading ? (
+                        {isLoading && filteredProducts.length === 0 ? (
                             <div className="flex justify-center py-8">
                                 <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                             </div>

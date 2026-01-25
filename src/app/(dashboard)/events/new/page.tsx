@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,8 +32,6 @@ import { ja } from "date-fns/locale";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { Product } from "@/types";
-
-// 特売アイテムの型
 type SaleItem = {
     id: string;
     product: Product;
@@ -41,7 +39,7 @@ type SaleItem = {
     currentStock: number;
 };
 
-export default function NewEventPage(): React.ReactElement {
+function NewEventContent(): React.ReactElement {
     const router = useRouter();
     const searchParams = useSearchParams();
     const copyFromId = searchParams.get("copy");
@@ -527,5 +525,13 @@ export default function NewEventPage(): React.ReactElement {
                 </div>
             </form>
         </div>
+    );
+}
+
+export default function NewEventPage(): React.ReactElement {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+            <NewEventContent />
+        </Suspense>
     );
 }

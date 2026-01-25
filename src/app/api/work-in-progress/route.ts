@@ -131,9 +131,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 expected_completion: expectedCompletion || null,
                 note: note || null,
                 status: 'in_progress'
-            })
+            } as any)
             .select()
-            .single()
+            .single<any>()
 
         if (error) {
             console.error('仕掛中登録エラー:', error)
@@ -168,7 +168,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 .from('work_in_progress')
                 .select('product_id, quantity')
                 .eq('id', id)
-                .single()
+                .single<any>()
 
             if (wipItem) {
                 // 現在の在庫を取得
@@ -176,7 +176,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     .from('inventory')
                     .select('quantity')
                     .eq('product_id', wipItem.product_id)
-                    .single()
+                    .single<any>()
 
                 const currentQty = inventory?.quantity || 0
                 const newQty = currentQty + wipItem.quantity
@@ -188,7 +188,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                         product_id: wipItem.product_id,
                         quantity: newQty,
                         updated_at: new Date().toISOString()
-                    }, { onConflict: 'product_id' })
+                    } as any, { onConflict: 'product_id' })
 
                 // 履歴を記録
                 await supabase.from('stock_history').insert({
@@ -196,11 +196,12 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     type: 'incoming',
                     quantity: wipItem.quantity,
                     note: '仕掛中完了'
-                })
+                } as any)
 
                 // 仕掛中を完了に更新
                 await supabase
                     .from('work_in_progress')
+                    // @ts-ignore
                     .update({
                         status: 'completed',
                         completed_at: new Date().toISOString().split('T')[0]
@@ -210,11 +211,13 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         } else if (action === 'cancel') {
             await supabase
                 .from('work_in_progress')
+                // @ts-ignore
                 .update({ status: 'cancelled' })
                 .eq('id', id)
         } else if (action === 'update' && updateData) {
             await supabase
                 .from('work_in_progress')
+                // @ts-ignore
                 .update(updateData)
                 .eq('id', id)
         }

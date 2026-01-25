@@ -42,6 +42,7 @@ export type Product = {
   backColorCount?: number; // 裏色数
   totalColorCount?: number; // 総色数
   productType?: string; // Excel Column Type (種別) 例: 既製品, 別注
+  supplierStock?: number; // メーカー在庫
 };
 
 // 在庫情報

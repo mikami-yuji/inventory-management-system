@@ -25,6 +25,7 @@ import { useCart } from "@/contexts/cart-context";
 import { useProducts, useInventory } from "@/hooks/use-supabase-data";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import type { Product } from "@/types";
+import { StockAdjustmentDialog } from "@/components/inventory/stock-adjustment-dialog";
 
 export default function OthersInventoryPage(): React.ReactElement {
     const [searchQuery, setSearchQuery] = useState("");
@@ -45,9 +46,9 @@ export default function OthersInventoryPage(): React.ReactElement {
 
     // 在庫マップを作成
     const inventoryMap = useMemo(() => {
-        const map = new Map<string, number>();
+        const map = new Map<string, { quantity: number; updatedAt?: string }>();
         inventoryData?.forEach(item => {
-            map.set(item.productId, item.quantity);
+            map.set(item.productId, { quantity: item.quantity, updatedAt: item.updatedAt });
         });
         return map;
     }, [inventoryData]);
@@ -103,12 +104,12 @@ export default function OthersInventoryPage(): React.ReactElement {
 
         if (stockFilter === "low") {
             products = products.filter(p => {
-                const qty = inventoryMap.get(p.id) || 0;
+                const qty = inventoryMap.get(p.id)?.quantity || 0;
                 const minAlert = p.minStockAlert || 100;
                 return qty > 0 && qty < minAlert;
             });
         } else if (stockFilter === "out") {
-            products = products.filter(p => (inventoryMap.get(p.id) || 0) <= 0);
+            products = products.filter(p => (inventoryMap.get(p.id)?.quantity || 0) <= 0);
         }
 
         return products;
@@ -120,7 +121,7 @@ export default function OthersInventoryPage(): React.ReactElement {
         let outOfStock = 0;
 
         otherProducts.forEach(p => {
-            const qty = inventoryMap.get(p.id) || 0;
+            const qty = inventoryMap.get(p.id)?.quantity || 0;
             const minAlert = p.minStockAlert || 100;
             if (qty <= 0) outOfStock++;
             else if (qty < minAlert) lowStock++;
@@ -136,7 +137,8 @@ export default function OthersInventoryPage(): React.ReactElement {
         setStockFilter("all");
     };
 
-    if (loading) {
+    // 初回ロード時のみローディング表示（データがある場合は更新中も表示し続ける）
+    if (loading && otherProducts.length === 0) {
         return (
             <div className="flex items-center justify-center h-96">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -266,6 +268,7 @@ export default function OthersInventoryPage(): React.ReactElement {
                             inventoryMap={inventoryMap}
                             onEdit={handleEditProduct}
                             onDelete={handleDeleteProduct}
+                            onRefetch={refetch}
                         />
                     )}
                 </CardContent>
@@ -283,83 +286,116 @@ export default function OthersInventoryPage(): React.ReactElement {
 
 type OthersInventoryTableProps = {
     products: Product[];
-    inventoryMap: Map<string, number>;
+    inventoryMap: Map<string, { quantity: number; updatedAt?: string }>;
     onEdit: (product: Product) => void;
     onDelete: (productId: string) => Promise<void>;
+    onRefetch: () => void;
 };
 
-function OthersInventoryTable({ products, inventoryMap, onEdit, onDelete }: OthersInventoryTableProps): React.ReactElement {
+function OthersInventoryTable({ products, inventoryMap, onEdit, onDelete, onRefetch }: OthersInventoryTableProps): React.ReactElement {
     const { addToCart, items } = useCart();
+    const [adjustStock, setAdjustStock] = useState<Product | null>(null);
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>商品情報</TableHead>
-                    <TableHead className="text-right">現在庫</TableHead>
-                    <TableHead className="text-right">発注点</TableHead>
-                    <TableHead className="text-center">状態</TableHead>
-                    <TableHead className="w-[100px]">操作</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {products.map((product) => {
-                    const currentStock = inventoryMap.get(product.id) || 0;
-                    const minAlert = product.minStockAlert || 100;
-                    const isOutOfStock = currentStock <= 0;
-                    const isLowStock = currentStock > 0 && currentStock < minAlert;
-                    const isInCart = items.some(item => item.product.id === product.id);
+        <Card>
+            <CardHeader>
+                <CardTitle>その他在庫状況 ({products.length}件)</CardTitle>
+            </CardHeader>
+            <CardContent>
+                {products.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">該当する商品がありません</div>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>商品情報</TableHead>
+                                <TableHead className="text-right">現在庫</TableHead>
+                                <TableHead className="text-right">発注点</TableHead>
+                                <TableHead className="text-center">状態</TableHead>
+                                <TableHead className="w-[100px]">操作</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {products.map((product) => {
+                                const inventoryItem = inventoryMap.get(product.id) || { quantity: 0 };
+                                const currentStock = inventoryItem.quantity;
+                                const updatedAt = inventoryItem.updatedAt;
+                                const minAlert = product.minStockAlert || 100;
+                                const isOutOfStock = currentStock <= 0;
+                                const isLowStock = currentStock > 0 && currentStock < minAlert;
+                                const isInCart = items.some(item => item.product.id === product.id);
 
-                    return (
-                        <TableRow key={product.id} className={cn(isOutOfStock && "bg-red-50")}>
-                            <TableCell>
-                                <div className="font-medium">{product.name}</div>
-                                <div className="text-sm text-gray-500">受注№: {product.sku || '-'}</div>
-                                {product.productCode && <div className="text-sm text-gray-500">商品コード: {product.productCode}</div>}
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <div className={cn(
-                                    "font-bold text-lg",
-                                    isOutOfStock && "text-red-600",
-                                    isLowStock && "text-amber-600"
-                                )}>
-                                    {currentStock.toLocaleString()}
-                                </div>
-                            </TableCell>
-                            <TableCell className="text-right text-muted-foreground">
-                                {minAlert.toLocaleString()}
-                            </TableCell>
-                            <TableCell className="text-center">
-                                {isOutOfStock ? (
-                                    <Badge variant="destructive">欠品</Badge>
-                                ) : isLowStock ? (
-                                    <Badge variant="outline" className="border-amber-500 text-amber-600">低在庫</Badge>
-                                ) : (
-                                    <Badge variant="outline" className="border-green-500 text-green-600">正常</Badge>
-                                )}
-                            </TableCell>
-                            <TableCell>
-                                <div className="flex items-center gap-1">
-                                    <Button
-                                        size="sm"
-                                        variant={isInCart ? "secondary" : "outline"}
-                                        onClick={() => addToCart(product, 1)}
-                                        disabled={isOutOfStock}
-                                    >
-                                        {isInCart ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-                                    </Button>
-                                    <Button size="sm" variant="ghost" onClick={() => onEdit(product)}>
-                                        <Pencil className="h-3 w-3" />
-                                    </Button>
-                                    <Button size="sm" variant="ghost" onClick={() => onDelete(product.id)} className="text-red-500">
-                                        <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    );
-                })}
-            </TableBody>
-        </Table>
+                                return (
+                                    <TableRow key={product.id} className={cn(isOutOfStock && "bg-red-50")}>
+                                        <TableCell>
+                                            <div className="font-medium">{product.name}</div>
+                                            <div className="text-sm text-gray-500">受注№: {product.sku || '-'}</div>
+                                            {product.productCode && <div className="text-sm text-gray-500">商品コード: {product.productCode}</div>}
+                                        </TableCell>
+                                        <TableCell
+                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative"
+                                            onClick={() => setAdjustStock(product)}
+                                        >
+                                            <div className={cn(
+                                                "font-bold text-lg flex items-center justify-end gap-1",
+                                                isOutOfStock && "text-red-600",
+                                                isLowStock && "text-amber-600"
+                                            )}>
+                                                {currentStock.toLocaleString()}
+                                                <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                                            </div>
+                                            {updatedAt && (
+                                                <div className="text-[10px] text-gray-400 clear-both pt-1">
+                                                    {new Date(updatedAt).toLocaleDateString()}{" "}
+                                                    {new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right text-muted-foreground">
+                                            {minAlert.toLocaleString()}
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            {isOutOfStock ? (
+                                                <Badge variant="destructive">欠品</Badge>
+                                            ) : isLowStock ? (
+                                                <Badge variant="outline" className="border-amber-500 text-amber-600">低在庫</Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="border-green-500 text-green-600">正常</Badge>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    size="sm"
+                                                    variant={isInCart ? "secondary" : "outline"}
+                                                    onClick={() => addToCart(product, 1)}
+                                                    disabled={isOutOfStock}
+                                                >
+                                                    {isInCart ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                                                </Button>
+                                                <Button size="sm" variant="ghost" onClick={() => onEdit(product)}>
+                                                    <Pencil className="h-3 w-3" />
+                                                </Button>
+                                                <Button size="sm" variant="ghost" onClick={() => onDelete(product.id)} className="text-red-500">
+                                                    <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                )}
+            </CardContent>
+
+            <StockAdjustmentDialog
+                product={adjustStock}
+                open={!!adjustStock}
+                onOpenChange={(open) => !open && setAdjustStock(null)}
+                currentStock={adjustStock ? (inventoryMap.get(adjustStock.id)?.quantity || 0) : 0}
+                onSuccess={onRefetch}
+            />
+        </Card>
     );
 }

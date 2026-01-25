@@ -101,16 +101,18 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         }
 
         // 現在の在庫を取得
-        const { data: currentInventory, error: fetchError } = await supabase
+        const { data: currentInventoryData, error: fetchError } = await supabase
             .from('inventory')
             .select('quantity')
             .eq('product_id', productId)
             .single()
 
-        if (fetchError) {
+        if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "The result contains 0 rows"
             console.error('在庫取得エラー:', fetchError)
             return NextResponse.json({ data: null, error: fetchError.message }, { status: 500 })
         }
+
+        const currentInventory = currentInventoryData as { quantity: number } | null;
 
         // 新しい在庫数を計算
         let newQuantity = currentInventory?.quantity ?? 0
@@ -135,7 +137,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 product_id: productId,
                 quantity: newQuantity,
                 updated_at: new Date().toISOString()
-            })
+            } as any, { onConflict: 'product_id' })
             .select()
             .single()
 
@@ -150,7 +152,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             type,
             quantity,
             note
-        })
+        } as any)
 
         return NextResponse.json({ data: updatedInventory, error: null })
     } catch (error) {

@@ -107,9 +107,9 @@ export default function BagsInventoryPage(): React.ReactElement {
 
     // 在庫マップを作成
     const inventoryMap = useMemo(() => {
-        const map = new Map<string, number>();
+        const map = new Map<string, { quantity: number; updatedAt?: string }>();
         inventoryData?.forEach(item => {
-            map.set(item.productId, item.quantity);
+            map.set(item.productId, { quantity: item.quantity, updatedAt: item.updatedAt });
         });
         return map;
     }, [inventoryData]);
@@ -141,7 +141,7 @@ export default function BagsInventoryPage(): React.ReactElement {
     const supplierStockMap = useMemo(() => {
         const map = new Map<string, number>();
         allProducts.forEach(product => {
-            const supplierStock = (product as unknown as { supplier_stock?: number }).supplier_stock || 0;
+            const supplierStock = product.supplierStock || 0;
             map.set(product.id, supplierStock);
         });
         return map;
@@ -241,14 +241,14 @@ export default function BagsInventoryPage(): React.ReactElement {
         // 在庫フィルター
         if (stockFilter === "low") {
             products = products.filter(p => {
-                const qty = inventoryMap.get(p.id) || 0;
+                const qty = inventoryMap.get(p.id)?.quantity || 0;
                 const allocated = saleAllocationMap.get(p.id)?.meters || 0;
                 const available = qty - allocated;
                 return available > 0 && available < 50;
             });
         } else if (stockFilter === "out") {
             products = products.filter(p => {
-                const qty = inventoryMap.get(p.id) || 0;
+                const qty = inventoryMap.get(p.id)?.quantity || 0;
                 const allocated = saleAllocationMap.get(p.id)?.meters || 0;
                 return qty - allocated <= 0;
             });
@@ -285,7 +285,7 @@ export default function BagsInventoryPage(): React.ReactElement {
         let hasReservation = 0;
 
         bagProducts.forEach(p => {
-            const qty = inventoryMap.get(p.id) || 0;
+            const qty = inventoryMap.get(p.id)?.quantity || 0;
             const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
             const available = qty - allocation.meters;
             // minStockAlertを使って低在庫判定（設定がない場合はデフォルト100）
@@ -308,7 +308,8 @@ export default function BagsInventoryPage(): React.ReactElement {
         setStockFilter("all");
     };
 
-    if (loading) {
+    // 初回ロード時のみローディング表示（データがある場合は更新中も表示し続ける）
+    if (loading && allProducts.length === 0) {
         return (
             <div className="flex items-center justify-center h-96">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
