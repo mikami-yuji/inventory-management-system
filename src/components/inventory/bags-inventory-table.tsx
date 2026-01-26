@@ -111,12 +111,22 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                     availableBags = availableStock;
                                 }
 
-                                const isOutOfStock = availableStock <= 0;
-                                // minStockAlertを使って低在庫判定（設定がない場合はデフォルト100）
-                                const alertThreshold = product.minStockAlert || 100;
-                                const isLowStock = availableStock > 0 && availableStock <= alertThreshold;
-                                const hasAllocation = allocation.bags > 0;
+                                // ステータス判定 (手動上書きを優先)
+                                let isOutOfStock = false;
+                                let isLowStock = false;
 
+                                if (product.statusOverride === 'out_of_stock') {
+                                    isOutOfStock = true;
+                                } else if (product.statusOverride === 'low_stock') {
+                                    isLowStock = true;
+                                } else {
+                                    // 自動判定
+                                    isOutOfStock = availableStock <= 0;
+                                    const alertThreshold = product.minStockAlert || 100;
+                                    isLowStock = availableStock > 0 && availableStock <= alertThreshold;
+                                }
+
+                                const hasAllocation = allocation.bags > 0;
                                 const isInCart = items.some(item => item.product.id === product.id);
 
                                 return (
@@ -264,9 +274,13 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                         </TableCell>
                                         <TableCell className="text-center">
                                             {isOutOfStock ? (
-                                                <Badge variant="destructive">欠品</Badge>
+                                                <Badge variant="destructive">
+                                                    {product.statusOverride === 'out_of_stock' ? '欠品 (手動)' : '欠品'}
+                                                </Badge>
                                             ) : isLowStock ? (
-                                                <Badge variant="outline" className="border-amber-500 text-amber-600">低在庫</Badge>
+                                                <Badge variant="outline" className="border-amber-500 text-amber-600">
+                                                    {product.statusOverride === 'low_stock' ? '低在庫 (手動)' : '低在庫'}
+                                                </Badge>
                                             ) : hasAllocation ? (
                                                 <Badge variant="outline" className="border-blue-500 text-blue-600">引当中</Badge>
                                             ) : (

@@ -43,6 +43,7 @@ export type Product = {
   totalColorCount?: number; // 総色数
   productType?: string; // Excel Column Type (種別) 例: 既製品, 別注
   supplierStock?: number; // メーカー在庫
+  statusOverride?: 'normal' | 'low_stock' | 'out_of_stock'; // ステータス手動上書き
 };
 
 // 在庫情報

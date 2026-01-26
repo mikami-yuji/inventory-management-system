@@ -44,6 +44,7 @@ export async function GET(): Promise<NextResponse> {
             suffix: item.suffix,
             productType: item.product_type, // Excel Column Type
             supplierStock: item.supplier_stock && !isNaN(Number(item.supplier_stock)) ? Number(item.supplier_stock) : 0,
+            statusOverride: item.status_override,
         }));
 
         return NextResponse.json(products);
@@ -88,6 +89,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             variety: body.variety || null,
             suffix: body.suffix || null,
             product_type: body.productType || null,
+            status_override: body.statusOverride || 'normal',
         };
 
         const { data, error } = await supabase
@@ -152,6 +154,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         if (body.variety !== undefined) updateData.variety = body.variety;
         if (body.suffix !== undefined) updateData.suffix = body.suffix;
         if (body.productType !== undefined) updateData.product_type = body.productType;
+        if (body.statusOverride !== undefined) updateData.status_override = body.statusOverride;
 
         const { data, error } = await supabase
             .from('products')

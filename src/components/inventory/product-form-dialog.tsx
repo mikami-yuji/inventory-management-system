@@ -52,6 +52,7 @@ type ProductFormData = {
     frontColorCount: string;
     backColorCount: string;
     totalColorCount: string;
+    statusOverride: 'normal' | 'low_stock' | 'out_of_stock';
 };
 
 type ProductFormDialogProps = {
@@ -82,6 +83,7 @@ const initialFormData: ProductFormData = {
     frontColorCount: "",
     backColorCount: "",
     totalColorCount: "",
+    statusOverride: 'normal',
 };
 
 export function ProductFormDialog({
@@ -120,6 +122,7 @@ export function ProductFormDialog({
                 frontColorCount: product.frontColorCount?.toString() || "",
                 backColorCount: product.backColorCount?.toString() || "",
                 totalColorCount: product.totalColorCount?.toString() || "",
+                statusOverride: product.statusOverride || 'normal',
             });
         } else {
             setFormData(initialFormData);
@@ -164,6 +167,7 @@ export function ProductFormDialog({
                 frontColorCount: formData.frontColorCount ? Number(formData.frontColorCount) : undefined,
                 backColorCount: formData.backColorCount ? Number(formData.backColorCount) : undefined,
                 totalColorCount: formData.totalColorCount ? Number(formData.totalColorCount) : undefined,
+                statusOverride: formData.statusOverride,
             };
 
             const response = await fetch("/api/products", {
@@ -377,6 +381,27 @@ export function ProductFormDialog({
                                 placeholder="100"
                             />
                         </div>
+                    </div>
+
+                    {/* ステータス手動上書き */}
+                    <div className="space-y-2 border rounded-lg p-4 bg-amber-50">
+                        <Label htmlFor="statusOverride">ステータス（手動設定）</Label>
+                        <Select
+                            value={formData.statusOverride}
+                            onValueChange={(val: any) => handleChange("statusOverride", val)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="通常" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="normal">自動判定（通常）</SelectItem>
+                                <SelectItem value="low_stock">在庫減少（強制）</SelectItem>
+                                <SelectItem value="out_of_stock">欠品（強制）</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                            ※「在庫減少」「欠品」を選択すると、実際の在庫数に関わらずその状態として表示されます。
+                        </p>
                     </div>
 
                     {/* 色数情報 */}

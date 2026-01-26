@@ -66,18 +66,6 @@ const routes: RouteEntry[] = [
                 color: "text-violet-400",
             },
             {
-                label: "シール在庫",
-                icon: Package,
-                href: "/inventory/stickers",
-                color: "text-green-400",
-            },
-            {
-                label: "その他在庫",
-                icon: Package,
-                href: "/inventory/others",
-                color: "text-gray-400",
-            },
-            {
                 label: "在庫入力",
                 icon: ClipboardEdit,
                 href: "/stock-input",
