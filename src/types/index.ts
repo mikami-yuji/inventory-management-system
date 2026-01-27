@@ -106,6 +106,7 @@ export type Order = {
   type: OrderType;
   items: OrderItem[];
   eventId?: string; // 特売発注の場合のイベントID
+  shipmentSource?: 'inventory' | 'supplier'; // 出荷元 (在庫 or メーカー直送)
 };
 
 // 在庫履歴

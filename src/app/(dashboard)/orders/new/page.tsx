@@ -11,11 +11,15 @@ import { useCart } from "@/contexts/cart-context";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+
 
 export default function NewOrderPage(): React.ReactElement {
     const router = useRouter();
     const { items, updateQuantity, removeFromCart, clearCart, getTotalPrice } = useCart();
     const [loading, setLoading] = useState(false);
+    const [shipmentSource, setShipmentSource] = useState<'inventory' | 'supplier'>('inventory');
 
     const onSubmit = async (): Promise<void> => {
         if (items.length === 0) {
@@ -23,11 +27,38 @@ export default function NewOrderPage(): React.ReactElement {
             return;
         }
         setLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        clearCart();
-        setLoading(false);
-        alert("出荷依頼を送信しました");
-        router.push('/orders');
+
+        try {
+            // クライアントIDはモック。認証実装後は auth.user.id 等を使用
+            // 今回はダミーUUIDを使用するか、既存のユーザーIDを使用
+            const clientId = "00000000-0000-0000-0000-000000000000"; // 仮
+
+            const response = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: items.map(i => ({ productId: i.product.id, quantity: i.quantity })),
+                    clientId,
+                    type: 'standard', // デフォルト
+                    shipmentSource
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                alert(`エラーが発生しました: ${error.error}`);
+                return;
+            }
+
+            clearCart();
+            alert("出荷依頼を完了しました");
+            router.push('/orders');
+        } catch (error) {
+            console.error(error);
+            alert("通信エラーが発生しました");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -150,28 +181,65 @@ export default function NewOrderPage(): React.ReactElement {
                         </CardContent>
                     </Card>
 
-                    {/* 合計・確定 */}
-                    <Card>
-                        <CardContent className="pt-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <div className="text-sm text-muted-foreground">合計金額（税別）</div>
-                                    <div className="text-3xl font-bold">
-                                        ¥{getTotalPrice().toLocaleString()}
+                    {/* 出荷オプションと合計 */}
+                    <div className="grid gap-6 md:grid-cols-2">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>出荷オプション</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    <div>
+                                        <Label className="mb-2 block">出荷元</Label>
+                                        <RadioGroup
+                                            value={shipmentSource}
+                                            onValueChange={(v) => setShipmentSource(v as 'inventory' | 'supplier')}
+                                            className="flex flex-col space-y-2"
+                                        >
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="inventory" id="source-inventory" />
+                                                <Label htmlFor="source-inventory">自社在庫から出荷</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="supplier" id="source-supplier" />
+                                                <Label htmlFor="source-supplier">メーカー在庫から直送</Label>
+                                            </div>
+                                        </RadioGroup>
+                                        <p className="text-xs text-muted-foreground mt-2">
+                                            ※メーカー直送を選択すると、メーカー在庫のみが減少し、自社在庫は変動しません。
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" onClick={clearCart}>
-                                        カートを空にする
-                                    </Button>
-                                    <Button onClick={onSubmit} disabled={loading} className="gap-2">
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>注文概要</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-muted-foreground">小計（税別）</span>
+                                        <span>¥{getTotalPrice().toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center pt-4 border-t">
+                                        <span className="font-bold">合計</span>
+                                        <span className="text-2xl font-bold">¥{getTotalPrice().toLocaleString()}</span>
+                                    </div>
+
+                                    <Button onClick={onSubmit} disabled={loading} className="w-full gap-2 mt-4" size="lg">
                                         <Send className="h-4 w-4" />
                                         {loading ? '送信中...' : '出荷依頼を確定'}
                                     </Button>
+
+                                    <Button variant="outline" onClick={clearCart} className="w-full" disabled={loading}>
+                                        カートを空にする
+                                    </Button>
                                 </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </>
             )}
         </div>
