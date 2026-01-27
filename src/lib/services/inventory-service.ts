@@ -34,6 +34,18 @@ export const getApproxBagCount = (weight: number): number => {
     return Math.floor(ROLL_LENGTH_MM / pitch);
 };
 
+// 枚数からメートルに変換
+export const bagsToMeters = (bags: number, weight: number): number => {
+    const pitch = getPitch(weight);
+    return (bags * pitch) / 1000;
+};
+
+// メートルから枚数に変換
+export const metersToBags = (meters: number, weight: number): number => {
+    const pitch = getPitch(weight);
+    return Math.floor((meters * 1000) / pitch);
+};
+
 /**
  * 在庫サービス
  */

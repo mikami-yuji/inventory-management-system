@@ -2,29 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-// 仕掛中アイテムの型
-export type WorkInProgress = {
-    id: string;
-    productId: string;
-    productName?: string;
-    productSku?: string;
-    quantity: number;
-    startedAt: string;
-    expectedCompletion: string | null;
-    completedAt: string | null;
-    note: string | null;
-    status: 'in_progress' | 'completed' | 'cancelled';
-    createdAt: string;
-};
-
-// 仕掛中登録用の入力型
-export type WIPInput = {
-    productId: string;
-    quantity: number;
-    startedAt: string;
-    expectedCompletion?: string;
-    note?: string;
-};
+import type { WorkInProgress, WIPInput } from '@/types';
 
 /**
  * 仕掛中一覧を取得するフック
@@ -184,17 +162,27 @@ export function useWIPActions(): {
 }
 
 /**
- * 商品ごとの仕掛中合計を計算するユーティリティ
+ * 商品ごとの仕掛中アイテムをグループ化するユーティリティ
  */
-export function calculateWIPByProduct(items: WorkInProgress[]): Map<string, number> {
-    const map = new Map<string, number>();
+export function calculateWIPByProduct(items: WorkInProgress[]): Map<string, WorkInProgress[]> {
+    const map = new Map<string, WorkInProgress[]>();
 
     items
         .filter(item => item.status === 'in_progress')
         .forEach(item => {
-            const current = map.get(item.productId) || 0;
-            map.set(item.productId, current + item.quantity);
+            const current = map.get(item.productId) || [];
+            current.push(item);
+            map.set(item.productId, current);
         });
+
+    // 完了予定日順にソート (nullは後ろ)
+    map.forEach(list => {
+        list.sort((a, b) => {
+            if (!a.expectedCompletion) return 1;
+            if (!b.expectedCompletion) return -1;
+            return new Date(a.expectedCompletion).getTime() - new Date(b.expectedCompletion).getTime();
+        });
+    });
 
     return map;
 }

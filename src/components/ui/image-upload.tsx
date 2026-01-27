@@ -40,11 +40,10 @@ export function ImageUpload({
     const [preview, setPreview] = useState<string | null>(value || null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // ファイル選択ハンドラ
-    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    const [isDragging, setIsDragging] = useState(false);
 
+    // ファイル処理（共通）
+    const processFile = async (file: File) => {
         // 画像ファイルかチェック
         if (!file.type.startsWith("image/")) {
             setError("画像ファイルを選択してください");
@@ -97,6 +96,41 @@ export function ImageUpload({
         }
     };
 
+    // ファイル選択ハンドラ
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        await processFile(file);
+    };
+
+    // ドラッグ&ドロップハンドラ
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!disabled && !uploading) {
+            setIsDragging(true);
+        }
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        if (disabled || uploading) return;
+
+        const file = e.dataTransfer.files?.[0];
+        if (file) {
+            await processFile(file);
+        }
+    };
+
     // 画像削除ハンドラ
     const handleRemove = (): void => {
         setPreview(null);
@@ -117,13 +151,32 @@ export function ImageUpload({
 
             {/* プレビューエリア */}
             {preview ? (
-                <div className="relative inline-block">
+                <div
+                    className={cn(
+                        "relative inline-block transition-transform duration-200",
+                        isDragging && "scale-105"
+                    )}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                >
                     <img
                         src={preview}
                         alt="プレビュー"
-                        className="w-32 h-32 object-cover rounded-lg border"
+                        className={cn(
+                            "w-32 h-32 object-cover rounded-lg border",
+                            isDragging && "opacity-50 blur-sm"
+                        )}
                     />
-                    {!disabled && (
+
+                    {/* ドラッグ中のオーバーレイ */}
+                    {isDragging && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-lg pointer-events-none">
+                            <Upload className="h-8 w-8 text-primary" />
+                        </div>
+                    )}
+
+                    {!disabled && !isDragging && (
                         <Button
                             type="button"
                             variant="destructive"
@@ -138,17 +191,24 @@ export function ImageUpload({
             ) : (
                 <div
                     className={cn(
-                        "w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors",
-                        disabled && "opacity-50 cursor-not-allowed"
+                        "w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all duration-200",
+                        "hover:border-primary hover:bg-slate-50",
+                        disabled && "opacity-50 cursor-not-allowed",
+                        isDragging && "border-primary bg-blue-50 scale-105"
                     )}
                     onClick={() => !disabled && !uploading && inputRef.current?.click()}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
                 >
                     {uploading ? (
                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     ) : (
                         <>
-                            <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
-                            <span className="text-xs text-muted-foreground">画像を選択</span>
+                            <Upload className={cn("h-8 w-8 mb-2 transition-colors", isDragging ? "text-primary" : "text-muted-foreground")} />
+                            <span className={cn("text-xs transition-colors", isDragging ? "text-primary font-medium" : "text-muted-foreground")}>
+                                {isDragging ? "ドロップして登録" : "画像を選択 / ドロップ"}
+                            </span>
                         </>
                     )}
                 </div>

@@ -132,3 +132,25 @@ export type PaginatedResponse<T> = {
   page: number;
   pageSize: number;
 };
+
+// 仕掛中アイテムの型
+export type WorkInProgress = {
+  id: string;
+  productId: string;
+  quantity: number;
+  startedAt: string;
+  expectedCompletion: string | null;
+  completedAt: string | null;
+  note: string | null;
+  status: 'in_progress' | 'completed' | 'cancelled';
+  createdAt: string;
+};
+
+// 仕掛中登録用の入力型
+export type WIPInput = {
+  productId: string;
+  quantity: number;
+  startedAt: string;
+  expectedCompletion?: string;
+  note?: string;
+};

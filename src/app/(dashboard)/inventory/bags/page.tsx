@@ -15,17 +15,23 @@ import {
     Package,
     TrendingDown,
     Calendar,
-    AlertTriangle
+    AlertTriangle,
+    LayoutGrid,
+    List
 } from "lucide-react";
 import {
     getPitch,
+    bagsToMeters
 } from "@/lib/services";
-import { useProducts, useInventory } from "@/hooks/use-supabase-data";
+import { useProducts, useInventory, useIncomingStock } from "@/hooks/use-supabase-data";
 import { useSaleEvents } from "@/hooks/use-sale-events";
 import { useWorkInProgress, calculateWIPByProduct } from "@/hooks/use-work-in-progress";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
+import { IncomingStockDialog } from "@/components/inventory/incoming-stock-dialog";
 import type { Product } from "@/types";
 import { BagsInventoryTable } from "@/components/inventory/bags-inventory-table";
+import { BagsInventoryCards } from "@/components/inventory/bags-inventory-cards";
+import { cn } from "@/lib/utils";
 
 import {
     AlertDialog,
@@ -37,12 +43,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-// 枚数からメートルに変換
-const bagsToMeters = (bags: number, weight: number): number => {
-    const pitch = getPitch(weight);
-    return (bags * pitch) / 1000;
-};
 
 // 都道府県リスト（北から南、最後に国内産）
 const PREFECTURES = [
@@ -85,6 +85,9 @@ const getProductGroup = (p: Product): number => {
 };
 
 export default function BagsInventoryPage(): React.ReactElement {
+    // 表示モード (grid | table)
+    const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
+
     const [searchQuery, setSearchQuery] = useState("");
     const [weightFilter, setWeightFilter] = useState("all");
     const [shapeFilter, setShapeFilter] = useState("all");
@@ -95,8 +98,9 @@ export default function BagsInventoryPage(): React.ReactElement {
     const { inventory: inventoryData, loading: inventoryLoading, refetch: refetchInventory } = useInventory();
     const { events: saleEvents, loading: eventsLoading } = useSaleEvents();
     const { items: wipItems, loading: wipLoading, refetch: refetchWIP } = useWorkInProgress({ status: 'in_progress' });
+    const { incomingStocks, loading: incomingLoading, refetch: refetchIncoming } = useIncomingStock();
 
-    const loading = productsLoading || inventoryLoading || eventsLoading || wipLoading;
+    const loading = productsLoading || inventoryLoading || eventsLoading || wipLoading || incomingLoading;
     const error = productsError;
 
     // 米袋カテゴリのみをフィルタ (bag + new_rice)
@@ -148,12 +152,33 @@ export default function BagsInventoryPage(): React.ReactElement {
     }, [allProducts]);
 
     // 入荷予定マップ
-    const incomingMap = useMemo(() => new Map<string, { quantity: number; nextDate: string | null }>(), []);
+    const incomingMap = useMemo(() => {
+        const map = new Map<string, { quantity: number; nextDate: string | null }>();
+
+        // 商品ごとに入荷予定をグループ化して、直近の予定を取得
+        incomingStocks.forEach(stock => {
+            const current = map.get(stock.productId);
+
+            // 合計数量を加算
+            const quantity = (current?.quantity || 0) + stock.quantity;
+
+            // 直近の日付を判定
+            let nextDate = current?.nextDate || null;
+            if (!nextDate || new Date(stock.expectedDate) < new Date(nextDate)) {
+                nextDate = stock.expectedDate;
+            }
+
+            map.set(stock.productId, { quantity, nextDate });
+        });
+
+        return map;
+    }, [incomingStocks]);
 
     const refetch = (): void => {
         refetchProducts();
         refetchInventory();
         refetchWIP();
+        refetchIncoming();
     };
 
     // 商品フォームダイアログの状態
@@ -163,6 +188,10 @@ export default function BagsInventoryPage(): React.ReactElement {
     // 削除確認ダイアログの状態
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
+    // 入荷予定ダイアログの状態
+    const [incomingDialogOpen, setIncomingDialogOpen] = useState(false);
+    const [incomingStockProduct, setIncomingStockProduct] = useState<Product | null>(null);
 
     const handleAddProduct = (): void => {
         setEditingProduct(null);
@@ -334,10 +363,32 @@ export default function BagsInventoryPage(): React.ReactElement {
                     <h1 className="text-3xl font-bold">米袋在庫管理</h1>
                     <p className="text-muted-foreground">米袋・新米関連商品の在庫を確認・管理します</p>
                 </div>
-                <Button onClick={handleAddProduct} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    商品追加
-                </Button>
+                <div className="flex items-center gap-2">
+                    <div className="bg-slate-100 p-1 rounded-lg border flex items-center">
+                        <Button
+                            variant={viewMode === "table" ? "secondary" : "ghost"}
+                            size="sm"
+                            className={cn("px-3 h-8", viewMode === "table" && "bg-white shadow-sm")}
+                            onClick={() => setViewMode("table")}
+                        >
+                            <List className="h-4 w-4 mr-2" />
+                            リスト
+                        </Button>
+                        <Button
+                            variant={viewMode === "grid" ? "secondary" : "ghost"}
+                            size="sm"
+                            className={cn("px-3 h-8", viewMode === "grid" && "bg-white shadow-sm")}
+                            onClick={() => setViewMode("grid")}
+                        >
+                            <LayoutGrid className="h-4 w-4 mr-2" />
+                            カード
+                        </Button>
+                    </div>
+                    <Button onClick={handleAddProduct} className="gap-2 ml-2">
+                        <Plus className="h-4 w-4" />
+                        商品追加
+                    </Button>
+                </div>
             </div>
 
             {/* サマリーカード */}
@@ -477,25 +528,55 @@ export default function BagsInventoryPage(): React.ReactElement {
                 </CardContent>
             </Card>
 
-            {/* 在庫テーブル */}
-            <BagsInventoryTable
-                products={filteredProducts}
-                inventoryMap={inventoryMap}
-                saleAllocationMap={saleAllocationMap}
-                wipMap={wipMap}
-                supplierStockMap={supplierStockMap}
-                incomingMap={incomingMap}
-                saleEvents={saleEvents || []}
-                onEdit={handleEditProduct}
-                onDelete={handleDeleteClick}
-                onRefetch={refetch}
-            />
+            {/* 在庫表示 (テーブル or カード) */}
+            {viewMode === "table" ? (
+                <BagsInventoryTable
+                    products={filteredProducts}
+                    inventoryMap={inventoryMap}
+                    saleAllocationMap={saleAllocationMap}
+                    wipMap={wipMap}
+                    supplierStockMap={supplierStockMap}
+                    incomingMap={incomingMap}
+                    saleEvents={saleEvents || []}
+                    onEdit={handleEditProduct}
+                    onDelete={handleDeleteClick}
+                    onIncomingStockClick={(product) => {
+                        setIncomingStockProduct(product);
+                        setIncomingDialogOpen(true);
+                    }}
+                    onRefetch={refetch}
+                />
+            ) : (
+                <BagsInventoryCards
+                    products={filteredProducts}
+                    inventoryMap={inventoryMap}
+                    saleAllocationMap={saleAllocationMap}
+                    wipMap={wipMap}
+                    supplierStockMap={supplierStockMap}
+                    incomingMap={incomingMap}
+                    onEdit={handleEditProduct}
+                    onDelete={handleDeleteClick}
+                    onIncomingStockClick={(product) => {
+                        setIncomingStockProduct(product);
+                        setIncomingDialogOpen(true);
+                    }}
+                    onRefetch={refetch}
+                />
+            )}
 
             {/* 商品フォームダイアログ */}
             <ProductFormDialog
                 open={formDialogOpen}
                 onOpenChange={setFormDialogOpen}
                 product={editingProduct}
+                onSuccess={refetch}
+            />
+
+            {/* 入荷予定ダイアログ */}
+            <IncomingStockDialog
+                open={incomingDialogOpen}
+                onOpenChange={setIncomingDialogOpen}
+                product={incomingStockProduct}
                 onSuccess={refetch}
             />
 

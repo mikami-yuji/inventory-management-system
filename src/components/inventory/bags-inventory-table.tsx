@@ -18,7 +18,7 @@ import {
     isRollBag,
 } from "@/lib/services";
 import { useCart } from "@/contexts/cart-context";
-import type { Product } from "@/types";
+import type { Product, WorkInProgress } from "@/types";
 import { SupplierStockDialog } from "@/components/inventory/supplier-stock-dialog";
 import { WIPDialog } from "@/components/inventory/wip-dialog";
 import { StockAdjustmentDialog } from "@/components/inventory/stock-adjustment-dialog";
@@ -41,16 +41,17 @@ export type BagsInventoryTableProps = {
     products: Product[];
     inventoryMap: Map<string, { quantity: number; updatedAt?: string }>;
     saleAllocationMap: Map<string, { bags: number; meters: number }>;
-    wipMap: Map<string, number>;
+    wipMap: Map<string, WorkInProgress[]>;
     supplierStockMap: Map<string, number>;
     incomingMap: Map<string, { quantity: number; nextDate: string | null }>;
     saleEvents: SaleEvent[];
     onEdit: (product: Product) => void;
     onDelete: (product: Product) => void;
+    onIncomingStockClick: (product: Product) => void;
     onRefetch: () => void;
 };
 
-export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, saleEvents, onEdit, onDelete, onRefetch }: BagsInventoryTableProps): React.ReactElement {
+export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, saleEvents, onEdit, onDelete, onIncomingStockClick, onRefetch }: BagsInventoryTableProps): React.ReactElement {
     const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
     const [editWIP, setEditWIP] = useState<Product | null>(null);
     const [viewAllocation, setViewAllocation] = useState<Product | null>(null);
@@ -77,9 +78,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 <TableHead className="text-right">現在庫</TableHead>
                                 <TableHead className="text-right">特売引当</TableHead>
                                 <TableHead className="text-right">有効在庫</TableHead>
+                                <TableHead className="text-right">入荷予定</TableHead>
                                 <TableHead className="text-right">メーカー在庫</TableHead>
                                 <TableHead className="text-right">仕掛中</TableHead>
-                                <TableHead className="text-right">入荷予定</TableHead>
                                 <TableHead className="text-center">状態</TableHead>
                                 <TableHead className="w-[100px]">操作</TableHead>
                             </TableRow>
@@ -92,7 +93,8 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
 
                                 const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
                                 const incoming = incomingMap.get(product.id);
-                                const wipQuantity = wipMap.get(product.id) || 0;
+                                const wipList = wipMap.get(product.id) || [];
+                                const wipQuantity = wipList.reduce((sum, item) => sum + item.quantity, 0);
                                 const supplierStock = supplierStockMap.get(product.id) || 0;
 
                                 const isRoll = product.shape && isRollBag(product.shape);
@@ -232,6 +234,22 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                         </TableCell>
                                         <TableCell
                                             className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
+                                            onClick={() => onIncomingStockClick(product)}
+                                        >
+                                            {incoming && incoming.quantity > 0 ? (
+                                                <div className="text-emerald-600">
+                                                    <div className="font-medium">{incoming.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
+                                                    {incoming.nextDate && <div className="text-xs">{new Date(incoming.nextDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>}
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-end">
+                                                    <span className="text-muted-foreground group-hover:hidden">-</span>
+                                                    <Plus className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell
+                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
                                             onClick={() => setEditSupplierStock(product)}
                                         >
                                             {supplierStock > 0 ? (
@@ -246,14 +264,27 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 </div>
                                             )}
                                         </TableCell>
+
                                         <TableCell
                                             className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
                                             onClick={() => setEditWIP(product)}
                                         >
-                                            {wipQuantity > 0 ? (
+                                            {wipList && wipList.length > 0 ? (
                                                 <div className="text-purple-600">
-                                                    <div className="font-medium">{wipQuantity.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
-                                                    <div className="text-xs">加工中</div>
+                                                    <div className="font-medium text-base">
+                                                        {wipList.reduce((sum, item) => sum + item.quantity, 0).toLocaleString()}
+                                                        <span className="text-xs ml-0.5">{isRoll ? 'm' : '枚'}</span>
+                                                    </div>
+                                                    <div className="flex flex-col gap-0.5 mt-0.5">
+                                                        {wipList.map((item, i) => (
+                                                            <div key={item.id} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
+                                                                {item.expectedCompletion ?
+                                                                    `${new Date(item.expectedCompletion).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}納: `
+                                                                    : '未定: '}
+                                                                {item.quantity.toLocaleString()}
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center justify-end">
@@ -262,16 +293,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 </div>
                                             )}
                                         </TableCell>
-                                        <TableCell className="text-right">
-                                            {incoming ? (
-                                                <div className="text-emerald-600">
-                                                    <div className="font-medium">{incoming.quantity.toLocaleString()}m</div>
-                                                    {incoming.nextDate && <div className="text-xs">{incoming.nextDate}</div>}
-                                                </div>
-                                            ) : (
-                                                <span className="text-muted-foreground">-</span>
-                                            )}
-                                        </TableCell>
+
                                         <TableCell className="text-center">
                                             {isOutOfStock ? (
                                                 <Badge variant="destructive">
@@ -343,6 +365,6 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                 onClose={() => setViewAllocation(null)}
                 saleEvents={saleEvents}
             />
-        </Card>
+        </Card >
     );
 }
