@@ -143,6 +143,8 @@ export type WorkInProgress = {
   completedAt: string | null;
   note: string | null;
   status: 'in_progress' | 'completed' | 'cancelled';
+  termType: 'specific' | 'early' | 'mid' | 'late';
+  confirmationStatus: 'unconfirmed' | 'confirmed';
   createdAt: string;
 };
 
@@ -152,5 +154,6 @@ export type WIPInput = {
   quantity: number;
   startedAt: string;
   expectedCompletion?: string;
+  termType?: 'specific' | 'early' | 'mid' | 'late';
   note?: string;
 };

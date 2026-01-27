@@ -12,8 +12,6 @@ import {
     Menu,
     BarChart3,
     ClipboardEdit,
-    ChevronDown,
-    ChevronRight,
     Boxes,
     Truck,
     Wrench,
@@ -60,7 +58,7 @@ const routes: RouteEntry[] = [
         groupColor: "text-violet-500",
         children: [
             {
-                label: "米袋在庫",
+                label: "在庫管理",
                 icon: Package,
                 href: "/inventory/bags",
                 color: "text-violet-400",
@@ -136,43 +134,16 @@ function NavItem({ route, pathname, onClick }: { route: RouteItem; pathname: str
     );
 }
 
-// グループアイテム（アコーディオン）
+// グループアイテム（常時展開・タイトルなし）
 function NavGroup({ group, pathname, onClick }: { group: RouteGroup; pathname: string; onClick?: () => void }) {
-    // 子のいずれかがアクティブならグループを開く
-    const isChildActive = group.children.some(
-        child => pathname === child.href || pathname.startsWith(child.href + '/')
-    );
-    const [isOpen, setIsOpen] = useState(isChildActive);
-
     return (
         <div className="space-y-1">
-            {/* グループヘッダー */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={cn(
-                    "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition",
-                    isChildActive ? "text-white" : "text-zinc-400"
-                )}
-            >
-                <div className="flex items-center flex-1">
-                    <group.groupIcon className={cn("h-5 w-5 mr-3", group.groupColor)} />
-                    {group.groupLabel}
-                </div>
-                {isOpen ? (
-                    <ChevronDown className="h-4 w-4" />
-                ) : (
-                    <ChevronRight className="h-4 w-4" />
-                )}
-            </button>
-
-            {/* 子アイテム */}
-            {isOpen && (
-                <div className="pl-4 space-y-1">
-                    {group.children.map((child) => (
-                        <NavItem key={child.href} route={child} pathname={pathname} onClick={onClick} />
-                    ))}
-                </div>
-            )}
+            {/* 子アイテム (常時表示・フラット) */}
+            <div className="space-y-1">
+                {group.children.map((child) => (
+                    <NavItem key={child.href} route={child} pathname={pathname} onClick={onClick} />
+                ))}
+            </div>
         </div>
     );
 }

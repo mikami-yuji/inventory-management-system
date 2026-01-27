@@ -3,10 +3,11 @@
 import React, { useState, useMemo } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Store } from "lucide-react";
+import { ChevronLeft, ChevronRight, Store, Plus, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { SaleEvent } from "@/hooks/use-sale-events";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -22,7 +23,7 @@ export function SaleEventCalendar({ events }: SaleEventCalendarProps): React.Rea
     const calendarDays = useMemo(() => {
         const monthStart = startOfMonth(currentDate);
         const monthEnd = endOfMonth(monthStart);
-        const startDate = startOfWeek(monthStart, { locale: ja }); // 月曜始まり？日曜始まり？ ja localeは通常日曜始まり
+        const startDate = startOfWeek(monthStart, { locale: ja });
         const endDate = endOfWeek(monthEnd, { locale: ja });
 
         return eachDayOfInterval({ start: startDate, end: endDate });
@@ -82,12 +83,13 @@ export function SaleEventCalendar({ events }: SaleEventCalendarProps): React.Rea
                         const dayEvents = getEventsForDay(day);
                         const isCurrentMonth = isSameMonth(day, currentDate);
                         const isToday = isSameDay(day, new Date());
+                        const dateStr = format(day, "yyyy-MM-dd");
 
                         return (
                             <div
                                 key={day.toISOString()}
                                 className={cn(
-                                    "min-h-[120px] p-2 border rounded-md text-sm transition-colors",
+                                    "min-h-[120px] p-2 border rounded-md text-sm transition-colors relative group",
                                     isCurrentMonth ? "bg-background" : "bg-muted/30 text-muted-foreground",
                                     isToday && "bg-blue-50 border-blue-300"
                                 )}
@@ -101,25 +103,83 @@ export function SaleEventCalendar({ events }: SaleEventCalendarProps): React.Rea
                                     >
                                         {format(day, "d")}
                                     </span>
+                                    {/* クイック追加ボタン */}
+                                    <Link
+                                        href={`/events/new?date=${dateStr}`}
+                                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                        title="この日にイベントを追加"
+                                    >
+                                        <Button size="icon" variant="ghost" className="h-6 w-6 rounded-full hover:bg-blue-100 text-blue-600">
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </Link>
                                 </div>
 
                                 <div className="space-y-1">
-                                    {dayEvents.map(event => (
-                                        <Link href={`/events/${event.id}`} key={event.id} className="block">
-                                            <div
-                                                className={cn(
-                                                    "text-xs px-1.5 py-1 rounded border truncate transition-colors",
-                                                    statusColors[event.status],
-                                                )}
-                                                title={`${event.clientName} (${event.items.length}商品)`}
-                                            >
-                                                <div className="font-semibold truncate">{event.clientName}</div>
-                                                <div className="text-[10px] opacity-80 truncate">
-                                                    {event.items.length}商品
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))}
+                                    {dayEvents.map(event => {
+                                        // 引当状況の確認
+                                        const isFullyAllocated = event.items.every(item => item.allocatedQuantity >= item.plannedQuantity);
+                                        const totalItems = event.items.length;
+                                        const totalQuantity = event.items.reduce((sum, i) => sum + i.plannedQuantity, 0);
+
+                                        return (
+                                            <TooltipProvider key={event.id}>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Link href={`/events/${event.id}`} className="block">
+                                                            <div
+                                                                className={cn(
+                                                                    "text-xs px-1.5 py-1 rounded border truncate transition-colors flex items-center justify-between",
+                                                                    statusColors[event.status],
+                                                                )}
+                                                            >
+                                                                <div className="truncate font-semibold flex-1">
+                                                                    {event.clientName}
+                                                                </div>
+                                                                {/* 引当ステータスアイコン */}
+                                                                <div className="ml-1 flex-shrink-0">
+                                                                    {isFullyAllocated ? (
+                                                                        <CheckCircle2 className="h-3 w-3 text-green-600" />
+                                                                    ) : (
+                                                                        <AlertCircle className="h-3 w-3 text-amber-600" />
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </Link>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent className="max-w-[250px] space-y-2">
+                                                        <div>
+                                                            <div className="font-bold text-sm mb-1">{event.clientName}</div>
+                                                            <div className="text-xs text-muted-foreground mb-1">
+                                                                {format(new Date(event.dates[0]), "M/d")} {event.scheduleType === 'monthly' ? '(月間)' : ''}
+                                                            </div>
+                                                            <div className="flex items-center gap-1 text-xs">
+                                                                {isFullyAllocated ? (
+                                                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 px-1 py-0 h-5">引当完了</Badge>
+                                                                ) : (
+                                                                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 px-1 py-0 h-5">未引当あり</Badge>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="border-t pt-2">
+                                                            <div className="text-xs font-medium mb-1">商品 ({totalItems}点 / 計{totalQuantity}個)</div>
+                                                            <ul className="text-xs space-y-1 text-muted-foreground">
+                                                                {event.items.slice(0, 3).map((item, idx) => (
+                                                                    <li key={idx} className="flex justify-between">
+                                                                        <span className="truncate max-w-[120px]">{item.productName}</span>
+                                                                        <span>{item.plannedQuantity}個</span>
+                                                                    </li>
+                                                                ))}
+                                                                {event.items.length > 3 && (
+                                                                    <li className="text-center text-[10px] text-blue-500">他 {event.items.length - 3} 件...</li>
+                                                                )}
+                                                            </ul>
+                                                        </div>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         );

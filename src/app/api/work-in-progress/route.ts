@@ -14,6 +14,8 @@ type WorkInProgress = {
     completedAt: string | null
     note: string | null
     status: 'in_progress' | 'completed' | 'cancelled'
+    termType?: string
+    confirmationStatus?: string
     createdAt: string
 }
 
@@ -36,6 +38,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                 completed_at,
                 note,
                 status,
+                term_type,
+                confirmation_status,
                 created_at,
                 products (
                     id,
@@ -74,6 +78,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             completed_at: string | null
             note: string | null
             status: string
+            term_type: string | null
+            confirmation_status: string | null
             created_at: string
             products: { id: string; name: string; sku: string | null } | null
         }) => ({
@@ -87,6 +93,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             completedAt: item.completed_at,
             note: item.note,
             status: item.status as WorkInProgress['status'],
+            termType: item.term_type || undefined,
+            confirmationStatus: item.confirmation_status || undefined,
             createdAt: item.created_at
         }))
 
@@ -130,8 +138,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 started_at: startedAt,
                 expected_completion: expectedCompletion || null,
                 note: note || null,
-                status: 'in_progress'
-            } as any)
+                status: 'in_progress',
+                term_type: (body as any).termType || 'specific'
+            })
             .select()
             .single<any>()
 
@@ -156,10 +165,13 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         const supabase = createServerClient()
         const body = await request.json()
 
-        const { id, action, data: updateData } = body as {
+        const { id, action, data: updateData, confirmedDate, quantity, supplierStock } = body as {
             id: string
-            action: 'complete' | 'cancel' | 'update'
+            action: 'complete' | 'cancel' | 'update' | 'confirm'
             data?: Record<string, unknown>
+            confirmedDate?: string
+            quantity?: number
+            supplierStock?: number
         }
 
         if (action === 'complete') {
@@ -208,6 +220,52 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     })
                     .eq('id', id)
             }
+        } else if (action === 'confirm') {
+            // 納期確定処理
+            if (!confirmedDate || !quantity) {
+                return NextResponse.json({ data: null, error: '日付と数量は必須です' }, { status: 400 })
+            }
+
+            // 1. 仕掛中データの更新
+            const { data: wipItem, error: updateError } = await supabase
+                .from('work_in_progress')
+                // @ts-ignore
+                .update({
+                    quantity: quantity,
+                    expected_completion: confirmedDate, // 具体的な日付で上書き
+                    term_type: 'specific', // specificに変更
+                    confirmation_status: 'confirmed',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', id)
+                .select('product_id')
+                .single<any>()
+
+            if (updateError) throw updateError;
+            if (!wipItem) throw new Error("仕掛中データが見つかりません");
+
+            // 2. 入荷予定(incoming_stock)に登録
+            await supabase
+                .from('incoming_stock')
+                .insert({
+                    product_id: wipItem.product_id,
+                    expected_date: confirmedDate,
+                    quantity: quantity,
+                    note: '仕掛中からの自動登録'
+                } as any)
+
+            // 3. メーカー在庫の更新 (指定がある場合)
+            if (typeof supplierStock === 'number') {
+                await supabase
+                    .from('products')
+                    // @ts-ignore
+                    .update({
+                        supplier_stock: supplierStock,
+                        supplier_stock_updated_at: new Date().toISOString()
+                    })
+                    .eq('id', wipItem.product_id)
+            }
+
         } else if (action === 'cancel') {
             await supabase
                 .from('work_in_progress')

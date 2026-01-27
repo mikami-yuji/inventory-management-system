@@ -98,6 +98,20 @@ function NewEventContent(): React.ReactElement {
         }
     }, [copyFromId, existingEvents, products, inventoryMap]);
 
+    // 日付パラメータの処理 (カレンダーからの遷移など)
+    useEffect(() => {
+        const dateParam = searchParams.get("date");
+        if (dateParam && !copyFromId) {
+            const date = new Date(dateParam);
+            if (!isNaN(date.getTime())) {
+                setSingleDate(date);
+                // 月間モード用に配列にも追加しておく（モード切り替え時のため）
+                setMonthlyDates([date]);
+            }
+        }
+    }, [searchParams, copyFromId]);
+
+
     // 商品検索結果
     const filteredProducts = useMemo(() => {
         if (!productSearch.trim()) return [];
