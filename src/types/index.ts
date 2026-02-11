@@ -115,7 +115,7 @@ export type StockHistory = {
   productId: string;
   date: string; // ISO string
   quantity: number; // その時点の在庫数
-  type: 'check' | 'incoming' | 'adjustment' | 'order'; // 確認、入荷、調整、発注(出庫)
+  type: 'check' | 'incoming' | 'adjustment' | 'order' | 'outgoing'; // 確認、入荷、調整、発注(出庫)、通常出庫
   changeAmount?: number; // 増減数 (checkの場合はnullも可だが、計算で使うなら算出しておく)
   note?: string;
 };

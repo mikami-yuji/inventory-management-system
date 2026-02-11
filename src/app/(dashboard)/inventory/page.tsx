@@ -44,6 +44,7 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { SupplierStockDialog } from "@/components/inventory/supplier-stock-dialog";
 import { WIPDialog } from "@/components/inventory/wip-dialog";
+import { OrderSheetDialog } from "@/components/inventory/order-sheet-dialog";
 
 // 枚数からメートルに変換
 const bagsToMeters = (bags: number, weight: number): number => {
@@ -259,8 +260,13 @@ export default function InventoryPage(): React.ReactElement {
 
     const [formDialogOpen, setFormDialogOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
+    const [analyzingProduct, setAnalyzingProduct] = useState<Product | null>(null);
+
     const handleAddProduct = () => { setEditingProduct(null); setFormDialogOpen(true); };
     const handleEditProduct = (product: Product) => { setEditingProduct(product); setFormDialogOpen(true); };
+    const handleAnalyzeProduct = (product: Product) => { setAnalyzingProduct(product); setAnalysisDialogOpen(true); };
+
     const handleDeleteProduct = async (productId: string) => {
         if (!confirm("この商品を削除しますか？")) return;
         try {
@@ -310,6 +316,10 @@ export default function InventoryPage(): React.ReactElement {
                             読み込み中...
                         </div>
                     )}
+                    <OrderSheetDialog
+                        products={allProducts}
+                        inventoryMap={inventoryMap}
+                    />
                     <Button onClick={handleAddProduct} className="gap-2 w-full md:w-auto">
                         <Plus className="h-4 w-4" />
                         商品追加
@@ -471,6 +481,7 @@ export default function InventoryPage(): React.ReactElement {
                             onEdit={handleEditProduct}
                             onDelete={handleDeleteProduct}
                             onRefetch={refetch}
+                            onAnalyze={handleAnalyzeProduct}
                         />
                     </div>
                     {/* Mobile List */}
@@ -485,10 +496,11 @@ export default function InventoryPage(): React.ReactElement {
                             onEdit={handleEditProduct}
                             onDelete={handleDeleteProduct}
                             onRefetch={refetch}
+                            onAnalyze={handleAnalyzeProduct}
                         />
                     </div>
-                </div>
-            </Tabs>
+                </div >
+            </Tabs >
 
             <ProductFormDialog
                 open={formDialogOpen}
@@ -496,7 +508,18 @@ export default function InventoryPage(): React.ReactElement {
                 product={editingProduct}
                 onSuccess={refetch}
             />
-        </div>
+
+            {
+                analyzingProduct && (
+                    <ProductAnalysisDialog
+                        open={analysisDialogOpen}
+                        onOpenChange={setAnalysisDialogOpen}
+                        product={analyzingProduct}
+                        currentStock={inventoryMap.get(analyzingProduct.id) || 0}
+                    />
+                )
+            }
+        </div >
     );
 }
 
@@ -511,9 +534,10 @@ type InventoryTableProps = {
     onEdit: (product: Product) => void;
     onDelete: (productId: string) => Promise<void>;
     onRefetch: () => void;
+    onAnalyze: (product: Product) => void;
 };
 
-function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch }: InventoryTableProps) {
+function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch, onAnalyze }: InventoryTableProps) {
     const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
     const [editWIP, setEditWIP] = useState<Product | null>(null);
 
@@ -565,6 +589,9 @@ function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, sup
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex justify-end gap-2">
+                                            <Button variant="ghost" size="icon" onClick={() => onAnalyze(product)} title="分析">
+                                                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                                            </Button>
                                             <Button variant="ghost" size="icon" onClick={() => onEdit(product)}><Pencil className="h-4 w-4" /></Button>
                                         </div>
                                     </TableCell>
@@ -589,7 +616,7 @@ function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, sup
                 <WIPDialog
                     open={!!editWIP}
                     onOpenChange={(open) => !open && setEditWIP(null)}
-                    productId={editWIP.id}
+                    product={editWIP}
                     onSuccess={onRefetch}
                 />
             )}
@@ -597,7 +624,7 @@ function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, sup
     );
 }
 
-function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch }: InventoryTableProps) {
+function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch, onAnalyze }: InventoryTableProps) {
     const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
     const [editWIP, setEditWIP] = useState<Product | null>(null);
 
@@ -659,6 +686,9 @@ function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap
                             </div>
 
                             <div className="flex justify-end gap-2 pt-2 border-t mt-2">
+                                <Button variant="ghost" size="sm" onClick={() => onAnalyze(product)}>
+                                    <BarChart3 className="h-4 w-4 mr-1" /> 分析
+                                </Button>
                                 <Button variant="ghost" size="sm" onClick={() => setEditSupplierStock(product)}>
                                     <Package className="h-4 w-4 mr-1" /> メーカー
                                 </Button>
@@ -688,7 +718,7 @@ function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap
                 <WIPDialog
                     open={!!editWIP}
                     onOpenChange={(open) => !open && setEditWIP(null)}
-                    productId={editWIP.id}
+                    product={editWIP}
                     onSuccess={onRefetch}
                 />
             )}

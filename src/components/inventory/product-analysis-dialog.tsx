@@ -28,7 +28,8 @@ import {
     AlertTriangle,
     Info
 } from "lucide-react";
-import { stockHistoryService } from "@/lib/services/stock-history-service";
+import { useStockAnalysis } from "@/hooks/use-stock-history";
+
 import { Product } from "@/types";
 import {
     Chart as ChartJS,
@@ -68,38 +69,59 @@ export function ProductAnalysisDialog({
     open,
     onOpenChange
 }: ProductAnalysisDialogProps): React.ReactElement {
-    // 分析データを取得
-    const analysis = useMemo(() => {
-        return stockHistoryService.getUsageAnalysis(product.id, currentStock);
-    }, [product.id, currentStock]);
+    // データフェッチ (Hookを使用)
+    const { history, analysis, loading } = useStockAnalysis(product.id, currentStock);
 
-    // 履歴データをグラフ用に整形
-    const chartData = useMemo(() => {
-        const history = stockHistoryService.getStockHistory(product.id)
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    // グラフデータ構築ロジック (Corrected for Stock Level)
+    const stockLevelChartData = useMemo(() => {
+        if (!history || history.length === 0) return null;
 
-        // 直近30日分
-        const recentHistory = history.slice(-10);
+        // Sort by date ASC
+        const sorted = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        // Calculate Stock Level over time
+        // Strategy: Forward Replay from 0 (or initial adjustment)
+        let runningStock = 0;
+        const dataPoints = sorted.map(h => {
+            if (h.type === 'adjustment') {
+                runningStock = h.quantity;
+            } else if (h.type === 'incoming') {
+                runningStock += h.quantity;
+            } else if (h.type === 'outgoing') {
+                runningStock -= h.quantity;
+            } else if (h.type === 'order') {
+                // order is also outgoing in terms of stock
+                runningStock -= h.quantity;
+            }
+
+            return {
+                date: h.date,
+                stock: runningStock
+            };
+        });
+
+        const recent = dataPoints.slice(-30);
 
         return {
-            labels: recentHistory.map(h => {
-                const d = new Date(h.date);
+            labels: recent.map(p => {
+                const d = new Date(p.date);
                 return `${d.getMonth() + 1}/${d.getDate()}`;
             }),
             datasets: [
                 {
                     label: '在庫数推移',
-                    data: recentHistory.map(h => h.quantity),
+                    data: recent.map(p => p.stock),
                     borderColor: 'rgb(59, 130, 246)',
                     backgroundColor: 'rgba(59, 130, 246, 0.5)',
                     tension: 0.3,
                 }
-            ],
+            ]
         };
-    }, [product.id]);
+    }, [history]);
 
     const chartOptions = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 display: false,
@@ -114,6 +136,39 @@ export function ProductAnalysisDialog({
             },
         },
     };
+
+    if (loading && !analysis) { // Use a better loading check
+        return (
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>読み込み中...</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex justify-center p-8">
+                        <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
+    }
+
+    // If no analysis data (empty history)
+    if (!analysis || !stockLevelChartData) {
+        return (
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{product.name}</DialogTitle>
+                    </DialogHeader>
+                    <div className="text-center p-8 text-muted-foreground">
+                        在庫履歴データがありません。
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
+    }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -237,11 +292,11 @@ export function ProductAnalysisDialog({
                     {/* グラフ */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-base">在庫推移（直近10回確認分）</CardTitle>
+                            <CardTitle className="text-base">在庫推移（直近30回分）</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="h-[200px] w-full">
-                                <Line data={chartData} options={chartOptions} />
+                                {stockLevelChartData && <Line data={stockLevelChartData} options={chartOptions} />}
                             </div>
                         </CardContent>
                     </Card>

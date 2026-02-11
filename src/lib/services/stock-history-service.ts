@@ -1,17 +1,11 @@
+
 import type { StockHistory } from "@/types";
-import { dataSource } from "./data-source";
 
-// 在庫履歴サービス
-// 週2回の在庫確認データから使用数を算出
-
-// 在庫履歴を取得
-function getStockHistory(productId: string): StockHistory[] {
-    return dataSource.getStockHistory().filter(h => h.productId === productId);
-}
+// 在庫履歴サービス (Pure Functions)
+// 履歴データを受け取って分析結果を返す
 
 // 期間内の使用数を計算
-function calculateUsage(productId: string, days: number): number {
-    const history = getStockHistory(productId);
+function calculateUsage(history: StockHistory[], days: number): number {
     if (history.length < 2) return 0;
 
     const now = new Date();
@@ -21,77 +15,89 @@ function calculateUsage(productId: string, days: number): number {
     const periodHistory = history.filter(h => new Date(h.date) >= startDate);
     if (periodHistory.length < 2) return 0;
 
-    // 使用数 = 期間開始時の在庫 + 入荷 - 期間終了時の在庫
-    // 簡略化: 最初と最後の差分 + 入荷分
+    // ソート (昇順: 古い順)
     const sorted = periodHistory.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    const firstQty = sorted[0].quantity;
-    const lastQty = sorted[sorted.length - 1].quantity;
 
-    // 入荷分を考慮（入荷があった場合は使用数にプラス）
-    const incomingTotal = periodHistory
-        .filter(h => h.type === 'incoming')
-        .reduce((sum, h) => sum + (h.changeAmount || 0), 0);
+    // 使用数の計算ロジック
+    // 入庫(incoming)はプラス、出庫(outgoing)はマイナス
+    // 単純に「出庫数の合計」を使用数とするのが最も正確か？
+    // 前回のロジック: (最初 - 最後 + 入荷)
+    // 今回は「出庫(outgoing)の合計」を使用数として定義する
+    // ただし、adjustmentで減った分も考慮すべきか？
+    // adjustmentは「実地棚卸」なので、減った分は不明損耗＝使用とみなす
+    // しかしadjustmentは絶対値で記録されるため、差分がわからないと計算できない
+    // APIの仕様上、adjustmentの際は changeAmount を計算していない場合がある
+    // よって、今回は「outgoingの合計」を使用数とする
 
-    return Math.max(0, firstQty - lastQty + incomingTotal);
+    // 修正: outgoing の total
+    let totalOutgoing = 0;
+    for (const record of sorted) {
+        if (record.type === 'outgoing') {
+            totalOutgoing += record.quantity;
+        }
+    }
+
+    return totalOutgoing;
 }
 
 // 週間使用数
-function getWeeklyUsage(productId: string): number {
-    return calculateUsage(productId, 7);
+function getWeeklyUsage(history: StockHistory[]): number {
+    return calculateUsage(history, 7);
 }
 
 // 月間使用数
-function getMonthlyUsage(productId: string): number {
-    return calculateUsage(productId, 30);
+function getMonthlyUsage(history: StockHistory[]): number {
+    return calculateUsage(history, 30);
 }
 
 // 3ヶ月使用数
-function getQuarterlyUsage(productId: string): number {
-    return calculateUsage(productId, 90);
+function getQuarterlyUsage(history: StockHistory[]): number {
+    return calculateUsage(history, 90);
 }
 
 // 1日あたり平均使用数
-function getDailyAverageUsage(productId: string): number {
-    const monthlyUsage = getMonthlyUsage(productId);
+function getDailyAverageUsage(history: StockHistory[]): number {
+    const monthlyUsage = getMonthlyUsage(history);
     return Math.round(monthlyUsage / 30 * 10) / 10;
 }
 
 // 推定在庫切れ日数
-function getEstimatedDaysUntilStockout(productId: string, currentStock: number): number | null {
-    const dailyAvg = getDailyAverageUsage(productId);
+function getEstimatedDaysUntilStockout(dailyAvg: number, currentStock: number): number | null {
     if (dailyAvg === 0) return null;
     return Math.floor(currentStock / dailyAvg);
 }
 
 // 使用傾向（増加/減少/安定）
-function getUsageTrend(productId: string): 'increasing' | 'decreasing' | 'stable' {
-    const lastWeek = getWeeklyUsage(productId);
-    const history = getStockHistory(productId);
+function getUsageTrend(history: StockHistory[]): 'increasing' | 'decreasing' | 'stable' {
+    const lastWeekUsage = calculateUsage(history, 7);
 
-    // 2週間前のデータを取得
-    const twoWeeksAgo = new Date();
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    // 2週間前の使用数 (14日前〜7日前)
+    const now = new Date();
+    const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     const prevWeekHistory = history.filter(h => {
-        const date = new Date(h.date);
-        return date >= twoWeeksAgo && date < oneWeekAgo;
+        const d = new Date(h.date);
+        return d >= twoWeeksAgo && d < oneWeekAgo;
     });
 
-    if (prevWeekHistory.length < 2) return 'stable';
+    let prevWeekUsage = 0;
+    for (const record of prevWeekHistory) {
+        if (record.type === 'outgoing') {
+            prevWeekUsage += record.quantity;
+        }
+    }
 
-    const sorted = prevWeekHistory.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    const prevWeekUsage = sorted[0].quantity - sorted[sorted.length - 1].quantity;
+    const diff = lastWeekUsage - prevWeekUsage;
 
-    const diff = lastWeek - prevWeekUsage;
-    if (diff > lastWeek * 0.1) return 'increasing';
-    if (diff < -lastWeek * 0.1) return 'decreasing';
+    // 10%以上の変動
+    if (diff > (lastWeekUsage + prevWeekUsage) / 2 * 0.1) return 'increasing';
+    if (diff < -(lastWeekUsage + prevWeekUsage) / 2 * 0.1) return 'decreasing';
     return 'stable';
 }
 
 // 商品の使用分析サマリーを取得
-function getUsageAnalysis(productId: string, currentStock: number): {
+function getUsageAnalysis(history: StockHistory[], currentStock: number): {
     weekly: number;
     monthly: number;
     quarterly: number;
@@ -100,14 +106,15 @@ function getUsageAnalysis(productId: string, currentStock: number): {
     trend: 'increasing' | 'decreasing' | 'stable';
     suggestedOrderQuantity: number;
 } {
-    const weekly = getWeeklyUsage(productId);
-    const monthly = getMonthlyUsage(productId);
-    const quarterly = getQuarterlyUsage(productId);
-    const dailyAverage = getDailyAverageUsage(productId);
-    const daysUntilStockout = getEstimatedDaysUntilStockout(productId, currentStock);
-    const trend = getUsageTrend(productId);
+    const weekly = getWeeklyUsage(history);
+    const monthly = getMonthlyUsage(history);
+    const quarterly = getQuarterlyUsage(history);
+    const dailyAverage = getDailyAverageUsage(history);
+    const daysUntilStockout = getEstimatedDaysUntilStockout(dailyAverage, currentStock);
+    const trend = getUsageTrend(history);
 
-    // 推奨発注数 = 月間使用数 × 1.2（余裕分）
+    // 推奨発注数 = 月間使用数 × 1.2（余裕分） - 現在庫
+    // 単純に月間使用数 × 1.2 とする（発注点方式）
     const suggestedOrderQuantity = Math.ceil(monthly * 1.2);
 
     return {
@@ -122,7 +129,6 @@ function getUsageAnalysis(productId: string, currentStock: number): {
 }
 
 export const stockHistoryService = {
-    getStockHistory,
     getWeeklyUsage,
     getMonthlyUsage,
     getQuarterlyUsage,
@@ -130,14 +136,4 @@ export const stockHistoryService = {
     getEstimatedDaysUntilStockout,
     getUsageTrend,
     getUsageAnalysis,
-    addStockHistory,
 };
-
-// 履歴を追加
-function addStockHistory(entry: Omit<StockHistory, 'id'>): void {
-    const newEntry: StockHistory = {
-        ...entry,
-        id: Math.random().toString(36).substr(2, 9),
-    };
-    dataSource.getStockHistory().push(newEntry);
-}
