@@ -135,12 +135,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
                 if (product && typeof product.supplier_stock === 'number') {
                     const newStock = Math.max(0, product.supplier_stock - item.quantity)
-                    await supabase
-                        .from('products')
+                    await (supabase
+                        .from('products') as any)
                         .update({
                             supplier_stock: newStock,
                             supplier_stock_updated_at: new Date().toISOString()
-                        } as any)
+                        })
                         .eq('id', item.productId)
 
                     // 履歴記録（メーカー直送）
@@ -198,9 +198,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         // とりあえず requested のままだが、在庫は減らした。整合性をとるため shipped にする？
         // User request is "Shipment from..." implies the action IS shipment.
         // Let's set status to 'shipped' to reflect that stock has moved.
-        await supabase
-            .from('orders')
-            .update({ status: 'shipped' } as any)
+        await (supabase
+            .from('orders') as any)
+            .update({ status: 'shipped' })
             .eq('id', orderId)
 
         return NextResponse.json({

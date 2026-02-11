@@ -15,6 +15,8 @@ import {
     Boxes,
     Truck,
     Wrench,
+    Bell,
+    History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -102,6 +104,18 @@ const routes: RouteEntry[] = [
                 icon: BarChart3,
                 href: "/reports",
                 color: "text-emerald-400",
+            },
+            {
+                label: "通知",
+                icon: Bell,
+                href: "/notifications",
+                color: "text-yellow-400",
+            },
+            {
+                label: "操作ログ",
+                icon: History,
+                href: "/activity-log",
+                color: "text-slate-400",
             },
             {
                 label: "設定",

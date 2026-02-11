@@ -130,8 +130,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             )
         }
 
-        const { data, error } = await supabase
-            .from('work_in_progress')
+        const { data, error } = await (supabase
+            .from('work_in_progress') as any)
             .insert({
                 product_id: productId,
                 quantity,
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 term_type: (body as any).termType || 'specific'
             })
             .select()
-            .single<any>()
+            .single()
 
         if (error) {
             console.error('仕掛中登録エラー:', error)
@@ -211,9 +211,8 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 } as any)
 
                 // 仕掛中を完了に更新
-                await supabase
-                    .from('work_in_progress')
-                    // @ts-ignore
+                await (supabase
+                    .from('work_in_progress') as any)
                     .update({
                         status: 'completed',
                         completed_at: new Date().toISOString().split('T')[0]
@@ -227,9 +226,8 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             }
 
             // 1. 仕掛中データの更新
-            const { data: wipItem, error: updateError } = await supabase
-                .from('work_in_progress')
-                // @ts-ignore
+            const { data: wipItem, error: updateError } = await (supabase
+                .from('work_in_progress') as any)
                 .update({
                     quantity: quantity,
                     expected_completion: confirmedDate, // 具体的な日付で上書き
@@ -239,7 +237,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 })
                 .eq('id', id)
                 .select('product_id')
-                .single<any>()
+                .single()
 
             if (updateError) throw updateError;
             if (!wipItem) throw new Error("仕掛中データが見つかりません");
@@ -267,14 +265,14 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             }
 
         } else if (action === 'cancel') {
-            await supabase
-                .from('work_in_progress')
+            await (supabase
+                .from('work_in_progress') as any)
                 // @ts-ignore
                 .update({ status: 'cancelled' })
                 .eq('id', id)
         } else if (action === 'update' && updateData) {
-            await supabase
-                .from('work_in_progress')
+            await (supabase
+                .from('work_in_progress') as any)
                 // @ts-ignore
                 .update(updateData)
                 .eq('id', id)
@@ -301,8 +299,8 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
             return NextResponse.json({ data: null, error: 'IDが必要です' }, { status: 400 })
         }
 
-        const { error } = await supabase
-            .from('work_in_progress')
+        const { error } = await (supabase
+            .from('work_in_progress') as any)
             .delete()
             .eq('id', id)
 

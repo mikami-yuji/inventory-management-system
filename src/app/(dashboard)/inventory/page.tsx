@@ -145,7 +145,17 @@ export default function InventoryPage(): React.ReactElement {
     }, [saleEvents, allProducts]);
 
     // 仕掛中マップを作成 (productId -> quantity)
+    // InventoryTableは number を期待しているため、数量を合計する
     const wipMap = useMemo(() => calculateWIPByProduct(wipItems), [wipItems]);
+
+    const wipQuantityMap = useMemo(() => {
+        const map = new Map<string, number>();
+        wipMap.forEach((items, productId) => {
+            const total = items.reduce((sum, item) => sum + item.quantity, 0);
+            map.set(productId, total);
+        });
+        return map;
+    }, [wipMap]);
 
     // メーカー在庫マップを作成 (productId -> supplierStock)
     const supplierStockMap = useMemo(() => {
@@ -482,7 +492,7 @@ export default function InventoryPage(): React.ReactElement {
                         products={filteredProducts}
                         inventoryMap={inventoryMap}
                         saleAllocationMap={saleAllocationMap}
-                        wipMap={wipMap}
+                        wipMap={wipQuantityMap}
                         supplierStockMap={supplierStockMap}
                         incomingMap={incomingMap}
                         onEdit={handleEditProduct}
@@ -495,7 +505,7 @@ export default function InventoryPage(): React.ReactElement {
                         products={filteredProducts}
                         inventoryMap={inventoryMap}
                         saleAllocationMap={saleAllocationMap}
-                        wipMap={wipMap}
+                        wipMap={wipQuantityMap}
                         supplierStockMap={supplierStockMap}
                         incomingMap={incomingMap}
                         onEdit={handleEditProduct}
@@ -508,7 +518,7 @@ export default function InventoryPage(): React.ReactElement {
                         products={filteredProducts}
                         inventoryMap={inventoryMap}
                         saleAllocationMap={saleAllocationMap}
-                        wipMap={wipMap}
+                        wipMap={wipQuantityMap}
                         supplierStockMap={supplierStockMap}
                         incomingMap={incomingMap}
                         onEdit={handleEditProduct}
@@ -521,7 +531,7 @@ export default function InventoryPage(): React.ReactElement {
                         products={filteredProducts}
                         inventoryMap={inventoryMap}
                         saleAllocationMap={saleAllocationMap}
-                        wipMap={wipMap}
+                        wipMap={wipQuantityMap}
                         supplierStockMap={supplierStockMap}
                         incomingMap={incomingMap}
                         onEdit={handleEditProduct}
@@ -534,7 +544,7 @@ export default function InventoryPage(): React.ReactElement {
                         products={filteredProducts}
                         inventoryMap={inventoryMap}
                         saleAllocationMap={saleAllocationMap}
-                        wipMap={wipMap}
+                        wipMap={wipQuantityMap}
                         supplierStockMap={supplierStockMap}
                         incomingMap={incomingMap}
                         onEdit={handleEditProduct}

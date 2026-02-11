@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +25,7 @@ import {
     CheckCircle2,
 } from "lucide-react";
 import { useNotification } from "@/contexts/notification-context";
-import { inventoryService } from "@/lib/services";
-import { useMemo } from "react";
+import { useInventory } from "@/hooks/use-supabase-data";
 
 export default function SettingsPage(): React.ReactElement {
     const { settings, updateSettings, resetSettings, testNotification } = useNotification();
@@ -37,13 +36,13 @@ export default function SettingsPage(): React.ReactElement {
     const [importResult, setImportResult] = useState<{ success: number; error: number } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // 現在の低在庫商品数を計算
+    // APIから在庫データを取得して低在庫商品数を計算
+    const { inventory } = useInventory();
     const lowStockStats = useMemo(() => {
-        const inventory = inventoryService.getInventory();
         const lowStock = inventory.filter(i => i.quantity > 0 && i.quantity < settings.lowStockThreshold).length;
         const outOfStock = inventory.filter(i => i.quantity === 0).length;
         return { lowStock, outOfStock };
-    }, [settings.lowStockThreshold]);
+    }, [inventory, settings.lowStockThreshold]);
 
     // CSVエクスポート（直接URLを開いてダウンロード）
     const handleExport = (): void => {

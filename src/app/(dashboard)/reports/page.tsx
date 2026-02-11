@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,9 +12,10 @@ import {
     Package,
     ShoppingCart,
     Calendar,
-    DollarSign
+    DollarSign,
+    Loader2
 } from "lucide-react";
-import { inventoryService, orderService } from "@/lib/services";
+import { useProducts, useInventory } from "@/hooks/use-supabase-data";
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -43,10 +44,33 @@ ChartJS.register(
 );
 
 export default function ReportsPage(): React.ReactElement {
-    // 在庫データを取得
-    const inventory = inventoryService.getInventory();
-    const products = inventoryService.getProducts();
-    const orders = orderService.getOrders();
+    // APIから商品・在庫データを取得
+    const { products, loading: productsLoading } = useProducts();
+    const { inventory, loading: inventoryLoading } = useInventory();
+
+    // 発注データをAPIから取得
+    const [orders, setOrders] = useState<{ id: string }[]>([]);
+    const [ordersLoading, setOrdersLoading] = useState(true);
+
+    const fetchOrders = useCallback(async (): Promise<void> => {
+        try {
+            const res = await fetch('/api/orders');
+            if (res.ok) {
+                const data = await res.json();
+                setOrders(data || []);
+            }
+        } catch (err) {
+            console.error('発注データ取得エラー:', err);
+        } finally {
+            setOrdersLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchOrders();
+    }, [fetchOrders]);
+
+    const loading = productsLoading || inventoryLoading || ordersLoading;
 
     // 月別の発注サマリー（モックデータ）
     const monthlyData = useMemo(() => {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef, useState, Suspense } from "react";
+import React, { useMemo, useRef, useState, useEffect, useCallback, Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +17,65 @@ import {
     Loader2
 } from "lucide-react";
 import { useProducts, useInventory } from "@/hooks/use-supabase-data";
-import { stockHistoryService } from "@/lib/services";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+
+// 在庫履歴のAPI応答型
+type StockHistoryEntry = {
+    id: string;
+    productId: string;
+    date: string;
+    quantity: number;
+    type: string;
+    changeAmount: number;
+};
+
+// 商品ごとの使用分析を在庫履歴から計算する純粋関数
+function computeUsageAnalysis(
+    history: StockHistoryEntry[],
+    currentStock: number
+): {
+    weekly: number;
+    monthly: number;
+    daysUntilStockout: number | null;
+    suggestedOrder: number;
+    trend: 'increasing' | 'decreasing' | 'stable';
+} {
+    if (history.length < 2) {
+        return { weekly: 0, monthly: 0, daysUntilStockout: null, suggestedOrder: 0, trend: 'stable' };
+    }
+
+    // 日付でソート
+    const sorted = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // 期間別使用量を計算
+    const now = new Date();
+    const calcUsage = (days: number): number => {
+        const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+        const periodEntries = sorted.filter(h => new Date(h.date) >= startDate);
+        if (periodEntries.length < 2) return 0;
+        const first = periodEntries[0].quantity;
+        const last = periodEntries[periodEntries.length - 1].quantity;
+        const incoming = periodEntries
+            .filter(h => h.type === 'incoming')
+            .reduce((sum, h) => sum + (h.changeAmount || 0), 0);
+        return Math.max(0, first - last + incoming);
+    };
+
+    const weekly = calcUsage(7);
+    const monthly = calcUsage(30);
+    const dailyAvg = monthly > 0 ? monthly / 30 : 0;
+    const daysUntilStockout = dailyAvg > 0 ? Math.floor(currentStock / dailyAvg) : null;
+    const suggestedOrder = Math.ceil(monthly * 1.2);
+
+    // トレンド計算（今週 vs 先週）
+    const prevWeekUsage = calcUsage(14) - weekly;
+    let trend: 'increasing' | 'decreasing' | 'stable' = 'stable';
+    if (weekly > 0 && (weekly - prevWeekUsage) > weekly * 0.1) trend = 'increasing';
+    else if (weekly > 0 && (prevWeekUsage - weekly) > weekly * 0.1) trend = 'decreasing';
+
+    return { weekly, monthly, daysUntilStockout, suggestedOrder, trend };
+}
 
 function StockReportContent(): React.ReactElement {
     const searchParams = useSearchParams();
@@ -32,7 +88,29 @@ function StockReportContent(): React.ReactElement {
     const { products, loading: productsLoading, error } = useProducts();
     const { inventory: inventoryData, loading: inventoryLoading } = useInventory();
 
-    const loading = productsLoading || inventoryLoading;
+    // 在庫履歴をAPIから取得
+    const [stockHistory, setStockHistory] = useState<StockHistoryEntry[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(true);
+
+    const fetchHistory = useCallback(async (): Promise<void> => {
+        try {
+            const res = await fetch('/api/stock-history?days=90&limit=1000');
+            if (res.ok) {
+                const result = await res.json();
+                setStockHistory(result.data || []);
+            }
+        } catch (err) {
+            console.error('在庫履歴取得エラー:', err);
+        } finally {
+            setHistoryLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchHistory();
+    }, [fetchHistory]);
+
+    const loading = productsLoading || inventoryLoading || historyLoading;
 
     // 在庫マップを作成 (productId -> quantity)
     const inventoryMap = useMemo(() => {
@@ -49,12 +127,23 @@ function StockReportContent(): React.ReactElement {
         return products.filter(p => p.category === categoryFilter);
     }, [products, categoryFilter]);
 
+    // 商品ID別に在庫履歴をグループ化
+    const historyByProduct = useMemo(() => {
+        const map = new Map<string, StockHistoryEntry[]>();
+        stockHistory.forEach(entry => {
+            const list = map.get(entry.productId) || [];
+            list.push(entry);
+            map.set(entry.productId, list);
+        });
+        return map;
+    }, [stockHistory]);
+
     // レポートデータを生成
     const reportData = useMemo(() => {
         return filteredProducts.map(product => {
-            // inventoryMapから在庫数を取得（Supabase連携）
             const currentStock = inventoryMap.get(product.id) || 0;
-            const analysis = stockHistoryService.getUsageAnalysis(product.id, currentStock);
+            const productHistory = historyByProduct.get(product.id) || [];
+            const analysis = computeUsageAnalysis(productHistory, currentStock);
 
             return {
                 product,
@@ -62,11 +151,11 @@ function StockReportContent(): React.ReactElement {
                 weeklyUsage: analysis.weekly,
                 monthlyUsage: analysis.monthly,
                 daysUntilStockout: analysis.daysUntilStockout,
-                suggestedOrder: analysis.suggestedOrderQuantity,
+                suggestedOrder: analysis.suggestedOrder,
                 trend: analysis.trend,
             };
-        }).filter(item => item.currentStock > 0 || item.monthlyUsage > 0); // 在庫があるか使用履歴があるもののみ
-    }, [filteredProducts, inventoryMap]);
+        }).filter(item => item.currentStock > 0 || item.monthlyUsage > 0);
+    }, [filteredProducts, inventoryMap, historyByProduct]);
 
     // サマリー統計
     const summary = useMemo(() => {

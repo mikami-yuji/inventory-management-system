@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-02-11
+
+### Added
+- **アクティビティログ機能**: `/activity-log` ページ追加。ユーザー操作（在庫調整、特売登録）の履歴確認が可能。
+- **通知機能**: `/notifications` ページ追加。在庫切れ/低在庫アラートのリアルタイム確認と履歴管理。
+- **サイドバー更新**: アクティビティログと通知へのナビゲーションリンク追加。
+
+### Fixed
+- **ビルドエラー修正**: `inventory/page.tsx` における `wipMap` の型不整合を修正。
+- **API厳密型チェック対応**: `api/orders/route.ts` および `api/work-in-progress/route.ts` におけるSupabase型定義との不整合を修正（`update`/`insert` 時の型キャスト追加）。
+
+### Changed
+- **アクティビティログDB統合**: `activity_log` テーブル用マイグレーションスクリプト作成 (`scripts/migrations/004_create_activity_log.sql`)。
+
 ## [0.4.0] - 2026-02-11
 
 ### Added
