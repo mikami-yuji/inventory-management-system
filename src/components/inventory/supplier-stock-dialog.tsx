@@ -36,6 +36,7 @@ export function SupplierStockDialog({
     // ダイアログが開くたび、または商品が変わるたびに初期値をセット
     useEffect(() => {
         if (open) {
+            // eslint-disable-next-line
             setStock(currentStock);
         }
     }, [open, currentStock]);

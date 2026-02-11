@@ -21,6 +21,7 @@ import { Plus, Check, Loader2, Trash2, CalendarClock, PackageCheck } from "lucid
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { WorkInProgress } from "@/types";
 
 interface WIPDialogProps {
     product: Product | null;
@@ -68,6 +69,7 @@ export function WIPDialog({
     useEffect(() => {
         if (open && product) {
             refetch();
+            // eslint-disable-next-line
             setActiveTab("list");
             setQuantity(0);
             setNote("");
@@ -120,7 +122,7 @@ export function WIPDialog({
         }
     };
 
-    const handleConfirmClick = (item: any) => {
+    const handleConfirmClick = (item: WorkInProgress) => {
         setConfirmingId(item.id);
         setConfirmQuantity(item.quantity); // 初期値は予定数
         setConfirmDate(format(new Date(), 'yyyy-MM-dd'));
@@ -139,13 +141,7 @@ export function WIPDialog({
         }
     };
 
-    const handleComplete = async (id: string) => {
-        const success = await completeWIP(id);
-        if (success) {
-            onSuccess();
-            refetch();
-        }
-    };
+
 
     const handleDelete = async (id: string) => {
         if (!confirm("本当に削除しますか？")) return;

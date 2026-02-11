@@ -44,6 +44,7 @@ export function NotificationProvider({ children }: { children: ReactNode }): Rea
         const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
         if (stored) {
             try {
+                // eslint-disable-next-line
                 setSettings({ ...defaultSettings, ...JSON.parse(stored) });
             } catch {
                 // 無効なデータの場合はデフォルト使用

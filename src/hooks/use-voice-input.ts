@@ -3,24 +3,63 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 
 // Web Speech API interfaces
+interface SpeechRecognitionResult {
+    isFinal: boolean;
+    [index: number]: {
+        transcript: string;
+    };
+}
+
+interface SpeechRecognitionResultList {
+    [index: number]: SpeechRecognitionResult;
+    length: number;
+}
+
+interface SpeechRecognitionEvent extends Event {
+    resultIndex: number;
+    results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+    error: string;
+    message: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    start: () => void;
+    stop: () => void;
+    abort: () => void;
+    onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+    onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+    onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+    onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
+}
+
+interface SpeechRecognitionConstructor {
+    new(): SpeechRecognition;
+}
+
 interface IWindow extends Window {
-    webkitSpeechRecognition?: any;
-    SpeechRecognition?: any;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+    SpeechRecognition?: SpeechRecognitionConstructor;
 }
 
 export function useVoiceInput(options?: {
     onResult?: (text: string) => void;
-    onError?: (error: any) => void;
+    onError?: (error: string) => void;
     lang?: string;
 }) {
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState("");
     const [error, setError] = useState<string | null>(null);
-    const recognitionRef = useRef<any>(null);
+    const recognitionRef = useRef<SpeechRecognition | null>(null);
 
     // Initialize recognition
     useEffect(() => {
-        const { webkitSpeechRecognition, SpeechRecognition } = window as IWindow;
+        const { webkitSpeechRecognition, SpeechRecognition } = window as unknown as IWindow;
         const SpeechRecognitionConstructor = SpeechRecognition || webkitSpeechRecognition;
 
         if (SpeechRecognitionConstructor) {
@@ -38,24 +77,20 @@ export function useVoiceInput(options?: {
                 setIsListening(false);
             };
 
-            recognition.onresult = (event: any) => {
+            recognition.onresult = (event: SpeechRecognitionEvent) => {
                 const current = event.resultIndex;
-                const transcriptResult = event.results[current][0].transcript;
+                const result = event.results[current];
+                const transcriptResult = result[0].transcript;
 
                 setTranscript(transcriptResult);
 
                 // Final result
-                if (event.results[current].isFinal && options?.onResult) {
-                    // Normalize numbers (e.g. "５個" -> "5")
-                    const normalized = transcriptResult.replace(/[０-９]/g, (s: string) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
-                        .replace(/[^0-9]/g, ''); // Extract numbers only if intention is quantity?
-
-                    // Let the caller handle normalization, just return text
+                if (result.isFinal && options?.onResult) {
                     options.onResult(transcriptResult);
                 }
             };
 
-            recognition.onerror = (event: any) => {
+            recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
                 console.error("Speech recognition error", event.error);
                 setError(event.error);
                 setIsListening(false);
@@ -72,7 +107,7 @@ export function useVoiceInput(options?: {
                 recognitionRef.current.abort();
             }
         };
-    }, []);
+    }, [options]);
 
     const startListening = useCallback(() => {
         if (recognitionRef.current && !isListening) {
@@ -97,6 +132,6 @@ export function useVoiceInput(options?: {
         error,
         startListening,
         stopListening,
-        hasSupport: !!(typeof window !== 'undefined' && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition))
+        hasSupport: typeof window !== 'undefined' && !!((window as unknown as IWindow).SpeechRecognition || (window as unknown as IWindow).webkitSpeechRecognition)
     };
 }

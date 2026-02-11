@@ -84,7 +84,17 @@ export default function DashboardPage(): React.ReactElement {
             const res = await fetch('/api/incoming-stock');
             if (res.ok) {
                 const data = await res.json();
-                setIncomingStock((data || []).slice(0, 5).map((item: any) => ({
+                setIncomingStock((data || []).slice(0, 5).map((item: {
+                    id: string;
+                    product_id?: string;
+                    productId?: string;
+                    products?: { name: string };
+                    productName?: string;
+                    expected_date?: string;
+                    expectedDate?: string;
+                    quantity: number;
+                    note: string | null;
+                }) => ({
                     id: item.id,
                     productId: item.product_id || item.productId,
                     productName: item.products?.name || item.productName || '不明',

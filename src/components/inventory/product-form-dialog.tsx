@@ -417,7 +417,7 @@ export function ProductFormDialog({
                         <Label htmlFor="statusOverride">ステータス（手動設定）</Label>
                         <Select
                             value={formData.statusOverride}
-                            onValueChange={(val: any) => handleChange("statusOverride", val)}
+                            onValueChange={(val: 'normal' | 'low_stock' | 'out_of_stock') => handleChange("statusOverride", val)}
                         >
                             <SelectTrigger>
                                 <SelectValue placeholder="通常" />

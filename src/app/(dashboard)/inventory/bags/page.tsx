@@ -20,7 +20,6 @@ import {
     List
 } from "lucide-react";
 import {
-    getPitch,
     bagsToMeters
 } from "@/lib/services";
 import { useProducts, useInventory, useIncomingStock } from "@/hooks/use-supabase-data";

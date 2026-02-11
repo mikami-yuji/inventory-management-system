@@ -33,6 +33,7 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
         const stored = localStorage.getItem(CART_STORAGE_KEY);
         if (stored) {
             try {
+                // eslint-disable-next-line
                 setItems(JSON.parse(stored));
             } catch {
                 // 無効なデータの場合は無視

@@ -13,6 +13,8 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+import type { Product } from "@/types";
+
 type ScannedItem = {
     id: string; // Product ID
     janCode: string;
@@ -36,7 +38,7 @@ export default function ScanPage() {
     // Single Mode State
     const [scannedCode, setScannedCode] = useState<string | null>(null);
     const [manualCode, setManualCode] = useState('');
-    const [scannedProduct, setScannedProduct] = useState<any | null>(null);
+    const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
     const [currentStock, setCurrentStock] = useState<number | null>(null);
     const [adjustQty, setAdjustQty] = useState<string>('1');
     const [isProcessing, setIsProcessing] = useState(false);
@@ -384,23 +386,38 @@ export default function ScanPage() {
 }
 
 // Helper for Single Mode UI (extracted for cleanliness, but keep in same file for now)
-function hidingScannerSingle(mode: string, scannedProduct: any) {
+function hidingScannerSingle(mode: string, scannedProduct: Product | null) {
     if (mode === 'single' && scannedProduct) return false;
     return true;
 }
 
-function SingleScanResult({ product, currentStock, adjustQty, setAdjustQty, handleStockUpdate, resetScan, isProcessing, isListening, startListening, stopListening, hasSupport, transcript }: any) {
+type SingleScanResultProps = {
+    product: Product;
+    currentStock: number | null;
+    adjustQty: string;
+    setAdjustQty: (qty: string) => void;
+    handleStockUpdate: (type: 'in' | 'out') => Promise<void>;
+    resetScan: () => void;
+    isProcessing: boolean;
+    isListening: boolean;
+    startListening: () => void;
+    stopListening: () => void;
+    hasSupport: boolean;
+    transcript: string;
+};
+
+function SingleScanResult({ product, currentStock, adjustQty, setAdjustQty, handleStockUpdate, resetScan, isProcessing, isListening, startListening, stopListening, hasSupport, transcript }: SingleScanResultProps) {
     // ... Copy existing Single UI here ...
     // (For brevity in plan, I will assume full code in write_to_file)
     return (
         <Card className="animate-in fade-in slide-in-from-bottom-4 duration-300">
             <CardHeader className="bg-muted/50 pb-2">
                 <CardTitle className="text-lg flex justify-between items-start">
-                    <span>{product.productName}</span>
+                    <span>{product.name}</span>
                     <Badge variant="outline">{product.productCode}</Badge>
                 </CardTitle>
                 <CardDescription>
-                    {product.size} / {product.material} / {product.shape}
+                    {product.weight ? `${product.weight}kg` : '-'} / {product.material} / {product.shape}
                 </CardDescription>
             </CardHeader>
             <CardContent className="pt-4 space-y-4">

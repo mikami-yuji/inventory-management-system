@@ -47,8 +47,22 @@ function NewEventContent(): React.ReactElement {
     // フォーム状態
     const [clientName, setClientName] = useState("");
     const [scheduleType, setScheduleType] = useState<"single" | "monthly">("single");
-    const [singleDate, setSingleDate] = useState<Date | undefined>(undefined);
-    const [monthlyDates, setMonthlyDates] = useState<Date[]>([]);
+    const [singleDate, setSingleDate] = useState<Date | undefined>(() => {
+        const dateParam = searchParams.get("date");
+        if (dateParam && !copyFromId) {
+            const date = new Date(dateParam);
+            return !isNaN(date.getTime()) ? date : undefined;
+        }
+        return undefined;
+    });
+    const [monthlyDates, setMonthlyDates] = useState<Date[]>(() => {
+        const dateParam = searchParams.get("date");
+        if (dateParam && !copyFromId) {
+            const date = new Date(dateParam);
+            return !isNaN(date.getTime()) ? [date] : [];
+        }
+        return [];
+    });
     const [description, setDescription] = useState("");
     const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
     const [allocateStock, setAllocateStock] = useState(false);
@@ -74,6 +88,7 @@ function NewEventContent(): React.ReactElement {
 
     // コピー元イベントからデータを読み込む
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
         if (copyFromId && existingEvents.length > 0 && products.length > 0) {
             const sourceEvent = existingEvents.find(e => e.id === copyFromId);
             if (sourceEvent) {
@@ -99,17 +114,7 @@ function NewEventContent(): React.ReactElement {
     }, [copyFromId, existingEvents, products, inventoryMap]);
 
     // 日付パラメータの処理 (カレンダーからの遷移など)
-    useEffect(() => {
-        const dateParam = searchParams.get("date");
-        if (dateParam && !copyFromId) {
-            const date = new Date(dateParam);
-            if (!isNaN(date.getTime())) {
-                setSingleDate(date);
-                // 月間モード用に配列にも追加しておく（モード切り替え時のため）
-                setMonthlyDates([date]);
-            }
-        }
-    }, [searchParams, copyFromId]);
+
 
 
     // 商品検索結果
