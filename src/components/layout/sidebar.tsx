@@ -18,6 +18,7 @@ import {
     Bell,
     History,
     ScanBarcode,
+    UserCog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -125,9 +126,21 @@ const routes: RouteEntry[] = [
                 color: "text-slate-400",
             },
             {
-                label: "設定",
+                label: "仕入先管理",
+                icon: Boxes,
+                href: "/settings/suppliers",
+                color: "text-blue-400",
+            },
+            {
+                label: "ユーザー管理",
+                icon: UserCog,
+                href: "/settings/users",
+                color: "text-purple-400",
+            },
+            {
+                label: "一般設定",
                 icon: Settings,
-                href: "/settings",
+                href: "/settings/general",
                 color: "text-gray-400",
             },
         ],

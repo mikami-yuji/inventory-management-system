@@ -44,6 +44,19 @@ export type Product = {
   productType?: string; // Excel Column Type (種別) 例: 既製品, 別注
   supplierStock?: number; // メーカー在庫
   statusOverride?: 'normal' | 'low_stock' | 'out_of_stock'; // ステータス手動上書き
+  supplierId?: string; // 仕入先ID
+};
+
+// 仕入先マスタ
+export type Supplier = {
+  id: string;
+  name: string;
+  contactPerson?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  note?: string;
+  active: boolean;
 };
 
 // 在庫情報

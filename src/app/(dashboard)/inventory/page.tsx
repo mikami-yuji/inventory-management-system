@@ -28,7 +28,6 @@ import {
     MoreHorizontal
 } from "lucide-react";
 import {
-    inventoryService,
     getPitch,
     isRollBag,
     getApproxBagCount

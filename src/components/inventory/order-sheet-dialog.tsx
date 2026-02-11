@@ -10,10 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileSpreadsheet, Loader2, RefreshCw } from "lucide-react";
 import { Product } from "@/types";
-import { useProducts, useInventory } from "@/hooks/use-supabase-data";
-import { useStockAnalysis } from "@/hooks/use-stock-history"; // Individual hook might be too slow for list
+import { useProducts, useInventory, useSuppliers } from "@/hooks/use-supabase-data";
+
 import { orderSheetService } from "@/lib/services/order-sheet-service";
-import { stockHistoryService } from "@/lib/services/stock-history-service"; // Use service directly if we have data
+
 
 // Helper to get recommended quantity
 // Real implementation would need history for ALL products.
@@ -32,6 +32,7 @@ export function OrderSheetDialog({ products, inventoryMap, trigger }: OrderSheet
     const [open, setOpen] = useState(false);
     const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
     const [orderQuantities, setOrderQuantities] = useState<Map<string, number>>(new Map());
+    const { suppliers } = useSuppliers();
 
     // Filter low stock items (Simple check: stock < 50 for Roll, < 100 for Sheet)
     // Actually, we can reuse the logic from InventoryPage?
@@ -85,7 +86,8 @@ export function OrderSheetDialog({ products, inventoryMap, trigger }: OrderSheet
             quantities.set(p.id, orderQuantities.get(p.id) || 0);
         });
 
-        orderSheetService.generateExcel(selectedItems, quantities);
+        const supplierMap = new Map(suppliers.map(s => [s.id, s.name]));
+        orderSheetService.generateExcel(selectedItems, quantities, supplierMap);
         setOpen(false);
     };
 

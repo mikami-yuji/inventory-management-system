@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { useSuppliers } from "@/hooks/use-supabase-data";
 import type { Product } from "@/types";
 
 // フォームデータの型
@@ -53,6 +54,7 @@ type ProductFormData = {
     backColorCount: string;
     totalColorCount: string;
     statusOverride: 'normal' | 'low_stock' | 'out_of_stock';
+    supplierId: string;
 };
 
 type ProductFormDialogProps = {
@@ -84,6 +86,7 @@ const initialFormData: ProductFormData = {
     backColorCount: "",
     totalColorCount: "",
     statusOverride: 'normal',
+    supplierId: "",
 };
 
 export function ProductFormDialog({
@@ -95,6 +98,7 @@ export function ProductFormDialog({
     const [formData, setFormData] = useState<ProductFormData>(initialFormData);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { suppliers } = useSuppliers();
 
     const isEdit = !!product;
 
@@ -123,6 +127,7 @@ export function ProductFormDialog({
                 backColorCount: product.backColorCount?.toString() || "",
                 totalColorCount: product.totalColorCount?.toString() || "",
                 statusOverride: product.statusOverride || 'normal',
+                supplierId: product.supplierId || "",
             });
         } else {
             setFormData(initialFormData);
@@ -168,6 +173,7 @@ export function ProductFormDialog({
                 backColorCount: formData.backColorCount ? Number(formData.backColorCount) : undefined,
                 totalColorCount: formData.totalColorCount ? Number(formData.totalColorCount) : undefined,
                 statusOverride: formData.statusOverride,
+                supplierId: formData.supplierId || undefined,
             };
 
             const response = await fetch("/api/products", {
@@ -260,6 +266,29 @@ export function ProductFormDialog({
                                 {[formData.prefix, formData.origin, formData.variety, formData.suffix].filter(Boolean).join(' ') || '（詳細を入力してください）'}
                             </div>
                         </div>
+                    </div>
+
+
+
+                    {/* 仕入先 */}
+                    <div className="space-y-2">
+                        <Label htmlFor="supplierId">仕入先</Label>
+                        <Select
+                            value={formData.supplierId}
+                            onValueChange={(val) => handleChange("supplierId", val)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="仕入先を選択" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">指定なし</SelectItem>
+                                {suppliers.map((supplier) => (
+                                    <SelectItem key={supplier.id} value={supplier.id}>
+                                        {supplier.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {/* カテゴリ */}

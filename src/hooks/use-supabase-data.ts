@@ -6,7 +6,10 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Product, Inventory, StockHistory, IncomingStock } from '@/types';
+import useSWR from 'swr';
+import type { Product, Inventory, StockHistory, IncomingStock, Supplier, User } from '@/types';
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 // 商品情報付き在庫データの型
 export type InventoryWithProduct = {
@@ -79,6 +82,7 @@ export function useInventory(options?: {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const loadedRef = useRef(false);
+    const { settings } = useAppSettings();
 
     const fetchInventory = useCallback(async (): Promise<void> => {
         if (!loadedRef.current) setLoading(true);
@@ -128,8 +132,10 @@ export function useInventory(options?: {
     }, [options?.category, options?.search, options?.lowStock]);
 
     useEffect(() => {
-        fetchInventory();
-    }, [fetchInventory]);
+        if (settings) {
+            fetchInventory();
+        }
+    }, [fetchInventory, settings]);
 
     return { inventory, loading, error, refetch: fetchInventory };
 }
@@ -204,9 +210,12 @@ export function useDashboardStats(): {
     } | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { settings } = useAppSettings();
 
     useEffect(() => {
         const fetchStats = async (): Promise<void> => {
+            if (!settings) return; // Wait for settings to load
+
             setLoading(true);
             try {
                 // 商品と在庫を取得して統計を計算
@@ -225,8 +234,10 @@ export function useDashboardStats(): {
 
                 // 統計を計算
                 const totalProducts = products.length;
+                const defaultThreshold = Number(settings?.default_min_stock_alert) || 100;
+
                 const lowStockCount = inventory.filter(i =>
-                    i.quantity > 0 && i.quantity < (i.product?.minStockAlert || 100)
+                    i.quantity > 0 && i.quantity < (i.product?.minStockAlert || defaultThreshold)
                 ).length;
                 const outOfStockCount = inventory.filter(i => i.quantity === 0).length;
                 const totalInventoryValue = inventory.reduce((sum, i) =>
@@ -241,8 +252,10 @@ export function useDashboardStats(): {
             }
         };
 
+
+
         fetchStats();
-    }, []);
+    }, [settings]);
 
     return { stats, loading, error };
 }
@@ -438,5 +451,38 @@ export function useIncomingStock(productId?: string): {
         updateIncomingStock,
         deleteIncomingStock,
         refetch: fetchIncomingStock
+    };
+}
+
+export function useSuppliers(activeOnly: boolean = true) {
+    const { data, error, isLoading, mutate } = useSWR(`/api/suppliers?active=${activeOnly}`, fetcher);
+
+    return {
+        suppliers: (data?.data as Supplier[]) || [],
+        isLoading,
+        isError: error,
+        mutate,
+    };
+}
+
+export function useUsers() {
+    const { data, error, isLoading, mutate } = useSWR('/api/users', fetcher);
+
+    return {
+        users: (data?.data as User[]) || [],
+        isLoading,
+        isError: error,
+        mutate,
+    };
+}
+
+export function useAppSettings() {
+    const { data, error, isLoading, mutate } = useSWR('/api/settings', fetcher);
+
+    return {
+        settings: (data?.data as Record<string, any>) || {},
+        isLoading,
+        isError: error,
+        mutate,
     };
 }

@@ -4,7 +4,7 @@ import { Product } from '@/types';
 import { format } from 'date-fns';
 
 export const orderSheetService = {
-    generateExcel: (products: Product[], quantities: Map<string, number>) => {
+    generateExcel: (products: Product[], quantities: Map<string, number>, supplierMap?: Map<string, string>) => {
         // データ作成
         const data = products.map(product => {
             const qty = quantities.get(product.id) || 0;
@@ -14,7 +14,7 @@ export const orderSheetService = {
                 '商品名': product.name,
                 '品番': product.productCode || '',
                 'JANコード': product.janCode || '',
-                'メーカー': (product as any).supplier || '', // Assuming supplier field might exist or added later
+                'メーカー': (product.supplierId && supplierMap?.get(product.supplierId)) || '',
                 '発注数': qty,
                 '単位': product.category === 'bag' ? '枚' : '個', // Simplification
                 '備考': ''
