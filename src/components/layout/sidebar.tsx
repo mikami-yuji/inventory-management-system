@@ -17,6 +17,7 @@ import {
     Wrench,
     Bell,
     History,
+    ScanBarcode,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -70,6 +71,12 @@ const routes: RouteEntry[] = [
                 icon: ClipboardEdit,
                 href: "/stock-input",
                 color: "text-cyan-400",
+            },
+            {
+                label: "スキャン",
+                icon: ScanBarcode,
+                href: "/scan",
+                color: "text-green-400",
             },
         ],
     },
