@@ -3,13 +3,15 @@
 import { useState, useCallback, useEffect } from 'react';
 import { BarcodeScanner } from '@/components/inventory/barcode-scanner';
 import { useProducts, useInventory, useUpdateInventory } from '@/hooks/use-supabase-data';
+import { useVoiceInput } from '@/hooks/use-voice-input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Package, History, ArrowLeft, Plus, Minus, Search } from 'lucide-react';
+import { Loader2, Package, History, ArrowLeft, Plus, Minus, Search, Mic, MicOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export default function ScanPage() {
     const router = useRouter();
@@ -24,6 +26,24 @@ export default function ScanPage() {
     const [adjustQty, setAdjustQty] = useState<string>('1');
     const [isProcessing, setIsProcessing] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    // Voice Input Setup
+    const { isListening, startListening, stopListening, hasSupport, transcript } = useVoiceInput({
+        onResult: (text) => {
+            console.log("Voice Result:", text);
+            // Case 1: Quantity (e.g. "5", "10個")
+            // Convert full-width numbers to half-width
+            const normalized = text.replace(/[０-９]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+            const match = normalized.match(/(\d+)/);
+            if (match) {
+                setAdjustQty(match[0]);
+                setMessage({ type: 'success', text: `数量を ${match[0]} に設定しました` });
+            }
+        },
+        onError: (err) => {
+            console.error("Voice Error:", err);
+        }
+    });
 
     // Find product when code changes
     useEffect(() => {
@@ -113,6 +133,15 @@ export default function ScanPage() {
                     <ArrowLeft className="h-6 w-6" />
                 </Button>
                 <h1 className="text-xl font-bold">スキャン入出庫</h1>
+                {hasSupport && (
+                    <div className="ml-auto">
+                        {isListening ? (
+                            <Badge variant="destructive" className="animate-pulse">音声認識中...</Badge>
+                        ) : (
+                            <Badge variant="secondary">音声入力可</Badge>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Scanner Area */}
@@ -187,7 +216,24 @@ export default function ScanPage() {
                                 >
                                     <Plus className="h-4 w-4" />
                                 </Button>
+
+                                {hasSupport && (
+                                    <Button
+                                        variant={isListening ? "destructive" : "secondary"}
+                                        size="icon"
+                                        onClick={isListening ? stopListening : startListening}
+                                        className={cn("ml-2", isListening && "animate-pulse")}
+                                        title="音声入力"
+                                    >
+                                        {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                                    </Button>
+                                )}
                             </div>
+                            {transcript && isListening && (
+                                <p className="text-xs text-muted-foreground text-center animate-pulse">
+                                    認識中: {transcript}
+                                </p>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 pt-2">

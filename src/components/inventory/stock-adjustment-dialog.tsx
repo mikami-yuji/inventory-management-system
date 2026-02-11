@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateInventory } from "@/hooks/use-supabase-data";
-import { Loader2 } from "lucide-react";
+import { useVoiceInput } from "@/hooks/use-voice-input";
+import { Loader2, Mic, MicOff } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Product } from "@/types";
 
 type StockAdjustmentDialogProps = {
@@ -28,6 +30,17 @@ export function StockAdjustmentDialog({
     const [quantity, setQuantity] = useState<string>("");
     const [note, setNote] = useState<string>("");
     const { updateStock, loading, error } = useUpdateInventory();
+
+    const { isListening, startListening, stopListening, hasSupport, transcript } = useVoiceInput({
+        onResult: (text) => {
+            // Case 1: Quantity (e.g. "50")
+            const normalized = text.replace(/[０-９]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+            const match = normalized.match(/(\d+)/);
+            if (match) {
+                setQuantity(match[0]);
+            }
+        }
+    });
 
     useEffect(() => {
         if (open && product) {
@@ -81,14 +94,27 @@ export function StockAdjustmentDialog({
                         <Label htmlFor="quantity" className="text-right">
                             変更後
                         </Label>
-                        <Input
-                            id="quantity"
-                            type="number"
-                            min="0"
-                            value={quantity}
-                            onChange={(e) => setQuantity(e.target.value)}
-                            className="col-span-3"
-                        />
+                        <div className="col-span-3 flex items-center gap-2">
+                            <Input
+                                id="quantity"
+                                type="number"
+                                min="0"
+                                value={quantity}
+                                onChange={(e) => setQuantity(e.target.value)}
+                                className="flex-1"
+                            />
+                            {hasSupport && (
+                                <Button
+                                    type="button"
+                                    variant={isListening ? "destructive" : "outline"}
+                                    size="icon"
+                                    onClick={isListening ? stopListening : startListening}
+                                    className={cn(isListening && "animate-pulse")}
+                                >
+                                    {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                                </Button>
+                            )}
+                        </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="note" className="text-right">
