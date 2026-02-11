@@ -17,19 +17,112 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useProducts, useInventory } from "@/hooks/use-supabase-data";
-import { orderService, eventService, inventoryService } from "@/lib/services";
+import { useState, useEffect, useCallback } from "react";
+
+// APIから取得する発注データの型
+type DashboardOrder = {
+    id: string;
+    status: string;
+    type: string;
+    createdAt: string;
+};
+
+// APIから取得するイベントデータの型
+type DashboardEvent = {
+    id: string;
+    clientName: string;
+    status: string;
+    dates: string[];
+};
 
 export default function DashboardPage(): React.ReactElement {
     // Supabase APIから商品と在庫データを取得
     const { products, loading: productsLoading } = useProducts();
     const { inventory, loading: inventoryLoading } = useInventory();
 
-    const loading = productsLoading || inventoryLoading;
+    // Hydrationエラー回避: 日時表示はクライアントサイドのみ
+    const [currentTime, setCurrentTime] = useState<string>("");
+    useEffect(() => {
+        setCurrentTime(new Date().toLocaleString('ja-JP'));
+    }, []);
 
-    // モックサービスからイベントと発注を取得（将来的にAPIに移行）
-    const activeEvents = eventService.getEventsByStatus('active');
-    const incomingStock = inventoryService.getIncomingStock().slice(0, 5);
-    const orders = orderService.getOrders().slice(0, 5);
+    // 発注データをAPIから取得
+    const [orders, setOrders] = useState<DashboardOrder[]>([]);
+    const [ordersLoading, setOrdersLoading] = useState(true);
+
+    const fetchOrders = useCallback(async (): Promise<void> => {
+        try {
+            const res = await fetch('/api/orders');
+            if (res.ok) {
+                const data = await res.json();
+                setOrders(data.slice(0, 5));
+            }
+        } catch (err) {
+            console.error('発注データ取得エラー:', err);
+        } finally {
+            setOrdersLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchOrders();
+    }, [fetchOrders]);
+
+    // 入荷予定データをAPIから取得
+    type IncomingStockItem = {
+        id: string;
+        productId: string;
+        productName: string;
+        expectedDate: string;
+        quantity: number;
+        note: string | null;
+    };
+    const [incomingStock, setIncomingStock] = useState<IncomingStockItem[]>([]);
+
+    const fetchIncomingStock = useCallback(async (): Promise<void> => {
+        try {
+            const res = await fetch('/api/incoming-stock');
+            if (res.ok) {
+                const data = await res.json();
+                setIncomingStock((data || []).slice(0, 5).map((item: any) => ({
+                    id: item.id,
+                    productId: item.product_id || item.productId,
+                    productName: item.products?.name || item.productName || '不明',
+                    expectedDate: item.expected_date || item.expectedDate,
+                    quantity: item.quantity,
+                    note: item.note,
+                })));
+            }
+        } catch (err) {
+            console.error('入荷予定取得エラー:', err);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchIncomingStock();
+    }, [fetchIncomingStock]);
+
+    // 特売イベントデータをAPIから取得
+    const [activeEvents, setActiveEvents] = useState<DashboardEvent[]>([]);
+
+    const fetchEvents = useCallback(async (): Promise<void> => {
+        try {
+            const res = await fetch('/api/sale-events?status=active');
+            if (res.ok) {
+                const result = await res.json();
+                // APIは { data: [...], error: null } 形式で返す
+                setActiveEvents(result.data || []);
+            }
+        } catch (err) {
+            console.error('イベント取得エラー:', err);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchEvents();
+    }, [fetchEvents]);
+
+    const loading = productsLoading || inventoryLoading || ordersLoading;
 
     // 在庫統計を計算
     const lowStockItems = inventory.filter(i => i.quantity < 50);
@@ -57,7 +150,7 @@ export default function DashboardPage(): React.ReactElement {
                         </div>
                     )}
                     <p className="text-sm text-muted-foreground">
-                        最終更新: {new Date().toLocaleString('ja-JP')}
+                        {currentTime && `最終更新: ${currentTime}`}
                     </p>
                 </div>
             </div>
@@ -216,7 +309,7 @@ export default function DashboardPage(): React.ReactElement {
                                 <div key={stock.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                                     <div>
                                         <p className="text-sm font-medium">
-                                            {inventoryService.getProductName(stock.productId).slice(0, 30)}...
+                                            {stock.productName.slice(0, 30)}{stock.productName.length > 30 ? '...' : ''}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             {stock.expectedDate} / {stock.quantity.toLocaleString()}個
@@ -258,9 +351,10 @@ export default function DashboardPage(): React.ReactElement {
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {activeEvents.map(event => (
                                 <div key={event.id} className="p-4 bg-white rounded-lg shadow-sm border border-pink-100">
-                                    <h4 className="font-semibold text-pink-900">{event.name}</h4>
-                                    <p className="text-sm text-gray-500 mt-1">{event.startDate} 〜 {event.endDate}</p>
-                                    <p className="text-sm mt-2 line-clamp-2">{event.description}</p>
+                                    <h4 className="font-semibold text-pink-900">{event.clientName}</h4>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        {event.dates?.[0]} {event.dates?.length > 1 ? `〜 ${event.dates[event.dates.length - 1]}` : ''}
+                                    </p>
                                     <Button variant="link" className="p-0 h-auto mt-2 text-pink-600" asChild>
                                         <Link href={`/events/${event.id}`}>詳細を見る</Link>
                                     </Button>

@@ -2,6 +2,64 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import type { ApiResponse, Order } from '@/types'
 
+// GET: 発注一覧を取得
+export async function GET(): Promise<NextResponse> {
+    try {
+        const supabase = createServerClient()
+
+        // 発注データを取得（新しい順）
+        const { data: ordersData, error: ordersError } = await supabase
+            .from('orders')
+            .select(`
+                id,
+                client_id,
+                status,
+                type,
+                event_id,
+                shipment_source,
+                created_at,
+                order_items (
+                    id,
+                    product_id,
+                    quantity,
+                    products (
+                        id,
+                        name
+                    )
+                )
+            `)
+            .order('created_at', { ascending: false })
+
+        if (ordersError) {
+            console.error('発注一覧取得エラー:', ordersError)
+            return NextResponse.json({ error: ordersError.message }, { status: 500 })
+        }
+
+        // TypeScript型に変換
+        const orders = (ordersData || []).map((order: any) => ({
+            id: order.id,
+            clientId: order.client_id,
+            status: order.status,
+            type: order.type,
+            eventId: order.event_id,
+            shipmentSource: order.shipment_source,
+            createdAt: order.created_at,
+            items: (order.order_items || []).map((item: any) => ({
+                productId: item.product_id,
+                quantity: item.quantity,
+                productName: item.products?.name || '不明な商品',
+            })),
+        }))
+
+        return NextResponse.json(orders)
+
+    } catch (error) {
+        console.error('サーバーエラー:', error)
+        return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
+    }
+}
+
+
 // POST: 新規発注作成
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<Order>>> {
     try {
@@ -45,7 +103,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
         const { error: itemsError } = await supabase
             .from('order_items')
-            .insert(orderItems)
+            .insert(orderItems as any)
 
         if (itemsError) {
             console.error('発注明細作成エラー:', itemsError)
@@ -69,11 +127,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         for (const item of items) {
             if (shipmentSource === 'supplier') {
                 // メーカー在庫から減らす
-                const { data: product } = await supabase
+                const { data: product }: any = await supabase
                     .from('products')
                     .select('supplier_stock')
                     .eq('id', item.productId)
-                    .single<any>()
+                    .single()
 
                 if (product && typeof product.supplier_stock === 'number') {
                     const newStock = Math.max(0, product.supplier_stock - item.quantity)
@@ -129,8 +187,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 await supabase.from('stock_history').insert({
                     product_id: item.productId,
                     type: 'order',
-                    quantity: newQty, // その時点の在庫
-                    changeAmount: -item.quantity,
+                    quantity: newQty,
+                    change_amount: -item.quantity,
                     note: '出荷依頼'
                 } as any)
             }

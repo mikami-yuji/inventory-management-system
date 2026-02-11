@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-02-11
+
+### Added
+- **認証・セキュリティ**
+  - `src/middleware.ts` - 認証ミドルウェア（ページ→リダイレクト / API→401 JSON）
+  - `src/hooks/use-auth-session.ts` - セッション管理フック
+  - `src/app/register/page.tsx` - ユーザー登録ページ
+  - `src/app/api/auth/register/route.ts` - 登録API（Supabase Auth連携）
+- **運用品質向上**
+  - `src/components/error-boundary.tsx` - エラー境界コンポーネント
+  - `src/lib/api-client.ts` - 統一APIクライアント（エラーハンドリング・401自動リダイレクト）
+  - `src/app/(dashboard)/error.tsx` - Next.jsエラーページ
+  - `src/app/(dashboard)/loading.tsx` - ローディングスケルトン
+  - `src/app/(dashboard)/not-found.tsx` - 404ページ
+
+### Changed
+- **全ページのSupabase API化（モック依存ゼロ）**
+  - ダッシュボード: 発注・入荷予定・特売イベントをAPI接続
+  - 発注一覧: `/api/orders` GET APIで実データ表示
+  - 特売イベント: 既存API活用、ダッシュボード表示をAPI化
+- ダッシュボードレイアウトにErrorBoundaryを統合
+- Navbar: ログアウト機能追加、ユーザードロップダウン表示
+
+
 ## [0.2.0] - 2026-01-08
 
 ### Added

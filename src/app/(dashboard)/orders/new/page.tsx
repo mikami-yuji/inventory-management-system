@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 
 export default function NewOrderPage(): React.ReactElement {
@@ -20,18 +21,22 @@ export default function NewOrderPage(): React.ReactElement {
     const { items, updateQuantity, removeFromCart, clearCart, getTotalPrice } = useCart();
     const [loading, setLoading] = useState(false);
     const [shipmentSource, setShipmentSource] = useState<'inventory' | 'supplier'>('inventory');
+    const { user } = useAuthSession();
 
     const onSubmit = async (): Promise<void> => {
         if (items.length === 0) {
             alert("カートに商品がありません");
             return;
         }
+        if (!user?.id) {
+            alert("ログイン情報が取得できません。再ログインしてください。");
+            return;
+        }
         setLoading(true);
 
         try {
-            // クライアントIDはモック。認証実装後は auth.user.id 等を使用
-            // 今回はダミーUUIDを使用するか、既存のユーザーIDを使用
-            const clientId = "00000000-0000-0000-0000-000000000000"; // 仮
+            // 認証済みユーザーのIDを使用
+            const clientId = user.id;
 
             const response = await fetch('/api/orders', {
                 method: 'POST',

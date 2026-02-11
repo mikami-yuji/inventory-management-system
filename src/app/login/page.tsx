@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Package } from 'lucide-react'
+import Link from 'next/link'
 
 export default function LoginPage(): React.ReactNode {
     const router = useRouter()
@@ -93,6 +94,13 @@ export default function LoginPage(): React.ReactNode {
                         >
                             {isLoading ? 'ログイン中...' : 'ログイン'}
                         </Button>
+
+                        <div className="text-center text-sm text-muted-foreground">
+                            アカウントをお持ちでない方は{' '}
+                            <Link href="/register" className="text-primary hover:underline">
+                                新規登録
+                            </Link>
+                        </div>
                     </form>
                 </CardContent>
             </Card>
