@@ -1,0 +1,16 @@
+{
+    "name": "Inventory Management System",
+    "short_name": "在庫管理",
+    "description": "米袋在庫管理・発注システム",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "icons": [
+        {
+            "src": "/app-icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ]
+}
