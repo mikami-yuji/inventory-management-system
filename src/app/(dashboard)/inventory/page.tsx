@@ -44,9 +44,7 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { SupplierStockDialog } from "@/components/inventory/supplier-stock-dialog";
 import { WIPDialog } from "@/components/inventory/wip-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-// ... (Keep existing constants and helpers: bagsToMeters, metersToBags, PREFECTURES, getPrefectureIndex, getProductGroup) ...
 // 枚数からメートルに変換
 const bagsToMeters = (bags: number, weight: number): number => {
     const pitch = getPitch(weight);
@@ -94,7 +92,7 @@ const getProductGroup = (p: Product): number => {
     return 0;
 };
 
-// Helper: Calculate Stock Status
+// Helper: Calculate Stock Status (Extracted logic)
 const calculateStockStatus = (
     product: Product,
     inventoryMap: Map<string, number>,
@@ -148,19 +146,18 @@ const calculateStockStatus = (
 };
 
 export default function InventoryPage(): React.ReactElement {
-    // ... (Keep existing State and Hooks) ...
     const [currentTab, setCurrentTab] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [weightFilter, setWeightFilter] = useState("all");
     const [stockFilter, setStockFilter] = useState("all");
+    const [isFilterOpen, setIsFilterOpen] = useState(false); // Mobile filter state
 
     const { products: allProducts, loading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
     const { inventory: inventoryData, loading: inventoryLoading, refetch: refetchInventory } = useInventory();
     const { events: saleEvents, loading: eventsLoading } = useSaleEvents();
     const { items: wipItems, loading: wipLoading, refetch: refetchWIP } = useWorkInProgress({ status: 'in_progress' });
 
-    // ... (Keep existing Maps logic: inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap)
-    // For brevity in write_to_file, assume identical logic as before
+    // 在庫マップ (Restored)
     const inventoryMap = useMemo(() => {
         const map = new Map<string, number>();
         inventoryData?.forEach(item => {
@@ -205,8 +202,9 @@ export default function InventoryPage(): React.ReactElement {
         return map;
     }, [allProducts]);
 
-    const incomingMap = useMemo(() => new Map(), []); // Mock for now
+    const incomingMap = useMemo(() => new Map(), []);
 
+    // Filters
     const filteredProducts = useMemo(() => {
         let products = currentTab === "all" ? allProducts : allProducts.filter(p => p.category === currentTab);
         if (searchQuery.trim()) {
@@ -249,7 +247,9 @@ export default function InventoryPage(): React.ReactElement {
         });
     }, [allProducts, currentTab, searchQuery, weightFilter, stockFilter, inventoryMap, saleAllocationMap, wipQuantityMap, supplierStockMap, incomingMap]);
 
-    // ... (Keep existing refetch, dialog helpers, summary stats) ...
+    const loading = productsLoading || inventoryLoading || eventsLoading || wipLoading;
+    const error = productsError;
+
     const refetch = (): void => {
         const scrollY = window.scrollY;
         Promise.all([refetchProducts(), refetchInventory(), refetchWIP()]).then(() => {
@@ -263,7 +263,6 @@ export default function InventoryPage(): React.ReactElement {
     const handleEditProduct = (product: Product) => { setEditingProduct(product); setFormDialogOpen(true); };
     const handleDeleteProduct = async (productId: string) => {
         if (!confirm("この商品を削除しますか？")) return;
-        // ... (fetch logic)
         try {
             const response = await fetch(`/api/products?id=${productId}`, { method: "DELETE" });
             if (response.ok) refetch();
@@ -279,13 +278,38 @@ export default function InventoryPage(): React.ReactElement {
 
     const clearFilters = () => { setSearchQuery(""); setWeightFilter("all"); setStockFilter("all"); };
 
+    // Summary (Restored)
+    const summary = useMemo(() => {
+        const totalProducts = allProducts.length;
+        const outOfStock = allProducts.filter(p => {
+            const qty = inventoryMap.get(p.id) || 0;
+            const allocated = saleAllocationMap.get(p.id)?.meters || 0;
+            return (qty - allocated) <= 0;
+        }).length;
+        const lowStock = allProducts.filter(p => {
+            const qty = inventoryMap.get(p.id) || 0;
+            const allocated = saleAllocationMap.get(p.id)?.meters || 0;
+            const available = qty - allocated;
+            return available > 0 && available < 50;
+        }).length;
+        const hasReservation = allProducts.filter(p => {
+            const allocated = saleAllocationMap.get(p.id);
+            return allocated && allocated.bags > 0;
+        }).length;
+        return { totalProducts, outOfStock, lowStock, hasReservation };
+    }, [allProducts, inventoryMap, saleAllocationMap]);
+
     return (
-        <div className="space-y-6 pb-20"> {/* Add padding bottom for mobile fab? */}
+        <div className="space-y-6 pb-20">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <h2 className="text-3xl font-bold tracking-tight">在庫一覧</h2>
                 <div className="flex items-center gap-3">
-                    {/* Loading State */}
-                    <div className="flex-1"></div>
+                    {loading && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            読み込み中...
+                        </div>
+                    )}
                     <Button onClick={handleAddProduct} className="gap-2 w-full md:w-auto">
                         <Plus className="h-4 w-4" />
                         商品追加
@@ -293,15 +317,138 @@ export default function InventoryPage(): React.ReactElement {
                 </div>
             </div>
 
-            {/* Error, Summary Cards (Keep transparently) */}
-            {/* ... (Keep Summary Cards) ... */}
+            {error && (
+                <Card className="border-red-200 bg-red-50">
+                    <CardContent className="pt-6">
+                        <p className="text-red-600">エラー: {error}</p>
+                        <Button onClick={refetch} variant="outline" className="mt-2">
+                            再読み込み
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
 
-            {/* Search Filter (Keep transparently) */}
-            {/* ... (Keep Search Filters) ... */}
+            {/* サマリーカード (Restored) */}
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Package className="h-4 w-4" />
+                            総商品
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{summary.totalProducts}</div>
+                    </CardContent>
+                </Card>
+                <Card className="border-red-200">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-red-600 flex items-center gap-2">
+                            <TrendingDown className="h-4 w-4" />
+                            欠品
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-red-600">{summary.outOfStock}</div>
+                    </CardContent>
+                </Card>
+                <Card className="border-amber-200">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-amber-600 flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4" />
+                            低在庫
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-amber-600">{summary.lowStock}</div>
+                    </CardContent>
+                </Card>
+                <Card className="border-blue-200">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-blue-600 flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            引当
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-blue-600">{summary.hasReservation}</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* 検索・フィルターエリア (Restored & Mobile Polish) */}
+            <Card>
+                <div className="md:hidden p-4 border-b flex justify-between items-center bg-gray-50/50 cursor-pointer" onClick={() => setIsFilterOpen(!isFilterOpen)}>
+                    <div className="flex items-center gap-2 font-medium text-sm">
+                        <Filter className="h-4 w-4" />
+                        検索・絞り込み
+                        {hasActiveFilters && <Badge variant="secondary" className="ml-2 text-[10px] bg-sky-100 text-sky-800">適用中</Badge>}
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 pointer-events-none">
+                        {isFilterOpen ? <TrendingUp className="h-4 w-4 rotate-180" /> : <TrendingDown className="h-4 w-4" />}
+                    </Button>
+                </div>
+                <CardContent className={cn("pt-6", isFilterOpen ? "block" : "hidden md:block")}>
+                    <div className="flex flex-col gap-4 md:flex-row md:items-end">
+                        {/* 検索入力 */}
+                        <div className="flex-1">
+                            <label className="text-sm font-medium mb-2 block">商品検索</label>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="商品名、JAN、ID..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
+                        </div>
+                        {/* 重量フィルター */}
+                        <div className="w-full md:w-40">
+                            <label className="text-sm font-medium mb-2 block">重量</label>
+                            <Select value={weightFilter} onValueChange={setWeightFilter}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="すべて" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">すべて</SelectItem>
+                                    {availableWeights.map(w => (
+                                        <SelectItem key={w} value={w.toString()}>
+                                            {w}kg
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {/* 在庫状態フィルター */}
+                        <div className="w-full md:w-48">
+                            <label className="text-sm font-medium mb-2 block">在庫状態</label>
+                            <Select value={stockFilter} onValueChange={setStockFilter}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="すべて" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">すべて</SelectItem>
+                                    <SelectItem value="low">低在庫</SelectItem>
+                                    <SelectItem value="out">欠品</SelectItem>
+                                    <SelectItem value="reserved">特売引当あり</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {/* クリアボタン */}
+                        {hasActiveFilters && (
+                            <Button variant="outline" onClick={clearFilters} className="gap-2">
+                                <X className="h-4 w-4" />
+                                クリア
+                            </Button>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Content Switcher */}
             <Tabs defaultValue="all" onValueChange={setCurrentTab} className="w-full">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto pb-1">
                     <TabsList className="w-full justify-start md:justify-center">
                         <TabsTrigger value="all">すべて</TabsTrigger>
                         <TabsTrigger value="new_rice">新米</TabsTrigger>
@@ -353,7 +500,7 @@ export default function InventoryPage(): React.ReactElement {
     );
 }
 
-// ... (InventoryTableProps type) ...
+// ... (InventoryTableProps & Components - Same as before)
 type InventoryTableProps = {
     products: Product[];
     inventoryMap: Map<string, number>;
@@ -366,7 +513,6 @@ type InventoryTableProps = {
     onRefetch: () => void;
 };
 
-// ... (InventoryTable component: use calculateStockStatus internally now) ...
 function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch }: InventoryTableProps) {
     const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
     const [editWIP, setEditWIP] = useState<Product | null>(null);
@@ -451,7 +597,6 @@ function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, sup
     );
 }
 
-// Mobile List Component
 function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch }: InventoryTableProps) {
     const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
     const [editWIP, setEditWIP] = useState<Product | null>(null);
@@ -484,7 +629,6 @@ function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 pt-2 space-y-3">
-                            {/* Stats Grid */}
                             <div className="grid grid-cols-2 gap-3 text-sm">
                                 <div className="bg-white p-2 rounded border">
                                     <div className="text-muted-foreground text-xs">有効在庫</div>
@@ -503,7 +647,6 @@ function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap
                                 </div>
                             </div>
 
-                            {/* Sub Info */}
                             <div className="flex gap-2 text-xs">
                                 <div className="flex-1 bg-slate-50 p-2 rounded">
                                     <span className="text-muted-foreground block">メーカー在庫</span>
@@ -515,7 +658,6 @@ function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap
                                 </div>
                             </div>
 
-                            {/* Actions */}
                             <div className="flex justify-end gap-2 pt-2 border-t mt-2">
                                 <Button variant="ghost" size="sm" onClick={() => setEditSupplierStock(product)}>
                                     <Package className="h-4 w-4 mr-1" /> メーカー

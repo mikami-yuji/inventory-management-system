@@ -14,7 +14,7 @@ export default function DashboardLayout({
             </div>
             <main className="md:pl-72">
                 <Navbar />
-                <div className="p-8">
+                <div className="p-4 md:p-8">
                     <ErrorBoundary>
                         {children}
                     </ErrorBoundary>

@@ -252,43 +252,71 @@ export default function DashboardPage(): React.ReactElement {
                         </Button>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>発注ID</TableHead>
-                                    <TableHead>タイプ</TableHead>
-                                    <TableHead>ステータス</TableHead>
-                                    <TableHead className="text-right">日時</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {orders.map((order) => (
-                                    <TableRow key={order.id}>
-                                        <TableCell className="font-mono text-sm">{order.id.slice(0, 8)}...</TableCell>
-                                        <TableCell>
-                                            <Badge variant={order.type === 'special_event' ? 'secondary' : 'outline'}>
-                                                {order.type === 'special_event' ? '特売' : '通常'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={order.status === 'shipped' ? 'default' : 'outline'}>
-                                                {order.status === 'shipped' ? '出荷済' : order.status === 'requested' ? '受付中' : '取消'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right text-sm text-muted-foreground">
-                                            {new Date(order.createdAt).toLocaleDateString('ja-JP')}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                                {orders.length === 0 && (
+                        {/* Desktop Table */}
+                        <div className="hidden md:block">
+                            <Table>
+                                <TableHeader>
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center text-muted-foreground">
-                                            発注履歴はありません
-                                        </TableCell>
+                                        <TableHead>発注ID</TableHead>
+                                        <TableHead>タイプ</TableHead>
+                                        <TableHead>ステータス</TableHead>
+                                        <TableHead className="text-right">日時</TableHead>
                                     </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {orders.map((order) => (
+                                        <TableRow key={order.id}>
+                                            <TableCell className="font-mono text-sm">{order.id.slice(0, 8)}...</TableCell>
+                                            <TableCell>
+                                                <Badge variant={order.type === 'special_event' ? 'secondary' : 'outline'}>
+                                                    {order.type === 'special_event' ? '特売' : '通常'}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant={order.status === 'shipped' ? 'default' : 'outline'}>
+                                                    {order.status === 'shipped' ? '出荷済' : order.status === 'requested' ? '受付中' : '取消'}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right text-sm text-muted-foreground">
+                                                {new Date(order.createdAt).toLocaleDateString('ja-JP')}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                    {orders.length === 0 && (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="text-center text-muted-foreground">
+                                                発注履歴はありません
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+
+                        {/* Mobile List */}
+                        <div className="md:hidden space-y-3">
+                            {orders.map((order) => (
+                                <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                    <div className="space-y-1">
+                                        <div className="font-mono text-sm font-bold">{order.id.slice(0, 8)}...</div>
+                                        <div className="text-xs text-muted-foreground">{new Date(order.createdAt).toLocaleDateString('ja-JP')}</div>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <Badge variant={order.type === 'special_event' ? 'secondary' : 'outline'} className="text-[10px]">
+                                            {order.type === 'special_event' ? '特売' : '通常'}
+                                        </Badge>
+                                        <Badge variant={order.status === 'shipped' ? 'default' : 'outline'} className="text-[10px]">
+                                            {order.status === 'shipped' ? '出荷済' : order.status === 'requested' ? '受付中' : '取消'}
+                                        </Badge>
+                                    </div>
+                                </div>
+                            ))}
+                            {orders.length === 0 && (
+                                <div className="text-center text-muted-foreground py-4">
+                                    発注履歴はありません
+                                </div>
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
 
