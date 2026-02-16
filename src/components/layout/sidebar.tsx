@@ -19,6 +19,7 @@ import {
     History,
     ScanBarcode,
     UserCog,
+    Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -136,6 +137,12 @@ const routes: RouteEntry[] = [
                 icon: UserCog,
                 href: "/settings/users",
                 color: "text-purple-400",
+            },
+            {
+                label: "データ管理",
+                icon: Database,
+                href: "/settings/data",
+                color: "text-teal-400",
             },
             {
                 label: "一般設定",
