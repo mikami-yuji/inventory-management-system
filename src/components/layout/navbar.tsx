@@ -4,11 +4,12 @@ import React from "react";
 import { MobileSidebar } from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { UserCircle, ShoppingCart, LogOut } from "lucide-react";
+import { UserCircle, ShoppingCart, LogOut, Sun, Moon } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "@/contexts/cart-context";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { signOut } from "next-auth/react";
+import { useTheme } from "next-themes";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -21,6 +22,7 @@ import {
 export function Navbar(): React.ReactElement {
     const { getTotalItems } = useCart();
     const { user, isAuthenticated } = useAuthSession();
+    const { theme, setTheme } = useTheme();
     const itemCount = getTotalItems();
 
     // ログアウト処理
@@ -28,10 +30,22 @@ export function Navbar(): React.ReactElement {
         await signOut({ callbackUrl: '/login' });
     };
 
+    // テーマ切り替え
+    const toggleTheme = (): void => {
+        setTheme(theme === 'dark' ? 'light' : 'dark');
+    };
+
     return (
         <div className="flex items-center p-4">
             <MobileSidebar />
             <div className="flex w-full justify-end gap-2">
+                {/* テーマ切り替え */}
+                <Button variant="ghost" size="icon" onClick={toggleTheme} title="テーマ切り替え">
+                    <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <span className="sr-only">テーマ切り替え</span>
+                </Button>
+
                 {/* カートアイコン */}
                 <Button variant="ghost" size="icon" asChild className="relative">
                     <Link href="/orders/new">
@@ -82,3 +96,4 @@ export function Navbar(): React.ReactElement {
         </div>
     );
 }
+

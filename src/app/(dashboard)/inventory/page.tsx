@@ -25,7 +25,8 @@ import {
     TrendingUp,
     Calendar,
     AlertTriangle,
-    MoreHorizontal
+    MoreHorizontal,
+    Star
 } from "lucide-react";
 import {
     getPitch,
@@ -38,12 +39,14 @@ import { useSaleEvents } from "@/hooks/use-sale-events";
 import { useWorkInProgress, calculateWIPByProduct, useWIPActions } from "@/hooks/use-work-in-progress";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import { ProductAnalysisDialog } from "@/components/inventory/product-analysis-dialog";
+import { StockLevelBar } from "@/components/inventory/stock-level-bar";
 import type { Product } from "@/types";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { SupplierStockDialog } from "@/components/inventory/supplier-stock-dialog";
 import { WIPDialog } from "@/components/inventory/wip-dialog";
 import { OrderSheetDialog } from "@/components/inventory/order-sheet-dialog";
+import { useFavorites } from "@/hooks/use-favorites";
 
 // 枚数からメートルに変換
 const bagsToMeters = (bags: number, weight: number): number => {
@@ -151,6 +154,7 @@ export default function InventoryPage(): React.ReactElement {
     const [weightFilter, setWeightFilter] = useState("all");
     const [stockFilter, setStockFilter] = useState("all");
     const [isFilterOpen, setIsFilterOpen] = useState(false); // Mobile filter state
+    const { toggleFavorite, isFavorite } = useFavorites();
 
     const { products: allProducts, loading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
     const { inventory: inventoryData, loading: inventoryLoading, refetch: refetchInventory } = useInventory();
@@ -237,6 +241,10 @@ export default function InventoryPage(): React.ReactElement {
             });
         }
         return products.sort((a, b) => {
+            // お気に入りを最上部に表示
+            const favA = isFavorite(a.id) ? 0 : 1;
+            const favB = isFavorite(b.id) ? 0 : 1;
+            if (favA !== favB) return favA - favB;
             const groupA = getProductGroup(a);
             const groupB = getProductGroup(b);
             if (groupA !== groupB) return groupA - groupB;
@@ -245,7 +253,7 @@ export default function InventoryPage(): React.ReactElement {
             if (prefA !== prefB) return prefA - prefB;
             return (a.weight || 0) - (b.weight || 0);
         });
-    }, [allProducts, currentTab, searchQuery, weightFilter, stockFilter, inventoryMap, saleAllocationMap, wipQuantityMap, supplierStockMap, incomingMap]);
+    }, [allProducts, currentTab, searchQuery, weightFilter, stockFilter, inventoryMap, saleAllocationMap, wipQuantityMap, supplierStockMap, incomingMap, isFavorite]);
 
     const loading = productsLoading || inventoryLoading || eventsLoading || wipLoading;
     const error = productsError;
@@ -481,6 +489,8 @@ export default function InventoryPage(): React.ReactElement {
                             onDelete={handleDeleteProduct}
                             onRefetch={refetch}
                             onAnalyze={handleAnalyzeProduct}
+                            onToggleFavorite={toggleFavorite}
+                            isFavorite={isFavorite}
                         />
                     </div>
                     {/* Mobile List */}
@@ -496,6 +506,8 @@ export default function InventoryPage(): React.ReactElement {
                             onDelete={handleDeleteProduct}
                             onRefetch={refetch}
                             onAnalyze={handleAnalyzeProduct}
+                            onToggleFavorite={toggleFavorite}
+                            isFavorite={isFavorite}
                         />
                     </div>
                 </div >
@@ -534,9 +546,11 @@ type InventoryTableProps = {
     onDelete: (productId: string) => Promise<void>;
     onRefetch: () => void;
     onAnalyze: (product: Product) => void;
+    onToggleFavorite: (productId: string) => void;
+    isFavorite: (productId: string) => boolean;
 };
 
-function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch, onAnalyze }: InventoryTableProps) {
+function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch, onAnalyze, onToggleFavorite, isFavorite }: InventoryTableProps) {
     const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
     const [editWIP, setEditWIP] = useState<Product | null>(null);
 
@@ -563,8 +577,19 @@ function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, sup
                             return (
                                 <TableRow key={product.id} className={cn(status.isOutOfStock && "bg-red-50")}>
                                     <TableCell>
-                                        <div className="font-medium">{product.name}</div>
-                                        <div className="text-xs text-gray-400">{product.productCode}</div>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => onToggleFavorite(product.id)}
+                                                className="shrink-0 hover:scale-110 transition-transform"
+                                                title={isFavorite(product.id) ? "お気に入り解除" : "お気に入り登録"}
+                                            >
+                                                <Star className={cn("h-4 w-4", isFavorite(product.id) ? "fill-yellow-400 text-yellow-400" : "text-gray-300 dark:text-gray-600")} />
+                                            </button>
+                                            <div>
+                                                <div className="font-medium">{product.name}</div>
+                                                <div className="text-xs text-gray-400">{product.productCode}</div>
+                                            </div>
+                                        </div>
                                     </TableCell>
                                     <TableCell className="hidden lg:table-cell">
                                         <div className="text-sm">{product.weight}kg / {product.shape}</div>
@@ -579,6 +604,13 @@ function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, sup
                                         <div className={cn("font-bold", status.isOutOfStock && "text-red-600", status.isLowStock && "text-amber-600")}>
                                             {status.availableStock.toLocaleString()}{status.isRoll ? 'm' : '枚'}
                                         </div>
+                                        <StockLevelBar
+                                            currentStock={status.availableStock}
+                                            threshold={product.minStockAlert || 100}
+                                            isOutOfStock={status.isOutOfStock}
+                                            isLowStock={status.isLowStock}
+                                            compact
+                                        />
                                     </TableCell>
                                     <TableCell className="text-right hidden lg:table-cell">
                                         {status.supplierStock > 0 ? `${status.supplierStock.toLocaleString()}` : "-"}
@@ -623,7 +655,7 @@ function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, sup
     );
 }
 
-function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch, onAnalyze }: InventoryTableProps) {
+function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap, onEdit, onDelete, onRefetch, onAnalyze, onToggleFavorite, isFavorite }: InventoryTableProps) {
     const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
     const [editWIP, setEditWIP] = useState<Product | null>(null);
 
@@ -639,9 +671,18 @@ function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap
                     <Card key={product.id} className={cn("overflow-hidden", status.isOutOfStock && "border-red-200 bg-red-50/50")}>
                         <CardHeader className="p-4 pb-2">
                             <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="font-bold text-lg">{product.name}</h3>
-                                    <p className="text-sm text-muted-foreground">{product.productCode} / {product.janCode}</p>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => onToggleFavorite(product.id)}
+                                        className="shrink-0 hover:scale-110 transition-transform"
+                                        title={isFavorite(product.id) ? "お気に入り解除" : "お気に入り登録"}
+                                    >
+                                        <Star className={cn("h-5 w-5", isFavorite(product.id) ? "fill-yellow-400 text-yellow-400" : "text-gray-300 dark:text-gray-600")} />
+                                    </button>
+                                    <div>
+                                        <h3 className="font-bold text-lg">{product.name}</h3>
+                                        <p className="text-sm text-muted-foreground">{product.productCode} / {product.janCode}</p>
+                                    </div>
                                 </div>
                                 <div>
                                     {status.isOutOfStock ? (
@@ -656,15 +697,21 @@ function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap
                         </CardHeader>
                         <CardContent className="p-4 pt-2 space-y-3">
                             <div className="grid grid-cols-2 gap-3 text-sm">
-                                <div className="bg-white p-2 rounded border">
+                                <div className="bg-white dark:bg-card p-2 rounded border">
                                     <div className="text-muted-foreground text-xs">有効在庫</div>
                                     <div className={cn("font-bold text-xl", status.isOutOfStock && "text-red-600")}>
                                         {status.availableStock.toLocaleString()}
                                         <span className="text-xs font-normal text-muted-foreground ml-1">{status.isRoll ? 'm' : '枚'}</span>
                                     </div>
-                                    {status.isRoll && <div className="text-xs text-muted-foreground">約{status.availableBags.toLocaleString()}枚</div>}
+                                    <StockLevelBar
+                                        currentStock={status.availableStock}
+                                        threshold={product.minStockAlert || 100}
+                                        isOutOfStock={status.isOutOfStock}
+                                        isLowStock={status.isLowStock}
+                                    />
+                                    {status.isRoll && <div className="text-xs text-muted-foreground mt-1">約{status.availableBags.toLocaleString()}枚</div>}
                                 </div>
-                                <div className="bg-white p-2 rounded border">
+                                <div className="bg-white dark:bg-card p-2 rounded border">
                                     <div className="text-muted-foreground text-xs">実在庫</div>
                                     <div className="font-bold text-lg">{status.currentStock.toLocaleString()}<span className="text-xs font-normal text-muted-foreground">{status.isRoll ? 'm' : '枚'}</span></div>
                                     {status.hasAllocation && (
