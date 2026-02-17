@@ -14,14 +14,33 @@ import Link from "next/link";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { useDeliveryAddresses } from "@/hooks/use-supabase-data";
+import { DeliveryAddressDialog } from "@/components/orders/delivery-address-dialog";
 
 
 export default function NewOrderPage(): React.ReactElement {
     const router = useRouter();
     const { items, updateQuantity, removeFromCart, clearCart, getTotalPrice } = useCart();
+    const { addresses, addAddress, refetch: refetchAddresses } = useDeliveryAddresses();
     const [loading, setLoading] = useState(false);
-    const [shipmentSource, setShipmentSource] = useState<'inventory' | 'supplier'>('inventory');
     const { user } = useAuthSession();
+
+    // 選択された住所ID
+    const [selectedAddressId, setSelectedAddressId] = useState<string>("");
+    // 住所追加ダイアログの状態
+    const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+
+    // 初期ロード時にデフォルト住所を選択
+    React.useEffect(() => {
+        if (addresses.length > 0 && !selectedAddressId) {
+            const defaultAddr = addresses.find(a => a.isDefault);
+            if (defaultAddr) {
+                setSelectedAddressId(defaultAddr.id);
+            } else {
+                setSelectedAddressId(addresses[0].id);
+            }
+        }
+    }, [addresses, selectedAddressId]);
 
     const onSubmit = async (): Promise<void> => {
         if (items.length === 0) {
@@ -32,6 +51,13 @@ export default function NewOrderPage(): React.ReactElement {
             alert("ログイン情報が取得できません。再ログインしてください。");
             return;
         }
+
+        const selectedAddress = addresses.find(a => a.id === selectedAddressId);
+        if (!selectedAddress) {
+            alert("納品場所を選択してください");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -45,7 +71,10 @@ export default function NewOrderPage(): React.ReactElement {
                     items: items.map(i => ({ productId: i.product.id, quantity: i.quantity })),
                     clientId,
                     type: 'standard', // デフォルト
-                    shipmentSource
+                    shipmentSource: 'supplier', // メーカー直送固定
+                    deliveryName: selectedAddress.name,
+                    deliveryAddress: selectedAddress.address,
+                    deliveryPhone: selectedAddress.phone
                 })
             });
 
@@ -189,30 +218,48 @@ export default function NewOrderPage(): React.ReactElement {
                     {/* 出荷オプションと合計 */}
                     <div className="grid gap-6 md:grid-cols-2">
                         <Card>
-                            <CardHeader>
-                                <CardTitle>出荷オプション</CardTitle>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle>納品場所</CardTitle>
+                                <Button variant="outline" size="sm" onClick={() => setIsAddressDialogOpen(true)}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    新規追加
+                                </Button>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="pt-4">
                                 <div className="space-y-4">
-                                    <div>
-                                        <Label className="mb-2 block">出荷元</Label>
+                                    {addresses.length === 0 ? (
+                                        <div className="text-center py-4 text-muted-foreground text-sm">
+                                            納品場所が登録されていません。<br />
+                                            「新規追加」から登録してください。
+                                        </div>
+                                    ) : (
                                         <RadioGroup
-                                            value={shipmentSource}
-                                            onValueChange={(v) => setShipmentSource(v as 'inventory' | 'supplier')}
-                                            className="flex flex-col space-y-2"
+                                            value={selectedAddressId}
+                                            onValueChange={setSelectedAddressId}
+                                            className="space-y-3"
                                         >
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="inventory" id="source-inventory" />
-                                                <Label htmlFor="source-inventory">自社在庫から出荷</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="supplier" id="source-supplier" />
-                                                <Label htmlFor="source-supplier">メーカー在庫から直送</Label>
-                                            </div>
+                                            {addresses.map((addr) => (
+                                                <div key={addr.id} className="flex items-start space-x-3 border p-3 rounded-md hover:bg-muted/50 cursor-pointer" onClick={() => setSelectedAddressId(addr.id)}>
+                                                    <RadioGroupItem value={addr.id} id={`addr-${addr.id}`} className="mt-1" />
+                                                    <div className="flex-1 cursor-pointer">
+                                                        <Label htmlFor={`addr-${addr.id}`} className="font-medium cursor-pointer">
+                                                            {addr.name}
+                                                            {addr.isDefault && <Badge variant="outline" className="ml-2 text-xs">デフォルト</Badge>}
+                                                        </Label>
+                                                        <div className="text-sm text-muted-foreground mt-1">
+                                                            <div>〒{addr.postalCode} {addr.address}</div>
+                                                            <div>TEL: {addr.phone}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </RadioGroup>
-                                        <p className="text-xs text-muted-foreground mt-2">
-                                            ※メーカー直送を選択すると、メーカー在庫のみが減少し、自社在庫は変動しません。
-                                        </p>
+                                    )}
+
+                                    <div className="bg-slate-50 p-3 rounded-md border text-xs text-muted-foreground mt-4">
+                                        <p className="font-medium mb-1">出荷について</p>
+                                        <p>出荷元は「メーカー在庫から直送」となります。</p>
+                                        <p>メーカー在庫のみが減少し、自社在庫は変動しません。</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -233,7 +280,7 @@ export default function NewOrderPage(): React.ReactElement {
                                         <span className="text-2xl font-bold">¥{getTotalPrice().toLocaleString()}</span>
                                     </div>
 
-                                    <Button onClick={onSubmit} disabled={loading} className="w-full gap-2 mt-4" size="lg">
+                                    <Button onClick={onSubmit} disabled={loading || !selectedAddressId} className="w-full gap-2 mt-4" size="lg">
                                         <Send className="h-4 w-4" />
                                         {loading ? '送信中...' : '出荷依頼を確定'}
                                     </Button>
@@ -247,6 +294,12 @@ export default function NewOrderPage(): React.ReactElement {
                     </div>
                 </>
             )}
+
+            <DeliveryAddressDialog
+                open={isAddressDialogOpen}
+                onOpenChange={setIsAddressDialogOpen}
+                onSuccess={() => refetchAddresses()}
+            />
         </div>
     );
 }

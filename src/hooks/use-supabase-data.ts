@@ -486,3 +486,103 @@ export function useAppSettings() {
         mutate,
     };
 }
+
+/**
+ * 納品先住所データを取得・操作するフック
+ */
+export function useDeliveryAddresses(): {
+    addresses: import('@/types').DeliveryAddress[];
+    loading: boolean;
+    error: string | null;
+    addAddress: (address: Omit<import('@/types').DeliveryAddress, 'id' | 'clientId'>) => Promise<boolean>;
+    deleteAddress: (id: string) => Promise<boolean>;
+    refetch: () => void;
+} {
+    const [addresses, setAddresses] = useState<import('@/types').DeliveryAddress[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const loadedRef = useRef(false);
+
+    const fetchAddresses = useCallback(async (): Promise<void> => {
+        if (!loadedRef.current) setLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch('/api/delivery-addresses');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            setAddresses(data);
+            loadedRef.current = true;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : '住所の取得に失敗しました');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchAddresses();
+    }, [fetchAddresses]);
+
+    // 住所を追加
+    const addAddress = async (address: Omit<import('@/types').DeliveryAddress, 'id' | 'clientId'>): Promise<boolean> => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/delivery-addresses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(address),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '作成に失敗しました');
+            }
+
+            await fetchAddresses();
+            return true;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : '作成に失敗しました');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 住所を削除
+    const deleteAddress = async (id: string): Promise<boolean> => {
+        if (!confirm('本当に削除しますか？')) return false;
+
+        setLoading(true);
+        try {
+            const response = await fetch(`/api/delivery-addresses?id=${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '削除に失敗しました');
+            }
+
+            await fetchAddresses();
+            return true;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : '削除に失敗しました');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return {
+        addresses,
+        loading,
+        error,
+        addAddress,
+        deleteAddress,
+        refetch: fetchAddresses
+    };
+}

@@ -72,6 +72,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             type: 'standard' | 'special_event'
             eventId?: string
             shipmentSource: 'inventory' | 'supplier'
+            deliveryName?: string
+            deliveryAddress?: string
+            deliveryPhone?: string
         }
 
         // 1. 発注レコード作成
@@ -79,10 +82,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             .from('orders')
             .insert({
                 client_id: clientId,
-                status: 'requested', // 通常は最初は受付中だが、今回は即時出荷済み扱いにするか？一旦requested
+                status: 'requested',
                 type,
                 event_id: eventId || null,
-                shipment_source: shipmentSource || 'inventory'
+                shipment_source: shipmentSource || 'inventory',
+                delivery_name: body.deliveryName,
+                delivery_address: body.deliveryAddress,
+                delivery_phone: body.deliveryPhone
             } as any)
             .select()
             .single<any>()

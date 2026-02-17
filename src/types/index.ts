@@ -120,6 +120,20 @@ export type Order = {
   items: OrderItem[];
   eventId?: string; // 特売発注の場合のイベントID
   shipmentSource?: 'inventory' | 'supplier'; // 出荷元 (在庫 or メーカー直送)
+  deliveryName?: string;
+  deliveryAddress?: string;
+  deliveryPhone?: string;
+};
+
+// 納品先住所
+export type DeliveryAddress = {
+  id: string;
+  clientId: string;
+  name: string;
+  postalCode?: string;
+  address: string;
+  phone: string;
+  isDefault: boolean;
 };
 
 // 在庫履歴

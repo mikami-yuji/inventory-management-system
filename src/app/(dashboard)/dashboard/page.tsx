@@ -148,6 +148,8 @@ export default function DashboardPage(): React.ReactElement {
         return sum + (item.quantity * unitPrice);
     }, 0);
 
+
+
     return (
         <div className="space-y-8">
             <div className="flex items-center justify-between">
