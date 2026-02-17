@@ -4,28 +4,33 @@ import { createServerClient } from '@/lib/supabase';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
-export async function GET(request: NextRequest) {
+// セッションからユーザーIDを取得するヘルパー
+function getUserId(session: { user?: Record<string, unknown> } | null): string | null {
+    if (!session?.user) return null;
+    return (session.user as Record<string, unknown>).id as string | null;
+}
+
+export async function GET(_request: NextRequest): Promise<NextResponse> {
     const session = await getServerSession(authOptions);
-    if (!session?.user || !(session.user as any).id) {
+    const userId = getUserId(session);
+    if (!userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = (session.user as any).id;
-
     try {
         const supabase = createServerClient();
-        // @ts-ignore - Database types not yet updated
-        const { data, error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase as any)
             .from('delivery_addresses')
             .select('*')
             .eq('client_id', userId)
-            .order('is_default', { ascending: false }) // デフォルトを先に
+            .order('is_default', { ascending: false })
             .order('created_at', { ascending: false });
 
         if (error) throw error;
 
         // キャメルケースに変換
-        const addresses = (data || []).map((addr: any) => ({
+        const addresses = (data || []).map((addr: Record<string, unknown>) => ({
             id: addr.id,
             clientId: addr.client_id,
             name: addr.name,
@@ -42,13 +47,12 @@ export async function GET(request: NextRequest) {
     }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
     const session = await getServerSession(authOptions);
-    if (!session?.user || !(session.user as any).id) {
+    const userId = getUserId(session);
+    if (!userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const userId = (session.user as any).id;
 
     try {
         const body = await request.json();
@@ -62,15 +66,15 @@ export async function POST(request: NextRequest) {
         // デフォルト設定の場合、既存のデフォルトを解除
         const supabase = createServerClient();
         if (isDefault) {
-            // @ts-ignore
-            await supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase as any)
                 .from('delivery_addresses')
                 .update({ is_default: false })
                 .eq('client_id', userId);
         }
 
-        // @ts-ignore
-        const { data, error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase as any)
             .from('delivery_addresses')
             .insert({
                 client_id: userId,
@@ -80,7 +84,7 @@ export async function POST(request: NextRequest) {
                 phone,
                 is_default: isDefault || false
             })
-            .select() // create後のデータを取得
+            .select()
             .single();
 
         if (error) throw error;
@@ -92,13 +96,12 @@ export async function POST(request: NextRequest) {
     }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(request: NextRequest): Promise<NextResponse> {
     const session = await getServerSession(authOptions);
-    if (!session?.user || !(session.user as any).id) {
+    const userId = getUserId(session);
+    if (!userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const userId = (session.user as any).id;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -109,12 +112,12 @@ export async function DELETE(request: NextRequest) {
 
     try {
         const supabase = createServerClient();
-        // @ts-ignore
-        const { error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any)
             .from('delivery_addresses')
             .delete()
             .eq('id', id)
-            .eq('client_id', userId); // 自分のデータのみ削除可能
+            .eq('client_id', userId);
 
         if (error) throw error;
 
