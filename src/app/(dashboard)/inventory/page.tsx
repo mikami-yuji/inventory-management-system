@@ -172,7 +172,7 @@ export default function InventoryPage(): React.ReactElement {
 
     const saleAllocationMap = useMemo(() => {
         const map = new Map<string, { bags: number; meters: number }>();
-        saleEvents.filter(e => e.status === 'upcoming' || e.status === 'active').forEach(event => {
+        saleEvents.forEach(event => {
             event.items.forEach(item => {
                 const current = map.get(item.productId) || { bags: 0, meters: 0 };
                 const product = allProducts.find(p => p.id === item.productId);

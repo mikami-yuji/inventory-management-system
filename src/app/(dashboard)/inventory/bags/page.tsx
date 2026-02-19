@@ -121,7 +121,6 @@ export default function BagsInventoryPage(): React.ReactElement {
     const saleAllocationMap = useMemo(() => {
         const map = new Map<string, { bags: number; meters: number }>();
         saleEvents
-            .filter(e => e.status === 'upcoming' || e.status === 'active')
             .forEach(event => {
                 event.items.forEach(item => {
                     const current = map.get(item.productId) || { bags: 0, meters: 0 };

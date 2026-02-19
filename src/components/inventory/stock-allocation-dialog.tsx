@@ -40,7 +40,7 @@ export function StockAllocationDialog({
     // この商品を引き当てているイベントを抽出
     const allocations = saleEvents.flatMap(event => {
         const item = event.items.find(i => i.productId === product.id);
-        if (item && item.allocatedQuantity > 0 && (event.status === 'upcoming' || event.status === 'active')) {
+        if (item && item.allocatedQuantity > 0) {
             return [{
                 eventName: event.clientName, // クライアント名をイベント名として使用
                 dates: event.dates,
@@ -91,7 +91,7 @@ export function StockAllocationDialog({
                                             <TableCell>
                                                 <div className="font-medium">{alloc.eventName}</div>
                                                 <Badge variant="outline" className="mt-1 text-xs">
-                                                    {alloc.status === 'active' ? '開催中' : '予定'}
+                                                    {alloc.status === 'active' ? '開催中' : alloc.status === 'completed' ? '終了' : '予定'}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-sm">
