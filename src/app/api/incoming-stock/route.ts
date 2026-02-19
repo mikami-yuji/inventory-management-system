@@ -14,7 +14,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
         let query = supabase
             .from('incoming_stock')
-            .select('*')
+            .select('*, products(name)')
             .order('expected_date', { ascending: true });
 
         // 商品IDでフィルタリング
@@ -29,10 +29,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        // キャメルケースに変換して返却
-        const formattedData = data.map(item => ({
+        // キャメルケースに変換して返却（商品名を含む）
+        const formattedData = (data as (typeof data[number] & { products: { name: string } | null })[]).map(item => ({
             id: item.id,
             productId: item.product_id,
+            productName: item.products?.name || '不明',
             expectedDate: item.expected_date,
             quantity: item.quantity,
             note: item.note,
