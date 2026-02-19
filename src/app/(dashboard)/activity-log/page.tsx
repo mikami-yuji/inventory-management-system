@@ -125,10 +125,10 @@ export default function ActivityLogPage(): React.ReactElement {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">操作ログ</h2>
-                    <p className="text-muted-foreground">システム操作の履歴を確認できます</p>
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">操作ログ</h2>
+                    <p className="text-sm text-muted-foreground">システム操作の履歴を確認できます</p>
                 </div>
                 <Button variant="outline" onClick={fetchLogs} className="gap-2">
                     <RefreshCw className="h-4 w-4" />

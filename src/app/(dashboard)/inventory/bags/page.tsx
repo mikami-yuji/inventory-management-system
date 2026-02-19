@@ -356,10 +356,10 @@ export default function BagsInventoryPage(): React.ReactElement {
     return (
         <div className="space-y-6 p-6">
             {/* ヘッダー */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold">米袋在庫管理</h1>
-                    <p className="text-muted-foreground">米袋・新米関連商品の在庫を確認・管理します</p>
+                    <h1 className="text-2xl md:text-3xl font-bold">米袋在庫管理</h1>
+                    <p className="text-sm text-muted-foreground">米袋・新米関連商品の在庫を確認・管理します</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="bg-slate-100 p-1 rounded-lg border flex items-center">

@@ -65,10 +65,10 @@ export default function EventsPage(): React.ReactElement {
     return (
         <div className="space-y-6">
             {/* ヘッダー */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">特売イベント管理</h2>
-                    <p className="text-muted-foreground">特売先ごとの在庫管理と出荷予定を確認</p>
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">特売イベント管理</h2>
+                    <p className="text-sm text-muted-foreground">特売先ごとの在庫管理と出荷予定を確認</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center rounded-md border bg-muted p-1 mr-2">

@@ -152,8 +152,8 @@ export default function DashboardPage(): React.ReactElement {
 
     return (
         <div className="space-y-8">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">ダッシュボード</h2>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">ダッシュボード</h2>
                 <div className="flex items-center gap-4">
                     {loading && (
                         <div className="flex items-center gap-2 text-muted-foreground text-sm">

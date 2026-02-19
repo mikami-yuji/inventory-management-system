@@ -134,10 +134,10 @@ export default function NotificationsPage(): React.ReactElement {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">通知</h2>
-                    <p className="text-muted-foreground">在庫アラートと重要な通知を確認できます</p>
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">通知</h2>
+                    <p className="text-sm text-muted-foreground">在庫アラートと重要な通知を確認できます</p>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={handleResetDismissed} className="gap-2">

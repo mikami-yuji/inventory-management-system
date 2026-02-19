@@ -32,7 +32,10 @@ export const BarcodeScanner = (props: BarcodeScannerProps) => {
                 qrbox: props.qrbox || 250,
                 aspectRatio: props.aspectRatio || 1.0,
                 disableFlip: props.disableFlip || false,
-                // Create a config object compatible with library expectations
+                // 外カメラ（背面カメラ）を優先的に使用
+                videoConstraints: {
+                    facingMode: { ideal: "environment" },
+                },
             };
 
             // Use verbose mode only if specified
