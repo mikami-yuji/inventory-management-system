@@ -85,7 +85,7 @@ const getProductGroup = (p: Product): number => {
 
 export default function BagsInventoryPage(): React.ReactElement {
     // 表示モード (grid | table)
-    const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
+    const [viewMode, setViewMode] = useState<"table" | "grid">("table");
 
     const [searchQuery, setSearchQuery] = useState("");
     const [weightFilter, setWeightFilter] = useState("all");
