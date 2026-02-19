@@ -279,7 +279,14 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                         {wipList.map((item, i) => (
                                                             <div key={item.id} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
                                                                 {item.expectedCompletion ?
-                                                                    `${new Date(item.expectedCompletion).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}納: `
+                                                                    (() => {
+                                                                        const d = new Date(item.expectedCompletion);
+                                                                        const month = d.getMonth() + 1;
+                                                                        if (item.termType === 'early') return `${month}月上旬納: `;
+                                                                        if (item.termType === 'mid') return `${month}月中旬納: `;
+                                                                        if (item.termType === 'late') return `${month}月下旬納: `;
+                                                                        return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}納: `;
+                                                                    })()
                                                                     : '未定: '}
                                                                 {item.quantity.toLocaleString()}
                                                             </div>
