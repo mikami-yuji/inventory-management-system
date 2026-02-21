@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Product, WorkInProgress } from "@/types";
+import { Product, WorkInProgress, IncomingStock } from "@/types";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ type BagsInventoryCardsProps = {
     saleAllocationMap: Map<string, { bags: number; meters: number }>;
     wipMap: Map<string, WorkInProgress[]>;
     supplierStockMap: Map<string, number>;
-    incomingMap: Map<string, { quantity: number; nextDate: string | null }>;
+    incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
     onEdit: (product: Product) => void;
     onDelete: (product: Product) => void;
     onIncomingStockClick: (product: Product) => void;
@@ -71,7 +71,7 @@ type ProductCardProps = {
     saleAllocationMap: Map<string, { bags: number; meters: number }>;
     wipMap: Map<string, WorkInProgress[]>;
     supplierStockMap: Map<string, number>;
-    incomingMap: Map<string, { quantity: number; nextDate: string | null }>;
+    incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
     onEdit: (product: Product) => void;
     onDelete: (product: Product) => void;
     onIncomingStockClick: (product: Product) => void;
@@ -215,11 +215,28 @@ function ProductCard({
                         <Badge variant="destructive" className="shadow-sm">欠品</Badge>
                     ) : isLowStock ? (
                         <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300 shadow-sm">低在庫</Badge>
+                    ) : product.status === 'plate_removal_scheduled' ? (
+                        <Badge variant="outline" className="border-amber-400 text-amber-600 bg-amber-50 shadow-sm">落版予定</Badge>
+                    ) : product.status === 'plate_removed' ? (
+                        <Badge variant="outline" className="border-purple-400 text-purple-600 bg-purple-50 shadow-sm">落版</Badge>
+                    ) : product.status === 'direct_delivery' ? (
+                        <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50 shadow-sm">直送先在庫</Badge>
+                    ) : product.status === 'on_sale_break' ? (
+                        <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50 shadow-sm">販売開始中断</Badge>
+                    ) : product.status === 'discontinued' ? (
+                        <Badge variant="outline" className="border-gray-400 text-gray-500 bg-gray-50 shadow-sm">廃盤</Badge>
                     ) : null}
                     {hasAllocation && (
-                        <Badge className="bg-blue-600 shadow-sm">特売引当中</Badge>
+                        <Badge className="bg-blue-600 shadow-sm text-[10px] px-1 h-5">特売引当中</Badge>
                     )}
                 </div>
+
+                {product.discontinuedDate && (
+                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
+                        {new Date(product.discontinuedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
+                        {(product.status === 'plate_removed' || product.status === 'plate_removal_scheduled') ? '落版' : '廃盤'}
+                    </div>
+                )}
 
                 {/* オーバーレイアクション（ホバー時 or ドラッグ時） */}
                 {(isHovered || isDragging || uploading) && (
@@ -266,9 +283,30 @@ function ProductCard({
 
                 <div className="mt-auto pt-2 border-t border-dashed">
                     <div className="flex justify-between items-end">
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-[10px] text-muted-foreground flex flex-col gap-0.5">
                             <div>SKU: {product.sku}</div>
-                            {wipQuantity > 0 && <div className="text-purple-600">加工中: {wipQuantity.toLocaleString()}</div>}
+                            {wipList && wipList.length > 0 && (
+                                <div className="text-purple-600 font-medium">
+                                    仕上がり中: {wipQuantity.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                    <div className="flex flex-col gap-0.5 mt-0.5 opacity-80 font-normal">
+                                        {wipList.map((item, i) => (
+                                            <div key={item.id}>
+                                                {item.expectedCompletion ?
+                                                    (() => {
+                                                        const d = new Date(item.expectedCompletion);
+                                                        const month = d.getMonth() + 1;
+                                                        if (item.termType === 'early') return `${month}月上旬: `;
+                                                        if (item.termType === 'mid') return `${month}月中旬: `;
+                                                        if (item.termType === 'late') return `${month}月下旬: `;
+                                                        return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: `;
+                                                    })()
+                                                    : '未定: '}
+                                                {item.quantity.toLocaleString()}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div className="text-right">
                             <div className={cn(
@@ -287,16 +325,23 @@ function ProductCard({
                             )}
 
                             {/* 入荷予定の表示 */}
-                            {incoming && incoming.quantity > 0 && (
+                            {incoming && incoming.total > 0 && (
                                 <div
-                                    className="text-[10px] text-emerald-600 font-medium cursor-pointer hover:underline mt-0.5"
+                                    className="text-[10px] text-emerald-600 font-medium cursor-pointer hover:underline mt-1"
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         onIncomingStockClick(product);
                                     }}
                                 >
-                                    入荷: {incoming.quantity.toLocaleString()}{isRoll ? 'm' : '枚'} ({new Date(incoming.nextDate!).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })})
+                                    入荷予定: {incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                    <div className="flex flex-col gap-0.5 mt-0.5 opacity-80 font-normal">
+                                        {incoming.items.map((item, i) => (
+                                            <div key={i}>
+                                                {new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {item.quantity.toLocaleString()}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 
