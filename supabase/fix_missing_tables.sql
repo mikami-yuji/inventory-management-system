@@ -51,3 +51,25 @@ CREATE POLICY "Allow delete access for authenticated users" ON suppliers FOR DEL
 INSERT INTO app_settings (key, value, description)
 VALUES ('default_min_stock_alert', '100', 'Default minimum stock threshold for alerts')
 ON CONFLICT (key) DO NOTHING;
+
+-- 6. orders テーブルの不足カラムを追加
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_source TEXT DEFAULT 'inventory';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_name TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_address TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_phone TEXT;
+
+-- 7. delivery_addresses テーブルの作成 (もし必要なら)
+CREATE TABLE IF NOT EXISTS delivery_addresses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    postal_code TEXT,
+    address TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE delivery_addresses ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage their own addresses" ON delivery_addresses;
+CREATE POLICY "Users can manage their own addresses" ON delivery_addresses FOR ALL USING (auth.uid() = client_id) WITH CHECK (auth.uid() = client_id);
