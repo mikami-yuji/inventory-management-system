@@ -32,6 +32,90 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         const { searchParams } = new URL(request.url)
         const status = searchParams.get('status')
 
+        // 期限切れのイベントを自動的に完了扱いにする
+        // JST基準での今日の日付（YYYY-MM-DD形式）
+        const todayStr = new Date(new Date().getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+        // 完了にすべきイベントを特定
+        // status が upcoming または active で、かつ全日程が今日より前のもの
+        const { data: activeEvents } = await supabase
+            .from('sale_events')
+            .select(`
+                id, 
+                dates, 
+                status,
+                client_name,
+                sale_event_items (
+                    product_id,
+                    allocated_quantity
+                )
+            `)
+            .in('status', ['upcoming', 'active'])
+            .returns<any[]>();
+
+        if (activeEvents && activeEvents.length > 0) {
+            const eventsToComplete = activeEvents.filter((event: any) => {
+                if (!event.dates || event.dates.length === 0) return false;
+                // 全ての開催日が今日より前かチェック
+                return event.dates.every((date: string) => date < todayStr);
+            });
+
+            if (eventsToComplete.length > 0) {
+                console.log(`Auto-completing ${eventsToComplete.length} events`);
+
+                for (const event of eventsToComplete) {
+                    const items = event.sale_event_items as Array<{ product_id: string, allocated_quantity: number }>;
+
+                    // 1. 在庫の差し戻し処理
+                    for (const item of items) {
+                        if (item.allocated_quantity > 0) {
+                            // 現在の在庫を取得
+                            const { data: inventory } = await supabase
+                                .from('inventory')
+                                .select('quantity')
+                                .eq('product_id', item.product_id)
+                                .single<any>();
+
+                            const currentQty = inventory?.quantity || 0;
+                            const newQty = currentQty + item.allocated_quantity;
+
+                            // 在庫を増やす
+                            await supabase
+                                .from('inventory')
+                                .upsert({
+                                    product_id: item.product_id,
+                                    quantity: newQty,
+                                    updated_at: new Date().toISOString()
+                                } as any, { onConflict: 'product_id' });
+
+                            // 履歴を記録
+                            await supabase.from('stock_history').insert({
+                                product_id: item.product_id,
+                                type: 'incoming',
+                                quantity: item.allocated_quantity,
+                                note: `特売期限切れによる引当解除: ${event.client_name}`
+                            } as any);
+
+                            // 引当数量をリセット
+                            await supabase
+                                .from('sale_event_items')
+                                // @ts-ignore
+                                .update({ allocated_quantity: 0 })
+                                .eq('event_id', event.id)
+                                .eq('product_id', item.product_id);
+                        }
+                    }
+
+                    // 2. ステータスを完了に更新
+                    await supabase
+                        .from('sale_events')
+                        // @ts-ignore
+                        .update({ status: 'completed' })
+                        .eq('id', event.id);
+                }
+            }
+        }
+
         // イベント一覧を取得
         let query = supabase
             .from('sale_events')
