@@ -312,10 +312,10 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                                     (() => {
                                                                         const d = new Date(item.expectedCompletion);
                                                                         const month = d.getMonth() + 1;
-                                                                        if (item.termType === 'early') return `${month}月上旬仕上がり: `;
-                                                                        if (item.termType === 'mid') return `${month}月中旬仕上がり: `;
-                                                                        if (item.termType === 'late') return `${month}月下旬仕上がり: `;
-                                                                        return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}仕上がり: `;
+                                                                        if (item.termType === 'early') return `${month}月上旬: `;
+                                                                        if (item.termType === 'mid') return `${month}月中旬: `;
+                                                                        if (item.termType === 'late') return `${month}月下旬: `;
+                                                                        return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: `;
                                                                     })()
                                                                     : '未定: '}
                                                                 {item.quantity.toLocaleString()}
