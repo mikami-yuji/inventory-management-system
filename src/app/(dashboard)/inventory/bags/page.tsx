@@ -153,22 +153,16 @@ export default function BagsInventoryPage(): React.ReactElement {
 
     // 入荷予定マップ
     const incomingMap = useMemo(() => {
-        const map = new Map<string, { quantity: number; nextDate: string | null }>();
+        const map = new Map<string, { total: number; items: IncomingStock[] }>();
 
-        // 商品ごとに入荷予定をグループ化して、直近の予定を取得
+        // 商品ごとに入荷予定をグループ化
         incomingStocks.forEach(stock => {
-            const current = map.get(stock.productId);
+            const current = map.get(stock.productId) || { total: 0, items: [] };
 
-            // 合計数量を加算
-            const quantity = (current?.quantity || 0) + stock.quantity;
-
-            // 直近の日付を判定
-            let nextDate = current?.nextDate || null;
-            if (!nextDate || new Date(stock.expectedDate) < new Date(nextDate)) {
-                nextDate = stock.expectedDate;
-            }
-
-            map.set(stock.productId, { quantity, nextDate });
+            map.set(stock.productId, {
+                total: current.total + stock.quantity,
+                items: [...current.items, stock].sort((a, b) => a.expectedDate.localeCompare(b.expectedDate))
+            });
         });
 
         return map;

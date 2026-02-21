@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Loader2, Trash2 } from "lucide-react";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { ja } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { Product, IncomingStock } from "@/types";
@@ -29,6 +29,7 @@ interface IncomingStockDialogProps {
 export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: IncomingStockDialogProps) {
     // 状態管理
     const [date, setDate] = useState<Date | undefined>(new Date());
+    const [shippedDate, setShippedDate] = useState<Date | undefined>(undefined);
     const [quantity, setQuantity] = useState<string>("");
     const [note, setNote] = useState<string>("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,6 +41,7 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
     useEffect(() => {
         if (open) {
             setDate(new Date());
+            setShippedDate(undefined);
             setQuantity("");
             setNote("");
             refetch();
@@ -56,6 +58,7 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
             const success = await addIncomingStock({
                 productId: product.id,
                 expectedDate: format(date, "yyyy-MM-dd"),
+                shippedDate: shippedDate ? format(shippedDate, "yyyy-MM-dd") : undefined,
                 quantity: parseInt(quantity, 10),
                 note: note
             });
@@ -63,6 +66,7 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
             if (success) {
                 // フォームをリセット
                 setQuantity("");
+                setShippedDate(undefined);
                 setNote("");
                 // 親コンポーネントに通知
                 if (onSuccess) onSuccess();
@@ -95,7 +99,39 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
                         <Label className="text-base font-semibold">新規登録</Label>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="date">入荷予定日</Label>
+                            <Label htmlFor="shippedDate">メーカー出荷予定日</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full justify-start text-left font-normal",
+                                            !shippedDate && "text-muted-foreground"
+                                        )}
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {shippedDate ? format(shippedDate, "yyyy年MM月dd日", { locale: ja }) : <span>日付を選択</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                        mode="single"
+                                        selected={shippedDate}
+                                        onSelect={(newDate) => {
+                                            setShippedDate(newDate);
+                                            if (newDate) {
+                                                // 出荷日の翌日を入荷予定日に設定
+                                                setDate(addDays(newDate, 1));
+                                            }
+                                        }}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="date">入荷（納品）予定日</Label>
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
@@ -171,8 +207,9 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
                                 {incomingStocks.map((stock) => (
                                     <div key={stock.id} className="flex items-center justify-between p-3 border rounded-lg bg-card">
                                         <div>
-                                            <div className="font-medium">
-                                                {format(new Date(stock.expectedDate), "yyyy年MM月dd日", { locale: ja })}
+                                            <div className="text-sm text-muted-foreground">
+                                                {stock.shippedDate && `出荷: ${format(new Date(stock.shippedDate), "M/d")} → `}
+                                                納品: {format(new Date(stock.expectedDate), "M/d")}
                                             </div>
                                             <div className="text-sm text-muted-foreground">
                                                 {stock.quantity.toLocaleString()}

@@ -36,6 +36,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             productId: item.product_id,
             productName: item.products?.name || '不明',
             expectedDate: item.expected_date,
+            shippedDate: item.shipped_date,
             quantity: item.quantity,
             note: item.note,
         }));
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             .insert({
                 product_id: body.productId,
                 expected_date: body.expectedDate,
+                shipped_date: body.shippedDate || null,
                 quantity: body.quantity,
                 note: body.note
             })
@@ -80,6 +82,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             id: data.id,
             productId: data.product_id,
             expectedDate: data.expected_date,
+            shippedDate: data.shipped_date,
             quantity: data.quantity,
             note: data.note,
         }, { status: 201 });
@@ -103,6 +106,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
 
         const updateData: any = {};
         if (body.expectedDate) updateData.expected_date = body.expectedDate;
+        if (body.shippedDate !== undefined) updateData.shipped_date = body.shippedDate;
         if (body.quantity !== undefined) updateData.quantity = body.quantity;
         if (body.note !== undefined) updateData.note = body.note;
 
@@ -122,6 +126,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
             id: data.id,
             productId: data.product_id,
             expectedDate: data.expected_date,
+            shippedDate: data.shipped_date,
             quantity: data.quantity,
             note: data.note,
         });

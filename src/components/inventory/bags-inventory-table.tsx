@@ -18,7 +18,7 @@ import {
     isRollBag,
 } from "@/lib/services";
 import { useCart } from "@/contexts/cart-context";
-import type { Product, WorkInProgress } from "@/types";
+import type { Product, WorkInProgress, IncomingStock } from "@/types";
 import { SupplierStockDialog } from "@/components/inventory/supplier-stock-dialog";
 import { WIPDialog } from "@/components/inventory/wip-dialog";
 import { StockAdjustmentDialog } from "@/components/inventory/stock-adjustment-dialog";
@@ -43,7 +43,7 @@ export type BagsInventoryTableProps = {
     saleAllocationMap: Map<string, { bags: number; meters: number }>;
     wipMap: Map<string, WorkInProgress[]>;
     supplierStockMap: Map<string, number>;
-    incomingMap: Map<string, { quantity: number; nextDate: string | null }>;
+    incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
     saleEvents: SaleEvent[];
     onEdit: (product: Product) => void;
     onDelete: (product: Product) => void;
@@ -258,10 +258,18 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                             className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
                                             onClick={() => onIncomingStockClick(product)}
                                         >
-                                            {incoming && incoming.quantity > 0 ? (
+                                            {incoming && incoming.total > 0 ? (
                                                 <div className="text-emerald-600">
-                                                    <div className="font-medium">{incoming.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
-                                                    {incoming.nextDate && <div className="text-xs">{new Date(incoming.nextDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</div>}
+                                                    <div className="font-medium underline decoration-dotted underline-offset-4">
+                                                        {incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                                    </div>
+                                                    <div className="flex flex-col gap-0.5 mt-0.5">
+                                                        {incoming.items.map((item, i) => (
+                                                            <div key={i} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
+                                                                {new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {item.quantity.toLocaleString()}
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center justify-end">
@@ -304,10 +312,10 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                                     (() => {
                                                                         const d = new Date(item.expectedCompletion);
                                                                         const month = d.getMonth() + 1;
-                                                                        if (item.termType === 'early') return `${month}月上旬納: `;
-                                                                        if (item.termType === 'mid') return `${month}月中旬納: `;
-                                                                        if (item.termType === 'late') return `${month}月下旬納: `;
-                                                                        return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}納: `;
+                                                                        if (item.termType === 'early') return `${month}月上旬仕上がり: `;
+                                                                        if (item.termType === 'mid') return `${month}月中旬仕上がり: `;
+                                                                        if (item.termType === 'late') return `${month}月下旬仕上がり: `;
+                                                                        return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}仕上がり: `;
                                                                     })()
                                                                     : '未定: '}
                                                                 {item.quantity.toLocaleString()}
