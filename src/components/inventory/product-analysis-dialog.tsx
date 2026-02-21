@@ -28,7 +28,7 @@ import {
     AlertTriangle,
     Info
 } from "lucide-react";
-import { useStockAnalysis } from "@/hooks/use-stock-history";
+import { useStockHistoryAnalysis } from "@/hooks/use-stock-history-analysis";
 
 import { Product } from "@/types";
 import {
@@ -70,7 +70,7 @@ export function ProductAnalysisDialog({
     onOpenChange
 }: ProductAnalysisDialogProps): React.ReactElement {
     // データフェッチ (Hookを使用)
-    const { history, analysis, loading } = useStockAnalysis(product.id, currentStock);
+    const { history, analysis, loading } = useStockHistoryAnalysis(product.id, currentStock);
 
     // グラフデータ構築ロジック (Corrected for Stock Level)
     const stockLevelChartData = useMemo(() => {

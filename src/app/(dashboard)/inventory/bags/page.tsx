@@ -29,7 +29,7 @@ import { useSaleEvents } from "@/hooks/use-sale-events";
 import { useWorkInProgress, calculateWIPByProduct } from "@/hooks/use-work-in-progress";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import { IncomingStockDialog } from "@/components/inventory/incoming-stock-dialog";
-import type { Product } from "@/types";
+import type { Product, IncomingStock } from "@/types";
 import { BagsInventoryTable } from "@/components/inventory/bags-inventory-table";
 import { BagsInventoryCards } from "@/components/inventory/bags-inventory-cards";
 import { cn } from "@/lib/utils";
