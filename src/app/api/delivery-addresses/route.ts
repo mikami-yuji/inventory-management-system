@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import type { DeliveryAddress, ApiResponse } from '@/types';
 
 // セッションからユーザーIDを取得するヘルパー
 function getUserId(session: { user?: Record<string, unknown> } | null): string | null {

@@ -16,7 +16,8 @@ import {
     ArrowLeft,
     Loader2
 } from "lucide-react";
-import { useProducts, useInventory } from "@/hooks/use-supabase-data";
+import { useProducts } from "@/hooks/use-products";
+import { useInventory } from "@/hooks/use-inventory";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 

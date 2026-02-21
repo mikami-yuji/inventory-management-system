@@ -23,7 +23,8 @@ import { cn } from "@/lib/utils";
 import type { Product } from "@/types";
 import { StockCheckConfirmation } from "@/components/inventory/stock-check-confirmation";
 import { ProductAnalysisDialog } from "@/components/inventory/product-analysis-dialog";
-import { useProducts, useInventory, useUpdateInventory } from "@/hooks/use-supabase-data";
+import { useProducts } from "@/hooks/use-products";
+import { useInventory, useUpdateInventory } from "@/hooks/use-inventory";
 
 // 編集中のアイテム型
 type EditingItem = {

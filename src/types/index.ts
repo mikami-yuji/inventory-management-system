@@ -76,26 +76,41 @@ export type IncomingStock = {
   note?: string;
 };
 
-// イベントステータス
-export type EventStatus = 'planning' | 'active' | 'closed';
+// 特売イベントのステータス
+export type SaleEventStatus = 'upcoming' | 'active' | 'completed' | 'cancelled';
 
-// 特売イベント
-export type SpecialEvent = {
+// 特売イベント商品
+export type SaleEventItem = {
   id: string;
-  clientId: string; // 特定のクライアント向け
-  name: string;
-  startDate: string;
-  endDate: string;
-  status: EventStatus;
-  description?: string;
+  productId: string;
+  productName: string;
+  productSku: string | null;
+  plannedQuantity: number;
+  allocatedQuantity: number;
+  actualQuantity: number | null;
+  currentStock: number;
 };
 
-// イベント在庫
-export type EventStock = {
-  eventId: string;
-  productId: string;
-  allocatedQuantity: number; // 当初確保した数量
-  currentQuantity: number; // 現在の残数
+// 特売イベント本体
+export type SaleEvent = {
+  id: string;
+  clientName: string;
+  scheduleType: 'single' | 'monthly';
+  dates: string[];
+  status: SaleEventStatus;
+  description: string | null;
+  createdAt: string;
+  items: SaleEventItem[];
+};
+
+// 新規イベント作成用の入力型
+export type SaleEventInput = {
+  clientName: string;
+  scheduleType: 'single' | 'monthly';
+  dates: string[];
+  description?: string;
+  items: Array<{ productId: string; quantity: number }>;
+  allocateStock?: boolean;
 };
 
 // 発注ステータス

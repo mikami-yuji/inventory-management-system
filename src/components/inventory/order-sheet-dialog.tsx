@@ -10,7 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileSpreadsheet, Loader2, RefreshCw } from "lucide-react";
 import { Product } from "@/types";
-import { useProducts, useInventory, useSuppliers } from "@/hooks/use-supabase-data";
+import { useProducts } from "@/hooks/use-products";
+import { useInventory } from "@/hooks/use-inventory";
+import { useSuppliers } from "@/hooks/use-masters";
 
 import { orderSheetService } from "@/lib/services/order-sheet-service";
 

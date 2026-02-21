@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { Product, IncomingStock } from "@/types";
-import { useIncomingStock } from "@/hooks/use-supabase-data";
+import { useIncomingStock } from "@/hooks/use-incoming-stock";
 
 interface IncomingStockDialogProps {
     open: boolean;

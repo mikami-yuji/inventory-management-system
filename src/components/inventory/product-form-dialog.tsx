@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
-import { useSuppliers } from "@/hooks/use-supabase-data";
+import { useSuppliers } from "@/hooks/use-masters";
 import type { Product } from "@/types";
 
 // フォームデータの型

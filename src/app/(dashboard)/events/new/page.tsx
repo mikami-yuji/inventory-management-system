@@ -24,7 +24,8 @@ import {
     AlertTriangle,
     Copy
 } from "lucide-react";
-import { useProducts, useInventory } from "@/hooks/use-supabase-data";
+import { useProducts } from "@/hooks/use-products";
+import { useInventory } from "@/hooks/use-inventory";
 import { useSaleEvents, useCreateSaleEvent } from "@/hooks/use-sale-events";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";

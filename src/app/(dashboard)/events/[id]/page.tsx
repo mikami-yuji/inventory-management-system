@@ -289,7 +289,7 @@ export default function EventDetailPage(): React.ReactElement {
 
                 {/* アクションボタン（印刷時非表示） */}
                 <div className="flex items-center gap-2 mb-4 print:hidden">
-                    {!allAllocated && (
+                    {(!allAllocated && totalActual === 0) && (
                         <Button onClick={handleAllocate} disabled={updating} className="gap-1">
                             <PackageCheck className="h-4 w-4" />
                             在庫引当

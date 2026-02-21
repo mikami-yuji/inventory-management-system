@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { BarcodeScanner } from '@/components/inventory/barcode-scanner';
-import { useProducts, useInventory, useUpdateInventory } from '@/hooks/use-supabase-data';
+import { useProducts } from "@/hooks/use-products";
+import { useInventory, useUpdateInventory } from "@/hooks/use-inventory";
 import { useVoiceInput } from '@/hooks/use-voice-input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUsers } from "@/hooks/use-supabase-data";
+import { useUsers } from "@/hooks/use-masters";
 import { User } from "@/types";
 import {
     Table,

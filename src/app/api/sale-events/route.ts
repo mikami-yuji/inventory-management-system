@@ -1,29 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
-import type { ApiResponse } from '@/types'
-
-// 特売イベントの型
-type SaleEvent = {
-    id: string
-    clientName: string
-    scheduleType: 'single' | 'monthly'
-    dates: string[]
-    status: 'upcoming' | 'active' | 'completed' | 'cancelled'
-    description: string | null
-    createdAt: string
-    items: SaleEventItem[]
-}
-
-type SaleEventItem = {
-    id: string
-    productId: string
-    productName: string
-    productSku: string | null
-    plannedQuantity: number
-    allocatedQuantity: number
-    actualQuantity: number | null
-    currentStock: number
-}
+import type { ApiResponse, SaleEvent, SaleEventItem } from '@/types'
+import { getJSTNow } from '@/lib/utils/date'
 
 // GET: 特売イベント一覧を取得
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<SaleEvent[]>>> {
@@ -34,7 +12,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
         // 期限切れのイベントを自動的に完了扱いにする
         // JST基準での今日の日付（YYYY-MM-DD形式）
-        const nowJST = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
+        const nowJST = getJSTNow();
         const todayStr = nowJST.toISOString().split('T')[0];
 
         // 完了にすべきイベントを特定
@@ -373,24 +351,87 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 return NextResponse.json({ data: null, error: error.message }, { status: 500 })
             }
         } else if (action === 'updateActual') {
-            // 実績数量更新
+            // 実績数量更新 & 在庫自動連動
             const items = updateData.items as Array<{ itemId: string; actualQuantity: number }>
+
+            // イベント情報を取得（履歴用）
+            const { data: event } = await supabase
+                .from('sale_events')
+                .select('client_name')
+                .eq('id', eventId)
+                .single<any>()
+
             for (const item of items) {
-                await supabase
+                // 現在のアイテム情報を取得
+                const { data: currentItem } = await supabase
                     .from('sale_event_items')
-                    // @ts-ignore
-                    .update({ actual_quantity: item.actualQuantity })
+                    .select('product_id, actual_quantity, allocated_quantity')
                     .eq('id', item.itemId)
+                    .single<any>()
+
+                if (currentItem) {
+                    const oldActual = currentItem.actual_quantity || 0
+                    const allocated = currentItem.allocated_quantity || 0
+                    const newActual = item.actualQuantity
+
+                    // 在庫調整量の計算
+                    // 初回確定時（引当があるとき）: 実績 - 引当
+                    // 更新時（引当がなく、実績を上書きするとき）: 新実績 - 旧実績
+                    const adjustment = (allocated > 0)
+                        ? (newActual - allocated)
+                        : (newActual - oldActual)
+
+                    if (adjustment !== 0) {
+                        // 在庫を更新
+                        const { data: inventory } = await supabase
+                            .from('inventory')
+                            .select('quantity')
+                            .eq('product_id', currentItem.product_id)
+                            .single<any>()
+
+                        const currentQty = inventory?.quantity || 0
+                        const newQty = Math.max(0, currentQty - adjustment)
+
+                        await supabase
+                            .from('inventory')
+                            .upsert({
+                                product_id: currentItem.product_id,
+                                quantity: newQty,
+                                updated_at: new Date().toISOString()
+                            } as any, { onConflict: 'product_id' })
+
+                        // 在庫履歴を記録
+                        await supabase.from('stock_history').insert({
+                            product_id: currentItem.product_id,
+                            type: adjustment > 0 ? 'outgoing' : 'incoming',
+                            quantity: Math.abs(adjustment),
+                            note: `特売実績確定調整: ${event?.client_name || '不明'}`
+                        } as any)
+                    }
+
+                    // アイテムの実績を更新し、引当を0にする
+                    await supabase
+                        .from('sale_event_items')
+                        // @ts-ignore
+                        .update({
+                            actual_quantity: newActual,
+                            allocated_quantity: 0
+                        })
+                        .eq('id', item.itemId)
+                }
             }
         } else if (action === 'allocateStock') {
             // 在庫引当
             const { data: eventItems } = await supabase
                 .from('sale_event_items')
-                .select('product_id, planned_quantity, allocated_quantity')
+                .select('product_id, planned_quantity, allocated_quantity, actual_quantity')
                 .eq('event_id', eventId)
                 .returns<any[]>()
 
             for (const item of eventItems || []) {
+                // すでに実績が入力されている場合は引当をスキップ（二重減算防止）
+                if (item.actual_quantity > 0) continue;
+
                 const toAllocate = item.planned_quantity - item.allocated_quantity
                 if (toAllocate <= 0) continue
 

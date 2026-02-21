@@ -1,0 +1,42 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.DS_Store": true,
+        "**/node_modules": true,
+        "**/.next": true,
+        "**/.swc": true,
+        "**/.cache": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/exports": true,
+        "**/supabase/.temp": true,
+        "**/tsconfig.tsbuildinfo": true,
+        "**/package-lock.json": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.next": true,
+        "**/.swc": true,
+        "**/exports": true,
+        "**/build": true,
+        "**/dist": true,
+        "**/*.map": true
+    },
+    "typescript.referencesCodeLens.enabled": false,
+    "typescript.implementationsCodeLens.enabled": false,
+    "typescript.tsserver.maxMemory": 4096,
+    "javascript.referencesCodeLens.enabled": false,
+    "python.analysis.exclude": [
+        "**/node_modules",
+        "**/.next",
+        "**/exports"
+    ],
+    "rust-analyzer.files.excludeDirs": [
+        "node_modules",
+        ".next",
+        "exports"
+    ],
+    "editor.renderControlCharacters": false,
+    "editor.renderWhitespace": "selection",
+    "editor.minimap.enabled": false
+}

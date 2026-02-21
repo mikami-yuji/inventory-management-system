@@ -22,7 +22,9 @@ import {
 import {
     bagsToMeters
 } from "@/lib/services";
-import { useProducts, useInventory, useIncomingStock } from "@/hooks/use-supabase-data";
+import { useProducts } from "@/hooks/use-products";
+import { useInventory } from "@/hooks/use-inventory";
+import { useIncomingStock } from "@/hooks/use-incoming-stock";
 import { useSaleEvents } from "@/hooks/use-sale-events";
 import { useWorkInProgress, calculateWIPByProduct } from "@/hooks/use-work-in-progress";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";

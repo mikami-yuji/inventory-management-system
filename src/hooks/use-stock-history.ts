@@ -1,43 +1,67 @@
+"use client";
 
-import useSWR from 'swr';
-import { StockHistory, ApiResponse } from '@/types';
-import { stockHistoryService } from '@/lib/services/stock-history-service';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import type { StockHistory, ApiResponse } from '@/types';
 
-const fetcher = async (url: string) => {
-    const res = await fetch(url);
-    if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || '履歴の取得に失敗しました');
-    }
-    const json: ApiResponse<StockHistory[]> = await res.json();
-    return json.data || [];
-};
+/**
+ * 在庫履歴データを取得するフック
+ */
+export function useStockHistory(options?: {
+    productId?: string;
+    days?: number;
+    limit?: number;
+}): {
+    history: StockHistory[];
+    loading: boolean;
+    error: string | null;
+    refetch: () => void;
+} {
+    const [history, setHistory] = useState<StockHistory[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const loadedRef = useRef(false);
 
-export function useStockHistory(productId: string) {
-    const { data: history, error, isLoading, mutate } = useSWR<StockHistory[]>(
-        productId ? `/api/inventory/history?productId=${productId}` : null,
-        fetcher
-    );
+    const fetchHistory = useCallback(async (): Promise<void> => {
+        if (!loadedRef.current) setLoading(true);
+        setError(null);
 
-    return {
-        history: history || [],
-        loading: isLoading,
-        error: error,
-        refetch: mutate,
-    };
-}
+        try {
+            const params = new URLSearchParams();
+            if (options?.productId) {
+                params.append('productId', options.productId);
+            }
+            if (options?.days) {
+                params.append('days', options.days.toString());
+            }
+            if (options?.limit) {
+                params.append('limit', options.limit.toString());
+            }
 
-export function useStockAnalysis(productId: string, currentStock: number) {
-    const { history, loading, error } = useStockHistory(productId);
+            const url = `/api/stock-history${params.toString() ? `?${params.toString()}` : ''}`;
+            const response = await fetch(url);
 
-    const analysis = history && history.length > 0
-        ? stockHistoryService.getUsageAnalysis(history, currentStock)
-        : null;
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-    return {
-        history,
-        analysis,
-        loading,
-        error
-    };
+            const result: ApiResponse<StockHistory[]> = await response.json();
+
+            if (result.error) {
+                throw new Error(result.error);
+            }
+
+            setHistory(result.data || []);
+            loadedRef.current = true;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : '在庫履歴の取得に失敗しました');
+        } finally {
+            setLoading(false);
+        }
+    }, [options?.productId, options?.days, options?.limit]);
+
+    useEffect(() => {
+        fetchHistory();
+    }, [fetchHistory]);
+
+    return { history, loading, error, refetch: fetchHistory };
 }

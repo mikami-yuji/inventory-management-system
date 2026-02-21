@@ -25,7 +25,7 @@ import {
     CheckCircle2,
 } from "lucide-react";
 import { useNotification } from "@/contexts/notification-context";
-import { useInventory } from "@/hooks/use-supabase-data";
+import { useInventory } from "@/hooks/use-inventory";
 
 export default function SettingsPage(): React.ReactElement {
     const { settings, updateSettings, resetSettings, testNotification } = useNotification();

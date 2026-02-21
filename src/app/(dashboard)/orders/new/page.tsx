@@ -14,7 +14,7 @@ import Link from "next/link";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useAuthSession } from "@/hooks/use-auth-session";
-import { useDeliveryAddresses } from "@/hooks/use-supabase-data";
+import { useDeliveryAddresses } from "@/hooks/use-delivery-addresses";
 import { DeliveryAddressDialog } from "@/components/orders/delivery-address-dialog";
 
 

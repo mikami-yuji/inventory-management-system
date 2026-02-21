@@ -16,7 +16,8 @@ import {
     Loader2
 } from "lucide-react";
 import Link from "next/link";
-import { useProducts, useInventory } from "@/hooks/use-supabase-data";
+import { useProducts } from "@/hooks/use-products";
+import { useInventory } from "@/hooks/use-inventory";
 import { useState, useEffect, useCallback } from "react";
 
 // APIから取得する発注データの型

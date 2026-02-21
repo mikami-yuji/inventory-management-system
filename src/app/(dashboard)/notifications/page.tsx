@@ -18,7 +18,8 @@ import {
     RefreshCw,
     Info,
 } from "lucide-react";
-import { useProducts, useInventory } from "@/hooks/use-supabase-data";
+import { useProducts } from "@/hooks/use-products";
+import { useInventory } from "@/hooks/use-inventory";
 import Link from "next/link";
 
 // 通知アイテムの型

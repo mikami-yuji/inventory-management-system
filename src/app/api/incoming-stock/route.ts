@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import type { IncomingStock, ApiResponse } from '@/types';
 
 // GET: 入荷予定一覧を取得
 export async function GET(request: NextRequest): Promise<NextResponse> {
