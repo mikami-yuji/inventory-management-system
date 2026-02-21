@@ -13,7 +13,7 @@ export async function GET(): Promise<NextResponse> {
         const { data, error } = await supabase
             .from('products')
             .select('*')
-            .eq('status', 'active')
+            .neq('status', 'inactive') // inactive以外をすべて取得
             .order('name');
 
         if (error) {
@@ -46,7 +46,29 @@ export async function GET(): Promise<NextResponse> {
             productType: item.product_type, // Excel Column Type
             supplierStock: item.supplier_stock && !isNaN(Number(item.supplier_stock)) ? Number(item.supplier_stock) : 0,
             statusOverride: item.status_override,
+            discontinuedDate: item.discontinued_date,
         }));
+
+        // 「落版予定」から「落版」への自動遷移ロジック
+        const today = new Date().toISOString().split('T')[0];
+        const statusUpdates = products.filter(p =>
+            p.status === 'plate_removal_scheduled' &&
+            p.discontinuedDate &&
+            p.discontinuedDate <= today
+        );
+
+        if (statusUpdates.length > 0) {
+            const idsToUpdate = statusUpdates.map(p => p.id);
+            await supabase
+                .from('products')
+                .update({ status: 'plate_removed' })
+                .in('id', idsToUpdate);
+
+            // 返却用データも更新
+            statusUpdates.forEach(p => {
+                p.status = 'plate_removed';
+            });
+        }
 
         return NextResponse.json(products);
     } catch (err) {
@@ -91,6 +113,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             suffix: body.suffix || null,
             product_type: body.productType || null,
             status_override: body.statusOverride || 'normal',
+            discontinued_date: body.discontinuedDate || null,
         };
 
         const { data, error } = await supabase
@@ -156,6 +179,8 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         if (body.suffix !== undefined) updateData.suffix = body.suffix;
         if (body.productType !== undefined) updateData.product_type = body.productType;
         if (body.statusOverride !== undefined) updateData.status_override = body.statusOverride;
+        if (body.status !== undefined) updateData.status = body.status;
+        if (body.discontinuedDate !== undefined) updateData.discontinued_date = body.discontinuedDate;
 
         const { data, error } = await supabase
             .from('products')

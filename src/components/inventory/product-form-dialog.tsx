@@ -27,7 +27,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { useSuppliers } from "@/hooks/use-masters";
-import type { Product } from "@/types";
+import type { Product, ProductStatus } from "@/types";
 
 // フォームデータの型
 type ProductFormData = {
@@ -54,7 +54,9 @@ type ProductFormData = {
     backColorCount: string;
     totalColorCount: string;
     statusOverride: 'normal' | 'low_stock' | 'out_of_stock';
+    status: ProductStatus;
     supplierId: string;
+    discontinuedDate: string;
 };
 
 type ProductFormDialogProps = {
@@ -86,7 +88,9 @@ const initialFormData: ProductFormData = {
     backColorCount: "",
     totalColorCount: "",
     statusOverride: 'normal',
+    status: 'active',
     supplierId: "",
+    discontinuedDate: "",
 };
 
 export function ProductFormDialog({
@@ -127,7 +131,9 @@ export function ProductFormDialog({
                 backColorCount: product.backColorCount?.toString() || "",
                 totalColorCount: product.totalColorCount?.toString() || "",
                 statusOverride: product.statusOverride || 'normal',
+                status: product.status || 'active',
                 supplierId: product.supplierId || "",
+                discontinuedDate: product.discontinuedDate || "",
             });
         } else {
             setFormData(initialFormData);
@@ -173,7 +179,9 @@ export function ProductFormDialog({
                 backColorCount: formData.backColorCount ? Number(formData.backColorCount) : undefined,
                 totalColorCount: formData.totalColorCount ? Number(formData.totalColorCount) : undefined,
                 statusOverride: formData.statusOverride,
+                status: formData.status,
                 supplierId: formData.supplierId || undefined,
+                discontinuedDate: formData.discontinuedDate || undefined,
             };
 
             const response = await fetch("/api/products", {
@@ -431,6 +439,50 @@ export function ProductFormDialog({
                         <p className="text-xs text-muted-foreground">
                             ※「在庫減少」「欠品」を選択すると、実際の在庫数に関わらずその状態として表示されます。
                         </p>
+                    </div>
+
+                    {/* 商品ステータス */}
+                    <div className="space-y-4 border rounded-lg p-4 bg-slate-50">
+                        <div className="space-y-2">
+                            <Label htmlFor="status">商品状態（マスタ設定）</Label>
+                            <Select
+                                value={formData.status}
+                                onValueChange={(val: ProductStatus) => handleChange("status", val)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="正常" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="active">正常</SelectItem>
+                                    <SelectItem value="plate_removal_scheduled">落版予定</SelectItem>
+                                    <SelectItem value="plate_removed">落版</SelectItem>
+                                    <SelectItem value="direct_delivery">直送先在庫</SelectItem>
+                                    <SelectItem value="on_sale_break">販売停止中</SelectItem>
+                                    <SelectItem value="discontinued">廃盤</SelectItem>
+                                    <SelectItem value="inactive">非表示（削除扱い）</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {(formData.status === 'plate_removal_scheduled' || formData.status === 'discontinued' || formData.status === 'plate_removed') && (
+                            <div className="space-y-2">
+                                <Label htmlFor="discontinuedDate">
+                                    {formData.status === 'plate_removal_scheduled' ? '落版予定日' :
+                                        formData.status === 'plate_removed' ? '落版日' : '廃盤日'}
+                                </Label>
+                                <Input
+                                    id="discontinuedDate"
+                                    type="date"
+                                    value={formData.discontinuedDate}
+                                    onChange={(e) => handleChange("discontinuedDate", e.target.value)}
+                                />
+                                {formData.status === 'plate_removal_scheduled' && (
+                                    <p className="text-[10px] text-amber-600">
+                                        ※設定した日付を過ぎると自動的に「落版」ステータスに切り替わります。
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* 色数情報 */}

@@ -13,7 +13,7 @@ export type User = {
 export type ProductCategory = 'bag' | 'sticker' | 'other' | 'new_rice';
 
 // 商品ステータス
-export type ProductStatus = 'active' | 'inactive';
+export type ProductStatus = 'active' | 'inactive' | 'plate_removal_scheduled' | 'plate_removed' | 'direct_delivery' | 'on_sale_break' | 'discontinued';
 
 // 商品マスタ
 export type Product = {
@@ -45,6 +45,7 @@ export type Product = {
   supplierStock?: number; // メーカー在庫
   statusOverride?: 'normal' | 'low_stock' | 'out_of_stock'; // ステータス手動上書き
   supplierId?: string; // 仕入先ID
+  discontinuedDate?: string; // 落版日/廃盤日 (YYYY-MM-DD)
 };
 
 // 仕入先マスタ

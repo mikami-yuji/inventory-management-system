@@ -324,19 +324,38 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                         </TableCell>
 
                                         <TableCell className="text-center">
-                                            {isOutOfStock ? (
-                                                <Badge variant="destructive">
-                                                    {product.statusOverride === 'out_of_stock' ? '欠品 (手動)' : '欠品'}
-                                                </Badge>
-                                            ) : isLowStock ? (
-                                                <Badge variant="outline" className="border-amber-500 text-amber-600">
-                                                    {product.statusOverride === 'low_stock' ? '低在庫 (手動)' : '低在庫'}
-                                                </Badge>
-                                            ) : hasAllocation ? (
-                                                <Badge variant="outline" className="border-blue-500 text-blue-600">引当中</Badge>
-                                            ) : (
-                                                <Badge variant="outline" className="border-green-500 text-green-600">正常</Badge>
-                                            )}
+                                            <div className="flex flex-col items-center gap-1">
+                                                {isOutOfStock ? (
+                                                    <Badge variant="destructive">
+                                                        {product.statusOverride === 'out_of_stock' ? '欠品 (手動)' : '欠品'}
+                                                    </Badge>
+                                                ) : isLowStock ? (
+                                                    <Badge variant="outline" className="border-amber-500 text-amber-600">
+                                                        {product.statusOverride === 'low_stock' ? '低在庫 (手動)' : '低在庫'}
+                                                    </Badge>
+                                                ) : product.status === 'plate_removal_scheduled' ? (
+                                                    <Badge variant="outline" className="border-amber-400 text-amber-600 bg-amber-50">落版予定</Badge>
+                                                ) : product.status === 'plate_removed' ? (
+                                                    <Badge variant="outline" className="border-purple-400 text-purple-600 bg-purple-50">落版</Badge>
+                                                ) : product.status === 'direct_delivery' ? (
+                                                    <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50">直送先在庫</Badge>
+                                                ) : product.status === 'on_sale_break' ? (
+                                                    <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50">販売開始中断</Badge>
+                                                ) : product.status === 'discontinued' ? (
+                                                    <Badge variant="outline" className="border-gray-400 text-gray-500 bg-gray-50">廃盤</Badge>
+                                                ) : hasAllocation ? (
+                                                    <Badge variant="outline" className="border-blue-500 text-blue-600">引当中</Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="border-green-500 text-green-600">正常</Badge>
+                                                )}
+
+                                                {product.discontinuedDate && (
+                                                    <div className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                        {new Date(product.discontinuedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
+                                                        {(product.status === 'plate_removed' || product.status === 'plate_removal_scheduled') ? '落版' : '廃盤'}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-1">
