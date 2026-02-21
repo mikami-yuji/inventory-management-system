@@ -176,7 +176,7 @@ export function WIPDialog({
                 <DialogHeader>
                     <DialogTitle>仕掛中（加工中）管理</DialogTitle>
                     <DialogDescription>
-                        {product.name} の仕掛品・仕上がり管理
+                        {product.name} の仕掛品・仕掛状況管理
                     </DialogDescription>
                 </DialogHeader>
 
@@ -184,7 +184,7 @@ export function WIPDialog({
                     // 確定処理画面
                     <div className="space-y-4 py-2">
                         <div className="bg-blue-50 p-3 rounded-md border border-blue-200 text-sm mb-4">
-                            仕上がり日を確定し、入荷予定日として登録します。<br />
+                            仕掛完了日を確定し、入荷予定日として登録します。<br />
                             同時にメーカー在庫数も更新できます。
                         </div>
 
@@ -252,7 +252,7 @@ export function WIPDialog({
                                                     <span className="text-lg">{item.quantity.toLocaleString()}</span>
                                                     {item.confirmationStatus === 'confirmed' ? (
                                                         <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
-                                                            仕上がり確定済
+                                                            仕掛確定済
                                                         </Badge>
                                                     ) : (
                                                         <Badge variant="outline" className="text-purple-600 border-purple-200 bg-purple-50">
@@ -268,7 +268,7 @@ export function WIPDialog({
                                                             onClick={() => handleConfirmClick(item)}
                                                         >
                                                             <PackageCheck className="h-4 w-4 mr-1" />
-                                                            仕上がり確定
+                                                            仕掛確定
                                                         </Button>
                                                     )}
 
@@ -355,7 +355,7 @@ export function WIPDialog({
                                 {/* 完了予定日入力エリア */}
                                 {dateType === 'specific' ? (
                                     <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="expected" className="text-right">仕上がり予定日</Label>
+                                        <Label htmlFor="expected" className="text-right">仕掛完了予定日</Label>
                                         <Input
                                             id="expected"
                                             type="date"

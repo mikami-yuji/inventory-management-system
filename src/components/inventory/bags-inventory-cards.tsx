@@ -287,7 +287,7 @@ function ProductCard({
                             <div>SKU: {product.sku}</div>
                             {wipList && wipList.length > 0 && (
                                 <div className="text-purple-600 font-medium">
-                                    仕上がり中: {wipQuantity.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                    仕掛中: {wipQuantity.toLocaleString()}{isRoll ? 'm' : '枚'}
                                     <div className="flex flex-col gap-0.5 mt-0.5 opacity-80 font-normal">
                                         {wipList.map((item, i) => (
                                             <div key={item.id}>
