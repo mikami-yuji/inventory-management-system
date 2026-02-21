@@ -231,7 +231,7 @@ function ProductCard({
                     )}
                 </div>
 
-                {product.discontinuedDate && (
+                {product.discontinuedDate && product.status !== 'active' && (
                     <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
                         {new Date(product.discontinuedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
                         {(product.status === 'plate_removed' || product.status === 'plate_removal_scheduled') ? '落版' : '廃盤'}

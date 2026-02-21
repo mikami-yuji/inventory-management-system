@@ -357,7 +357,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                     <Badge variant="outline" className="border-green-500 text-green-600">正常</Badge>
                                                 )}
 
-                                                {product.discontinuedDate && (
+                                                {product.discontinuedDate && product.status !== 'active' && (
                                                     <div className="text-[10px] text-muted-foreground whitespace-nowrap">
                                                         {new Date(product.discontinuedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
                                                         {(product.status === 'plate_removed' || product.status === 'plate_removal_scheduled') ? '落版' : '廃盤'}

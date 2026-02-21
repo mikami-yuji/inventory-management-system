@@ -1,10 +1,25 @@
--- productsテーブルのstatusカラムの制約を更新するSQL
--- これを実行することで、「直送先在庫」などの新しいステータスが保存可能になります。
+-- productsテーブルのstatusカラムに関連するすべての制約をクリーンアップして再作成するSQL
+-- これを実行することで、ステータス変更時の制約エラーを解消します。
 
--- 1. 既存の制約を削除（制約名: products_status_check）
-ALTER TABLE products DROP CONSTRAINT IF EXISTS products_status_check;
+DO $$ 
+DECLARE 
+    r RECORD;
+BEGIN
+    -- status という名前を含むすべての CHECK 制約を自動的に削除
+    FOR r IN (
+        SELECT conname 
+        FROM pg_constraint c 
+        JOIN pg_class t ON t.oid = c.conrelid 
+        WHERE t.relname = 'products' 
+          AND c.contype = 'c' -- 'c' は CHECK 制約
+          AND (c.conname LIKE '%status%' OR c.conname LIKE '%products_%_check%')
+    ) 
+    LOOP
+        EXECUTE 'ALTER TABLE products DROP CONSTRAINT IF EXISTS ' || quote_ident(r.conname);
+    END LOOP;
+END $$;
 
--- 2. 新しいステータスを含めた制約を再作成
+-- 新しく、すべての有効なステータスを含む制約を1つだけ追加
 ALTER TABLE products ADD CONSTRAINT products_status_check 
 CHECK (status IN (
   'active', 
