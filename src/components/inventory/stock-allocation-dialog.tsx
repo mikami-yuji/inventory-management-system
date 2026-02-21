@@ -49,6 +49,10 @@ export function StockAllocationDialog({
             }];
         }
         return [];
+    }).sort((a, b) => {
+        const dateA = a.dates.length > 0 ? a.dates[0] : "";
+        const dateB = b.dates.length > 0 ? b.dates[0] : "";
+        return dateA.localeCompare(dateB);
     });
 
     const totalAllocated = allocations.reduce((sum, item) => sum + item.quantity, 0);

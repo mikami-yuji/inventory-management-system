@@ -194,11 +194,33 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                             onClick={() => hasAllocation && setViewAllocation(product)}
                                         >
                                             {hasAllocation ? (
-                                                <div className="text-blue-600 underline decoration-dotted underline-offset-4">
-                                                    <div className="font-medium">{allocation.bags.toLocaleString()}本</div>
-                                                    {isRoll && (
-                                                        <div className="text-xs">({allocation.meters.toFixed(1)}m)</div>
-                                                    )}
+                                                <div className="text-blue-600">
+                                                    <div className="font-medium underline decoration-dotted underline-offset-4">
+                                                        {allocation.bags.toLocaleString()}
+                                                        <span className="text-xs ml-0.5">{isRoll ? 'm' : '枚'}</span>
+                                                    </div>
+                                                    <div className="flex flex-col gap-0.5 mt-0.5">
+                                                        {saleEvents
+                                                            .flatMap(event => {
+                                                                const item = event.items.find(i => i.productId === product.id);
+                                                                if (item && item.allocatedQuantity > 0 && (event.status === 'active' || event.status === 'upcoming')) {
+                                                                    return [{
+                                                                        date: event.dates[0],
+                                                                        client: event.clientName,
+                                                                        quantity: item.allocatedQuantity
+                                                                    }];
+                                                                }
+                                                                return [];
+                                                            })
+                                                            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+                                                            .map((alloc, i) => (
+                                                                <div key={i} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
+                                                                    {alloc.date ? (new Date(alloc.date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })) : '-'}:{" "}
+                                                                    {alloc.client}: {alloc.quantity.toLocaleString()}
+                                                                </div>
+                                                            ))
+                                                        }
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <span className="text-muted-foreground">-</span>
