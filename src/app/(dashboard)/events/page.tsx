@@ -51,6 +51,13 @@ export default function EventsPage(): React.ReactElement {
             );
         }
 
+        // 並び替え: 開始日の昇順（直近の予定を上に）
+        result.sort((a, b) => {
+            const aDate = a.dates.length > 0 ? [...a.dates].sort()[0] : '9999-12-31';
+            const bDate = b.dates.length > 0 ? [...b.dates].sort()[0] : '9999-12-31';
+            return aDate.localeCompare(bDate);
+        });
+
         return result;
     }, [events, currentTab, searchQuery, viewMode]);
 
