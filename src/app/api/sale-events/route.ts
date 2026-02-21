@@ -34,7 +34,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
         // 期限切れのイベントを自動的に完了扱いにする
         // JST基準での今日の日付（YYYY-MM-DD形式）
-        const todayStr = new Date(new Date().getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const nowJST = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
+        const todayStr = nowJST.toISOString().split('T')[0];
 
         // 完了にすべきイベントを特定
         // status が upcoming または active で、かつ全日程が今日より前のもの
@@ -113,6 +114,30 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                         .update({ status: 'completed' })
                         .eq('id', event.id);
                 }
+            }
+
+            // 進行中にすべきイベントを特定（開催10日前）
+            const tenDaysLaterJST = new Date(nowJST.getTime() + 10 * 24 * 60 * 60 * 1000);
+            const tenDaysLaterStr = tenDaysLaterJST.toISOString().split('T')[0];
+
+            const eventsToActive = activeEvents.filter((event: any) => {
+                if (event.status !== 'upcoming') return false;
+                if (!event.dates || event.dates.length === 0) return false;
+
+                // 最小の日付（開始日）を取得
+                const startDate = [...event.dates].sort()[0];
+                // 開始日が今日から10日以内かチェック
+                return startDate <= tenDaysLaterStr;
+            });
+
+            if (eventsToActive.length > 0) {
+                const ids = eventsToActive.map(e => e.id);
+                console.log(`Auto-activating ${ids.length} events:`, ids);
+                await supabase
+                    .from('sale_events')
+                    // @ts-ignore
+                    .update({ status: 'active' })
+                    .in('id', ids);
             }
         }
 
