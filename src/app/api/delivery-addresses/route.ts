@@ -38,7 +38,8 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
             postalCode: addr.postal_code,
             address: addr.address,
             phone: addr.phone,
-            isDefault: addr.is_default
+            isDefault: addr.is_default,
+            preferredShape: addr.preferred_shape
         }));
 
         return NextResponse.json(addresses);
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     try {
         const body = await request.json();
-        const { name, postalCode, address, phone, isDefault } = body;
+        const { name, postalCode, address, phone, isDefault, preferredShape } = body;
 
         // バリデーション
         if (!name || !address || !phone) {
@@ -83,7 +84,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 postal_code: postalCode,
                 address,
                 phone,
-                is_default: isDefault || false
+                is_default: isDefault || false,
+                preferred_shape: preferredShape || null
             })
             .select()
             .single();

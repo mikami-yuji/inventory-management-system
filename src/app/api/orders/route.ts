@@ -70,12 +70,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         const supabase = createServerClient()
         const body = await request.json()
 
-        const { items, clientId, type, eventId, shipmentSource } = body as {
+        const { items, clientId, type, eventId, shipmentSource, preferredShape } = body as {
             items: { productId: string, quantity: number }[]
             clientId: string
             type: 'standard' | 'special_event'
             eventId?: string
-            shipmentSource: 'inventory' | 'supplier'
+            shipmentSource: 'inventory' | 'supplier' | 'wip'
+            preferredShape?: string
             deliveryName?: string
             deliveryAddress?: string
             deliveryPhone?: string
@@ -89,10 +90,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 status: 'requested',
                 type,
                 event_id: eventId || null,
-                shipment_source: shipmentSource || 'inventory',
+                shipment_source: shipmentSource || 'supplier',
                 delivery_name: body.deliveryName,
                 delivery_address: body.deliveryAddress,
-                delivery_phone: body.deliveryPhone
+                delivery_phone: body.deliveryPhone,
+                preferred_shape: preferredShape
             } as any)
             .select()
             .single<any>()
@@ -173,8 +175,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                         note: `メーカー直送 (残: ${newStock})`
                     } as any)
                 }
-
-            } else {
+            } else if (shipmentSource === 'inventory') {
                 // 自社在庫から減らす (従来のInventory)
                 const { data: inv } = await supabase
                     .from('inventory')
@@ -200,6 +201,18 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                     quantity: newQty,
                     change_amount: -item.quantity,
                     note: '出荷依頼'
+                } as any)
+            } else if (shipmentSource === 'wip') {
+                // 仕掛分からの出荷
+                // WIPの在庫自体は 'completed' タイミングで inventory に入るが、
+                // ユーザーの意図は「仕掛中のものをそのまま発送する（自社在庫を経由しない、あるいは出荷予約）」
+                // ここでは WIPに関連する note を残すにとどめる（WIPの減算ロジックは必要に応じて拡張）
+                await supabase.from('stock_history').insert({
+                    product_id: item.productId,
+                    type: 'order',
+                    quantity: 0, // WIPなので現在庫には影響させない
+                    change_amount: -item.quantity,
+                    note: '仕掛仕上がり分からの出荷依頼'
                 } as any)
             }
         }

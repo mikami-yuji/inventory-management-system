@@ -13,8 +13,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useDeliveryAddresses } from "@/hooks/use-delivery-addresses";
+import { useWorkInProgress } from "@/hooks/use-work-in-progress";
+import { useInventory } from "@/hooks/use-inventory";
 import { DeliveryAddressDialog } from "@/components/orders/delivery-address-dialog";
 
 
@@ -22,9 +25,13 @@ export default function NewOrderPage(): React.ReactElement {
     const router = useRouter();
     const { items, updateQuantity, removeFromCart, clearCart, getTotalPrice } = useCart();
     const { addresses, addAddress, refetch: refetchAddresses } = useDeliveryAddresses();
+    const { items: wipItems, loading: wipLoading } = useWorkInProgress();
+    const { inventory, loading: invLoading } = useInventory();
     const [loading, setLoading] = useState(false);
     const { user } = useAuthSession();
 
+    // 出荷元 ('supplier' | 'wip')
+    const [shipmentSource, setShipmentSource] = useState<'supplier' | 'wip'>('supplier');
     // 選択された住所ID
     const [selectedAddressId, setSelectedAddressId] = useState<string>("");
     // 住所追加ダイアログの状態
@@ -71,10 +78,11 @@ export default function NewOrderPage(): React.ReactElement {
                     items: items.map(i => ({ productId: i.product.id, quantity: i.quantity })),
                     clientId,
                     type: 'standard', // デフォルト
-                    shipmentSource: 'supplier', // メーカー直送固定
+                    shipmentSource,
                     deliveryName: selectedAddress.name,
                     deliveryAddress: selectedAddress.address,
-                    deliveryPhone: selectedAddress.phone
+                    deliveryPhone: selectedAddress.phone,
+                    preferredShape: selectedAddress.preferredShape
                 })
             });
 
@@ -141,6 +149,7 @@ export default function NewOrderPage(): React.ReactElement {
                                     <TableRow>
                                         <TableHead>商品名</TableHead>
                                         <TableHead className="text-right">単価</TableHead>
+                                        <TableHead className="text-right">利用可能数</TableHead>
                                         <TableHead className="w-[180px] text-center">数量</TableHead>
                                         <TableHead className="text-right">小計</TableHead>
                                         <TableHead className="w-[60px]"></TableHead>
@@ -166,6 +175,27 @@ export default function NewOrderPage(): React.ReactElement {
                                                             (印刷代込)
                                                         </div>
                                                     )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {(() => {
+                                                        if (shipmentSource === 'supplier') {
+                                                            const stock = item.product.supplierStock || 0;
+                                                            return (
+                                                                <div className={cn("font-medium", item.quantity > stock && "text-red-500 font-bold")}>
+                                                                    {stock.toLocaleString()}枚
+                                                                </div>
+                                                            );
+                                                        } else {
+                                                            const wipQty = wipItems
+                                                                .filter((w: any) => w.productId === item.product.id)
+                                                                .reduce((sum: number, w: any) => sum + w.quantity, 0);
+                                                            return (
+                                                                <div className={cn("font-medium", item.quantity > wipQty && "text-red-500 font-bold")}>
+                                                                    {wipQty.toLocaleString()}枚 (仕掛中)
+                                                                </div>
+                                                            );
+                                                        }
+                                                    })()}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center justify-center gap-2">
@@ -258,8 +288,29 @@ export default function NewOrderPage(): React.ReactElement {
 
                                     <div className="bg-slate-50 p-3 rounded-md border text-xs text-muted-foreground mt-4">
                                         <p className="font-medium mb-1">出荷について</p>
-                                        <p>出荷元は「メーカー在庫から直送」となります。</p>
-                                        <p>メーカー在庫のみが減少し、自社在庫は変動しません。</p>
+                                        <div className="space-y-3 mt-2">
+                                            <RadioGroup
+                                                value={shipmentSource}
+                                                onValueChange={(val) => setShipmentSource(val as any)}
+                                            >
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="supplier" id="source-supplier" />
+                                                    <Label htmlFor="source-supplier" className="cursor-pointer">メーカー在庫（直送）</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="wip" id="source-wip" />
+                                                    <Label htmlFor="source-wip" className="cursor-pointer">仕掛仕上がり分（WIP）</Label>
+                                                </div>
+                                            </RadioGroup>
+
+                                            <div className="p-2 bg-amber-50 border border-amber-200 rounded text-amber-800">
+                                                {shipmentSource === 'supplier' ? (
+                                                    <p>メーカーの現在庫から即座に出荷します。自社内の在庫は変動しません。</p>
+                                                ) : (
+                                                    <p>現在製造中の仕掛品が完成次第、出荷します。仕掛中の残り数を確認してください。</p>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </CardContent>

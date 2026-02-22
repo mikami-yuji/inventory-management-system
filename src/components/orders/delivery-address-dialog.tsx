@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDeliveryAddresses } from "@/hooks/use-delivery-addresses";
 import { Loader2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 type DeliveryAddressDialogProps = {
     open: boolean;
@@ -28,7 +29,8 @@ export function DeliveryAddressDialog({
         postalCode: "",
         address: "",
         phone: "",
-        isDefault: false
+        isDefault: false,
+        preferredShape: "" as "RA" | "RZ" | "単袋" | ""
     });
 
     const handleChange = (field: string, value: string | boolean) => {
@@ -45,7 +47,8 @@ export function DeliveryAddressDialog({
                 postalCode: formData.postalCode,
                 address: formData.address,
                 phone: formData.phone,
-                isDefault: formData.isDefault
+                isDefault: formData.isDefault,
+                preferredShape: formData.preferredShape || undefined
             });
 
             if (success) {
@@ -54,7 +57,8 @@ export function DeliveryAddressDialog({
                     postalCode: "",
                     address: "",
                     phone: "",
-                    isDefault: false
+                    isDefault: false,
+                    preferredShape: ""
                 });
                 onSuccess();
                 onOpenChange(false);
@@ -119,6 +123,32 @@ export function DeliveryAddressDialog({
                             placeholder="東京都..."
                             required
                         />
+                    </div>
+
+                    <div className="space-y-3">
+                        <Label>好みの形状（任意）</Label>
+                        <RadioGroup
+                            value={formData.preferredShape}
+                            onValueChange={(value) => handleChange("preferredShape", value)}
+                            className="flex gap-4"
+                        >
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="RA" id="shape-ra" />
+                                <Label htmlFor="shape-ra" className="cursor-pointer">RA</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="RZ" id="shape-rz" />
+                                <Label htmlFor="shape-rz" className="cursor-pointer">RZ</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="単袋" id="shape-single" />
+                                <Label htmlFor="shape-single" className="cursor-pointer">単袋</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="" id="shape-none" />
+                                <Label htmlFor="shape-none" className="cursor-pointer text-muted-foreground">未指定</Label>
+                            </div>
+                        </RadioGroup>
                     </div>
 
                     <div className="flex items-center space-x-2 pt-2">

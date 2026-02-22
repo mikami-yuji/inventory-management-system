@@ -151,6 +151,7 @@ export type DeliveryAddress = {
   address: string;
   phone: string;
   isDefault: boolean;
+  preferredShape?: 'RA' | 'RZ' | '単袋';
 };
 
 // 在庫履歴
