@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useMemo, useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -13,7 +15,8 @@ import {
     ShoppingCart,
     Calendar,
     DollarSign,
-    Loader2
+    Loader2,
+    FileText
 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
@@ -50,7 +53,7 @@ export default function ReportsPage(): React.ReactElement {
     const { inventory, loading: inventoryLoading } = useInventory();
 
     // 発注データをAPIから取得
-    const [orders, setOrders] = useState<{ id: string }[]>([]);
+    const [orders, setOrders] = useState<any[]>([]);
     const [ordersLoading, setOrdersLoading] = useState(true);
 
     const fetchOrders = useCallback(async (): Promise<void> => {
@@ -73,16 +76,33 @@ export default function ReportsPage(): React.ReactElement {
 
     const loading = productsLoading || inventoryLoading || ordersLoading;
 
-    // 月別の発注サマリー（モックデータ）
+    // 月別の発注サマリー（実データ集計）
     const monthlyData = useMemo(() => {
         const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-        // モックの月別発注数
-        const orderCounts = [45, 52, 48, 61, 55, 67, 72, 68, 75, 82, 78, 85];
-        // モックの月別発注金額（万円）
-        const orderAmounts = [120, 145, 135, 178, 162, 195, 210, 198, 225, 248, 235, 260];
+        const orderCounts = new Array(12).fill(0);
+        const orderAmounts = new Array(12).fill(0);
+
+        const now = new Date();
+        const currentYear = now.getFullYear();
+
+        orders.forEach(order => {
+            const date = new Date(order.createdAt);
+            // 今年分のみ集計
+            if (date.getFullYear() === currentYear) {
+                const month = date.getMonth();
+                orderCounts[month]++;
+
+                // 金額計算
+                let orderTotal = 0;
+                order.items?.forEach((item: any) => {
+                    orderTotal += (item.unitPrice + item.printingCost) * item.quantity;
+                });
+                orderAmounts[month] += orderTotal / 10000; // 万円単位
+            }
+        });
 
         return { months, orderCounts, orderAmounts };
-    }, []);
+    }, [orders]);
 
     // カテゴリ別在庫分布
     const categoryDistribution = useMemo(() => {
@@ -226,10 +246,15 @@ export default function ReportsPage(): React.ReactElement {
                         <DollarSign className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-emerald-600">¥193万</div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <TrendingUp className="h-3 w-3 text-emerald-500" />
-                            前年比+12%
+                        <div className="text-2xl font-bold text-emerald-600">
+                            ¥{useMemo(() => {
+                                const total = monthlyData.orderAmounts.reduce((sum, val) => sum + val, 0);
+                                const monthsWithData = monthlyData.orderAmounts.filter(val => val > 0).length || 1;
+                                return Math.round(total / monthsWithData).toLocaleString();
+                            }, [monthlyData])}万
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            今年の実績から算出
                         </p>
                     </CardContent>
                 </Card>
@@ -281,9 +306,17 @@ export default function ReportsPage(): React.ReactElement {
                 <TabsContent value="inventory" className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2">
                         <Card>
-                            <CardHeader>
-                                <CardTitle>カテゴリ別商品数</CardTitle>
-                                <CardDescription>商品カテゴリの分布</CardDescription>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <div>
+                                    <CardTitle>カテゴリ別商品数</CardTitle>
+                                    <CardDescription>商品カテゴリの分布</CardDescription>
+                                </div>
+                                <Link href="/reports/stock-report">
+                                    <Button variant="outline" size="sm" className="gap-2">
+                                        <FileText className="h-4 w-4" />
+                                        在庫報告書の表示
+                                    </Button>
+                                </Link>
                             </CardHeader>
                             <CardContent>
                                 <div className="h-[300px] flex items-center justify-center">
@@ -346,7 +379,7 @@ export default function ReportsPage(): React.ReactElement {
                                                 <TableCell className="text-right">{count}件</TableCell>
                                                 <TableCell className="text-right">¥{amount}万</TableCell>
                                                 <TableCell className="text-right">
-                                                    ¥{Math.round(amount * 10000 / count).toLocaleString()}
+                                                    {count > 0 ? `¥${Math.round(amount * 10000 / count).toLocaleString()}` : '-'}
                                                 </TableCell>
                                                 <TableCell>
                                                     <Badge

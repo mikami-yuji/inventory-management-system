@@ -24,7 +24,9 @@ export async function GET(): Promise<NextResponse> {
                     quantity,
                     products (
                         id,
-                        name
+                        name,
+                        unit_price,
+                        printing_cost
                     )
                 )
             `)
@@ -48,6 +50,8 @@ export async function GET(): Promise<NextResponse> {
                 productId: item.product_id,
                 quantity: item.quantity,
                 productName: item.products?.name || '不明な商品',
+                unitPrice: item.products?.unit_price || 0,
+                printingCost: item.products?.printing_cost || 0,
             })),
         }))
 
