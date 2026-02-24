@@ -71,6 +71,7 @@ const settingsRoutes: RouteItem[] = [
     { label: "一般設定", icon: Settings, href: "/settings/general", color: "text-gray-400" },
     { label: "仕入先", icon: Package, href: "/settings/suppliers", color: "text-blue-400" },
     { label: "ユーザー", icon: Settings, href: "/settings/users", color: "text-purple-400" },
+    { label: "納品先", icon: Package, href: "/settings/delivery-addresses", color: "text-orange-400" },
     { label: "データ管理", icon: Settings, href: "/settings/data", color: "text-teal-400" },
     { label: "通知", icon: Settings, href: "/notifications", color: "text-yellow-400" },
 ];

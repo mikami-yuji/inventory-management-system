@@ -599,7 +599,7 @@ function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, sup
                                         {status.isRoll ? `${status.currentStock.toLocaleString()}m` : `${status.currentStock.toLocaleString()}枚`}
                                     </TableCell>
                                     <TableCell className="text-right hidden sm:table-cell">
-                                        {status.hasAllocation ? <span className="text-blue-600">{status.allocation.bags}本</span> : "-"}
+                                        {status.hasAllocation ? <span className="text-blue-600">{status.allocation.bags.toLocaleString()}枚</span> : "-"}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className={cn("font-bold", status.isOutOfStock && "text-red-600", status.isLowStock && "text-amber-600")}>
@@ -716,7 +716,7 @@ function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap
                                     <div className="text-muted-foreground text-xs">実在庫</div>
                                     <div className="font-bold text-lg">{status.currentStock.toLocaleString()}<span className="text-xs font-normal text-muted-foreground">{status.isRoll ? 'm' : '枚'}</span></div>
                                     {status.hasAllocation && (
-                                        <div className="text-xs text-blue-600">引当: {status.allocation.bags.toLocaleString()}本</div>
+                                        <div className="text-xs text-blue-600">引当: {status.allocation.bags.toLocaleString()}枚</div>
                                     )}
                                 </div>
                             </div>

@@ -11,6 +11,7 @@ export function useDeliveryAddresses(): {
     loading: boolean;
     error: string | null;
     addAddress: (address: Omit<DeliveryAddress, 'id' | 'clientId'>) => Promise<boolean>;
+    updateAddress: (address: DeliveryAddress) => Promise<boolean>;
     deleteAddress: (id: string) => Promise<boolean>;
     refetch: () => void;
 } {
@@ -68,6 +69,31 @@ export function useDeliveryAddresses(): {
         }
     };
 
+    // 住所を更新
+    const updateAddress = async (address: DeliveryAddress): Promise<boolean> => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/delivery-addresses', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(address),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '更新に失敗しました');
+            }
+
+            await fetchAddresses();
+            return true;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : '更新に失敗しました');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // 住所を削除
     const deleteAddress = async (id: string): Promise<boolean> => {
         if (!confirm('本当に削除しますか？')) return false;
@@ -98,6 +124,7 @@ export function useDeliveryAddresses(): {
         loading,
         error,
         addAddress,
+        updateAddress,
         deleteAddress,
         refetch: fetchAddresses
     };

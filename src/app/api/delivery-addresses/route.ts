@@ -130,3 +130,54 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ error: 'Failed to delete address' }, { status: 500 });
     }
 }
+export async function PATCH(request: NextRequest): Promise<NextResponse> {
+    const session = await getServerSession(authOptions);
+    const userId = getUserId(session);
+    if (!userId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    try {
+        const body = await request.json();
+        const { id, name, postalCode, address, phone, isDefault, preferredShape } = body;
+
+        if (!id) {
+            return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+        }
+
+        const supabase = createServerClient();
+
+        // デフォルト設定の場合、既存のデフォルトを解除
+        if (isDefault) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase as any)
+                .from('delivery_addresses')
+                .update({ is_default: false })
+                .eq('client_id', userId);
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase as any)
+            .from('delivery_addresses')
+            .update({
+                name,
+                postal_code: postalCode,
+                address,
+                phone,
+                is_default: isDefault,
+                preferred_shape: preferredShape || null,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .eq('client_id', userId)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return NextResponse.json(data);
+    } catch (error) {
+        console.error('Error updating address:', error);
+        return NextResponse.json({ error: 'Failed to update address' }, { status: 500 });
+    }
+}

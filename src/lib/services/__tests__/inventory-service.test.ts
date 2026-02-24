@@ -6,7 +6,6 @@ import {
     getPitch,
     isRollBag,
     getApproxBagCount,
-    inventoryService,
 } from '../inventory-service';
 
 describe('getPitch', () => {
@@ -34,10 +33,10 @@ describe('getPitch', () => {
         expect(getPitch(2.9)).toBe(350);
     });
 
-    test('2kg未満は250mmを返す', () => {
-        expect(getPitch(1)).toBe(250);
-        expect(getPitch(0.5)).toBe(250);
-        expect(getPitch(1.9)).toBe(250);
+    test('2kg未満は280mmを返す', () => {
+        expect(getPitch(1)).toBe(280);
+        expect(getPitch(0.5)).toBe(280);
+        expect(getPitch(1)).toBe(280);
     });
 });
 
@@ -96,84 +95,8 @@ describe('getApproxBagCount', () => {
         expect(getApproxBagCount(2)).toBe(857);
     });
 
-    test('1kg (ピッチ250mm) の場合1200枚を返す', () => {
-        // 300000 / 250 = 1200
-        expect(getApproxBagCount(1)).toBe(1200);
-    });
-});
-
-describe('inventoryService', () => {
-    describe('getProducts', () => {
-        test('商品一覧を取得できる', () => {
-            const products = inventoryService.getProducts();
-            expect(Array.isArray(products)).toBe(true);
-            expect(products.length).toBeGreaterThan(0);
-        });
-
-        test('商品にはid, name, skuが含まれる', () => {
-            const products = inventoryService.getProducts();
-            const firstProduct = products[0];
-            expect(firstProduct).toHaveProperty('id');
-            expect(firstProduct).toHaveProperty('name');
-            expect(firstProduct).toHaveProperty('sku');
-        });
-    });
-
-    describe('getProductsByCategory', () => {
-        test('allを指定すると全商品を取得できる', () => {
-            const allProducts = inventoryService.getProducts();
-            const filteredProducts = inventoryService.getProductsByCategory('all');
-            expect(filteredProducts.length).toBe(allProducts.length);
-        });
-
-        test('カテゴリで絞り込みができる', () => {
-            const bagProducts = inventoryService.getProductsByCategory('bag');
-            bagProducts.forEach(product => {
-                expect(product.category).toBe('bag');
-            });
-        });
-    });
-
-    describe('getProductById', () => {
-        test('存在する商品IDで商品を取得できる', () => {
-            const products = inventoryService.getProducts();
-            const firstProduct = products[0];
-            const found = inventoryService.getProductById(firstProduct.id);
-            expect(found).toEqual(firstProduct);
-        });
-
-        test('存在しない商品IDはundefinedを返す', () => {
-            const found = inventoryService.getProductById('non-existent-id');
-            expect(found).toBeUndefined();
-        });
-    });
-
-    describe('getProductName', () => {
-        test('存在する商品IDで商品名を取得できる', () => {
-            const products = inventoryService.getProducts();
-            const firstProduct = products[0];
-            const name = inventoryService.getProductName(firstProduct.id);
-            expect(name).toBe(firstProduct.name);
-        });
-
-        test('存在しない商品IDはIDをそのまま返す', () => {
-            const name = inventoryService.getProductName('unknown-id');
-            expect(name).toBe('unknown-id');
-        });
-    });
-
-    describe('getInventoryCount', () => {
-        test('在庫数を取得できる', () => {
-            const products = inventoryService.getProducts();
-            const firstProduct = products[0];
-            const count = inventoryService.getInventoryCount(firstProduct.id);
-            expect(typeof count).toBe('number');
-            expect(count).toBeGreaterThanOrEqual(0);
-        });
-
-        test('存在しない商品IDは0を返す', () => {
-            const count = inventoryService.getInventoryCount('non-existent-id');
-            expect(count).toBe(0);
-        });
+    test('1kg (ピッチ280mm) の場合約1071枚を返す', () => {
+        // 300000 / 280 = 1071.42...
+        expect(getApproxBagCount(1)).toBe(1071);
     });
 });

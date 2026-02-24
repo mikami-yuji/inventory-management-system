@@ -11,27 +11,45 @@ import { useDeliveryAddresses } from "@/hooks/use-delivery-addresses";
 import { Loader2 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
+import { DeliveryAddress } from "@/types";
+
 type DeliveryAddressDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess: () => void;
+    initialData?: DeliveryAddress;
 };
 
 export function DeliveryAddressDialog({
     open,
     onOpenChange,
-    onSuccess
+    onSuccess,
+    initialData
 }: DeliveryAddressDialogProps) {
-    const { addAddress } = useDeliveryAddresses();
+    const { addAddress, updateAddress } = useDeliveryAddresses();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
-        name: "",
-        postalCode: "",
-        address: "",
-        phone: "",
-        isDefault: false,
-        preferredShape: "" as "RA" | "RZ" | "単袋" | ""
+        name: initialData?.name || "",
+        postalCode: initialData?.postalCode || "",
+        address: initialData?.address || "",
+        phone: initialData?.phone || "",
+        isDefault: initialData?.isDefault || false,
+        preferredShape: initialData?.preferredShape || "" as "RA" | "RZ" | "単袋" | ""
     });
+
+    // フォームをリセットまたは初期化
+    React.useEffect(() => {
+        if (open) {
+            setFormData({
+                name: initialData?.name || "",
+                postalCode: initialData?.postalCode || "",
+                address: initialData?.address || "",
+                phone: initialData?.phone || "",
+                isDefault: initialData?.isDefault || false,
+                preferredShape: initialData?.preferredShape || ""
+            });
+        }
+    }, [open, initialData]);
 
     const handleChange = (field: string, value: string | boolean) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -42,32 +60,46 @@ export function DeliveryAddressDialog({
         setLoading(true);
 
         try {
-            const success = await addAddress({
-                name: formData.name,
-                postalCode: formData.postalCode,
-                address: formData.address,
-                phone: formData.phone,
-                isDefault: formData.isDefault,
-                preferredShape: formData.preferredShape || undefined
-            });
+            let success = false;
+
+            if (initialData?.id) {
+                // 更新
+                success = await updateAddress({
+                    ...initialData,
+                    ...formData,
+                    preferredShape: formData.preferredShape || undefined
+                });
+            } else {
+                // 新規作成
+                success = await addAddress({
+                    name: formData.name,
+                    postalCode: formData.postalCode,
+                    address: formData.address,
+                    phone: formData.phone,
+                    isDefault: formData.isDefault,
+                    preferredShape: formData.preferredShape || undefined
+                });
+            }
 
             if (success) {
-                setFormData({
-                    name: "",
-                    postalCode: "",
-                    address: "",
-                    phone: "",
-                    isDefault: false,
-                    preferredShape: ""
-                });
+                if (!initialData) {
+                    setFormData({
+                        name: "",
+                        postalCode: "",
+                        address: "",
+                        phone: "",
+                        isDefault: false,
+                        preferredShape: ""
+                    });
+                }
                 onSuccess();
                 onOpenChange(false);
             } else {
-                alert("登録に失敗しました");
+                alert(initialData ? "更新に失敗しました" : "登録に失敗しました");
             }
         } catch (error) {
             console.error(error);
-            alert("登録に失敗しました");
+            alert("エラーが発生しました");
         } finally {
             setLoading(false);
         }
@@ -77,7 +109,7 @@ export function DeliveryAddressDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>納品先住所の追加</DialogTitle>
+                    <DialogTitle>{initialData ? "納品先の編集" : "納品先住所の追加"}</DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -168,7 +200,7 @@ export function DeliveryAddressDialog({
                         </Button>
                         <Button type="submit" disabled={loading}>
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            登録する
+                            {initialData ? "更新する" : "登録する"}
                         </Button>
                     </DialogFooter>
                 </form>

@@ -320,7 +320,7 @@ function ProductCard({
                             </div>
                             {hasAllocation && (
                                 <div className="text-[10px] text-blue-600">
-                                    引当: {isRoll ? allocation.meters.toFixed(0) + 'm' : allocation.bags.toLocaleString() + '枚'}
+                                    引当: {allocation.bags.toLocaleString()}枚
                                 </div>
                             )}
 

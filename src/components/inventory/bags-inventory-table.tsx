@@ -197,7 +197,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 <div className="text-blue-600">
                                                     <div className="font-medium underline decoration-dotted underline-offset-4">
                                                         {allocation.bags.toLocaleString()}
-                                                        <span className="text-xs ml-0.5">{isRoll ? 'm' : '枚'}</span>
+                                                        <span className="text-xs ml-0.5">枚</span>
                                                     </div>
                                                     <div className="flex flex-col gap-0.5 mt-0.5">
                                                         {saleEvents
