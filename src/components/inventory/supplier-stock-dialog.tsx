@@ -13,7 +13,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { useWIPActions } from "@/hooks/use-work-in-progress";
+import { Package, ArrowRight, Loader2 } from "lucide-react";
 
 interface SupplierStockDialogProps {
     product: Product | null;
@@ -31,13 +33,15 @@ export function SupplierStockDialog({
     onSuccess,
 }: SupplierStockDialogProps) {
     const [stock, setStock] = useState(currentStock);
-    const { updateSupplierStock, loading } = useWIPActions();
+    const [moveQuantity, setMoveQuantity] = useState<number>(0);
+    const { updateSupplierStock, moveSupplierStockToInventory, loading } = useWIPActions();
 
     // ダイアログが開くたび、または商品が変わるたびに初期値をセット
     useEffect(() => {
         if (open) {
             // eslint-disable-next-line
             setStock(currentStock);
+            setMoveQuantity(0);
         }
     }, [open, currentStock]);
 
@@ -51,38 +55,97 @@ export function SupplierStockDialog({
         }
     };
 
+    const handleMove = async () => {
+        if (!product || moveQuantity <= 0) return;
+
+        const success = await moveSupplierStockToInventory(product.id, moveQuantity);
+        if (success) {
+            onSuccess();
+            onOpenChange(false);
+        }
+    };
+
     if (!product) return null;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>メーカー在庫の更新</DialogTitle>
+                    <DialogTitle>メーカー在庫管理</DialogTitle>
                     <DialogDescription>
-                        {product.name} のメーカー在庫数を入力してください。
+                        {product.name} の在庫管理を行います。
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="stock" className="text-right">
-                            在庫数
-                        </Label>
-                        <Input
-                            id="stock"
-                            type="number"
-                            value={stock}
-                            onChange={(e) => setStock(Number(e.target.value))}
-                            className="col-span-3"
-                            min={0}
-                        />
+
+                <div className="grid gap-6 py-4">
+                    {/* 在庫数更新セクション */}
+                    <div className="space-y-4">
+                        <h4 className="text-sm font-medium leading-none">在庫数の直接更新</h4>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="stock" className="text-right">
+                                在庫数
+                            </Label>
+                            <Input
+                                id="stock"
+                                type="number"
+                                value={stock}
+                                onChange={(e) => setStock(Number(e.target.value))}
+                                className="col-span-3"
+                                min={0}
+                            />
+                        </div>
+                        <div className="flex justify-end">
+                            <Button onClick={handleSave} disabled={loading} size="sm">
+                                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                在庫数を保存
+                            </Button>
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* 在庫移動セクション */}
+                    <div className="space-y-4">
+                        <h4 className="text-sm font-medium leading-none text-orange-600">現在庫へ移動（出荷）</h4>
+                        <p className="text-xs text-muted-foreground">
+                            メーカー在庫から現在庫へ移動します。入庫履歴に自動的に記録されます。
+                        </p>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="moveQuantity" className="text-right">
+                                移動数量
+                            </Label>
+                            <div className="col-span-3 flex items-center gap-2">
+                                <Input
+                                    id="moveQuantity"
+                                    type="number"
+                                    value={moveQuantity || ""}
+                                    onChange={(e) => setMoveQuantity(Number(e.target.value))}
+                                    placeholder="移動する数量"
+                                    min={0}
+                                    max={currentStock}
+                                />
+                                <Button
+                                    variant="default"
+                                    onClick={handleMove}
+                                    disabled={loading || moveQuantity <= 0 || moveQuantity > currentStock}
+                                    className="whitespace-nowrap bg-orange-500 hover:bg-orange-600 text-white"
+                                >
+                                    <ArrowRight className="h-4 w-4 mr-1" />
+                                    移動実行
+                                </Button>
+                            </div>
+                        </div>
+                        {currentStock < moveQuantity && (
+                            <p className="text-[10px] text-red-500 text-right">
+                                メーカー在庫以上の数量は移動できません
+                            </p>
+                        )}
                     </div>
                 </div>
+
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-                        キャンセル
-                    </Button>
-                    <Button onClick={handleSave} disabled={loading}>
-                        {loading ? "更新中..." : "保存"}
+                        閉じる
                     </Button>
                 </DialogFooter>
             </DialogContent>

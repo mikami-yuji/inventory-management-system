@@ -68,6 +68,7 @@ export function useWIPActions(): {
     cancelWIP: (id: string) => Promise<boolean>;
     deleteWIP: (id: string) => Promise<boolean>;
     updateSupplierStock: (productId: string, stock: number) => Promise<boolean>;
+    moveSupplierStockToInventory: (productId: string, quantity: number, note?: string) => Promise<boolean>;
     loading: boolean;
 } {
     const [loading, setLoading] = useState(false);
@@ -148,7 +149,29 @@ export function useWIPActions(): {
             const response = await fetch('/api/supplier-stock', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId, supplierStock: stock })
+                body: JSON.stringify({ productId, supplierStock: stock, action: 'update' })
+            });
+            const result = await response.json();
+            return !result.error;
+        } catch {
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const moveSupplierStockToInventory = async (productId: string, quantity: number, note?: string): Promise<boolean> => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/supplier-stock', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productId,
+                    action: 'move_to_inventory',
+                    movementQuantity: quantity,
+                    note
+                })
             });
             const result = await response.json();
             return !result.error;
@@ -182,7 +205,7 @@ export function useWIPActions(): {
         }
     };
 
-    return { createWIP, completeWIP, confirmWIP, cancelWIP, deleteWIP, updateSupplierStock, loading };
+    return { createWIP, completeWIP, confirmWIP, cancelWIP, deleteWIP, updateSupplierStock, moveSupplierStockToInventory, loading };
 }
 
 /**
