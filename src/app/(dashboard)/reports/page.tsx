@@ -16,7 +16,8 @@ import {
     Calendar,
     DollarSign,
     Loader2,
-    FileText
+    FileText,
+    RefreshCw,
 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
@@ -53,7 +54,15 @@ export default function ReportsPage(): React.ReactElement {
     const { inventory, loading: inventoryLoading } = useInventory();
 
     // 発注データをAPIから取得
-    const [orders, setOrders] = useState<any[]>([]);
+    const [orders, setOrders] = useState<Array<{
+        id: string;
+        createdAt: string;
+        items?: Array<{
+            unitPrice: number;
+            printingCost: number;
+            quantity: number;
+        }>;
+    }>>([]);
     const [ordersLoading, setOrdersLoading] = useState(true);
 
     const fetchOrders = useCallback(async (): Promise<void> => {
@@ -94,7 +103,7 @@ export default function ReportsPage(): React.ReactElement {
 
                 // 金額計算
                 let orderTotal = 0;
-                order.items?.forEach((item: any) => {
+                order.items?.forEach((item) => {
                     orderTotal += (item.unitPrice + item.printingCost) * item.quantity;
                 });
                 orderAmounts[month] += orderTotal / 10000; // 万円単位
@@ -311,12 +320,20 @@ export default function ReportsPage(): React.ReactElement {
                                     <CardTitle>カテゴリ別商品数</CardTitle>
                                     <CardDescription>商品カテゴリの分布</CardDescription>
                                 </div>
-                                <Link href="/reports/stock-report">
-                                    <Button variant="outline" size="sm" className="gap-2">
-                                        <FileText className="h-4 w-4" />
-                                        在庫報告書の表示
-                                    </Button>
-                                </Link>
+                                <div className="flex gap-2">
+                                    <Link href="/reports/turnover-report">
+                                        <Button variant="outline" size="sm" className="gap-2">
+                                            <RefreshCw className="h-4 w-4" />
+                                            回転率レポート
+                                        </Button>
+                                    </Link>
+                                    <Link href="/reports/stock-report">
+                                        <Button variant="outline" size="sm" className="gap-2">
+                                            <FileText className="h-4 w-4" />
+                                            在庫報告書
+                                        </Button>
+                                    </Link>
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <div className="h-[300px] flex items-center justify-center">
