@@ -73,11 +73,11 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                 ) : (
                     <div className="h-[calc(100vh-280px)] overflow-y-auto border rounded-md">
                         <Table>
-                            <TableHeader className="sticky top-0 z-30 bg-background shadow-sm border-b">
+                            <TableHeader className="sticky top-0 z-30 bg-background shadow-[0_1px_3px_rgba(0,0,0,0.1)]">
                                 <TableRow>
-                                    <TableHead className="w-[60px]">画像</TableHead>
-                                    <TableHead>商品情報</TableHead>
-                                    <TableHead>スペック</TableHead>
+                                    <TableHead className="w-[60px] sticky left-0 z-40 bg-background">画像</TableHead>
+                                    <TableHead className="w-[180px] sticky left-[60px] z-40 bg-background">商品情報</TableHead>
+                                    <TableHead className="w-[120px] sticky left-[240px] z-40 bg-background shadow-[2px_0_5px_-1px_rgba(0,0,0,0.1)]">スペック</TableHead>
                                     <TableHead className="text-right">現在庫</TableHead>
                                     <TableHead className="text-right">特売引当</TableHead>
                                     <TableHead className="text-right">有効在庫</TableHead>
@@ -135,8 +135,11 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                     const isInCart = items.some(item => item.product.id === product.id);
 
                                     return (
-                                        <TableRow key={product.id} className={cn(isOutOfStock && "bg-red-50")}>
-                                            <TableCell>
+                                        <TableRow key={product.id} className={cn("group", isOutOfStock && "bg-red-50 bg-opacity-50")}>
+                                            <TableCell className={cn(
+                                                "sticky left-0 z-10 transition-colors",
+                                                isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
+                                            )}>
                                                 {product.imageUrl ? (
                                                     <img
                                                         src={product.imageUrl}
@@ -149,7 +152,10 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                     </div>
                                                 )}
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className={cn(
+                                                "sticky left-[60px] z-10 transition-colors",
+                                                isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
+                                            )}>
                                                 <div className="max-w-[180px]">
                                                     <div className="font-medium truncate" title={product.name}>{product.name}</div>
                                                     <div className="text-sm text-gray-500 truncate">受注№: {product.sku || '-'}</div>
@@ -157,7 +163,10 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                     <div className="text-xs text-gray-400 truncate">JAN: {product.janCode || '-'}</div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className={cn(
+                                                "sticky left-[240px] z-10 shadow-[2px_0_5px_-1px_rgba(0,0,0,0.1)] transition-colors",
+                                                isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
+                                            )}>
                                                 <div className="text-sm">
                                                     <span className="font-medium">{product.weight}kg</span> / {product.shape}
                                                     {isRoll && (
