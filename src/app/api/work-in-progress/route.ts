@@ -165,58 +165,76 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         const supabase = createServerClient()
         const body = await request.json()
 
-        const { id, action, data: updateData, confirmedDate, quantity, supplierStock } = body as {
+        const { id, action, data: updateData, confirmedDate, quantity, supplierStock, expectedDate } = body as {
             id: string
-            action: 'complete' | 'cancel' | 'update' | 'confirm'
+            action: 'to_incoming' | 'to_supplier' | 'cancel' | 'update' | 'confirm'
             data?: Record<string, unknown>
             confirmedDate?: string
             quantity?: number
             supplierStock?: number
+            expectedDate?: string
         }
 
-        if (action === 'complete') {
-            // 完了処理：在庫に反映
+        if (action === 'to_incoming') {
+            // 仕掛品を入荷予定へ移動
+            if (!expectedDate || !quantity) {
+                return NextResponse.json({ data: null, error: '入荷予定日と数量は必須です' }, { status: 400 })
+            }
             const { data: wipItem } = await supabase
                 .from('work_in_progress')
-                .select('product_id, quantity')
+                .select('product_id')
                 .eq('id', id)
                 .single<any>()
 
             if (wipItem) {
-                // 現在の在庫を取得
-                const { data: inventory } = await supabase
-                    .from('inventory')
-                    .select('quantity')
-                    .eq('product_id', wipItem.product_id)
-                    .single<any>()
-
-                const currentQty = inventory?.quantity || 0
-                const newQty = currentQty + wipItem.quantity
-
-                // 在庫を増やす
                 await supabase
-                    .from('inventory')
-                    .upsert({
+                    .from('incoming_stock')
+                    .insert({
                         product_id: wipItem.product_id,
-                        quantity: newQty,
-                        updated_at: new Date().toISOString()
-                    } as any, { onConflict: 'product_id' })
+                        expected_date: expectedDate,
+                        quantity: quantity,
+                        note: '仕掛品からの移動'
+                    } as any)
 
-                // 履歴を記録
-                await supabase.from('stock_history').insert({
-                    product_id: wipItem.product_id,
-                    type: 'incoming',
-                    quantity: wipItem.quantity,
-                    note: '仕掛中完了'
-                } as any)
-
-                // 仕掛中を完了に更新
+                // 完了として仕掛品を削除
                 await (supabase
                     .from('work_in_progress') as any)
+                    .delete()
+                    .eq('id', id)
+            }
+        } else if (action === 'to_supplier') {
+            // 仕掛品をメーカー在庫へ移動
+            if (!quantity) {
+                return NextResponse.json({ data: null, error: '数量は必須です' }, { status: 400 })
+            }
+            const { data: wipItem } = await supabase
+                .from('work_in_progress')
+                .select('product_id')
+                .eq('id', id)
+                .single<any>()
+
+            if (wipItem) {
+                const { data: product } = await supabase
+                    .from('products')
+                    .select('supplier_stock')
+                    .eq('id', wipItem.product_id)
+                    .single<any>()
+
+                const currentStock = product?.supplier_stock || 0
+
+                await supabase
+                    .from('products')
+                    // @ts-ignore
                     .update({
-                        status: 'completed',
-                        completed_at: new Date().toISOString().split('T')[0]
+                        supplier_stock: currentStock + quantity,
+                        updated_at: new Date().toISOString()
                     })
+                    .eq('id', wipItem.product_id)
+
+                // 完了として仕掛品を削除
+                await (supabase
+                    .from('work_in_progress') as any)
+                    .delete()
                     .eq('id', id)
             }
         } else if (action === 'confirm') {

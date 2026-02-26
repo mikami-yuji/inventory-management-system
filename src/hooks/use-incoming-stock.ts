@@ -13,6 +13,7 @@ export function useIncomingStock(productId?: string): {
     addIncomingStock: (incomingStock: Omit<IncomingStock, 'id'>) => Promise<boolean>;
     updateIncomingStock: (id: string, incomingStock: Partial<IncomingStock>) => Promise<boolean>;
     deleteIncomingStock: (id: string) => Promise<boolean>;
+    receiveIncomingStock: (id: string) => Promise<boolean>;
     refetch: () => void;
 } {
     const [incomingStocks, setIncomingStocks] = useState<IncomingStock[]>([]);
@@ -123,6 +124,31 @@ export function useIncomingStock(productId?: string): {
         }
     };
 
+    // 入荷処理（本在庫へ反映）
+    const receiveIncomingStock = async (id: string): Promise<boolean> => {
+        setLoading(true);
+        try {
+            const response = await fetch(`/api/incoming-stock`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, action: 'receive' }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '入荷処理に失敗しました');
+            }
+
+            await fetchIncomingStock();
+            return true;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : '入荷処理に失敗しました');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return {
         incomingStocks,
         loading,
@@ -130,6 +156,7 @@ export function useIncomingStock(productId?: string): {
         addIncomingStock,
         updateIncomingStock,
         deleteIncomingStock,
+        receiveIncomingStock,
         refetch: fetchIncomingStock
     };
 }

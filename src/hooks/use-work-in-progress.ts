@@ -63,12 +63,12 @@ export function useWorkInProgress(options?: { status?: string; productId?: strin
  */
 export function useWIPActions(): {
     createWIP: (input: WIPInput) => Promise<{ success: boolean; error?: string }>;
-    completeWIP: (id: string) => Promise<boolean>;
-    confirmWIP: (id: string, confirmedDate: string, quantity: number, supplierStock?: number) => Promise<boolean>;
+    transferToIncoming: (id: string, expectedDate: string, quantity: number) => Promise<boolean>;
+    transferToSupplier: (id: string, quantity: number) => Promise<boolean>;
     cancelWIP: (id: string) => Promise<boolean>;
     deleteWIP: (id: string) => Promise<boolean>;
     updateSupplierStock: (productId: string, stock: number) => Promise<boolean>;
-    moveSupplierStockToInventory: (productId: string, quantity: number, note?: string) => Promise<boolean>;
+    moveSupplierStockToIncoming: (productId: string, quantity: number, expectedDate: string, note?: string) => Promise<boolean>;
     loading: boolean;
 } {
     const [loading, setLoading] = useState(false);
@@ -94,13 +94,30 @@ export function useWIPActions(): {
         }
     };
 
-    const completeWIP = async (id: string): Promise<boolean> => {
+    const transferToIncoming = async (id: string, expectedDate: string, quantity: number): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/work-in-progress', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, action: 'complete' })
+                body: JSON.stringify({ id, action: 'to_incoming', expectedDate, quantity })
+            });
+            const result = await response.json();
+            return !result.error;
+        } catch {
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const transferToSupplier = async (id: string, quantity: number): Promise<boolean> => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/work-in-progress', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, action: 'to_supplier', quantity })
             });
             const result = await response.json();
             return !result.error;
@@ -160,7 +177,7 @@ export function useWIPActions(): {
         }
     };
 
-    const moveSupplierStockToInventory = async (productId: string, quantity: number, note?: string): Promise<boolean> => {
+    const moveSupplierStockToIncoming = async (productId: string, quantity: number, expectedDate: string, note?: string): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/supplier-stock', {
@@ -168,8 +185,9 @@ export function useWIPActions(): {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     productId,
-                    action: 'move_to_inventory',
+                    action: 'move_to_incoming',
                     movementQuantity: quantity,
+                    expectedDate,
                     note
                 })
             });
@@ -182,30 +200,7 @@ export function useWIPActions(): {
         }
     };
 
-    const confirmWIP = async (id: string, confirmedDate: string, quantity: number, supplierStock?: number): Promise<boolean> => {
-        setLoading(true);
-        try {
-            const response = await fetch('/api/work-in-progress', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id,
-                    action: 'confirm',
-                    confirmedDate,
-                    quantity,
-                    supplierStock
-                })
-            });
-            const result = await response.json();
-            return !result.error;
-        } catch {
-            return false;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return { createWIP, completeWIP, confirmWIP, cancelWIP, deleteWIP, updateSupplierStock, moveSupplierStockToInventory, loading };
+    return { createWIP, transferToIncoming, transferToSupplier, cancelWIP, deleteWIP, updateSupplierStock, moveSupplierStockToIncoming, loading };
 }
 
 /**

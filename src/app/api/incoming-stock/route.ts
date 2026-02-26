@@ -165,3 +165,69 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ error: 'サーバー内部エラーが発生しました' }, { status: 500 });
     }
 }
+
+// PATCH: 入荷予定を本在庫へ反映（またはアクション実行）
+export async function PATCH(request: NextRequest): Promise<NextResponse> {
+    try {
+        const body = await request.json();
+
+        if (body.action === 'receive' && body.id) {
+            // 1. 入荷予定の取得
+            const { data: incomingStock, error: fetchError } = await supabase
+                .from('incoming_stock')
+                .select('*')
+                .eq('id', body.id)
+                .single();
+
+            if (fetchError || !incomingStock) {
+                return NextResponse.json({ error: '入荷予定が見つかりません' }, { status: 404 });
+            }
+
+            // 2. 現在の在庫数を取得
+            const { data: inventory } = await supabase
+                .from('inventory')
+                .select('quantity')
+                .eq('product_id', incomingStock.product_id)
+                .maybeSingle();
+
+            // レコードがない場合は0とする
+            const currentQty = (inventory as { quantity: number } | null)?.quantity || 0;
+            const newQty = currentQty + incomingStock.quantity;
+
+            // 3. 在庫数を更新 (upsert)
+            const { error: upsertError } = await supabase
+                .from('inventory')
+                .upsert({
+                    product_id: incomingStock.product_id,
+                    quantity: newQty,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'product_id' });
+
+            if (upsertError) {
+                throw upsertError;
+            }
+
+            // 4. 履歴を記録
+            await supabase.from('stock_history').insert({
+                product_id: incomingStock.product_id,
+                type: 'incoming',
+                quantity: incomingStock.quantity,
+                note: '入荷予定から反映'
+            });
+
+            // 5. 入荷予定を削除
+            await supabase
+                .from('incoming_stock')
+                .delete()
+                .eq('id', body.id);
+
+            return NextResponse.json({ success: true, message: '在庫に反映しました' });
+        }
+
+        return NextResponse.json({ error: '不正なアクションです' }, { status: 400 });
+
+    } catch (err) {
+        console.error('入荷処理エラー:', err);
+        return NextResponse.json({ error: 'サーバー内部エラーが発生しました' }, { status: 500 });
+    }
+}

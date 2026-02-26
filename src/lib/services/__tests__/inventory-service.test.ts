@@ -15,16 +15,25 @@ describe('getPitch', () => {
         expect(getPitch(30)).toBe(570);
     });
 
-    test('5kg以上10kg未満は470mmを返す', () => {
-        expect(getPitch(5)).toBe(470);
-        expect(getPitch(7)).toBe(470);
-        expect(getPitch(9.9)).toBe(470);
+    test('8kg以上10kg未満は530mmを返す', () => {
+        expect(getPitch(8)).toBe(530);
+        expect(getPitch(9.9)).toBe(530);
     });
 
-    test('3kg以上5kg未満は400mmを返す', () => {
+    test('5kg以上8kg未満は470mmを返す', () => {
+        expect(getPitch(5)).toBe(470);
+        expect(getPitch(7)).toBe(470);
+        expect(getPitch(7.9)).toBe(470);
+    });
+
+    test('4kg以上5kg未満は450mmを返す', () => {
+        expect(getPitch(4)).toBe(450);
+        expect(getPitch(4.9)).toBe(450);
+    });
+
+    test('3kg以上4kg未満は400mmを返す', () => {
         expect(getPitch(3)).toBe(400);
-        expect(getPitch(4)).toBe(400);
-        expect(getPitch(4.9)).toBe(400);
+        expect(getPitch(3.9)).toBe(400);
     });
 
     test('2kg以上3kg未満は350mmを返す', () => {

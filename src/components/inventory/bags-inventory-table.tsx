@@ -23,6 +23,7 @@ import { SupplierStockDialog } from "@/components/inventory/supplier-stock-dialo
 import { WIPDialog } from "@/components/inventory/wip-dialog";
 import { StockAdjustmentDialog } from "@/components/inventory/stock-adjustment-dialog";
 import { StockAllocationDialog } from "@/components/inventory/stock-allocation-dialog";
+import { ProductStatusDialog } from "@/components/inventory/product-status-dialog";
 import type { SaleEvent } from "@/hooks/use-sale-events";
 
 // 枚数からメートルに変換
@@ -56,6 +57,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
     const [editWIP, setEditWIP] = useState<Product | null>(null);
     const [viewAllocation, setViewAllocation] = useState<Product | null>(null);
     const [adjustStock, setAdjustStock] = useState<Product | null>(null);
+    const [editStatusProduct, setEditStatusProduct] = useState<Product | null>(null);
     const { addToCart, items } = useCart();
 
     return (
@@ -331,30 +333,33 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                             )}
                                         </TableCell>
 
-                                        <TableCell className="text-center">
-                                            <div className="flex flex-col items-center gap-1">
+                                        <TableCell
+                                            className="text-center cursor-pointer hover:bg-muted/50 transition-colors group"
+                                            onClick={() => setEditStatusProduct(product)}
+                                        >
+                                            <div className="flex flex-col items-center gap-1 relative">
                                                 {isOutOfStock ? (
-                                                    <Badge variant="destructive">
+                                                    <Badge variant="destructive" className="group-hover:opacity-80 transition-opacity">
                                                         {product.statusOverride === 'out_of_stock' ? '欠品 (手動)' : '欠品'}
                                                     </Badge>
                                                 ) : isLowStock ? (
-                                                    <Badge variant="outline" className="border-amber-500 text-amber-600">
+                                                    <Badge variant="outline" className="border-amber-500 text-amber-600 group-hover:bg-amber-50 transition-colors">
                                                         {product.statusOverride === 'low_stock' ? '低在庫 (手動)' : '低在庫'}
                                                     </Badge>
                                                 ) : product.status === 'plate_removal_scheduled' ? (
-                                                    <Badge variant="outline" className="border-amber-400 text-amber-600 bg-amber-50">落版予定</Badge>
+                                                    <Badge variant="outline" className="border-amber-400 text-amber-600 bg-amber-50 group-hover:bg-amber-100 transition-colors">落版予定</Badge>
                                                 ) : product.status === 'plate_removed' ? (
-                                                    <Badge variant="outline" className="border-purple-400 text-purple-600 bg-purple-50">落版</Badge>
+                                                    <Badge variant="outline" className="border-purple-400 text-purple-600 bg-purple-50 group-hover:bg-purple-100 transition-colors">落版</Badge>
                                                 ) : product.status === 'direct_delivery' ? (
-                                                    <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50">直送先在庫</Badge>
+                                                    <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50 group-hover:bg-blue-100 transition-colors">直送先在庫</Badge>
                                                 ) : product.status === 'on_sale_break' ? (
-                                                    <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50">販売開始中断</Badge>
+                                                    <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50 group-hover:bg-yellow-100 transition-colors">販売開始中断</Badge>
                                                 ) : product.status === 'discontinued' ? (
-                                                    <Badge variant="outline" className="border-gray-400 text-gray-500 bg-gray-50">廃盤</Badge>
+                                                    <Badge variant="outline" className="border-gray-400 text-gray-500 bg-gray-50 group-hover:bg-gray-100 transition-colors">廃盤</Badge>
                                                 ) : hasAllocation ? (
-                                                    <Badge variant="outline" className="border-blue-500 text-blue-600">引当中</Badge>
+                                                    <Badge variant="outline" className="border-blue-500 text-blue-600 group-hover:bg-blue-50 transition-colors">引当中</Badge>
                                                 ) : (
-                                                    <Badge variant="outline" className="border-green-500 text-green-600">正常</Badge>
+                                                    <Badge variant="outline" className="border-green-500 text-green-600 group-hover:bg-green-50 transition-colors">正常</Badge>
                                                 )}
 
                                                 {product.discontinuedDate && product.status !== 'active' && (
@@ -420,6 +425,12 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                 isOpen={!!viewAllocation}
                 onClose={() => setViewAllocation(null)}
                 saleEvents={saleEvents}
+            />
+            <ProductStatusDialog
+                product={editStatusProduct}
+                open={!!editStatusProduct}
+                onOpenChange={(open) => !open && setEditStatusProduct(null)}
+                onSuccess={onRefetch}
             />
         </Card >
     );

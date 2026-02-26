@@ -34,7 +34,10 @@ export function SupplierStockDialog({
 }: SupplierStockDialogProps) {
     const [stock, setStock] = useState(currentStock);
     const [moveQuantity, setMoveQuantity] = useState<number>(0);
-    const { updateSupplierStock, moveSupplierStockToInventory, loading } = useWIPActions();
+    const [expectedDate, setExpectedDate] = useState<string>(
+        new Date().toISOString().split('T')[0]
+    );
+    const { updateSupplierStock, moveSupplierStockToIncoming, loading } = useWIPActions();
 
     // ダイアログが開くたび、または商品が変わるたびに初期値をセット
     useEffect(() => {
@@ -42,6 +45,7 @@ export function SupplierStockDialog({
             // eslint-disable-next-line
             setStock(currentStock);
             setMoveQuantity(0);
+            setExpectedDate(new Date().toISOString().split('T')[0]);
         }
     }, [open, currentStock]);
 
@@ -56,9 +60,9 @@ export function SupplierStockDialog({
     };
 
     const handleMove = async () => {
-        if (!product || moveQuantity <= 0) return;
+        if (!product || moveQuantity <= 0 || !expectedDate) return;
 
-        const success = await moveSupplierStockToInventory(product.id, moveQuantity);
+        const success = await moveSupplierStockToIncoming(product.id, moveQuantity, expectedDate);
         if (success) {
             onSuccess();
             onOpenChange(false);
@@ -106,28 +110,40 @@ export function SupplierStockDialog({
 
                     {/* 在庫移動セクション */}
                     <div className="space-y-4">
-                        <h4 className="text-sm font-medium leading-none text-orange-600">現在庫へ移動（出荷）</h4>
+                        <h4 className="text-sm font-medium leading-none text-orange-600">入荷予定へ移動（出荷指示）</h4>
                         <p className="text-xs text-muted-foreground">
-                            メーカー在庫から現在庫へ移動します。入庫履歴に自動的に記録されます。
+                            メーカー在庫から出荷され、入荷予定に追加されます。
                         </p>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="moveQuantity" className="text-right">
-                                移動数量
+                                出荷数量
+                            </Label>
+                            <Input
+                                id="moveQuantity"
+                                type="number"
+                                value={moveQuantity || ""}
+                                onChange={(e) => setMoveQuantity(Number(e.target.value))}
+                                placeholder="出荷する数量"
+                                className="col-span-3"
+                                min={0}
+                                max={currentStock}
+                            />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="expectedDate" className="text-right">
+                                入荷予定日
                             </Label>
                             <div className="col-span-3 flex items-center gap-2">
                                 <Input
-                                    id="moveQuantity"
-                                    type="number"
-                                    value={moveQuantity || ""}
-                                    onChange={(e) => setMoveQuantity(Number(e.target.value))}
-                                    placeholder="移動する数量"
-                                    min={0}
-                                    max={currentStock}
+                                    id="expectedDate"
+                                    type="date"
+                                    value={expectedDate}
+                                    onChange={(e) => setExpectedDate(e.target.value)}
                                 />
                                 <Button
                                     variant="default"
                                     onClick={handleMove}
-                                    disabled={loading || moveQuantity <= 0 || moveQuantity > currentStock}
+                                    disabled={loading || moveQuantity <= 0 || moveQuantity > currentStock || !expectedDate}
                                     className="whitespace-nowrap bg-orange-500 hover:bg-orange-600 text-white"
                                 >
                                     <ArrowRight className="h-4 w-4 mr-1" />

@@ -8,11 +8,12 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         const supabase = createServerClient()
         const body = await request.json()
 
-        const { productId, supplierStock, action, movementQuantity, note } = body as {
+        const { productId, supplierStock, action, movementQuantity, expectedDate, note } = body as {
             productId: string
             supplierStock?: number
-            action?: 'update' | 'move_to_inventory'
+            action?: 'update' | 'move_to_incoming'
             movementQuantity?: number
+            expectedDate?: string
             note?: string
         }
 
@@ -23,11 +24,11 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             )
         }
 
-        // 現在庫へ移動のアクション
-        if (action === 'move_to_inventory') {
-            if (!movementQuantity || movementQuantity <= 0) {
+        // 入荷予定へ移動のアクション
+        if (action === 'move_to_incoming') {
+            if (!movementQuantity || movementQuantity <= 0 || !expectedDate) {
                 return NextResponse.json(
-                    { data: null, error: '正の移動数量を指定してください' },
+                    { data: null, error: '正の移動数量と入荷予定日を指定してください' },
                     { status: 400 }
                 )
             }
@@ -63,36 +64,19 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 return NextResponse.json({ data: null, error: 'メーカー在庫の更新に失敗しました' }, { status: 500 })
             }
 
-            // 3. 現在庫を増やす (inventoryテーブルへのUPSERT)
-            // 現在の在庫を取得
-            const { data: currentInventory, error: inventoryFetchError } = await supabase
-                .from('inventory')
-                .select('quantity')
-                .eq('product_id', productId)
-                .maybeSingle()
-
-            const currentQuantity = (currentInventory as { quantity: number } | null)?.quantity || 0
-            const newQuantity = currentQuantity + movementQuantity
-
-            const { error: updateInventoryError } = await supabase
-                .from('inventory')
-                .upsert({
+            // 3. 入荷予定を作成する
+            const { error: incomingStockError } = await supabase
+                .from('incoming_stock')
+                .insert({
                     product_id: productId,
-                    quantity: newQuantity,
-                    updated_at: new Date().toISOString()
-                } as any, { onConflict: 'product_id' })
+                    expected_date: expectedDate,
+                    quantity: movementQuantity,
+                    note: note || 'メーカー在庫からの出荷指示'
+                } as any)
 
-            if (updateInventoryError) {
-                return NextResponse.json({ data: null, error: '現在庫の更新に失敗しました' }, { status: 500 })
+            if (incomingStockError) {
+                return NextResponse.json({ data: null, error: '入荷予定の作成に失敗しました' }, { status: 500 })
             }
-
-            // 4. 履歴を記録
-            await supabase.from('stock_history').insert({
-                product_id: productId,
-                type: 'incoming',
-                quantity: movementQuantity,
-                note: note || 'メーカー在庫からの移動'
-            } as any)
 
             return NextResponse.json({ data: { success: true }, error: null })
         }

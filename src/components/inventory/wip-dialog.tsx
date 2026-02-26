@@ -45,7 +45,7 @@ export function WIPDialog({
     });
 
     // アクション
-    const { createWIP, completeWIP, confirmWIP, deleteWIP, loading: actionLoading } = useWIPActions();
+    const { createWIP, transferToIncoming, transferToSupplier, deleteWIP, loading: actionLoading } = useWIPActions();
 
     // フォーム状態 (新規作成)
     const [quantity, setQuantity] = useState(0);
@@ -61,9 +61,9 @@ export function WIPDialog({
 
     // 確定処理用ステート
     const [confirmingId, setConfirmingId] = useState<string | null>(null);
-    const [confirmDate, setConfirmDate] = useState(format(new Date(), 'yyyy-MM-dd')); // 出荷日
-    const [confirmQuantity, setConfirmQuantity] = useState(0); // 出荷数
-    const [supplierStock, setSupplierStock] = useState(0); // メーカー在庫
+    const [transferAction, setTransferAction] = useState<'incoming' | 'supplier' | null>(null);
+    const [confirmDate, setConfirmDate] = useState(format(new Date(), 'yyyy-MM-dd')); // 入荷日
+    const [confirmQuantity, setConfirmQuantity] = useState(0); // 個数
 
     // ダイアログが開いたときに再取得
     useEffect(() => {
@@ -73,10 +73,8 @@ export function WIPDialog({
             setActiveTab("list");
             setQuantity(0);
             setNote("");
-            setSpecificDate("");
             setConfirmingId(null);
-            // メーカー在庫の初期値をセット
-            setSupplierStock(product.supplierStock || 0);
+            setTransferAction(null);
         }
     }, [open, product, refetch]);
 
@@ -122,22 +120,21 @@ export function WIPDialog({
         }
     };
 
-    const handleConfirmClick = (item: WorkInProgress) => {
-        setConfirmingId(item.id);
-        setConfirmQuantity(item.quantity); // 初期値は予定数
-        setConfirmDate(format(new Date(), 'yyyy-MM-dd'));
-        // メーカー在庫は現在の値（もしあれば）
-        setSupplierStock(product?.supplierStock || 0);
-    };
-
     const handleSubmitConfirm = async () => {
-        if (!confirmingId) return;
+        if (!confirmingId || !transferAction) return;
 
-        const success = await confirmWIP(confirmingId, confirmDate, confirmQuantity, supplierStock);
+        let success = false;
+        if (transferAction === 'incoming') {
+            success = await transferToIncoming(confirmingId, confirmDate, confirmQuantity);
+        } else if (transferAction === 'supplier') {
+            success = await transferToSupplier(confirmingId, confirmQuantity);
+        }
+
         if (success) {
             onSuccess();
             refetch();
             setConfirmingId(null);
+            setTransferAction(null);
         }
     };
 
@@ -180,17 +177,18 @@ export function WIPDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                {confirmingId ? (
+                {confirmingId && transferAction ? (
                     // 確定処理画面
                     <div className="space-y-4 py-2">
                         <div className="bg-blue-50 p-3 rounded-md border border-blue-200 text-sm mb-4">
-                            仕掛完了日を確定し、入荷予定日として登録します。<br />
-                            同時にメーカー在庫数も更新できます。
+                            {transferAction === 'incoming'
+                                ? '仕掛完了とし、入荷予定として登録します。'
+                                : '仕掛完了とし、メーカー在庫に追加します。'}
                         </div>
 
                         <div className="grid gap-4">
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">出荷確定数</Label>
+                                <Label className="text-right">数量</Label>
                                 <Input
                                     type="number"
                                     value={confirmQuantity}
@@ -198,31 +196,28 @@ export function WIPDialog({
                                     className="col-span-3"
                                 />
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">出荷日</Label>
-                                <Input
-                                    type="date"
-                                    value={confirmDate}
-                                    onChange={(e) => setConfirmDate(e.target.value)}
-                                    className="col-span-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">メーカー在庫</Label>
-                                <Input
-                                    type="number"
-                                    value={supplierStock}
-                                    onChange={(e) => setSupplierStock(Number(e.target.value))}
-                                    className="col-span-3"
-                                />
-                            </div>
+
+                            {transferAction === 'incoming' && (
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label className="text-right">入荷予定日</Label>
+                                    <Input
+                                        type="date"
+                                        value={confirmDate}
+                                        onChange={(e) => setConfirmDate(e.target.value)}
+                                        className="col-span-3"
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <DialogFooter className="mt-6">
-                            <Button variant="outline" onClick={() => setConfirmingId(null)}>キャンセル</Button>
-                            <Button onClick={handleSubmitConfirm} disabled={actionLoading}>
+                            <Button variant="outline" onClick={() => {
+                                setConfirmingId(null);
+                                setTransferAction(null);
+                            }}>キャンセル</Button>
+                            <Button onClick={handleSubmitConfirm} disabled={actionLoading || confirmQuantity <= 0}>
                                 {actionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                確定して入荷予定へ
+                                確定して移動
                             </Button>
                         </DialogFooter>
                     </div>
@@ -262,17 +257,35 @@ export function WIPDialog({
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     {item.confirmationStatus !== 'confirmed' && (
-                                                        <Button
-                                                            size="sm"
-                                                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                                                            onClick={() => handleConfirmClick(item)}
-                                                        >
-                                                            <PackageCheck className="h-4 w-4 mr-1" />
-                                                            仕掛確定
-                                                        </Button>
+                                                        <div className="flex gap-1">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="text-orange-600 hover:bg-orange-50 border-orange-200 text-xs px-2 h-8"
+                                                                onClick={() => {
+                                                                    setTransferAction('supplier');
+                                                                    setConfirmingId(item.id);
+                                                                    setConfirmQuantity(item.quantity);
+                                                                }}
+                                                            >
+                                                                メーカー在庫へ
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 h-8 flex items-center gap-1"
+                                                                onClick={() => {
+                                                                    setTransferAction('incoming');
+                                                                    setConfirmingId(item.id);
+                                                                    setConfirmDate(format(new Date(), 'yyyy-MM-dd'));
+                                                                    setConfirmQuantity(item.quantity);
+                                                                }}
+                                                            >
+                                                                <PackageCheck className="h-3 w-3" />
+                                                                入荷予定へ
+                                                            </Button>
+                                                        </div>
                                                     )}
 
-                                                    {/* 完了ボタンは確定済みの場合のみ表示するか、フローによるが一旦残す */}
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"

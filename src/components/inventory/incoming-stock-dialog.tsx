@@ -35,7 +35,7 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // 商品ごとの入荷予定データ
-    const { incomingStocks, loading: loadingStocks, addIncomingStock, deleteIncomingStock, refetch } = useIncomingStock(product?.id);
+    const { incomingStocks, loading: loadingStocks, addIncomingStock, deleteIncomingStock, receiveIncomingStock, refetch } = useIncomingStock(product?.id);
 
     // ダイアログが開いたときに初期化
     useEffect(() => {
@@ -217,14 +217,28 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
                                                 {stock.note && ` · ${stock.note}`}
                                             </div>
                                         </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleDelete(stock.id)}
-                                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        <div className="flex items-center gap-1">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={async () => {
+                                                    const success = await receiveIncomingStock(stock.id);
+                                                    if (success && onSuccess) onSuccess();
+                                                }}
+                                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 h-8 px-2"
+                                                title="在庫に反映します"
+                                            >
+                                                入荷完了
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleDelete(stock.id)}
+                                                className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
