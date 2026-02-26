@@ -71,329 +71,331 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                         該当する商品がありません
                     </div>
                 ) : (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[60px] sticky left-0 z-20 bg-background shadow-[2px_0_5px_rgba(0,0,0,0.05)]">画像</TableHead>
-                                <TableHead className="w-[180px] sticky left-[60px] z-20 bg-background shadow-[2px_0_5px_rgba(0,0,0,0.05)]">商品情報</TableHead>
-                                <TableHead className="w-[120px] sticky left-[240px] z-20 bg-background shadow-[2px_0_5px_rgba(0,0,0,0.05)]">スペック</TableHead>
-                                <TableHead className="text-right">現在庫</TableHead>
-                                <TableHead className="text-right">特売引当</TableHead>
-                                <TableHead className="text-right">有効在庫</TableHead>
-                                <TableHead className="text-right">入荷予定</TableHead>
-                                <TableHead className="text-right">メーカー在庫</TableHead>
-                                <TableHead className="text-right">仕掛中</TableHead>
-                                <TableHead className="text-center">状態</TableHead>
-                                <TableHead className="w-[100px]">操作</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {products.map((product) => {
-                                const inventoryItem = inventoryMap.get(product.id) || { quantity: 0 };
-                                const currentStock = inventoryItem.quantity;
-                                const updatedAt = inventoryItem.updatedAt;
+                    <div className="h-[calc(100vh-280px)] overflow-y-auto border rounded-md">
+                        <Table>
+                            <TableHeader className="sticky top-0 z-30 bg-background shadow-sm border-b">
+                                <TableRow>
+                                    <TableHead className="w-[60px]">画像</TableHead>
+                                    <TableHead>商品情報</TableHead>
+                                    <TableHead>スペック</TableHead>
+                                    <TableHead className="text-right">現在庫</TableHead>
+                                    <TableHead className="text-right">特売引当</TableHead>
+                                    <TableHead className="text-right">有効在庫</TableHead>
+                                    <TableHead className="text-right">入荷予定</TableHead>
+                                    <TableHead className="text-right">メーカー在庫</TableHead>
+                                    <TableHead className="text-right">仕掛中</TableHead>
+                                    <TableHead className="text-center">状態</TableHead>
+                                    <TableHead className="w-[100px]">操作</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {products.map((product) => {
+                                    const inventoryItem = inventoryMap.get(product.id) || { quantity: 0 };
+                                    const currentStock = inventoryItem.quantity;
+                                    const updatedAt = inventoryItem.updatedAt;
 
-                                const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
-                                const incoming = incomingMap.get(product.id);
-                                const wipList = wipMap.get(product.id) || [];
-                                const wipQuantity = wipList.reduce((sum, item) => sum + item.quantity, 0);
-                                const supplierStock = supplierStockMap.get(product.id) || 0;
+                                    const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
+                                    const incoming = incomingMap.get(product.id);
+                                    const wipList = wipMap.get(product.id) || [];
+                                    const wipQuantity = wipList.reduce((sum, item) => sum + item.quantity, 0);
+                                    const supplierStock = supplierStockMap.get(product.id) || 0;
 
-                                const isRoll = product.shape && isRollBag(product.shape);
+                                    const isRoll = product.shape && isRollBag(product.shape);
 
-                                let availableStock: number;
-                                let currentBags: number;
-                                let availableBags: number;
+                                    let availableStock: number;
+                                    let currentBags: number;
+                                    let availableBags: number;
 
-                                if (isRoll) {
-                                    availableStock = currentStock - allocation.meters; // マイナスも許容
-                                    currentBags = metersToBags(currentStock, product.weight || 5);
-                                    availableBags = metersToBags(availableStock, product.weight || 5);
-                                } else {
-                                    availableStock = currentStock - allocation.bags; // マイナスも許容
-                                    currentBags = currentStock;
-                                    availableBags = availableStock;
-                                }
+                                    if (isRoll) {
+                                        availableStock = currentStock - allocation.meters; // マイナスも許容
+                                        currentBags = metersToBags(currentStock, product.weight || 5);
+                                        availableBags = metersToBags(availableStock, product.weight || 5);
+                                    } else {
+                                        availableStock = currentStock - allocation.bags; // マイナスも許容
+                                        currentBags = currentStock;
+                                        availableBags = availableStock;
+                                    }
 
-                                // ステータス判定 (手動上書きを優先)
-                                let isOutOfStock = false;
-                                let isLowStock = false;
+                                    // ステータス判定 (手動上書きを優先)
+                                    let isOutOfStock = false;
+                                    let isLowStock = false;
 
-                                if (product.statusOverride === 'out_of_stock') {
-                                    isOutOfStock = true;
-                                } else if (product.statusOverride === 'low_stock') {
-                                    isLowStock = true;
-                                } else {
-                                    // 自動判定
-                                    isOutOfStock = availableStock <= 0;
-                                    const alertThreshold = product.minStockAlert || 100;
-                                    isLowStock = availableStock > 0 && availableStock <= alertThreshold;
-                                }
+                                    if (product.statusOverride === 'out_of_stock') {
+                                        isOutOfStock = true;
+                                    } else if (product.statusOverride === 'low_stock') {
+                                        isLowStock = true;
+                                    } else {
+                                        // 自動判定
+                                        isOutOfStock = availableStock <= 0;
+                                        const alertThreshold = product.minStockAlert || 100;
+                                        isLowStock = availableStock > 0 && availableStock <= alertThreshold;
+                                    }
 
-                                const hasAllocation = allocation.bags > 0;
-                                const isInCart = items.some(item => item.product.id === product.id);
+                                    const hasAllocation = allocation.bags > 0;
+                                    const isInCart = items.some(item => item.product.id === product.id);
 
-                                return (
-                                    <TableRow key={product.id} className={cn(isOutOfStock && "bg-red-50")}>
-                                        <TableCell className="sticky left-0 z-10 bg-background shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
-                                            {product.imageUrl ? (
-                                                <img
-                                                    src={product.imageUrl}
-                                                    alt={product.name}
-                                                    className="w-12 h-12 object-cover rounded border"
-                                                />
-                                            ) : (
-                                                <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
-                                                    <Package className="h-5 w-5 text-gray-400" />
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="sticky left-[60px] z-10 bg-background shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
-                                            <div className="max-w-[180px]">
-                                                <div className="font-medium truncate" title={product.name}>{product.name}</div>
-                                                <div className="text-sm text-gray-500 truncate">受注№: {product.sku || '-'}</div>
-                                                {product.productCode && <div className="text-sm text-gray-500 truncate">商品コード: {product.productCode}</div>}
-                                                <div className="text-xs text-gray-400 truncate">JAN: {product.janCode || '-'}</div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="sticky left-[240px] z-10 bg-background shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
-                                            <div className="text-sm">
-                                                <span className="font-medium">{product.weight}kg</span> / {product.shape}
-                                                {isRoll && (
-                                                    <div className="text-xs text-blue-600 mt-1">
-                                                        ピッチ: {getPitch(product.weight || 0)}mm
+                                    return (
+                                        <TableRow key={product.id} className={cn(isOutOfStock && "bg-red-50")}>
+                                            <TableCell>
+                                                {product.imageUrl ? (
+                                                    <img
+                                                        src={product.imageUrl}
+                                                        alt={product.name}
+                                                        className="w-12 h-12 object-cover rounded border"
+                                                    />
+                                                ) : (
+                                                    <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
+                                                        <Package className="h-5 w-5 text-gray-400" />
                                                     </div>
                                                 )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell
-                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative"
-                                            onClick={() => setAdjustStock(product)}
-                                        >
-                                            {isRoll ? (
-                                                <>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="max-w-[180px]">
+                                                    <div className="font-medium truncate" title={product.name}>{product.name}</div>
+                                                    <div className="text-sm text-gray-500 truncate">受注№: {product.sku || '-'}</div>
+                                                    {product.productCode && <div className="text-sm text-gray-500 truncate">商品コード: {product.productCode}</div>}
+                                                    <div className="text-xs text-gray-400 truncate">JAN: {product.janCode || '-'}</div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="text-sm">
+                                                    <span className="font-medium">{product.weight}kg</span> / {product.shape}
+                                                    {isRoll && (
+                                                        <div className="text-xs text-blue-600 mt-1">
+                                                            ピッチ: {getPitch(product.weight || 0)}mm
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell
+                                                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative"
+                                                onClick={() => setAdjustStock(product)}
+                                            >
+                                                {isRoll ? (
+                                                    <>
+                                                        <div className="font-bold text-lg flex items-center justify-end gap-1">
+                                                            {currentStock.toLocaleString()}m
+                                                            <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground float-right">約{currentBags.toLocaleString()}枚</div>
+                                                    </>
+                                                ) : (
                                                     <div className="font-bold text-lg flex items-center justify-end gap-1">
-                                                        {currentStock.toLocaleString()}m
+                                                        {currentStock.toLocaleString()}枚
                                                         <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
                                                     </div>
-                                                    <div className="text-xs text-muted-foreground float-right">約{currentBags.toLocaleString()}枚</div>
-                                                </>
-                                            ) : (
-                                                <div className="font-bold text-lg flex items-center justify-end gap-1">
-                                                    {currentStock.toLocaleString()}枚
-                                                    <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
-                                                </div>
-                                            )}
-                                            {updatedAt && (
-                                                <div className="text-[10px] text-gray-400 clear-both pt-1">
-                                                    {new Date(updatedAt).toLocaleDateString()}{" "}
-                                                    {new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell
-                                            className={cn("text-right", hasAllocation && "cursor-pointer hover:bg-blue-50 transition-colors")}
-                                            onClick={() => hasAllocation && setViewAllocation(product)}
-                                        >
-                                            {hasAllocation ? (
-                                                <div className="text-blue-600">
-                                                    <div className="font-medium underline decoration-dotted underline-offset-4">
-                                                        {allocation.bags.toLocaleString()}
-                                                        <span className="text-xs ml-0.5">枚</span>
+                                                )}
+                                                {updatedAt && (
+                                                    <div className="text-[10px] text-gray-400 clear-both pt-1">
+                                                        {new Date(updatedAt).toLocaleDateString()}{" "}
+                                                        {new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </div>
-                                                    <div className="flex flex-col gap-0.5 mt-0.5">
-                                                        {saleEvents
-                                                            .flatMap(event => {
-                                                                const item = event.items.find(i => i.productId === product.id);
-                                                                if (item && item.allocatedQuantity > 0 && (event.status === 'active' || event.status === 'upcoming')) {
-                                                                    return [{
-                                                                        date: event.dates[0],
-                                                                        client: event.clientName,
-                                                                        quantity: item.allocatedQuantity
-                                                                    }];
-                                                                }
-                                                                return [];
-                                                            })
-                                                            .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
-                                                            .map((alloc, i) => (
-                                                                <div key={i} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
-                                                                    {alloc.date ? (new Date(alloc.date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })) : '-'}:{" "}
-                                                                    {alloc.client}: {alloc.quantity.toLocaleString()}
-                                                                </div>
-                                                            ))
-                                                        }
+                                                )}
+                                            </TableCell>
+                                            <TableCell
+                                                className={cn("text-right", hasAllocation && "cursor-pointer hover:bg-blue-50 transition-colors")}
+                                                onClick={() => hasAllocation && setViewAllocation(product)}
+                                            >
+                                                {hasAllocation ? (
+                                                    <div className="text-blue-600">
+                                                        <div className="font-medium underline decoration-dotted underline-offset-4">
+                                                            {allocation.bags.toLocaleString()}
+                                                            <span className="text-xs ml-0.5">枚</span>
+                                                        </div>
+                                                        <div className="flex flex-col gap-0.5 mt-0.5">
+                                                            {saleEvents
+                                                                .flatMap(event => {
+                                                                    const item = event.items.find(i => i.productId === product.id);
+                                                                    if (item && item.allocatedQuantity > 0 && (event.status === 'active' || event.status === 'upcoming')) {
+                                                                        return [{
+                                                                            date: event.dates[0],
+                                                                            client: event.clientName,
+                                                                            quantity: item.allocatedQuantity
+                                                                        }];
+                                                                    }
+                                                                    return [];
+                                                                })
+                                                                .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+                                                                .map((alloc, i) => (
+                                                                    <div key={i} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
+                                                                        {alloc.date ? (new Date(alloc.date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })) : '-'}:{" "}
+                                                                        {alloc.client}: {alloc.quantity.toLocaleString()}
+                                                                    </div>
+                                                                ))
+                                                            }
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ) : (
-                                                <span className="text-muted-foreground">-</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {isRoll ? (
-                                                <>
+                                                ) : (
+                                                    <span className="text-muted-foreground">-</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {isRoll ? (
+                                                    <>
+                                                        <div className={cn(
+                                                            "font-bold text-lg",
+                                                            isOutOfStock && "text-red-600",
+                                                            isLowStock && "text-amber-600"
+                                                        )}>
+                                                            {availableStock.toLocaleString()}m
+                                                        </div>
+                                                        <div className={cn(
+                                                            "text-xs float-right",
+                                                            isOutOfStock && "text-red-500",
+                                                            isLowStock && "text-amber-500"
+                                                        )}>
+                                                            約{availableBags.toLocaleString()}枚
+                                                        </div>
+                                                    </>
+                                                ) : (
                                                     <div className={cn(
                                                         "font-bold text-lg",
                                                         isOutOfStock && "text-red-600",
                                                         isLowStock && "text-amber-600"
                                                     )}>
-                                                        {availableStock.toLocaleString()}m
+                                                        {availableStock.toLocaleString()}枚
                                                     </div>
-                                                    <div className={cn(
-                                                        "text-xs float-right",
-                                                        isOutOfStock && "text-red-500",
-                                                        isLowStock && "text-amber-500"
-                                                    )}>
-                                                        約{availableBags.toLocaleString()}枚
+                                                )}
+                                            </TableCell>
+                                            <TableCell
+                                                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
+                                                onClick={() => onIncomingStockClick(product)}
+                                            >
+                                                {incoming && incoming.total > 0 ? (
+                                                    <div className="text-emerald-600">
+                                                        <div className="font-medium underline decoration-dotted underline-offset-4">
+                                                            {incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                                        </div>
+                                                        <div className="flex flex-col gap-0.5 mt-0.5">
+                                                            {incoming.items.map((item, i) => (
+                                                                <div key={i} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
+                                                                    {new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {item.quantity.toLocaleString()}
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
-                                                </>
-                                            ) : (
-                                                <div className={cn(
-                                                    "font-bold text-lg",
-                                                    isOutOfStock && "text-red-600",
-                                                    isLowStock && "text-amber-600"
-                                                )}>
-                                                    {availableStock.toLocaleString()}枚
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell
-                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
-                                            onClick={() => onIncomingStockClick(product)}
-                                        >
-                                            {incoming && incoming.total > 0 ? (
-                                                <div className="text-emerald-600">
-                                                    <div className="font-medium underline decoration-dotted underline-offset-4">
-                                                        {incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}
-                                                    </div>
-                                                    <div className="flex flex-col gap-0.5 mt-0.5">
-                                                        {incoming.items.map((item, i) => (
-                                                            <div key={i} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
-                                                                {new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {item.quantity.toLocaleString()}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center justify-end">
-                                                    <span className="text-muted-foreground group-hover:hidden">-</span>
-                                                    <Plus className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell
-                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
-                                            onClick={() => setEditSupplierStock(product)}
-                                        >
-                                            {supplierStock > 0 ? (
-                                                <div className="text-orange-600">
-                                                    <div className="font-medium">{supplierStock.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
-                                                    <div className="text-xs">メーカー</div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center justify-end">
-                                                    <span className="text-muted-foreground group-hover:hidden">-</span>
-                                                    <Pencil className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
-                                                </div>
-                                            )}
-                                        </TableCell>
-
-                                        <TableCell
-                                            className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
-                                            onClick={() => setEditWIP(product)}
-                                        >
-                                            {wipList && wipList.length > 0 ? (
-                                                <div className="text-purple-600">
-                                                    <div className="font-medium text-base">
-                                                        {wipList.reduce((sum, item) => sum + item.quantity, 0).toLocaleString()}
-                                                        <span className="text-xs ml-0.5">{isRoll ? 'm' : '枚'}</span>
-                                                    </div>
-                                                    <div className="flex flex-col gap-0.5 mt-0.5">
-                                                        {wipList.map((item, i) => (
-                                                            <div key={item.id} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
-                                                                {item.expectedCompletion ?
-                                                                    (() => {
-                                                                        const d = new Date(item.expectedCompletion);
-                                                                        const month = d.getMonth() + 1;
-                                                                        if (item.termType === 'early') return `${month}月上旬: `;
-                                                                        if (item.termType === 'mid') return `${month}月中旬: `;
-                                                                        if (item.termType === 'late') return `${month}月下旬: `;
-                                                                        return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: `;
-                                                                    })()
-                                                                    : '未定: '}
-                                                                {item.quantity.toLocaleString()}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center justify-end">
-                                                    <span className="text-muted-foreground group-hover:hidden">-</span>
-                                                    <Plus className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
-                                                </div>
-                                            )}
-                                        </TableCell>
-
-                                        <TableCell
-                                            className="text-center cursor-pointer hover:bg-muted/50 transition-colors group"
-                                            onClick={() => setEditStatusProduct(product)}
-                                        >
-                                            <div className="flex flex-col items-center gap-1 relative">
-                                                {isOutOfStock ? (
-                                                    <Badge variant="destructive" className="group-hover:opacity-80 transition-opacity">
-                                                        {product.statusOverride === 'out_of_stock' ? '欠品 (手動)' : '欠品'}
-                                                    </Badge>
-                                                ) : isLowStock ? (
-                                                    <Badge variant="outline" className="border-amber-500 text-amber-600 group-hover:bg-amber-50 transition-colors">
-                                                        {product.statusOverride === 'low_stock' ? '低在庫 (手動)' : '低在庫'}
-                                                    </Badge>
-                                                ) : product.status === 'plate_removal_scheduled' ? (
-                                                    <Badge variant="outline" className="border-amber-400 text-amber-600 bg-amber-50 group-hover:bg-amber-100 transition-colors">落版予定</Badge>
-                                                ) : product.status === 'plate_removed' ? (
-                                                    <Badge variant="outline" className="border-purple-400 text-purple-600 bg-purple-50 group-hover:bg-purple-100 transition-colors">落版</Badge>
-                                                ) : product.status === 'direct_delivery' ? (
-                                                    <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50 group-hover:bg-blue-100 transition-colors">直送先在庫</Badge>
-                                                ) : product.status === 'on_sale_break' ? (
-                                                    <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50 group-hover:bg-yellow-100 transition-colors">販売開始中断</Badge>
-                                                ) : product.status === 'discontinued' ? (
-                                                    <Badge variant="outline" className="border-gray-400 text-gray-500 bg-gray-50 group-hover:bg-gray-100 transition-colors">廃盤</Badge>
-                                                ) : hasAllocation ? (
-                                                    <Badge variant="outline" className="border-blue-500 text-blue-600 group-hover:bg-blue-50 transition-colors">引当中</Badge>
                                                 ) : (
-                                                    <Badge variant="outline" className="border-green-500 text-green-600 group-hover:bg-green-50 transition-colors">正常</Badge>
-                                                )}
-
-                                                {product.discontinuedDate && product.status !== 'active' && (
-                                                    <div className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                                        {new Date(product.discontinuedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
-                                                        {(product.status === 'plate_removed' || product.status === 'plate_removal_scheduled') ? '落版' : '廃盤'}
+                                                    <div className="flex items-center justify-end">
+                                                        <span className="text-muted-foreground group-hover:hidden">-</span>
+                                                        <Plus className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
                                                     </div>
                                                 )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-1">
-                                                <Button
-                                                    size="sm"
-                                                    variant={isInCart ? "secondary" : "outline"}
-                                                    onClick={() => addToCart(product, 1)}
-                                                    disabled={isOutOfStock}
-                                                    className="gap-1"
-                                                >
-                                                    {isInCart ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-                                                </Button>
-                                                <Button size="sm" variant="ghost" onClick={() => onEdit(product)} title="編集">
-                                                    <Pencil className="h-3 w-3" />
-                                                </Button>
-                                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onDelete(product); }} title="削除" className="text-red-500 hover:text-red-600">
-                                                    <Trash2 className="h-3 w-3" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })}
-                        </TableBody>
-                    </Table>
+                                            </TableCell>
+                                            <TableCell
+                                                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
+                                                onClick={() => setEditSupplierStock(product)}
+                                            >
+                                                {supplierStock > 0 ? (
+                                                    <div className="text-orange-600">
+                                                        <div className="font-medium">{supplierStock.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
+                                                        <div className="text-xs">メーカー</div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-end">
+                                                        <span className="text-muted-foreground group-hover:hidden">-</span>
+                                                        <Pencil className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
+                                                    </div>
+                                                )}
+                                            </TableCell>
+
+                                            <TableCell
+                                                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
+                                                onClick={() => setEditWIP(product)}
+                                            >
+                                                {wipList && wipList.length > 0 ? (
+                                                    <div className="text-purple-600">
+                                                        <div className="font-medium text-base">
+                                                            {wipList.reduce((sum, item) => sum + item.quantity, 0).toLocaleString()}
+                                                            <span className="text-xs ml-0.5">{isRoll ? 'm' : '枚'}</span>
+                                                        </div>
+                                                        <div className="flex flex-col gap-0.5 mt-0.5">
+                                                            {wipList.map((item, i) => (
+                                                                <div key={item.id} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
+                                                                    {item.expectedCompletion ?
+                                                                        (() => {
+                                                                            const d = new Date(item.expectedCompletion);
+                                                                            const month = d.getMonth() + 1;
+                                                                            if (item.termType === 'early') return `${month}月上旬: `;
+                                                                            if (item.termType === 'mid') return `${month}月中旬: `;
+                                                                            if (item.termType === 'late') return `${month}月下旬: `;
+                                                                            return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: `;
+                                                                        })()
+                                                                        : '未定: '}
+                                                                    {item.quantity.toLocaleString()}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-end">
+                                                        <span className="text-muted-foreground group-hover:hidden">-</span>
+                                                        <Plus className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
+                                                    </div>
+                                                )}
+                                            </TableCell>
+
+                                            <TableCell
+                                                className="text-center cursor-pointer hover:bg-muted/50 transition-colors group"
+                                                onClick={() => setEditStatusProduct(product)}
+                                            >
+                                                <div className="flex flex-col items-center gap-1 relative">
+                                                    {isOutOfStock ? (
+                                                        <Badge variant="destructive" className="group-hover:opacity-80 transition-opacity">
+                                                            {product.statusOverride === 'out_of_stock' ? '欠品 (手動)' : '欠品'}
+                                                        </Badge>
+                                                    ) : isLowStock ? (
+                                                        <Badge variant="outline" className="border-amber-500 text-amber-600 group-hover:bg-amber-50 transition-colors">
+                                                            {product.statusOverride === 'low_stock' ? '低在庫 (手動)' : '低在庫'}
+                                                        </Badge>
+                                                    ) : product.status === 'plate_removal_scheduled' ? (
+                                                        <Badge variant="outline" className="border-amber-400 text-amber-600 bg-amber-50 group-hover:bg-amber-100 transition-colors">落版予定</Badge>
+                                                    ) : product.status === 'plate_removed' ? (
+                                                        <Badge variant="outline" className="border-purple-400 text-purple-600 bg-purple-50 group-hover:bg-purple-100 transition-colors">落版</Badge>
+                                                    ) : product.status === 'direct_delivery' ? (
+                                                        <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50 group-hover:bg-blue-100 transition-colors">直送先在庫</Badge>
+                                                    ) : product.status === 'on_sale_break' ? (
+                                                        <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50 group-hover:bg-yellow-100 transition-colors">販売開始中断</Badge>
+                                                    ) : product.status === 'discontinued' ? (
+                                                        <Badge variant="outline" className="border-gray-400 text-gray-500 bg-gray-50 group-hover:bg-gray-100 transition-colors">廃盤</Badge>
+                                                    ) : hasAllocation ? (
+                                                        <Badge variant="outline" className="border-blue-500 text-blue-600 group-hover:bg-blue-50 transition-colors">引当中</Badge>
+                                                    ) : (
+                                                        <Badge variant="outline" className="border-green-500 text-green-600 group-hover:bg-green-50 transition-colors">正常</Badge>
+                                                    )}
+
+                                                    {product.discontinuedDate && product.status !== 'active' && (
+                                                        <div className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                            {new Date(product.discontinuedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
+                                                            {(product.status === 'plate_removed' || product.status === 'plate_removal_scheduled') ? '落版' : '廃盤'}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-1">
+                                                    <Button
+                                                        size="sm"
+                                                        variant={isInCart ? "secondary" : "outline"}
+                                                        onClick={() => addToCart(product, 1)}
+                                                        disabled={isOutOfStock}
+                                                        className="gap-1"
+                                                    >
+                                                        {isInCart ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                                                    </Button>
+                                                    <Button size="sm" variant="ghost" onClick={() => onEdit(product)} title="編集">
+                                                        <Pencil className="h-3 w-3" />
+                                                    </Button>
+                                                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onDelete(product); }} title="削除" className="text-red-500 hover:text-red-600">
+                                                        <Trash2 className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                    </div>
                 )}
             </CardContent>
 
