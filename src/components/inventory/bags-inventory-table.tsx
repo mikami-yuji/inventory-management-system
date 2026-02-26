@@ -71,7 +71,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                         該当する商品がありません
                     </div>
                 ) : (
-                    <div className="h-[calc(100vh-280px)] overflow-y-auto border rounded-md">
+                    <div className="h-[calc(100vh-280px)] overflow-auto border rounded-md relative [&_div[data-slot=table-container]]:overflow-visible">
                         <Table className="text-xs">
                             <TableHeader className="sticky top-0 z-30 bg-background shadow-sm border-b">
                                 <TableRow>
