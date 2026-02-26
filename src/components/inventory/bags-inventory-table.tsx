@@ -74,9 +74,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[60px]">画像</TableHead>
-                                <TableHead>商品情報</TableHead>
-                                <TableHead>スペック</TableHead>
+                                <TableHead className="w-[60px] sticky left-0 z-20 bg-background shadow-[2px_0_5px_rgba(0,0,0,0.05)]">画像</TableHead>
+                                <TableHead className="w-[180px] sticky left-[60px] z-20 bg-background shadow-[2px_0_5px_rgba(0,0,0,0.05)]">商品情報</TableHead>
+                                <TableHead className="w-[120px] sticky left-[240px] z-20 bg-background shadow-[2px_0_5px_rgba(0,0,0,0.05)]">スペック</TableHead>
                                 <TableHead className="text-right">現在庫</TableHead>
                                 <TableHead className="text-right">特売引当</TableHead>
                                 <TableHead className="text-right">有効在庫</TableHead>
@@ -135,7 +135,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
 
                                 return (
                                     <TableRow key={product.id} className={cn(isOutOfStock && "bg-red-50")}>
-                                        <TableCell>
+                                        <TableCell className="sticky left-0 z-10 bg-background shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                                             {product.imageUrl ? (
                                                 <img
                                                     src={product.imageUrl}
@@ -148,7 +148,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 </div>
                                             )}
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="sticky left-[60px] z-10 bg-background shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                                             <div className="max-w-[180px]">
                                                 <div className="font-medium truncate" title={product.name}>{product.name}</div>
                                                 <div className="text-sm text-gray-500 truncate">受注№: {product.sku || '-'}</div>
@@ -156,7 +156,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 <div className="text-xs text-gray-400 truncate">JAN: {product.janCode || '-'}</div>
                                             </div>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="sticky left-[240px] z-10 bg-background shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                                             <div className="text-sm">
                                                 <span className="font-medium">{product.weight}kg</span> / {product.shape}
                                                 {isRoll && (
