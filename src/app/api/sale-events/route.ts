@@ -335,7 +335,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
 
         const { eventId, action, data: updateData } = body as {
             eventId: string
-            action: 'updateStatus' | 'updateActual' | 'allocateStock'
+            action: 'updateStatus' | 'updateActual' | 'allocateStock' | 'updateAllocation'
             data: any
         }
 
@@ -461,6 +461,70 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     .eq('event_id', eventId)
                     .eq('product_id', item.product_id)
             }
+        } else if (action === 'updateAllocation') {
+            // 引当数の直接修正（在庫と連動）
+            const { itemId, newAllocatedQuantity } = updateData as { itemId: string; newAllocatedQuantity: number }
+
+            // イベント情報を取得（履歴用）
+            const { data: event } = await supabase
+                .from('sale_events')
+                .select('client_name')
+                .eq('id', eventId)
+                .single<any>()
+
+            // 現在のアイテム情報を取得
+            const { data: currentItem } = await supabase
+                .from('sale_event_items')
+                .select('product_id, allocated_quantity')
+                .eq('id', itemId)
+                .single<any>()
+
+            if (!currentItem) {
+                return NextResponse.json({ data: null, error: '対象のアイテムが見つかりません' }, { status: 404 })
+            }
+
+            const oldAllocated = currentItem.allocated_quantity || 0
+
+            // 変更がない場合はスキップ
+            if (oldAllocated === newAllocatedQuantity) {
+                return NextResponse.json({ data: { success: true }, error: null })
+            }
+
+            // 差分を計算（正の数: 新たに引当を増やすので在庫が減る / 負の数: 引当を減らすので在庫が戻る）
+            const adjustment = newAllocatedQuantity - oldAllocated
+
+            // 在庫を更新
+            const { data: inventory } = await supabase
+                .from('inventory')
+                .select('quantity')
+                .eq('product_id', currentItem.product_id)
+                .single<any>()
+
+            const currentQty = inventory?.quantity || 0
+            const newQty = Math.max(0, currentQty - adjustment)
+
+            await supabase
+                .from('inventory')
+                .upsert({
+                    product_id: currentItem.product_id,
+                    quantity: newQty,
+                    updated_at: new Date().toISOString()
+                } as any, { onConflict: 'product_id' })
+
+            // 在庫履歴を記録
+            await supabase.from('stock_history').insert({
+                product_id: currentItem.product_id,
+                type: adjustment > 0 ? 'outgoing' : 'incoming',
+                quantity: Math.abs(adjustment),
+                note: `特売引当修正: ${event?.client_name || '不明'} (${oldAllocated} → ${newAllocatedQuantity})`
+            } as any)
+
+            // 引当数量を更新
+            await supabase
+                .from('sale_event_items')
+                // @ts-ignore
+                .update({ allocated_quantity: newAllocatedQuantity })
+                .eq('id', itemId)
         }
 
         return NextResponse.json({ data: { success: true }, error: null })

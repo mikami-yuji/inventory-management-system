@@ -128,6 +128,7 @@ export function useCreateSaleEvent(): {
 export function useUpdateSaleEvent(): {
     updateStatus: (eventId: string, status: string) => Promise<boolean>;
     updateActual: (eventId: string, items: Array<{ itemId: string; actualQuantity: number }>) => Promise<boolean>;
+    updateAllocation: (eventId: string, itemId: string, newAllocatedQuantity: number) => Promise<boolean>;
     allocateStock: (eventId: string) => Promise<boolean>;
     deleteEvent: (eventId: string) => Promise<boolean>;
     loading: boolean;
@@ -176,6 +177,27 @@ export function useUpdateSaleEvent(): {
         }
     };
 
+    const updateAllocation = async (eventId: string, itemId: string, newAllocatedQuantity: number): Promise<boolean> => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/sale-events', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    eventId,
+                    action: 'updateAllocation',
+                    data: { itemId, newAllocatedQuantity }
+                })
+            });
+            const result = await response.json();
+            return !result.error;
+        } catch {
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const allocateStock = async (eventId: string): Promise<boolean> => {
         setLoading(true);
         try {
@@ -212,5 +234,5 @@ export function useUpdateSaleEvent(): {
         }
     };
 
-    return { updateStatus, updateActual, allocateStock, deleteEvent, loading };
+    return { updateStatus, updateActual, updateAllocation, allocateStock, deleteEvent, loading };
 }

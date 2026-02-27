@@ -17,16 +17,23 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { Pencil, Check, X, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import type { SaleEvent } from "@/hooks/use-sale-events";
+import { useUpdateSaleEvent } from "@/hooks/use-sale-events";
 import type { Product } from "@/types";
+import { toast } from "react-hot-toast";
 
 type StockAllocationDialogProps = {
     isOpen: boolean;
     onClose: () => void;
     product: Product | null;
     saleEvents: SaleEvent[];
+    onUpdate?: () => void;
 };
 
 export function StockAllocationDialog({
@@ -34,7 +41,12 @@ export function StockAllocationDialog({
     onClose,
     product,
     saleEvents,
+    onUpdate,
 }: StockAllocationDialogProps): React.ReactElement {
+    const { updateAllocation, loading } = useUpdateSaleEvent();
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editQuantity, setEditQuantity] = useState<string>("");
+
     if (!product) return <></>;
 
     // この商品を引き当てているイベントを抽出
@@ -42,6 +54,8 @@ export function StockAllocationDialog({
         const item = event.items.find(i => i.productId === product.id);
         if (item && item.allocatedQuantity > 0) {
             return [{
+                eventId: event.id,
+                itemId: item.id,
                 eventName: event.clientName, // クライアント名をイベント名として使用
                 dates: event.dates,
                 quantity: item.allocatedQuantity,
@@ -57,8 +71,35 @@ export function StockAllocationDialog({
 
     const totalAllocated = allocations.reduce((sum, item) => sum + item.quantity, 0);
 
+    const handleSave = async (alloc: typeof allocations[0]) => {
+        const quantity = parseInt(editQuantity, 10);
+        if (isNaN(quantity) || quantity < 0) {
+            toast.error("有効な数値を入力してください");
+            return;
+        }
+
+        const success = await updateAllocation(alloc.eventId, alloc.itemId, quantity);
+        if (success) {
+            toast.success("引当数を更新しました");
+            setEditingId(null);
+            if (onUpdate) onUpdate();
+        } else {
+            toast.error("更新に失敗しました");
+        }
+    };
+
+    const handleEdit = (alloc: typeof allocations[0]) => {
+        setEditingId(alloc.itemId);
+        setEditQuantity(alloc.quantity.toString());
+    };
+
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Dialog open={isOpen} onOpenChange={(open) => {
+            if (!open) {
+                setEditingId(null);
+                onClose();
+            }
+        }}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
                     <DialogTitle>特売引当詳細</DialogTitle>
@@ -110,8 +151,34 @@ export function StockAllocationDialog({
                                                     "-"
                                                 )}
                                             </TableCell>
-                                            <TableCell className="text-right font-medium">
-                                                {alloc.quantity.toLocaleString()}
+                                            <TableCell className="text-right whitespace-nowrap">
+                                                {editingId === alloc.itemId ? (
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <Input
+                                                            type="number"
+                                                            value={editQuantity}
+                                                            onChange={(e) => setEditQuantity(e.target.value)}
+                                                            className="w-20 h-7 text-right text-sm"
+                                                            autoFocus
+                                                            min={0}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') handleSave(alloc);
+                                                                if (e.key === 'Escape') setEditingId(null);
+                                                            }}
+                                                        />
+                                                        <Button size="icon" variant="ghost" className="h-6 w-6 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => handleSave(alloc)} disabled={loading}>
+                                                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                                                        </Button>
+                                                        <Button size="icon" variant="ghost" className="h-6 w-6 text-gray-500 hover:bg-gray-100" onClick={() => setEditingId(null)} disabled={loading}>
+                                                            <X className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="font-medium flex items-center justify-end gap-2 group/edit cursor-pointer" onClick={() => handleEdit(alloc)}>
+                                                        {alloc.quantity.toLocaleString()}
+                                                        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity" />
+                                                    </div>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))}
