@@ -75,9 +75,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                         <Table>
                             <TableHeader className="sticky top-0 z-30 bg-background shadow-[0_1px_3px_rgba(0,0,0,0.1)]">
                                 <TableRow>
-                                    <TableHead className="w-[60px]">画像</TableHead>
-                                    <TableHead className="w-[180px]">商品情報</TableHead>
-                                    <TableHead className="w-[120px]">スペック</TableHead>
+                                    <TableHead className="w-[60px] sticky left-0 z-40 bg-background">画像</TableHead>
+                                    <TableHead className="w-[180px] sticky left-[60px] z-40 bg-background">商品情報</TableHead>
+                                    <TableHead className="w-[120px] sticky left-[240px] z-40 bg-background shadow-[2px_0_5px_-1px_rgba(0,0,0,0.1)]">スペック</TableHead>
                                     <TableHead className="text-right">現在庫</TableHead>
                                     <TableHead className="text-right">特売引当</TableHead>
                                     <TableHead className="text-right">有効在庫</TableHead>
@@ -137,7 +137,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                     return (
                                         <TableRow key={product.id} className={cn("group", isOutOfStock && "bg-red-50 bg-opacity-50")}>
                                             <TableCell className={cn(
-                                                "transition-colors",
+                                                "sticky left-0 z-10 transition-colors",
                                                 isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
                                             )}>
                                                 {product.imageUrl ? (
@@ -153,7 +153,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 )}
                                             </TableCell>
                                             <TableCell className={cn(
-                                                "transition-colors",
+                                                "sticky left-[60px] z-10 transition-colors",
                                                 isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
                                             )}>
                                                 <div className="max-w-[180px]">
@@ -164,7 +164,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 </div>
                                             </TableCell>
                                             <TableCell className={cn(
-                                                "transition-colors",
+                                                "sticky left-[240px] z-10 shadow-[2px_0_5px_-1px_rgba(0,0,0,0.1)] transition-colors",
                                                 isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
                                             )}>
                                                 <div className="text-sm">
