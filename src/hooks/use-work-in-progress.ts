@@ -69,6 +69,13 @@ export function useWIPActions(): {
     deleteWIP: (id: string) => Promise<boolean>;
     updateSupplierStock: (productId: string, stock: number) => Promise<boolean>;
     moveSupplierStockToIncoming: (productId: string, quantity: number, expectedDate: string, note?: string) => Promise<boolean>;
+
+    // 新規ロット管理メソッド
+    getSupplierStockLots: (productId: string) => Promise<import('@/types').SupplierStockLot[]>;
+    addSupplierStockLot: (productId: string, quantity: number, stockDate: string, note?: string) => Promise<boolean>;
+    updateSupplierStockLot: (lotId: string, quantity: number, stockDate: string, note?: string) => Promise<boolean>;
+    deleteSupplierStockLot: (lotId: string) => Promise<boolean>;
+
     loading: boolean;
 } {
     const [loading, setLoading] = useState(false);
@@ -200,7 +207,80 @@ export function useWIPActions(): {
         }
     };
 
-    return { createWIP, transferToIncoming, transferToSupplier, cancelWIP, deleteWIP, updateSupplierStock, moveSupplierStockToIncoming, loading };
+    // ---------- ロット管理メソッド ----------
+    const getSupplierStockLots = async (productId: string): Promise<import('@/types').SupplierStockLot[]> => {
+        try {
+            const response = await fetch(`/api/supplier-stock?productId=${productId}`);
+            const result = await response.json();
+            return !result.error && result.data ? result.data : [];
+        } catch {
+            return [];
+        }
+    };
+
+    const addSupplierStockLot = async (productId: string, quantity: number, stockDate: string, note?: string): Promise<boolean> => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/supplier-stock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId, quantity, stockDate, note })
+            });
+            const result = await response.json();
+            return !result.error;
+        } catch {
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const updateSupplierStockLot = async (lotId: string, quantity: number, stockDate: string, note?: string): Promise<boolean> => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/supplier-stock', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'update_lot', lotId, quantity, stockDate, note })
+            });
+            const result = await response.json();
+            return !result.error;
+        } catch {
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const deleteSupplierStockLot = async (lotId: string): Promise<boolean> => {
+        setLoading(true);
+        try {
+            const response = await fetch(`/api/supplier-stock?lotId=${lotId}`, {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+            return !result.error;
+        } catch {
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return {
+        createWIP,
+        transferToIncoming,
+        transferToSupplier,
+        cancelWIP,
+        deleteWIP,
+        updateSupplierStock,
+        moveSupplierStockToIncoming,
+        getSupplierStockLots,
+        addSupplierStockLot,
+        updateSupplierStockLot,
+        deleteSupplierStockLot,
+        loading
+    };
 }
 
 /**

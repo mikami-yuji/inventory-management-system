@@ -60,6 +60,16 @@ export type Supplier = {
   active: boolean;
 };
 
+// メーカー在庫ロット
+export type SupplierStockLot = {
+  id: string;
+  productId: string;
+  stockDate: string; // YYYY-MM-DD
+  quantity: number;
+  note?: string;
+  createdAt: string;
+};
+
 // 在庫情報
 export type Inventory = {
   productId: string;
