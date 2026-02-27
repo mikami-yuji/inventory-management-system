@@ -71,18 +71,21 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                         該当する商品がありません
                     </div>
                 ) : (
-                    <div className="h-[calc(100vh-280px)] overflow-auto border rounded-md relative [&_div[data-slot=table-container]]:overflow-visible">
-                        <Table className="text-xs">
-                            <TableHeader className="sticky top-0 z-30 bg-background shadow-sm border-b">
+                    <div className="h-[calc(100vh-280px)] overflow-y-auto border rounded-md">
+                        <Table>
+                            <TableHeader className="sticky top-0 z-30 bg-background shadow-[0_1px_3px_rgba(0,0,0,0.1)]">
                                 <TableRow>
-                                    <TableHead className="w-[40px] px-2 text-xs">画像</TableHead>
-                                    <TableHead className="px-2 text-xs min-w-[200px]">商品詳細</TableHead>
-                                    <TableHead className="text-right px-2 text-xs w-[110px]">当社在庫</TableHead>
-                                    <TableHead className="text-right px-2 text-xs w-[110px]">特売引当</TableHead>
-                                    <TableHead className="text-right px-2 text-xs w-[110px]">入荷予定</TableHead>
-                                    <TableHead className="text-right px-2 text-xs w-[110px]">外部在庫</TableHead>
-                                    <TableHead className="text-center px-2 text-xs w-[80px]">状態</TableHead>
-                                    <TableHead className="px-2 text-xs w-[80px]">操作</TableHead>
+                                    <TableHead className="w-[60px] sticky left-0 z-40 bg-background">画像</TableHead>
+                                    <TableHead className="w-[180px] sticky left-[60px] z-40 bg-background">商品情報</TableHead>
+                                    <TableHead className="w-[120px] sticky left-[240px] z-40 bg-background shadow-[2px_0_5px_-1px_rgba(0,0,0,0.1)]">スペック</TableHead>
+                                    <TableHead className="text-right">現在庫</TableHead>
+                                    <TableHead className="text-right">特売引当</TableHead>
+                                    <TableHead className="text-right">有効在庫</TableHead>
+                                    <TableHead className="text-right">入荷予定</TableHead>
+                                    <TableHead className="text-right">メーカー在庫</TableHead>
+                                    <TableHead className="text-right">仕掛中</TableHead>
+                                    <TableHead className="text-center">状態</TableHead>
+                                    <TableHead className="w-[100px]">操作</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -132,91 +135,83 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                     const isInCart = items.some(item => item.product.id === product.id);
 
                                     return (
-                                        <TableRow key={product.id} className={cn("group text-xs", isOutOfStock && "bg-red-50 bg-opacity-50")}>
+                                        <TableRow key={product.id} className={cn("group", isOutOfStock && "bg-red-50 bg-opacity-50")}>
                                             <TableCell className={cn(
-                                                "px-2 py-3 transition-colors align-top",
+                                                "sticky left-0 z-10 transition-colors",
                                                 isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
                                             )}>
                                                 {product.imageUrl ? (
                                                     <img
                                                         src={product.imageUrl}
                                                         alt={product.name}
-                                                        className="w-10 h-10 object-cover rounded border"
+                                                        className="w-12 h-12 object-cover rounded border"
                                                     />
                                                 ) : (
-                                                    <div className="w-10 h-10 bg-gray-100 rounded border flex items-center justify-center">
+                                                    <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
                                                         <Package className="h-5 w-5 text-gray-400" />
                                                     </div>
                                                 )}
                                             </TableCell>
                                             <TableCell className={cn(
-                                                "px-2 py-3 transition-colors align-top",
+                                                "sticky left-[60px] z-10 transition-colors",
                                                 isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
                                             )}>
-                                                <div className="max-w-[280px] whitespace-normal leading-tight">
-                                                    <div className="font-bold text-sm text-foreground mb-1" title={product.name}>{product.name}</div>
-                                                    <div className="text-xs text-muted-foreground mb-1">
-                                                        <span className="font-medium text-foreground">{product.weight}kg</span> / {product.shape}
-                                                        {isRoll && <span className="text-blue-600 ml-2">ピッチ: {getPitch(product.weight || 0)}mm</span>}
-                                                    </div>
-                                                    <div className="text-[11px] text-gray-500 flex flex-wrap gap-x-3 gap-y-0.5">
-                                                        <span>受注№: {product.sku || '-'}</span>
-                                                        {product.productCode && <span>商品CD: {product.productCode}</span>}
-                                                        <span>JAN: {product.janCode || '-'}</span>
-                                                    </div>
+                                                <div className="max-w-[180px]">
+                                                    <div className="font-medium truncate" title={product.name}>{product.name}</div>
+                                                    <div className="text-sm text-gray-500 truncate">受注№: {product.sku || '-'}</div>
+                                                    {product.productCode && <div className="text-sm text-gray-500 truncate">商品コード: {product.productCode}</div>}
+                                                    <div className="text-xs text-gray-400 truncate">JAN: {product.janCode || '-'}</div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-right px-2 py-3 align-top min-w-[100px]">
-                                                <div className="mb-2">
-                                                    <div className="text-[10px] text-muted-foreground flex justify-end items-center gap-1 mb-0.5">
-                                                        有効在庫
-                                                    </div>
-                                                    {isRoll ? (
-                                                        <>
-                                                            <div className={cn("font-bold text-base leading-none", isOutOfStock ? "text-red-600" : isLowStock ? "text-amber-600" : "text-foreground")}>
-                                                                {availableStock.toLocaleString()}m
-                                                            </div>
-                                                            <div className={cn("text-[10px] mt-0.5", isOutOfStock ? "text-red-500" : isLowStock ? "text-amber-500" : "text-muted-foreground")}>
-                                                                約{availableBags.toLocaleString()}枚
-                                                            </div>
-                                                        </>
-                                                    ) : (
-                                                        <div className={cn("font-bold text-base leading-none", isOutOfStock ? "text-red-600" : isLowStock ? "text-amber-600" : "text-foreground")}>
-                                                            {availableStock.toLocaleString()}枚
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <div
-                                                    className="group/cur cursor-pointer hover:bg-muted/50 p-1 -mr-1 rounded inline-block text-right transition-colors border-t border-dashed border-gray-200 mt-1 pt-1.5 w-full relative"
-                                                    onClick={(e) => { e.stopPropagation(); setAdjustStock(product); }}
-                                                >
-                                                    <div className="text-[10px] text-muted-foreground flex justify-end items-center mb-0.5">
-                                                        現在庫
-                                                        <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/cur:opacity-100 transition-opacity absolute right-1" />
-                                                    </div>
-                                                    <div className="font-medium text-sm">
-                                                        {currentStock.toLocaleString()}{isRoll ? 'm' : '枚'}
-                                                    </div>
-                                                    {updatedAt && (
-                                                        <div className="text-[9px] text-gray-400 mt-0.5">
-                                                            {new Date(updatedAt).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })} {new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            <TableCell className={cn(
+                                                "sticky left-[240px] z-10 shadow-[2px_0_5px_-1px_rgba(0,0,0,0.1)] transition-colors",
+                                                isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
+                                            )}>
+                                                <div className="text-sm">
+                                                    <span className="font-medium">{product.weight}kg</span> / {product.shape}
+                                                    {isRoll && (
+                                                        <div className="text-xs text-blue-600 mt-1">
+                                                            ピッチ: {getPitch(product.weight || 0)}mm
                                                         </div>
                                                     )}
                                                 </div>
                                             </TableCell>
-
                                             <TableCell
-                                                className={cn("text-right px-2 py-3 align-top", hasAllocation && "cursor-pointer hover:bg-blue-50 transition-colors")}
+                                                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative"
+                                                onClick={() => setAdjustStock(product)}
+                                            >
+                                                {isRoll ? (
+                                                    <>
+                                                        <div className="font-bold text-lg flex items-center justify-end gap-1">
+                                                            {currentStock.toLocaleString()}m
+                                                            <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground float-right">約{currentBags.toLocaleString()}枚</div>
+                                                    </>
+                                                ) : (
+                                                    <div className="font-bold text-lg flex items-center justify-end gap-1">
+                                                        {currentStock.toLocaleString()}枚
+                                                        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                                                    </div>
+                                                )}
+                                                {updatedAt && (
+                                                    <div className="text-[10px] text-gray-400 clear-both pt-1">
+                                                        {new Date(updatedAt).toLocaleDateString()}{" "}
+                                                        {new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                )}
+                                            </TableCell>
+                                            <TableCell
+                                                className={cn("text-right", hasAllocation && "cursor-pointer hover:bg-blue-50 transition-colors")}
                                                 onClick={() => hasAllocation && setViewAllocation(product)}
                                             >
                                                 {hasAllocation ? (
                                                     <div className="text-blue-600">
-                                                        <div className="font-medium text-sm underline decoration-dotted underline-offset-4">
+                                                        <div className="font-medium underline decoration-dotted underline-offset-4">
                                                             {allocation.bags.toLocaleString()}
-                                                            <span className="text-[10px] ml-0.5">枚</span>
+                                                            <span className="text-xs ml-0.5">枚</span>
                                                         </div>
-                                                        <div className="flex flex-col gap-0.5 mt-1">
+                                                        <div className="flex flex-col gap-0.5 mt-0.5">
                                                             {saleEvents
                                                                 .flatMap(event => {
                                                                     const item = event.items.find(i => i.productId === product.id);
@@ -243,17 +238,44 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                     <span className="text-muted-foreground">-</span>
                                                 )}
                                             </TableCell>
-
+                                            <TableCell className="text-right">
+                                                {isRoll ? (
+                                                    <>
+                                                        <div className={cn(
+                                                            "font-bold text-lg",
+                                                            isOutOfStock && "text-red-600",
+                                                            isLowStock && "text-amber-600"
+                                                        )}>
+                                                            {availableStock.toLocaleString()}m
+                                                        </div>
+                                                        <div className={cn(
+                                                            "text-xs float-right",
+                                                            isOutOfStock && "text-red-500",
+                                                            isLowStock && "text-amber-500"
+                                                        )}>
+                                                            約{availableBags.toLocaleString()}枚
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className={cn(
+                                                        "font-bold text-lg",
+                                                        isOutOfStock && "text-red-600",
+                                                        isLowStock && "text-amber-600"
+                                                    )}>
+                                                        {availableStock.toLocaleString()}枚
+                                                    </div>
+                                                )}
+                                            </TableCell>
                                             <TableCell
-                                                className="text-right px-2 py-3 align-top cursor-pointer hover:bg-muted/50 transition-colors group"
+                                                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
                                                 onClick={() => onIncomingStockClick(product)}
                                             >
                                                 {incoming && incoming.total > 0 ? (
-                                                    <div className="text-emerald-600 flex flex-col items-end">
-                                                        <div className="font-medium text-sm underline decoration-dotted underline-offset-4">
+                                                    <div className="text-emerald-600">
+                                                        <div className="font-medium underline decoration-dotted underline-offset-4">
                                                             {incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}
                                                         </div>
-                                                        <div className="flex flex-col gap-0.5 mt-1">
+                                                        <div className="flex flex-col gap-0.5 mt-0.5">
                                                             {incoming.items.map((item, i) => (
                                                                 <div key={i} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
                                                                     {new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {item.quantity.toLocaleString()}
@@ -268,68 +290,64 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                     </div>
                                                 )}
                                             </TableCell>
-
-                                            <TableCell className="text-right px-2 py-3 align-top min-w-[100px]">
-                                                <div
-                                                    className="group/sup cursor-pointer hover:bg-muted/50 p-1 -mr-1 rounded transition-colors w-full inline-block relative"
-                                                    onClick={() => setEditSupplierStock(product)}
-                                                >
-                                                    <div className="text-[10px] text-muted-foreground flex justify-end items-center mb-0.5">
-                                                        メーカー <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/sup:opacity-100 absolute right-1" />
+                                            <TableCell
+                                                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
+                                                onClick={() => setEditSupplierStock(product)}
+                                            >
+                                                {supplierStock > 0 ? (
+                                                    <div className="text-orange-600">
+                                                        <div className="font-medium">{supplierStock.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
+                                                        <div className="text-xs">メーカー</div>
                                                     </div>
-                                                    {supplierStock > 0 ? (
-                                                        <div className="text-orange-600 font-medium text-sm">
-                                                            {supplierStock.toLocaleString()}{isRoll ? 'm' : '枚'}
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-gray-300">-</div>
-                                                    )}
-                                                </div>
-
-                                                <div className="w-full h-px border-t border-dashed border-gray-200 my-1"></div>
-
-                                                <div
-                                                    className="group/wip cursor-pointer hover:bg-muted/50 p-1 -mr-1 rounded transition-colors w-full inline-block relative"
-                                                    onClick={() => setEditWIP(product)}
-                                                >
-                                                    <div className="text-[10px] text-muted-foreground flex justify-end items-center mb-0.5">
-                                                        仕掛中 <Plus className="h-2.5 w-2.5 opacity-0 group-hover/wip:opacity-100 absolute right-1" />
+                                                ) : (
+                                                    <div className="flex items-center justify-end">
+                                                        <span className="text-muted-foreground group-hover:hidden">-</span>
+                                                        <Pencil className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
                                                     </div>
-                                                    {wipList && wipList.length > 0 ? (
-                                                        <div className="text-purple-600">
-                                                            <div className="font-medium text-sm">
-                                                                {wipList.reduce((sum, item) => sum + item.quantity, 0).toLocaleString()}
-                                                                <span className="text-[10px] ml-0.5">{isRoll ? 'm' : '枚'}</span>
-                                                            </div>
-                                                            <div className="flex flex-col gap-0.5 mt-1">
-                                                                {wipList.map((item) => (
-                                                                    <div key={item.id} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
-                                                                        {item.expectedCompletion ?
-                                                                            (() => {
-                                                                                const d = new Date(item.expectedCompletion);
-                                                                                const month = d.getMonth() + 1;
-                                                                                if (item.termType === 'early') return `${month}月上旬: `;
-                                                                                if (item.termType === 'mid') return `${month}月中旬: `;
-                                                                                if (item.termType === 'late') return `${month}月下旬: `;
-                                                                                return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: `;
-                                                                            })()
-                                                                            : '未定: '}
-                                                                        {item.quantity.toLocaleString()}
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-gray-300">-</div>
-                                                    )}
-                                                </div>
+                                                )}
                                             </TableCell>
 
                                             <TableCell
-                                                className="text-center px-2 py-3 align-top cursor-pointer hover:bg-muted/50 transition-colors group"
+                                                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group"
+                                                onClick={() => setEditWIP(product)}
+                                            >
+                                                {wipList && wipList.length > 0 ? (
+                                                    <div className="text-purple-600">
+                                                        <div className="font-medium text-base">
+                                                            {wipList.reduce((sum, item) => sum + item.quantity, 0).toLocaleString()}
+                                                            <span className="text-xs ml-0.5">{isRoll ? 'm' : '枚'}</span>
+                                                        </div>
+                                                        <div className="flex flex-col gap-0.5 mt-0.5">
+                                                            {wipList.map((item, i) => (
+                                                                <div key={item.id} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
+                                                                    {item.expectedCompletion ?
+                                                                        (() => {
+                                                                            const d = new Date(item.expectedCompletion);
+                                                                            const month = d.getMonth() + 1;
+                                                                            if (item.termType === 'early') return `${month}月上旬: `;
+                                                                            if (item.termType === 'mid') return `${month}月中旬: `;
+                                                                            if (item.termType === 'late') return `${month}月下旬: `;
+                                                                            return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: `;
+                                                                        })()
+                                                                        : '未定: '}
+                                                                    {item.quantity.toLocaleString()}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-end">
+                                                        <span className="text-muted-foreground group-hover:hidden">-</span>
+                                                        <Plus className="h-3 w-3 text-muted-foreground hidden group-hover:block" />
+                                                    </div>
+                                                )}
+                                            </TableCell>
+
+                                            <TableCell
+                                                className="text-center cursor-pointer hover:bg-muted/50 transition-colors group"
                                                 onClick={() => setEditStatusProduct(product)}
                                             >
-                                                <div className="flex flex-col items-center gap-1">
+                                                <div className="flex flex-col items-center gap-1 relative">
                                                     {isOutOfStock ? (
                                                         <Badge variant="destructive" className="group-hover:opacity-80 transition-opacity">
                                                             {product.statusOverride === 'out_of_stock' ? '欠品 (手動)' : '欠品'}
@@ -362,13 +380,14 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="px-2 py-3 align-top">
+                                            <TableCell>
                                                 <div className="flex items-center gap-1">
                                                     <Button
                                                         size="sm"
                                                         variant={isInCart ? "secondary" : "outline"}
                                                         onClick={() => addToCart(product, 1)}
                                                         disabled={isOutOfStock}
+                                                        className="gap-1"
                                                     >
                                                         {isInCart ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
                                                     </Button>
