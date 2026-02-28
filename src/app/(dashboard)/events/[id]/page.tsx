@@ -364,14 +364,14 @@ export default function EventDetailPage(): React.ReactElement {
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-right font-medium">
-                                                {item.plannedQuantity.toLocaleString()} <span className="text-xs text-muted-foreground">{unit}</span>
+                                                {item.plannedQuantity.toLocaleString()} <span className="text-xs text-muted-foreground">枚</span>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <span className={cn(
                                                     "font-medium",
                                                     isAllocated ? "text-green-600" : "text-amber-600"
                                                 )}>
-                                                    {item.allocatedQuantity.toLocaleString()} <span className="text-xs">{unit}</span>
+                                                    {item.allocatedQuantity.toLocaleString()} <span className="text-xs">枚</span>
                                                 </span>
                                             </TableCell>
                                             <TableCell className="text-right">
