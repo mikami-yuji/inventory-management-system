@@ -22,6 +22,12 @@ export const isRollBag = (shape: string): boolean => {
     return shape.includes('RZ') || shape.includes('RA') || shape.includes('RＺ') || shape.includes('RＡ');
 };
 
+// デフォルトの在庫アラート閾値を取得
+// ロールは1500m、単袋・その他は3000枚
+export const getDefaultMinStockAlert = (shape?: string | null): number => {
+    return isRollBag(shape || "") ? 1500 : 3000;
+};
+
 // 1ロールあたりの長さ (mm) - 300m
 const ROLL_LENGTH_MM = 300 * 1000;
 

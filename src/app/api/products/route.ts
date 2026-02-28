@@ -105,7 +105,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             image_url: body.imageUrl || null,
             description: body.description || null,
             status: 'active',
-            min_stock_alert: body.minStockAlert || 100,
+            min_stock_alert: body.minStockAlert === null || body.minStockAlert === ''
+                ? null
+                : Number(body.minStockAlert),
             // 商品名構造化フィールド
             prefix: body.prefix || null,
             origin: body.origin || null,
@@ -171,7 +173,11 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         if (body.category !== undefined) updateData.category = body.category;
         if (body.imageUrl !== undefined) updateData.image_url = body.imageUrl;
         if (body.description !== undefined) updateData.description = body.description;
-        if (body.minStockAlert !== undefined) updateData.min_stock_alert = body.minStockAlert;
+        if (body.minStockAlert !== undefined) {
+            updateData.min_stock_alert = body.minStockAlert === null || body.minStockAlert === ''
+                ? null
+                : Number(body.minStockAlert);
+        }
         // 商品名構造化フィールド
         if (body.prefix !== undefined) updateData.prefix = body.prefix;
         if (body.origin !== undefined) updateData.origin = body.origin;

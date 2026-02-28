@@ -20,6 +20,7 @@ import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
 import { useSupplierStockLots } from "@/hooks/use-supplier-stock-lots";
 import { useState, useEffect, useCallback } from "react";
+import { getDefaultMinStockAlert, isRollBag } from "@/lib/services";
 
 // APIから取得する発注データの型
 type DashboardOrder = {
@@ -151,9 +152,44 @@ export default function DashboardPage(): React.ReactElement {
 
     const loading = productsLoading || inventoryLoading || ordersLoading || lotsLoading;
 
-    // 在庫統計を計算
-    const lowStockItems = inventory.filter(i => i.quantity < 50);
-    const outOfStockItems = inventory.filter(i => i.quantity === 0);
+    // 在庫アラート用に計算
+    const urgentItems = inventory.map(item => {
+        const product = products.find(p => p.id === (item.product?.id || item.productId));
+        if (!product || product.status === 'inactive' || product.status === 'discontinued') return null;
+
+        const currentStock = item.quantity;
+        const isRoll = isRollBag(product.shape || "");
+
+        let isOutOfStock = false;
+        let isLowStock = false;
+
+        if (product.statusOverride === 'out_of_stock') {
+            isOutOfStock = true;
+        } else if (product.statusOverride === 'low_stock') {
+            isLowStock = true;
+        } else {
+            isOutOfStock = currentStock <= 0;
+            const threshold = product.minStockAlert !== null && product.minStockAlert !== undefined
+                ? product.minStockAlert
+                : getDefaultMinStockAlert(product.shape);
+            isLowStock = currentStock > 0 && currentStock <= threshold;
+        }
+
+        if (isOutOfStock || isLowStock) {
+            return {
+                ...item,
+                product,
+                isOutOfStock,
+                isLowStock,
+                unit: isRoll ? 'm' : '枚',
+                currentStock
+            };
+        }
+        return null;
+    }).filter((i): i is NonNullable<typeof i> => i !== null);
+
+    const outOfStockItems = urgentItems.filter(i => i.isOutOfStock);
+    const lowStockItems = urgentItems.filter(i => i.isLowStock);
     const totalProducts = products.length;
 
     // 商品IDから単価を取得するマップを作成
@@ -203,26 +239,57 @@ export default function DashboardPage(): React.ReactElement {
             </div>
 
             {/* 在庫アラート */}
-            {(lowStockItems.length > 0 || outOfStockItems.length > 0) && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-4">
-                    <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
-                    <div className="flex-1">
-                        <h3 className="font-semibold text-amber-900">在庫アラート</h3>
-                        <p className="text-sm text-amber-700 mt-1">
-                            {outOfStockItems.length > 0 && (
-                                <span className="font-medium text-red-600">欠品: {outOfStockItems.length}件</span>
-                            )}
-                            {outOfStockItems.length > 0 && lowStockItems.length > 0 && ' / '}
-                            {lowStockItems.length > 0 && (
-                                <span>低在庫: {lowStockItems.length}件</span>
-                            )}
-                        </p>
+            {(urgentItems.length > 0) && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-red-600" />
+                            <h3 className="font-bold text-red-700 text-lg">至急発注が必要な商品</h3>
+                        </div>
+                        <Button variant="outline" size="sm" asChild className="shrink-0 bg-white">
+                            <Link href="/inventory">
+                                在庫管理へ <ArrowRight className="ml-1 h-4 w-4" />
+                            </Link>
+                        </Button>
                     </div>
-                    <Button variant="outline" size="sm" asChild>
-                        <Link href="/inventory">
-                            確認する <ArrowRight className="ml-1 h-4 w-4" />
-                        </Link>
-                    </Button>
+
+                    <div className="space-y-4">
+                        {outOfStockItems.length > 0 && (
+                            <div>
+                                <h4 className="font-semibold text-red-800 border-b border-red-200 pb-1 mb-2">【欠品】直ちに手配が必要</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                    {outOfStockItems.map(item => (
+                                        <div key={item.product.id} className="bg-white border border-red-200 rounded p-2 flex justify-between items-center shadow-sm">
+                                            <div className="truncate text-sm font-medium mr-2" title={item.product.name}>
+                                                {item.product.name}
+                                            </div>
+                                            <div className="text-red-600 font-bold text-sm whitespace-nowrap">
+                                                {item.currentStock.toLocaleString()}{item.unit}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {lowStockItems.length > 0 && (
+                            <div>
+                                <h4 className="font-semibold text-amber-800 border-b border-amber-200 pb-1 mb-2">【低在庫】発注を検討</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                    {lowStockItems.map(item => (
+                                        <div key={item.product.id} className="bg-white border border-amber-200 rounded p-2 flex justify-between items-center shadow-sm">
+                                            <div className="truncate text-sm font-medium mr-2" title={item.product.name}>
+                                                {item.product.name}
+                                            </div>
+                                            <div className="text-amber-600 font-bold text-sm whitespace-nowrap">
+                                                {item.currentStock.toLocaleString()}{item.unit}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 

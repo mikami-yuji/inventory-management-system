@@ -78,7 +78,7 @@ const initialFormData: ProductFormData = {
     printingCost: "",
     category: "bag",
     description: "",
-    minStockAlert: "100",
+    minStockAlert: "",
     imageUrl: "",
     prefix: "",
     origin: "",
@@ -121,7 +121,7 @@ export function ProductFormDialog({
                 printingCost: product.printingCost?.toString() || "",
                 category: product.category || "bag",
                 description: product.description || "",
-                minStockAlert: product.minStockAlert?.toString() || "100",
+                minStockAlert: product.minStockAlert !== null && product.minStockAlert !== undefined ? product.minStockAlert.toString() : "",
                 imageUrl: product.imageUrl || "",
                 prefix: product.prefix || "",
                 origin: product.origin || "",
@@ -169,7 +169,7 @@ export function ProductFormDialog({
                 printingCost: formData.printingCost ? Number(formData.printingCost) : 0,
                 category: formData.category,
                 description: formData.description || undefined,
-                minStockAlert: formData.minStockAlert ? Number(formData.minStockAlert) : 100,
+                minStockAlert: formData.minStockAlert ? Number(formData.minStockAlert) : null,
                 imageUrl: formData.imageUrl || undefined,
                 prefix: formData.prefix || undefined,
                 origin: formData.origin || undefined,
@@ -409,14 +409,17 @@ export function ProductFormDialog({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="minStockAlert">在庫アラート</Label>
+                            <Label htmlFor="minStockAlert">在庫アラート (個別設定)</Label>
                             <Input
                                 id="minStockAlert"
                                 type="number"
                                 value={formData.minStockAlert}
                                 onChange={(e) => handleChange("minStockAlert", e.target.value)}
-                                placeholder="100"
+                                placeholder="空欄でデフォルト適用"
                             />
+                            <p className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                空欄時のデフォルト: ロール 1500m / 単袋 3000枚
+                            </p>
                         </div>
                     </div>
 

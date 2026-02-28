@@ -19,6 +19,7 @@ import {
 import {
     getPitch,
     isRollBag,
+    getDefaultMinStockAlert,
 } from "@/lib/services";
 import { useCart } from "@/contexts/cart-context";
 import type { Product, WorkInProgress, IncomingStock } from "@/types";
@@ -135,7 +136,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 } else {
                                     // 自動判定
                                     isOutOfStock = availableStock <= 0;
-                                    const alertThreshold = product.minStockAlert || 100;
+                                    const alertThreshold = product.minStockAlert !== null && product.minStockAlert !== undefined
+                                        ? product.minStockAlert
+                                        : getDefaultMinStockAlert(product.shape);
                                     isLowStock = availableStock > 0 && availableStock <= alertThreshold;
                                 }
 
