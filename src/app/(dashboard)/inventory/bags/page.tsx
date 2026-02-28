@@ -438,72 +438,74 @@ export default function BagsInventoryPage(): React.ReactElement {
 
             {/* 検索・フィルターエリア */}
             <Card>
-                <CardContent className="pt-6">
-                    <div className="flex flex-col gap-4 md:flex-row md:items-end">
+                <CardContent className="p-4 md:pt-6">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4">
                         <div className="flex-1">
-                            <label className="text-sm font-medium mb-2 block">商品検索</label>
+                            <label className="text-xs md:text-sm font-medium mb-1.5 md:mb-2 block text-muted-foreground">商品検索</label>
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="商品名、JANコード、商品IDで検索..."
+                                    placeholder="商品名、JAN、商品ID..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-10"
+                                    className="pl-10 h-9 md:h-10 text-sm"
                                 />
                             </div>
                         </div>
 
-                        <div className="w-full md:w-32">
-                            <label className="text-sm font-medium mb-2 block">重量</label>
-                            <Select value={weightFilter} onValueChange={setWeightFilter}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="すべて" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">すべて</SelectItem>
-                                    {availableWeights.map(w => (
-                                        <SelectItem key={w} value={w.toString()}>
-                                            {w}kg
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <div className="grid grid-cols-3 gap-2 md:flex md:gap-4 md:items-end">
+                            <div className="md:w-32">
+                                <label className="text-[10px] md:text-sm font-medium mb-1 md:mb-2 block text-muted-foreground">重量</label>
+                                <Select value={weightFilter} onValueChange={setWeightFilter}>
+                                    <SelectTrigger className="h-8 md:h-10 text-xs md:text-sm px-2">
+                                        <SelectValue placeholder="すべて" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">すべて</SelectItem>
+                                        {availableWeights.map(w => (
+                                            <SelectItem key={w} value={w.toString()}>
+                                                {w}kg
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                        <div className="w-full md:w-40">
-                            <label className="text-sm font-medium mb-2 block">形状</label>
-                            <Select value={shapeFilter} onValueChange={setShapeFilter}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="すべて" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">すべて</SelectItem>
-                                    {availableShapes.map(s => (
-                                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                            <div className="md:w-32">
+                                <label className="text-[10px] md:text-sm font-medium mb-1 md:mb-2 block text-muted-foreground">形状</label>
+                                <Select value={shapeFilter} onValueChange={setShapeFilter}>
+                                    <SelectTrigger className="h-8 md:h-10 text-xs md:text-sm px-2">
+                                        <SelectValue placeholder="すべて" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">すべて</SelectItem>
+                                        {availableShapes.map(s => (
+                                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                        <div className="w-full md:w-40">
-                            <label className="text-sm font-medium mb-2 block">在庫状態</label>
-                            <Select value={stockFilter} onValueChange={setStockFilter}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="すべて" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">すべて</SelectItem>
-                                    <SelectItem value="low">低在庫</SelectItem>
-                                    <SelectItem value="out">欠品</SelectItem>
-                                    <SelectItem value="reserved">特売引当あり</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <div className="md:w-40">
+                                <label className="text-[10px] md:text-sm font-medium mb-1 md:mb-2 block text-muted-foreground">状態</label>
+                                <Select value={stockFilter} onValueChange={setStockFilter}>
+                                    <SelectTrigger className="h-8 md:h-10 text-xs md:text-sm px-2">
+                                        <SelectValue placeholder="すべて" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">すべて</SelectItem>
+                                        <SelectItem value="low">低在庫</SelectItem>
+                                        <SelectItem value="out">欠品</SelectItem>
+                                        <SelectItem value="reserved">引当あり</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
                         {hasActiveFilters && (
-                            <Button variant="outline" onClick={clearFilters} className="gap-2">
+                            <Button variant="outline" onClick={clearFilters} className="gap-2 h-8 md:h-10 text-xs md:text-sm">
                                 <X className="h-4 w-4" />
-                                クリア
+                                <span className="hidden md:inline">クリア</span>
                             </Button>
                         )}
                     </div>
