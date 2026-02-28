@@ -514,6 +514,91 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 // @ts-ignore
                 .update({ allocated_quantity: newAllocatedQuantity })
                 .eq('id', itemId)
+        } else if (action === 'updateEvent') {
+            // イベント情報の全般的な更新
+            const { clientName, scheduleType, dates, description, items } = updateData as {
+                clientName: string;
+                scheduleType: 'single' | 'monthly';
+                dates: string[];
+                description: string | null;
+                items: Array<{ productId: string; plannedQuantity: number }>;
+            };
+
+            // 1. 基本情報の更新
+            const { error: updateError } = await supabase
+                .from('sale_events')
+                // @ts-ignore
+                .update({
+                    client_name: clientName,
+                    schedule_type: scheduleType,
+                    dates,
+                    description,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', eventId);
+
+            if (updateError) throw updateError;
+
+            // 2. アイテムの更新
+            // 既存のアイテムを取得
+            const { data: existingItems } = await supabase
+                .from('sale_event_items')
+                .select('id, product_id, allocated_quantity')
+                .eq('event_id', eventId)
+                .returns<any[]>();
+
+            const existingItemMap = new Map(existingItems?.map(i => [i.product_id, i]));
+
+            // 新しく追加・更新する商品
+            const newProductIds = new Set(items.map(i => i.productId));
+
+            // 削除された商品を特定し、引当を解除する
+            for (const existingItem of existingItems || []) {
+                if (!newProductIds.has(existingItem.product_id)) {
+                    // 引当がある場合は解除（在庫に戻す）
+                    if (existingItem.allocated_quantity > 0) {
+                        const { data: inventory } = await supabase
+                            .from('inventory')
+                            .select('quantity')
+                            .eq('product_id', existingItem.product_id)
+                            .single<any>();
+
+                        const currentQty = inventory?.quantity || 0;
+                        await supabase
+                            .from('inventory')
+                            .upsert({
+                                product_id: existingItem.product_id,
+                                quantity: currentQty + existingItem.allocated_quantity,
+                                updated_at: new Date().toISOString()
+                            } as any, { onConflict: 'product_id' });
+                    }
+                    // レコード削除
+                    await supabase.from('sale_event_items').delete().eq('id', existingItem.id);
+                }
+            }
+
+            // 追加・更新
+            for (const item of items) {
+                const existing = existingItemMap.get(item.productId);
+                if (existing) {
+                    // 更新
+                    await supabase
+                        .from('sale_event_items')
+                        // @ts-ignore
+                        .update({ planned_quantity: item.plannedQuantity })
+                        .eq('id', existing.id);
+                } else {
+                    // 新規追加
+                    await supabase
+                        .from('sale_event_items')
+                        .insert({
+                            event_id: eventId,
+                            product_id: item.productId,
+                            planned_quantity: item.plannedQuantity,
+                            allocated_quantity: 0
+                        } as any);
+                }
+            }
         }
 
         return NextResponse.json({ data: { success: true }, error: null })

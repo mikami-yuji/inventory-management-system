@@ -21,7 +21,8 @@ import {
     Save,
     CheckCircle,
     AlertTriangle,
-    Copy
+    Copy,
+    Pencil
 } from "lucide-react";
 import {
     bagsToMeters,
@@ -178,6 +179,12 @@ export default function EventDetailPage(): React.ReactElement {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <Button variant="outline" asChild className="gap-1">
+                        <Link href={`/events/${eventId}/edit`}>
+                            <Pencil className="h-4 w-4" />
+                            編集
+                        </Link>
+                    </Button>
                     <Button variant="outline" onClick={handleCopy} className="gap-1">
                         <Copy className="h-4 w-4" />
                         コピー
