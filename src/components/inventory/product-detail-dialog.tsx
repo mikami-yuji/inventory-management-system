@@ -2,17 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Product, WorkInProgress } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Pencil, Package, Clock, CalendarDays, Loader2, Mic, MicOff, TrendingDown, Info } from "lucide-react";
+import { Pencil, Package, Clock, CalendarDays, Loader2, Mic, MicOff, TrendingDown, Info, Barcode, Hash } from "lucide-react";
 import { useUpdateInventory } from "@/hooks/use-inventory";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 import { cn } from "@/lib/utils";
 import { isRollBag, getPitch } from "@/lib/services";
+import type { Product, WorkInProgress, SupplierStockLot } from "@/types";
 
 type ProductDetailDialogProps = {
     product: Product | null;
@@ -20,6 +19,7 @@ type ProductDetailDialogProps = {
     onOpenChange: (open: boolean) => void;
     currentStock: number;
     supplierStock: number;
+    supplierStockLots: SupplierStockLot[];
     wipItems: WorkInProgress[];
     saleAllocations?: { bags: number; meters: number };
     onEditProduct: (product: Product) => void;
@@ -32,13 +32,13 @@ export function ProductDetailDialog({
     onOpenChange,
     currentStock,
     supplierStock,
+    supplierStockLots,
     wipItems,
     saleAllocations,
     onEditProduct,
     onSuccess
 }: ProductDetailDialogProps): React.ReactElement {
     const [quantity, setQuantity] = useState<string>("");
-    const [note, setNote] = useState<string>("");
     const { updateStock, loading, error } = useUpdateInventory();
 
     const isRoll = product?.shape && isRollBag(product.shape);
@@ -57,7 +57,6 @@ export function ProductDetailDialog({
     useEffect(() => {
         if (open && product) {
             setQuantity(currentStock.toString());
-            setNote("");
         }
     }, [open, product, currentStock]);
 
@@ -71,7 +70,7 @@ export function ProductDetailDialog({
             return;
         }
 
-        const success = await updateStock(product.id, newQuantity, "adjustment", note);
+        const success = await updateStock(product.id, newQuantity, "adjustment", "");
 
         if (success) {
             onSuccess();
@@ -99,13 +98,29 @@ export function ProductDetailDialog({
                                 </div>
                             )}
                         </div>
-                        <div className="w-full space-y-2 text-center md:text-left">
-                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Product Info</div>
-                            <div className="text-xs font-medium text-slate-500">SKU: {product.sku || '-'}</div>
-                            <div className="flex flex-wrap justify-center md:justify-start gap-1">
-                                {product.variety && <Badge variant="outline" className="text-[10px] px-1 h-4 bg-amber-50 text-amber-700 border-amber-200">{product.variety}</Badge>}
-                                {product.origin && <Badge variant="outline" className="text-[10px] px-1 h-4 bg-green-50 text-green-700 border-green-200">{product.origin}</Badge>}
-                                <Badge variant="outline" className="text-[10px] px-1 h-4">{product.weight}kg / {product.shape}</Badge>
+                        <div className="w-full space-y-3 text-center md:text-left">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Product Specs</div>
+
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
+                                    <Hash className="h-3 w-3" /> SKU: {product.sku || '-'}
+                                </div>
+                                {product.productCode && (
+                                    <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
+                                        <Barcode className="h-3 w-3" /> Code: {product.productCode}
+                                    </div>
+                                )}
+                                {product.janCode && (
+                                    <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
+                                        <Info className="h-3 w-3" /> JAN: {product.janCode}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex flex-wrap justify-center md:justify-start gap-1 pt-1">
+                                {product.variety && <Badge variant="outline" className="text-[10px] px-1.5 h-5 bg-amber-50 text-amber-700 border-amber-200">{product.variety}</Badge>}
+                                {product.origin && <Badge variant="outline" className="text-[10px] px-1.5 h-5 bg-green-50 text-green-700 border-green-200">{product.origin}</Badge>}
+                                <Badge variant="outline" className="text-[10px] px-1.5 h-5 bg-slate-100">{product.weight}kg / {product.shape}</Badge>
                             </div>
                             <Button
                                 variant="outline"
@@ -131,35 +146,92 @@ export function ProductDetailDialog({
                             </DialogDescription>
                         </DialogHeader>
 
-                        {/* 在庫サマリー */}
-                        <div className="grid grid-cols-2 gap-3 mb-6">
-                            <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100">
-                                <div className="flex items-center text-blue-600 mb-1">
-                                    <Package className="h-3.5 w-3.5 mr-1" />
-                                    <span className="text-[10px] font-semibold">メーカー在庫</span>
+                        {/* 在庫サマリー & 詳細 */}
+                        <div className="space-y-4 mb-6">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100">
+                                    <div className="flex items-center text-blue-600 mb-1">
+                                        <Package className="h-3.5 w-3.5 mr-1" />
+                                        <span className="text-[10px] font-semibold uppercase tracking-tight">メーカー在庫 合計</span>
+                                    </div>
+                                    <div className="text-base font-bold text-blue-900">{supplierStock.toLocaleString()}<span className="text-[10px] font-normal ml-0.5">{unit}</span></div>
                                 </div>
-                                <div className="text-sm font-bold text-blue-900">{supplierStock.toLocaleString()}<span className="text-[10px] font-normal ml-0.5">{unit}</span></div>
+                                <div className="p-3 bg-orange-50/50 rounded-lg border border-orange-100">
+                                    <div className="flex items-center text-orange-600 mb-1">
+                                        <Clock className="h-3.5 w-3.5 mr-1" />
+                                        <span className="text-[10px] font-semibold uppercase tracking-tight">仕掛中 合計</span>
+                                    </div>
+                                    <div className="text-base font-bold text-orange-900">{wipQuantity.toLocaleString()}<span className="text-[10px] font-normal ml-0.5">{unit}</span></div>
+                                </div>
+                                <div className="p-3 bg-purple-50/50 rounded-lg border border-purple-100">
+                                    <div className="flex items-center text-purple-600 mb-1">
+                                        <CalendarDays className="h-3.5 w-3.5 mr-1" />
+                                        <span className="text-[10px] font-semibold uppercase tracking-tight">特売引当 合計</span>
+                                    </div>
+                                    <div className="text-base font-bold text-purple-900">{allocationQty.toLocaleString()}<span className="text-[10px] font-normal ml-0.5">{unit}</span></div>
+                                </div>
+                                <div className="p-3 bg-emerald-50/50 rounded-lg border border-emerald-100">
+                                    <div className="flex items-center text-emerald-600 mb-1">
+                                        <TrendingDown className="h-3.5 w-3.5 mr-1" />
+                                        <span className="text-[10px] font-semibold uppercase tracking-tight">有効在庫</span>
+                                    </div>
+                                    <div className="text-base font-bold text-emerald-900">{(currentStock - allocationQty).toLocaleString()}<span className="text-[10px] font-normal ml-0.5">{unit}</span></div>
+                                </div>
                             </div>
-                            <div className="p-3 bg-orange-50/50 rounded-lg border border-orange-100">
-                                <div className="flex items-center text-orange-600 mb-1">
-                                    <Clock className="h-3.5 w-3.5 mr-1" />
-                                    <span className="text-[10px] font-semibold">仕掛中・予定</span>
+
+                            {/* 詳細リストエリア */}
+                            <div className="grid grid-cols-2 gap-4 text-[11px]">
+                                {/* メーカー在庫ロット */}
+                                <div className="space-y-1.5">
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b pb-0.5">メーカー在庫内訳</div>
+                                    <div className="max-h-32 overflow-y-auto pr-1 space-y-1 custom-scrollbar">
+                                        {supplierStockLots && supplierStockLots.length > 0 ? (
+                                            supplierStockLots.map((lot, i) => {
+                                                const now = new Date();
+                                                const arrival = new Date(lot.stockDate);
+                                                const monthsElapsed = (now.getFullYear() - arrival.getFullYear()) * 12 + now.getMonth() - arrival.getMonth();
+                                                const isLongTerm = monthsElapsed >= 5;
+                                                return (
+                                                    <div key={i} className="flex justify-between items-center py-0.5 border-b border-slate-50 last:border-0">
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="text-slate-500">{new Date(lot.stockDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</span>
+                                                            {isLongTerm && <Badge variant="destructive" className="h-3 px-1 text-[7px] leading-none">長期</Badge>}
+                                                        </div>
+                                                        <span className="font-medium text-slate-700">{lot.quantity.toLocaleString()}{unit}</span>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <div className="text-slate-400 italic py-1">ロット情報なし</div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="text-sm font-bold text-orange-900">{wipQuantity.toLocaleString()}<span className="text-[10px] font-normal ml-0.5">{unit}</span></div>
-                            </div>
-                            <div className="p-3 bg-purple-50/50 rounded-lg border border-purple-100">
-                                <div className="flex items-center text-purple-600 mb-1">
-                                    <CalendarDays className="h-3.5 w-3.5 mr-1" />
-                                    <span className="text-[10px] font-semibold">特売引当</span>
+
+                                {/* 仕掛中リスト */}
+                                <div className="space-y-1.5">
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b pb-0.5">仕掛中・予定内訳</div>
+                                    <div className="max-h-32 overflow-y-auto pr-1 space-y-1 custom-scrollbar">
+                                        {wipItems && wipItems.length > 0 ? (
+                                            wipItems.map((item) => (
+                                                <div key={item.id} className="flex justify-between items-center py-0.5 border-b border-slate-50 last:border-0">
+                                                    <span className="text-slate-500">
+                                                        {item.expectedCompletion ? (() => {
+                                                            const d = new Date(item.expectedCompletion);
+                                                            const month = d.getMonth() + 1;
+                                                            if (item.termType === 'early') return `${month}月上旬`;
+                                                            if (item.termType === 'mid') return `${month}月中旬`;
+                                                            if (item.termType === 'late') return `${month}月下旬`;
+                                                            return d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+                                                        })() : '未定'}
+                                                    </span>
+                                                    <span className="font-medium text-slate-700">{item.quantity.toLocaleString()}{unit}</span>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-slate-400 italic py-1">仕掛情報なし</div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="text-sm font-bold text-purple-900">{allocationQty.toLocaleString()}<span className="text-[10px] font-normal ml-0.5">{unit}</span></div>
-                            </div>
-                            <div className="p-3 bg-emerald-50/50 rounded-lg border border-emerald-100">
-                                <div className="flex items-center text-emerald-600 mb-1">
-                                    <TrendingDown className="h-3.5 w-3.5 mr-1" />
-                                    <span className="text-[10px] font-semibold">有効在庫</span>
-                                </div>
-                                <div className="text-sm font-bold text-emerald-900">{(currentStock - allocationQty).toLocaleString()}<span className="text-[10px] font-normal ml-0.5">{unit}</span></div>
                             </div>
                         </div>
 
@@ -214,17 +286,6 @@ export function ProductDetailDialog({
                                 })()}
                             </div>
 
-                            <div className="space-y-1.5">
-                                <Label htmlFor="note" className="text-xs font-medium text-slate-500">備考</Label>
-                                <Textarea
-                                    id="note"
-                                    placeholder="（任意）調整理由など"
-                                    value={note}
-                                    onChange={(e) => setNote(e.target.value)}
-                                    className="resize-none h-20 text-sm"
-                                />
-                            </div>
-
                             {error && (
                                 <p className="text-xs text-red-500 font-medium">{error}</p>
                             )}
@@ -233,7 +294,7 @@ export function ProductDetailDialog({
                                 <Button type="button" variant="ghost" className="flex-1 text-slate-500 h-11" onClick={() => onOpenChange(false)}>
                                     閉じる
                                 </Button>
-                                <Button type="submit" className="flex-[2] h-11 font-bold" disabled={loading || parseInt(quantity, 10) === currentStock && !note}>
+                                <Button type="submit" className="flex-[2] h-11 font-bold" disabled={loading || parseInt(quantity, 10) === currentStock}>
                                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                     在庫数を更新
                                 </Button>

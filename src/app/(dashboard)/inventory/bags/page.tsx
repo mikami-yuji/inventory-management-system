@@ -583,6 +583,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                 onOpenChange={setDetailDialogOpen}
                 currentStock={detailProduct ? (inventoryMap.get(detailProduct.id)?.quantity || 0) : 0}
                 supplierStock={detailProduct ? (supplierStockMap.get(detailProduct.id) || 0) : 0}
+                supplierStockLots={detailProduct ? (supplierStockLotsMap.get(detailProduct.id) || []) : []}
                 wipItems={detailProduct ? (wipMap.get(detailProduct.id) || []) : []}
                 saleAllocations={detailProduct ? saleAllocationMap.get(detailProduct.id) : undefined}
                 onEditProduct={(product) => {
