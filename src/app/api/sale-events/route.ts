@@ -139,7 +139,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                     products (
                         id,
                         name,
-                        sku
+                        sku,
+                        shape,
+                        weight
                     )
                 )
             `)
@@ -200,7 +202,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                 planned_quantity: number
                 allocated_quantity: number
                 actual_quantity: number | null
-                products: { id: string; name: string; sku: string | null }
+                products: { id: string; name: string; sku: string | null; shape: string | null; weight: number | null }
             }>
         }) => ({
             id: event.id,
@@ -218,7 +220,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                 plannedQuantity: item.planned_quantity,
                 allocatedQuantity: item.allocated_quantity,
                 actualQuantity: item.actual_quantity,
-                currentStock: inventoryMap.get(item.product_id) || 0
+                currentStock: inventoryMap.get(item.product_id) || 0,
+                productShape: item.products?.shape || null,
+                productWeight: item.products?.weight || null
             }))
         }))
 

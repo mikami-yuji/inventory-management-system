@@ -23,6 +23,11 @@ import {
     AlertTriangle,
     Copy
 } from "lucide-react";
+import {
+    bagsToMeters,
+    metersToBags,
+    isRollBag
+} from "@/lib/services";
 import { useSaleEvents, useUpdateSaleEvent } from "@/hooks/use-sale-events";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -338,6 +343,10 @@ export default function EventDetailPage(): React.ReactElement {
                                     const isAllocated = item.allocatedQuantity >= item.plannedQuantity;
                                     const stockShort = item.currentStock < item.plannedQuantity;
 
+                                    const isRoll = isRollBag(item.productShape || "");
+                                    const unit = isRoll ? 'm' : '枚';
+                                    const bagEquiv = isRoll ? metersToBags(item.currentStock, item.productWeight || 5) : item.currentStock;
+
                                     return (
                                         <TableRow key={item.id}>
                                             <TableCell>
@@ -345,19 +354,24 @@ export default function EventDetailPage(): React.ReactElement {
                                                 <div className="text-xs text-muted-foreground">{item.productSku}</div>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <span className={cn(stockShort && "text-red-600 font-medium")}>
-                                                    {item.currentStock.toLocaleString()}
-                                                </span>
+                                                <div className={cn(stockShort && "text-red-600 font-medium")}>
+                                                    {item.currentStock.toLocaleString()} <span className="text-xs text-muted-foreground">{unit}</span>
+                                                </div>
+                                                {isRoll && (
+                                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                                        (約 {bagEquiv.toLocaleString()} 枚)
+                                                    </div>
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-right font-medium">
-                                                {item.plannedQuantity.toLocaleString()}
+                                                {item.plannedQuantity.toLocaleString()} <span className="text-xs text-muted-foreground">{unit}</span>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <span className={cn(
                                                     "font-medium",
                                                     isAllocated ? "text-green-600" : "text-amber-600"
                                                 )}>
-                                                    {item.allocatedQuantity.toLocaleString()}
+                                                    {item.allocatedQuantity.toLocaleString()} <span className="text-xs">{unit}</span>
                                                 </span>
                                             </TableCell>
                                             <TableCell className="text-right">

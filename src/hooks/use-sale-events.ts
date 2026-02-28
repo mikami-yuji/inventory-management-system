@@ -23,6 +23,8 @@ export type SaleEventItem = {
     allocatedQuantity: number;
     actualQuantity: number | null;
     currentStock: number;
+    productShape?: string | null;
+    productWeight?: number | null;
 };
 
 // 新規イベント作成用の入力型
