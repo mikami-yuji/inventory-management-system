@@ -389,49 +389,49 @@ export default function BagsInventoryPage(): React.ReactElement {
             </div>
 
             {/* サマリーカード */}
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 md:gap-4 md:grid-cols-4">
                 <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium flex items-center gap-2">
-                            <Package className="h-4 w-4" />
+                    <CardHeader className="p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium flex items-center gap-1 md:gap-2">
+                            <Package className="h-3 w-3 md:h-4 md:h-4" />
                             総商品数
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{summary.total}</div>
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold">{summary.total}</div>
                     </CardContent>
                 </Card>
                 <Card className="border-red-200">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-red-600 flex items-center gap-2">
-                            <TrendingDown className="h-4 w-4" />
+                    <CardHeader className="p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium text-red-600 flex items-center gap-1 md:gap-2">
+                            <TrendingDown className="h-3 w-3 md:h-4 md:h-4" />
                             欠品
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-red-600">{summary.outOfStock}</div>
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold text-red-600">{summary.outOfStock}</div>
                     </CardContent>
                 </Card>
                 <Card className="border-amber-200">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-amber-600 flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4" />
+                    <CardHeader className="p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium text-amber-600 flex items-center gap-1 md:gap-2">
+                            <AlertTriangle className="h-3 w-3 md:h-4 md:h-4" />
                             低在庫
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-amber-600">{summary.lowStock}</div>
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold text-amber-600">{summary.lowStock}</div>
                     </CardContent>
                 </Card>
                 <Card className="border-blue-200">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-blue-600 flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
+                    <CardHeader className="p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium text-blue-600 flex items-center gap-1 md:gap-2">
+                            <Calendar className="h-3 w-3 md:h-4 md:h-4" />
                             特売引当中
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-blue-600">{summary.hasReservation}</div>
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold text-blue-600">{summary.hasReservation}</div>
                     </CardContent>
                 </Card>
             </div>

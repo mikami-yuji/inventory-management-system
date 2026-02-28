@@ -223,54 +223,54 @@ export default function DashboardPage(): React.ReactElement {
             )}
 
             {/* 概要カード */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-2 lg:grid-cols-4 md:gap-4">
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">総商品数</CardTitle>
-                        <Package className="h-4 w-4 text-muted-foreground" />
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium">総商品数</CardTitle>
+                        <Package className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{totalProducts.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold">{totalProducts.toLocaleString()}</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">
                             登録済み商品
                         </p>
                     </CardContent>
                 </Card>
 
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">在庫総額</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium">在庫総額</CardTitle>
+                        <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">¥{totalStockValue.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold">¥{totalStockValue.toLocaleString()}</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">
                             概算価値
                         </p>
                     </CardContent>
                 </Card>
 
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">進行中イベント</CardTitle>
-                        <TicketPercent className="h-4 w-4 text-muted-foreground" />
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium">進行中イベント</CardTitle>
+                        <TicketPercent className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{activeEvents.length} 件</div>
-                        <p className="text-xs text-muted-foreground">
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold">{activeEvents.length} 件</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">
                             開催中の特売
                         </p>
                     </CardContent>
                 </Card>
 
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">入荷予定</CardTitle>
-                        <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium">入荷予定</CardTitle>
+                        <CalendarDays className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{incomingStock.length} 件</div>
-                        <p className="text-xs text-muted-foreground">
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold">{incomingStock.length} 件</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">
                             予定されている入荷
                         </p>
                     </CardContent>
