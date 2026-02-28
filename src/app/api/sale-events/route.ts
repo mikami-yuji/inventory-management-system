@@ -171,8 +171,22 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             inventoryMap.set(item.product_id, item.quantity)
         })
 
+        // 完了後5日経過したイベントを除外するフィルタリング
+        const fiveDaysAgoStr = new Date(nowJST.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+        const filteredData = (data || []).filter((event: any) => {
+            if (event.status === 'completed') {
+                if (!event.dates || event.dates.length === 0) return true;
+                const lastDate = [...event.dates].sort().reverse()[0];
+                if (lastDate < fiveDaysAgoStr) {
+                    return false; // 5日以上前の完了イベントは除外
+                }
+            }
+            return true;
+        });
+
         // レスポンス形式に変換
-        const events: SaleEvent[] = (data || []).map((event: {
+        const events: SaleEvent[] = filteredData.map((event: {
             id: string
             client_name: string
             schedule_type: string
