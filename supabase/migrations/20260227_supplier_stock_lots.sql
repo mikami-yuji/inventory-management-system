@@ -1,3 +1,12 @@
+-- `updated_at` 自動更新用の共通関数（存在しない場合のために作成）
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = timezone('utc'::text, now());
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
 -- メーカー在庫をロット単位で管理するテーブル
 CREATE TABLE IF NOT EXISTS public.supplier_stock_lots (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -32,7 +41,7 @@ CREATE POLICY "Enable delete for authenticated users only"
 CREATE TRIGGER update_supplier_stock_lots_updated_at
     BEFORE UPDATE ON public.supplier_stock_lots
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+    EXECUTE FUNCTION public.update_updated_at_column();
 
 -- ロットの合計数で products.supplier_stock を自動更新するトリガー
 CREATE OR REPLACE FUNCTION update_product_supplier_stock_total()

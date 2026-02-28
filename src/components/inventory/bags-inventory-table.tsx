@@ -6,12 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
     Check,
     Plus,
     Pencil,
     Trash2,
     Package,
+    Download,
+    X,
 } from "lucide-react";
 import {
     getPitch,
@@ -59,6 +62,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
     const [adjustStock, setAdjustStock] = useState<Product | null>(null);
     const [editStatusProduct, setEditStatusProduct] = useState<Product | null>(null);
     const { addToCart, items } = useCart();
+
+    // 画像拡大用ステート
+    const [selectedImage, setSelectedImage] = useState<{ url: string; alt: string; name: string } | null>(null);
 
     return (
         <Card>
@@ -141,11 +147,16 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
                                             )}>
                                                 {product.imageUrl ? (
-                                                    <img
-                                                        src={product.imageUrl}
-                                                        alt={product.name}
-                                                        className="w-12 h-12 object-cover rounded border"
-                                                    />
+                                                    <div
+                                                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                                                        onClick={() => setSelectedImage({ url: product.imageUrl!, alt: product.name, name: product.name })}
+                                                    >
+                                                        <img
+                                                            src={product.imageUrl}
+                                                            alt={product.name}
+                                                            className="w-12 h-12 object-cover rounded border"
+                                                        />
+                                                    </div>
                                                 ) : (
                                                     <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
                                                         <Package className="h-5 w-5 text-gray-400" />
@@ -444,6 +455,72 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                 onOpenChange={(open) => !open && setEditStatusProduct(null)}
                 onSuccess={onRefetch}
             />
+
+            {/* 画像拡大・ダウンロードダイアログ */}
+            <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
+                <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden bg-black/95 border-none">
+                    <DialogTitle className="sr-only">画像プレビュー</DialogTitle>
+                    <DialogDescription className="sr-only">商品の拡大画像プレビュー</DialogDescription>
+                    {selectedImage && (
+                        <div className="relative flex flex-col items-center justify-center min-h-[400px] pt-12 pb-8 px-6">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-2 right-2 text-white/70 hover:text-white hover:bg-white/20 rounded-full h-10 w-10 transition-colors"
+                                onClick={() => setSelectedImage(null)}
+                            >
+                                <X className="h-6 w-6" />
+                            </Button>
+
+                            <img
+                                src={selectedImage.url}
+                                alt={selectedImage.alt}
+                                className="max-w-full max-h-[75vh] object-contain rounded-md"
+                            />
+
+                            <div className="mt-6 flex flex-col items-center gap-4 w-full">
+                                <p className="text-white text-base font-medium text-center line-clamp-2 px-12">
+                                    {selectedImage.name}
+                                </p>
+                                <Button
+                                    variant="secondary"
+                                    className="w-full sm:w-auto flex items-center gap-2 mt-2"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        // ブラウザで直接ダウンロードさせる
+                                        fetch(selectedImage.url)
+                                            .then(response => response.blob())
+                                            .then(blob => {
+                                                const url = window.URL.createObjectURL(blob);
+                                                const a = document.createElement('a');
+                                                a.style.display = 'none';
+                                                a.href = url;
+
+                                                // ファイル名生成 (拡張子の推測付き)
+                                                const extMatch = selectedImage.url.match(/\.(jpeg|jpg|png|gif|webp)(\?.*)?$/i);
+                                                const ext = extMatch ? extMatch[1] : 'jpg';
+                                                a.download = `${selectedImage.name}.${ext}`;
+
+                                                document.body.appendChild(a);
+                                                a.click();
+                                                window.URL.revokeObjectURL(url);
+                                                document.body.removeChild(a);
+                                            })
+                                            .catch(err => {
+                                                console.error('Download failed:', err);
+                                                // フォールバック（別タブで開く）
+                                                window.open(selectedImage.url, '_blank');
+                                            });
+                                    }}
+                                >
+                                    <Download className="h-4 w-4" />
+                                    画像をダウンロード
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </Card >
     );
 }
