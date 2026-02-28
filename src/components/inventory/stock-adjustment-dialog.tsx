@@ -8,15 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateInventory } from "@/hooks/use-inventory";
 import { useVoiceInput } from "@/hooks/use-voice-input";
-import { Loader2, Mic, MicOff } from "lucide-react";
+import { Loader2, Mic, MicOff, Package, Clock, CalendarDays, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Product } from "@/types";
+import type { Product, WorkInProgress, SaleEvent } from "@/types";
 
 type StockAdjustmentDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     product: Product | null;
     currentStock: number;
+    supplierStock?: number;
+    wipItems?: WorkInProgress[];
+    saleAllocations?: { bags: number; meters: number };
     onSuccess: () => void;
 };
 
@@ -25,6 +28,9 @@ export function StockAdjustmentDialog({
     onOpenChange,
     product,
     currentStock,
+    supplierStock = 0,
+    wipItems = [],
+    saleAllocations,
     onSuccess
 }: StockAdjustmentDialogProps): React.ReactElement {
     const [quantity, setQuantity] = useState<string>("");
@@ -74,12 +80,45 @@ export function StockAdjustmentDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>在庫数調整</DialogTitle>
+                    <DialogTitle>在庫数調整 (棚卸し)</DialogTitle>
                     <DialogDescription>
                         {product.name} の在庫数を直接変更します。<br />
                         この操作は「調整」として履歴に記録されます。
                     </DialogDescription>
                 </DialogHeader>
+
+                {/* 付加情報の表示 */}
+                <div className="grid grid-cols-3 gap-2 py-2 mt-2 border-y border-muted">
+                    <div className="flex flex-col items-center justify-center p-2 bg-blue-50/50 rounded-md border border-blue-100">
+                        <div className="flex items-center text-blue-600 mb-1">
+                            <Package className="h-4 w-4 mr-1" />
+                            <span className="text-xs font-semibold">メーカー在庫</span>
+                        </div>
+                        <span className="font-bold text-blue-900">{supplierStock.toLocaleString()}</span>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center p-2 bg-orange-50/50 rounded-md border border-orange-100">
+                        <div className="flex items-center text-orange-600 mb-1">
+                            <Clock className="h-4 w-4 mr-1" />
+                            <span className="text-xs font-semibold">仕掛中・予定</span>
+                        </div>
+                        <span className="font-bold text-orange-900">
+                            {wipItems.reduce((sum, item) => sum + item.quantity, 0).toLocaleString()}
+                        </span>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center p-2 bg-purple-50/50 rounded-md border border-purple-100">
+                        <div className="flex items-center text-purple-600 mb-1">
+                            <CalendarDays className="h-4 w-4 mr-1" />
+                            <span className="text-xs font-semibold">特売引当</span>
+                        </div>
+                        <span className="font-bold text-purple-900">
+                            {product.shape?.toLowerCase().includes('roll') || product.shape === '原反'
+                                ? saleAllocations?.meters || 0
+                                : saleAllocations?.bags || 0}
+                        </span>
+                    </div>
+                </div>
 
                 <form onSubmit={handleSave} className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">

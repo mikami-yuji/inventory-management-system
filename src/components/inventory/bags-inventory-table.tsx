@@ -424,6 +424,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                 open={!!adjustStock}
                 onOpenChange={(open) => !open && setAdjustStock(null)}
                 currentStock={adjustStock ? (inventoryMap.get(adjustStock.id)?.quantity || 0) : 0}
+                supplierStock={adjustStock ? (supplierStockMap.get(adjustStock.id) || 0) : 0}
+                wipItems={adjustStock ? (wipMap.get(adjustStock.id) || []) : []}
+                saleAllocations={adjustStock ? saleAllocationMap.get(adjustStock.id) : undefined}
                 onSuccess={onRefetch}
             />
 
