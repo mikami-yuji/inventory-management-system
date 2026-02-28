@@ -90,7 +90,8 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                     <TableHead className="text-right">入荷予定</TableHead>
                                     <TableHead className="text-right">メーカー在庫</TableHead>
                                     <TableHead className="text-right">仕掛中</TableHead>
-                                    <TableHead className="text-center">状態</TableHead>
+                                    <TableHead className="text-center">在庫状況</TableHead>
+                                    <TableHead className="text-center">全体状況</TableHead>
                                     <TableHead className="w-[100px]">操作</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -354,33 +355,46 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 )}
                                             </TableCell>
 
+                                            {/* 在庫状況 (Inventory Status) */}
                                             <TableCell
                                                 className="text-center cursor-pointer hover:bg-muted/50 transition-colors group"
                                                 onClick={() => setEditStatusProduct(product)}
                                             >
                                                 <div className="flex flex-col items-center gap-1 relative">
                                                     {isOutOfStock ? (
-                                                        <Badge variant="destructive" className="group-hover:opacity-80 transition-opacity">
+                                                        <Badge variant="destructive" className="group-hover:opacity-80 transition-opacity whitespace-nowrap">
                                                             {product.statusOverride === 'out_of_stock' ? '欠品 (手動)' : '欠品'}
                                                         </Badge>
                                                     ) : isLowStock ? (
-                                                        <Badge variant="outline" className="border-amber-500 text-amber-600 group-hover:bg-amber-50 transition-colors">
+                                                        <Badge variant="outline" className="border-amber-500 text-amber-600 group-hover:bg-amber-50 transition-colors whitespace-nowrap">
                                                             {product.statusOverride === 'low_stock' ? '低在庫 (手動)' : '低在庫'}
                                                         </Badge>
-                                                    ) : product.status === 'plate_removal_scheduled' ? (
-                                                        <Badge variant="outline" className="border-amber-400 text-amber-600 bg-amber-50 group-hover:bg-amber-100 transition-colors">落版予定</Badge>
-                                                    ) : product.status === 'plate_removed' ? (
-                                                        <Badge variant="outline" className="border-purple-400 text-purple-600 bg-purple-50 group-hover:bg-purple-100 transition-colors">落版</Badge>
-                                                    ) : product.status === 'direct_delivery' ? (
-                                                        <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50 group-hover:bg-blue-100 transition-colors">直送先在庫</Badge>
-                                                    ) : product.status === 'on_sale_break' ? (
-                                                        <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50 group-hover:bg-yellow-100 transition-colors">販売開始中断</Badge>
-                                                    ) : product.status === 'discontinued' ? (
-                                                        <Badge variant="outline" className="border-gray-400 text-gray-500 bg-gray-50 group-hover:bg-gray-100 transition-colors">廃盤</Badge>
                                                     ) : hasAllocation ? (
-                                                        <Badge variant="outline" className="border-blue-500 text-blue-600 group-hover:bg-blue-50 transition-colors">引当中</Badge>
+                                                        <Badge variant="outline" className="border-blue-500 text-blue-600 group-hover:bg-blue-50 transition-colors whitespace-nowrap">引当中</Badge>
                                                     ) : (
-                                                        <Badge variant="outline" className="border-green-500 text-green-600 group-hover:bg-green-50 transition-colors">正常</Badge>
+                                                        <Badge variant="outline" className="border-green-500 text-green-600 group-hover:bg-green-50 transition-colors whitespace-nowrap">正常</Badge>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+
+                                            {/* 全体状況 (Overall Status) */}
+                                            <TableCell
+                                                className="text-center cursor-pointer hover:bg-muted/50 transition-colors group"
+                                                onClick={() => setEditStatusProduct(product)}
+                                            >
+                                                <div className="flex flex-col items-center gap-1 relative">
+                                                    {product.status === 'plate_removal_scheduled' ? (
+                                                        <Badge variant="outline" className="border-amber-400 text-amber-600 bg-amber-50 group-hover:bg-amber-100 transition-colors whitespace-nowrap">落版予定</Badge>
+                                                    ) : product.status === 'plate_removed' ? (
+                                                        <Badge variant="outline" className="border-purple-400 text-purple-600 bg-purple-50 group-hover:bg-purple-100 transition-colors whitespace-nowrap">落版</Badge>
+                                                    ) : product.status === 'direct_delivery' ? (
+                                                        <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50 group-hover:bg-blue-100 transition-colors whitespace-nowrap">直送先在庫</Badge>
+                                                    ) : product.status === 'on_sale_break' ? (
+                                                        <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50 group-hover:bg-yellow-100 transition-colors whitespace-nowrap">販売開始中断</Badge>
+                                                    ) : product.status === 'discontinued' ? (
+                                                        <Badge variant="outline" className="border-gray-400 text-gray-500 bg-gray-50 group-hover:bg-gray-100 transition-colors whitespace-nowrap">廃盤</Badge>
+                                                    ) : (
+                                                        <span className="text-muted-foreground group-hover:hidden">-</span>
                                                     )}
 
                                                     {product.discontinuedDate && product.status !== 'active' && (
