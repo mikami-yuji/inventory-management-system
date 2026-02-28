@@ -141,6 +141,25 @@ export default function BagsInventoryPage(): React.ReactElement {
         return map;
     }, [saleEvents, allProducts]);
 
+    // 特売引当の詳細マップを作成 (Client Name, Dates, Qty)
+    const detailedSaleAllocationMap = useMemo(() => {
+        const map = new Map<string, Array<{ eventId: string; clientName: string; quantity: number; dates: string[] }>>();
+        saleEvents.forEach(event => {
+            if (event.status === 'completed' || event.status === 'cancelled') return;
+            event.items.forEach(item => {
+                const list = map.get(item.productId) || [];
+                list.push({
+                    eventId: event.id,
+                    clientName: event.clientName,
+                    quantity: item.allocatedQuantity,
+                    dates: event.dates
+                });
+                map.set(item.productId, list);
+            });
+        });
+        return map;
+    }, [saleEvents]);
+
     // 仕掛中マップを作成
     const wipMap = useMemo(() => calculateWIPByProduct(wipItems), [wipItems]);
 
@@ -586,6 +605,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                 supplierStockLots={detailProduct ? (supplierStockLotsMap.get(detailProduct.id) || []) : []}
                 wipItems={detailProduct ? (wipMap.get(detailProduct.id) || []) : []}
                 saleAllocations={detailProduct ? saleAllocationMap.get(detailProduct.id) : undefined}
+                detailedAllocations={detailProduct ? (detailedSaleAllocationMap.get(detailProduct.id) || []) : []}
                 onEditProduct={(product) => {
                     setEditingProduct(product);
                     setFormDialogOpen(true);

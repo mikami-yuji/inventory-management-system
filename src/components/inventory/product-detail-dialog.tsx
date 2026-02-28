@@ -13,6 +13,13 @@ import { cn } from "@/lib/utils";
 import { isRollBag, getPitch } from "@/lib/services";
 import type { Product, WorkInProgress, SupplierStockLot } from "@/types";
 
+export type SaleAllocationDetail = {
+    eventId: string;
+    clientName: string;
+    quantity: number;
+    dates: string[];
+};
+
 type ProductDetailDialogProps = {
     product: Product | null;
     open: boolean;
@@ -22,6 +29,7 @@ type ProductDetailDialogProps = {
     supplierStockLots: SupplierStockLot[];
     wipItems: WorkInProgress[];
     saleAllocations?: { bags: number; meters: number };
+    detailedAllocations: SaleAllocationDetail[];
     onEditProduct: (product: Product) => void;
     onSuccess: () => void;
 };
@@ -35,6 +43,7 @@ export function ProductDetailDialog({
     supplierStockLots,
     wipItems,
     saleAllocations,
+    detailedAllocations,
     onEditProduct,
     onSuccess
 }: ProductDetailDialogProps): React.ReactElement {
@@ -229,6 +238,28 @@ export function ProductDetailDialog({
                                             ))
                                         ) : (
                                             <div className="text-slate-400 italic py-1">仕掛情報なし</div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 特売引当リスト */}
+                                <div className="space-y-1.5 col-span-2 mt-2">
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b pb-0.5">特売引当内訳</div>
+                                    <div className="max-h-32 overflow-y-auto pr-1 space-y-1 custom-scrollbar">
+                                        {detailedAllocations && detailedAllocations.length > 0 ? (
+                                            detailedAllocations.map((alloc, i) => (
+                                                <div key={i} className="flex justify-between items-center py-1 border-b border-slate-50 last:border-0 hover:bg-slate-50 rounded px-1">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium text-slate-700">{alloc.clientName}</span>
+                                                        <span className="text-[9px] text-slate-400">
+                                                            {alloc.dates.map(d => new Date(d).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })).join(', ')}
+                                                        </span>
+                                                    </div>
+                                                    <span className="font-bold text-purple-700">{alloc.quantity.toLocaleString()}{unit}</span>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-slate-400 italic py-1">引当情報なし</div>
                                         )}
                                     </div>
                                 </div>
