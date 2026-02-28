@@ -125,7 +125,7 @@ export function ProductDetailDialog({
                     {/* 右側: 在庫状況と調整フォーム */}
                     <div className="flex-1 p-6">
                         <DialogHeader className="mb-4">
-                            <DialogTitle className="text-lg font-bold">{product.name}</DialogTitle>
+                            <DialogTitle className="text-lg font-bold">{product.name} ({product.weight}kg)</DialogTitle>
                             <DialogDescription className="text-xs">
                                 在庫状況の確認と調整を行います
                             </DialogDescription>

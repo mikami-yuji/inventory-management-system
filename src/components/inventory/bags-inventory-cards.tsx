@@ -285,8 +285,8 @@ function ProductCard({
             <CardContent className="p-3 flex-1 flex flex-col gap-2">
                 <div>
                     <div className="flex items-start justify-between gap-2 mb-1">
-                        <h3 className="font-medium text-sm line-clamp-2 leading-tight min-h-[2.5em]" title={product.name}>
-                            {product.name}
+                        <h3 className="font-medium text-sm line-clamp-2 leading-tight min-h-[2.5em]" title={`${product.name} (${product.weight}kg)`}>
+                            {product.name} ({product.weight}kg)
                         </h3>
                     </div>
                     <div className="flex flex-wrap gap-1 mb-2">
