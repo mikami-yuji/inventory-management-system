@@ -10,7 +10,7 @@ import { Pencil, Package, Clock, CalendarDays, Loader2, Mic, MicOff, TrendingDow
 import { useUpdateInventory } from "@/hooks/use-inventory";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 import { cn } from "@/lib/utils";
-import { isRollBag, getPitch } from "@/lib/services";
+import { isRollBag, getPitch, bagsToMeters } from "@/lib/services";
 import type { Product, WorkInProgress, SupplierStockLot } from "@/types";
 
 export type SaleAllocationDetail = {
@@ -92,6 +92,9 @@ export function ProductDetailDialog({
     const wipQuantity = wipItems.reduce((sum, item) => sum + item.quantity, 0);
     const allocationQty = isRoll ? (saleAllocations?.meters || 0) : (saleAllocations?.bags || 0);
 
+    // 有効在庫計算 (ロールの場合はメーター同士、袋の場合は枚同士)
+    const availableStock = Math.max(0, currentStock - allocationQty);
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden max-h-[95vh] flex flex-col">
@@ -160,6 +163,65 @@ export function ProductDetailDialog({
                                 </DialogDescription>
                             </DialogHeader>
 
+                            {/* 調整フォーム (Moved to top for accessibility) */}
+                            <form onSubmit={handleSave} className="space-y-3 mb-6 p-4 bg-slate-50/50 rounded-xl border border-slate-100">
+                                <div className="flex items-center justify-between mb-1">
+                                    <Label htmlFor="quantity" className="text-xs font-bold flex items-center gap-1.5 text-slate-700">
+                                        <Info className="h-3.5 w-3.5 text-primary" />
+                                        在庫数の調整 (棚卸し)
+                                    </Label>
+                                    <div className="text-[10px] text-muted-foreground bg-white px-2 py-0.5 rounded border border-slate-100 font-medium">
+                                        現在: {currentStock.toLocaleString()}{unit}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <div className="relative flex-1">
+                                        <Input
+                                            id="quantity"
+                                            type="number"
+                                            min="0"
+                                            value={quantity}
+                                            onChange={(e) => setQuantity(e.target.value)}
+                                            className="pr-12 text-base font-bold h-10 border-slate-200 focus:border-primary focus:ring-primary/20"
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                                            {unit}
+                                        </div>
+                                    </div>
+                                    {hasSupport && (
+                                        <Button
+                                            type="button"
+                                            variant={isListening ? "destructive" : "outline"}
+                                            size="icon"
+                                            onClick={isListening ? stopListening : startListening}
+                                            className={cn("h-10 w-10 shrink-0", isListening && "animate-pulse")}
+                                        >
+                                            {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                                        </Button>
+                                    )}
+                                    <Button type="submit" className="h-10 px-4 font-bold shrink-0" disabled={loading || parseInt(quantity, 10) === currentStock}>
+                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "更新"}
+                                    </Button>
+                                </div>
+
+                                {/* 増減表示 */}
+                                <div className="flex justify-start min-h-[16px]">
+                                    {(() => {
+                                        const newQty = parseInt(quantity, 10);
+                                        if (isNaN(newQty)) return null;
+                                        const diff = newQty - currentStock;
+                                        if (diff === 0) return null;
+                                        if (diff > 0) return <span className="text-[10px] font-bold text-green-600 flex items-center gap-1">+{diff.toLocaleString()}{unit} 増加します</span>;
+                                        return <span className="text-[10px] font-bold text-red-600 flex items-center gap-1">{diff.toLocaleString()}{unit} 減少します</span>;
+                                    })()}
+                                </div>
+
+                                {error && (
+                                    <p className="text-[10px] text-red-500 font-medium">{error}</p>
+                                )}
+                            </form>
+
                             {/* 在庫サマリー & 詳細 */}
                             <div className="space-y-4 mb-6">
                                 <div className="grid grid-cols-2 gap-3">
@@ -182,14 +244,14 @@ export function ProductDetailDialog({
                                             <CalendarDays className="h-3.5 w-3.5 mr-1" />
                                             <span className="text-[10px] font-semibold uppercase tracking-tight">特売引当 合計</span>
                                         </div>
-                                        <div className="text-base font-bold text-purple-900">{allocationQty.toLocaleString()}<span className="text-[10px] font-normal ml-0.5">{unit}</span></div>
+                                        <div className="text-base font-bold text-purple-900">{(saleAllocations?.bags || 0).toLocaleString()}<span className="text-[10px] font-normal ml-0.5">枚</span></div>
                                     </div>
                                     <div className="p-3 bg-emerald-50/50 rounded-lg border border-emerald-100">
                                         <div className="flex items-center text-emerald-600 mb-1">
                                             <TrendingDown className="h-3.5 w-3.5 mr-1" />
                                             <span className="text-[10px] font-semibold uppercase tracking-tight">有効在庫</span>
                                         </div>
-                                        <div className="text-base font-bold text-emerald-900">{(currentStock - allocationQty).toLocaleString()}<span className="text-[10px] font-normal ml-0.5">{unit}</span></div>
+                                        <div className="text-base font-bold text-emerald-900">{availableStock.toLocaleString()}<span className="text-[10px] font-normal ml-0.5">{unit}</span></div>
                                     </div>
                                 </div>
 
@@ -260,7 +322,7 @@ export function ProductDetailDialog({
                                                                 {alloc.dates.map(d => new Date(d).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })).join(', ')}
                                                             </span>
                                                         </div>
-                                                        <span className="font-bold text-purple-700">{alloc.quantity.toLocaleString()}{unit}</span>
+                                                        <span className="font-bold text-purple-700">{alloc.quantity.toLocaleString()}枚</span>
                                                     </div>
                                                 ))
                                             ) : (
@@ -270,72 +332,6 @@ export function ProductDetailDialog({
                                     </div>
                                 </div>
                             </div>
-
-                            {/* 調整フォーム */}
-                            <form onSubmit={handleSave} className="space-y-4 pt-4 border-t border-dashed">
-                                <div className="flex items-center justify-between mb-2">
-                                    <Label htmlFor="quantity" className="text-sm font-bold flex items-center gap-1.5">
-                                        <Info className="h-4 w-4 text-primary" />
-                                        在庫数の調整 (棚卸し)
-                                    </Label>
-                                    <div className="text-[10px] text-muted-foreground bg-slate-100 px-2 py-0.5 rounded">
-                                        現在: {currentStock.toLocaleString()}{unit}
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <div className="relative flex-1">
-                                        <Input
-                                            id="quantity"
-                                            type="number"
-                                            min="0"
-                                            value={quantity}
-                                            onChange={(e) => setQuantity(e.target.value)}
-                                            className="pr-12 text-lg font-bold"
-                                        />
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-normal">
-                                            {unit}
-                                        </div>
-                                    </div>
-                                    {hasSupport && (
-                                        <Button
-                                            type="button"
-                                            variant={isListening ? "destructive" : "outline"}
-                                            size="icon"
-                                            onClick={isListening ? stopListening : startListening}
-                                            className={cn("h-10 w-10", isListening && "animate-pulse")}
-                                        >
-                                            {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                                        </Button>
-                                    )}
-                                </div>
-
-                                {/* 増減表示 */}
-                                <div className="flex justify-center min-h-[20px]">
-                                    {(() => {
-                                        const newQty = parseInt(quantity, 10);
-                                        if (isNaN(newQty)) return null;
-                                        const diff = newQty - currentStock;
-                                        if (diff === 0) return <span className="text-xs text-slate-400">変更なし (±0)</span>;
-                                        if (diff > 0) return <span className="text-xs font-bold text-green-600">+{diff.toLocaleString()}{unit} 増加します</span>;
-                                        return <span className="text-xs font-bold text-red-600">{diff.toLocaleString()}{unit} 減少します</span>;
-                                    })()}
-                                </div>
-
-                                {error && (
-                                    <p className="text-xs text-red-500 font-medium">{error}</p>
-                                )}
-
-                                <div className="flex gap-2 pt-2">
-                                    <Button type="button" variant="ghost" className="flex-1 text-slate-500 h-11" onClick={() => onOpenChange(false)}>
-                                        閉じる
-                                    </Button>
-                                    <Button type="submit" className="flex-[2] h-11 font-bold" disabled={loading || parseInt(quantity, 10) === currentStock}>
-                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                        在庫数を更新
-                                    </Button>
-                                </div>
-                            </form>
                         </div>
                     </div>
                 </div>
