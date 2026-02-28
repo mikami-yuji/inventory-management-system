@@ -37,6 +37,7 @@ type DashboardEvent = {
     dates: string[];
     items?: Array<{
         productName: string;
+        productWeight: number | null;
         plannedQuantity: number;
     }>;
 };
@@ -80,6 +81,7 @@ export default function DashboardPage(): React.ReactElement {
         id: string;
         productId: string;
         productName: string;
+        productWeight: number | null;
         expectedDate: string;
         quantity: number;
         note: string | null;
@@ -95,8 +97,9 @@ export default function DashboardPage(): React.ReactElement {
                     id: string;
                     product_id?: string;
                     productId?: string;
-                    products?: { name: string };
+                    products?: { name: string, weight?: number };
                     productName?: string;
+                    productWeight?: number | null;
                     expected_date?: string;
                     expectedDate?: string;
                     quantity: number;
@@ -105,6 +108,7 @@ export default function DashboardPage(): React.ReactElement {
                     id: item.id,
                     productId: item.product_id || item.productId,
                     productName: item.products?.name || item.productName || '不明',
+                    productWeight: item.products?.weight !== undefined ? item.products?.weight : (item.productWeight || null),
                     expectedDate: item.expected_date || item.expectedDate,
                     quantity: item.quantity,
                     note: item.note,
@@ -380,7 +384,7 @@ export default function DashboardPage(): React.ReactElement {
                                 <div key={stock.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                                     <div>
                                         <p className="text-sm font-medium">
-                                            {stock.productName.slice(0, 30)}{stock.productName.length > 30 ? '...' : ''}
+                                            {stock.productName.slice(0, 30)}{stock.productName.length > 30 ? '...' : ''} {stock.productWeight ? `${stock.productWeight}kg` : ''}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             {stock.expectedDate} / {stock.quantity.toLocaleString()}個
@@ -431,7 +435,7 @@ export default function DashboardPage(): React.ReactElement {
                                             {event.items.slice(0, 3).map((item, idx) => (
                                                 <div key={idx} className="flex justify-between items-center text-xs text-gray-600">
                                                     <span className="truncate mr-2" title={item.productName}>
-                                                        {item.productName}
+                                                        {item.productName} {item.productWeight ? `${item.productWeight}kg` : ''}
                                                     </span>
                                                     <span className="font-medium whitespace-nowrap text-pink-700">
                                                         {item.plannedQuantity.toLocaleString()} 個
