@@ -357,7 +357,9 @@ export default function EventDetailPage(): React.ReactElement {
                                     return (
                                         <TableRow key={item.id}>
                                             <TableCell>
-                                                <div className="font-medium">{item.productName}</div>
+                                                <div className="font-medium">
+                                                    {item.productName} {item.productWeight ? `${item.productWeight}kg` : ''}
+                                                </div>
                                                 <div className="text-xs text-muted-foreground">{item.productSku}</div>
                                             </TableCell>
                                             <TableCell className="text-right">

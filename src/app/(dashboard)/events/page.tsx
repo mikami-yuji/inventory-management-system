@@ -266,7 +266,7 @@ function EventCard({ event }: { event: SaleEvent }): React.ReactElement {
                 <div className="text-xs text-muted-foreground space-y-1">
                     {event.items.slice(0, 3).map((item, idx) => (
                         <div key={idx} className="truncate">
-                            • {item.productName} ({item.plannedQuantity}個)
+                            • {item.productName} {item.productWeight ? `${item.productWeight}kg` : ''} ({item.plannedQuantity}個)
                         </div>
                     ))}
                     {event.items.length > 3 && (

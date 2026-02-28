@@ -415,7 +415,9 @@ function EditEventContent(): React.ReactElement {
                                     {saleItems.map(item => (
                                         <TableRow key={item.id}>
                                             <TableCell>
-                                                <div className="font-medium">{item.product.name}</div>
+                                                <div className="font-medium">
+                                                    {item.product.name} {item.product.weight ? `${item.product.weight}kg` : ''}
+                                                </div>
                                                 <div className="text-xs text-gray-500">{item.product.sku}</div>
                                             </TableCell>
                                             <TableCell className="text-right">
