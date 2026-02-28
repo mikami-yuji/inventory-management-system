@@ -116,6 +116,26 @@ export function StockAdjustmentDialog({
                             )}
                         </div>
                     </div>
+
+                    {/* 増減数の表示エリア */}
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <div className="col-start-2 col-span-3 min-h-[24px]">
+                            {(() => {
+                                const newQty = parseInt(quantity, 10);
+                                if (isNaN(newQty)) return null;
+
+                                const diff = newQty - currentStock;
+                                if (diff === 0) {
+                                    return <span className="text-sm font-medium text-gray-500">増減なし (±0)</span>;
+                                } else if (diff > 0) {
+                                    return <span className="text-sm font-bold text-green-600">+{diff.toLocaleString()} 増</span>;
+                                } else {
+                                    return <span className="text-sm font-bold text-red-600">{diff.toLocaleString()} 減</span>;
+                                }
+                            })()}
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="note" className="text-right">
                             備考
