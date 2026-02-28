@@ -516,8 +516,11 @@ export default function ScanPage() {
 }
 
 // Helper for Single Mode UI (extracted for cleanliness, but keep in same file for now)
-function hidingScannerSingle(mode: string, scannedProduct: Product | null, hasMultipleMatches: boolean) {
-    if (mode === 'single' && (scannedProduct || hasMultipleMatches)) return false;
+function hidingScannerSingle(mode: string, detailProduct: Product | null, hasMultipleMatches: boolean) {
+    // If there are multiple matches, we MUST show the selection card, so return true to "keep showing" the area.
+    if (mode === 'single' && hasMultipleMatches) return true;
+    // If a single product is already selected/identified, we can hide the scanner area.
+    if (mode === 'single' && detailProduct) return false;
     return true;
 }
 
