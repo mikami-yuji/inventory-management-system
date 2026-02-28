@@ -1,20 +1,26 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { BarcodeScanner } from '@/components/inventory/barcode-scanner';
 import { useProducts } from "@/hooks/use-products";
 import { useInventory, useUpdateInventory } from "@/hooks/use-inventory";
-import { useVoiceInput } from '@/hooks/use-voice-input';
+import { useIncomingStock } from '@/hooks/use-incoming-stock';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, Plus, Minus, Search, Mic, MicOff, ListChecks, Trash2, Send } from 'lucide-react';
+import { Loader2, ArrowLeft, Plus, Minus, Search, ListChecks, Trash2, Send } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-import type { Product } from "@/types";
+import { ProductDetailDialog } from '@/components/inventory/product-detail-dialog';
+import { ProductFormDialog } from '@/components/inventory/product-form-dialog';
+import { IncomingStockDialog } from '@/components/inventory/incoming-stock-dialog';
+import { useSupplierStockLots } from '@/hooks/use-supplier-stock-lots';
+import { useWorkInProgress } from '@/hooks/use-work-in-progress';
+import { useSaleEvents } from '@/hooks/use-sale-events';
+import { bagsToMeters } from '@/lib/services';
+import type { Product, IncomingStock, WorkInProgress, SupplierStockLot } from "@/types";
 
 type ScannedItem = {
     id: string; // Product ID
@@ -30,57 +36,104 @@ type ScannedItem = {
 export default function ScanPage() {
     const router = useRouter();
     const { products, loading: productsLoading } = useProducts();
-    const { inventory, refetch: refetchInventory } = useInventory();
-    const { updateStock, loading: updateLoading } = useUpdateInventory();
+    const { inventory: inventoryData, refetch: refetchInventory } = useInventory();
+    const { updateStock } = useUpdateInventory();
+    const { events: saleEvents } = useSaleEvents();
+    const { items: wipItems, refetch: refetchWIP } = useWorkInProgress({ status: 'in_progress' });
+    const { incomingStocks, refetch: refetchIncoming } = useIncomingStock();
+    const { lotsMap: supplierStockLotsMap, refetch: refetchLots } = useSupplierStockLots();
 
     // Mode: 'single' (Do-do) or 'batch' (Renzoku)
     const [scanMode, setScanMode] = useState<'single' | 'batch'>('single');
 
-    // Single Mode State
+    // Modal State
+    const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+    const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [formDialogOpen, setFormDialogOpen] = useState(false);
+    const [incomingStockProduct, setIncomingStockProduct] = useState<Product | null>(null);
+    const [incomingDialogOpen, setIncomingDialogOpen] = useState(false);
+
+    // Single Mode Scanner State
     const [scannedCode, setScannedCode] = useState<string | null>(null);
     const [manualCode, setManualCode] = useState('');
     const [matchingProducts, setMatchingProducts] = useState<Product[]>([]);
-    const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
-    const [currentStock, setCurrentStock] = useState<number | null>(null);
-    const [adjustQty, setAdjustQty] = useState<string>('1');
     const [isProcessing, setIsProcessing] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     // Batch Mode State
     const [batchItems, setBatchItems] = useState<ScannedItem[]>([]);
 
-    // Voice Input Setup
-    const { isListening, startListening, stopListening, hasSupport, transcript } = useVoiceInput({
-        onResult: (text) => {
-            console.log("Voice Result:", text);
-            const normalized = text.replace(/[０-９]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+    // Data Maps logic (Same as bags/page.tsx)
+    const inventoryMap = useMemo(() => {
+        const map = new Map<string, { quantity: number; updatedAt?: string }>();
+        inventoryData?.forEach(item => {
+            map.set(item.productId, { quantity: item.quantity, updatedAt: item.updatedAt });
+        });
+        return map;
+    }, [inventoryData]);
 
-            // Heuristic words for commands
-            if (text.includes("完了") || text.includes("送信")) {
-                if (scanMode === 'batch' && batchItems.length > 0) {
-                    handleBatchSubmit();
-                    return;
-                }
-            }
+    const saleAllocationMap = useMemo(() => {
+        const map = new Map<string, { bags: number; meters: number }>();
+        saleEvents.forEach(event => {
+            event.items.forEach(item => {
+                const current = map.get(item.productId) || { bags: 0, meters: 0 };
+                const product = products.find(p => p.id === item.productId);
+                const weight = product?.weight || 5;
+                const allocatedMeters = bagsToMeters(item.allocatedQuantity, weight);
+                map.set(item.productId, {
+                    bags: current.bags + item.allocatedQuantity,
+                    meters: current.meters + allocatedMeters
+                });
+            });
+        });
+        return map;
+    }, [saleEvents, products]);
 
-            const match = normalized.match(/(\d+)/);
-            if (match) {
-                const num = match[0];
-                if (scanMode === 'single') {
-                    setAdjustQty(num);
-                    setMessage({ type: 'success', text: `数量を ${num} に設定しました` });
-                } else {
-                    // In batch mode, update the LAST scanned item's quantity
-                    if (batchItems.length > 0) {
-                        const newItems = [...batchItems];
-                        newItems[0].adjustQty = parseInt(num, 10); // Update most recent (index 0)
-                        setBatchItems(newItems);
-                        setMessage({ type: 'success', text: `最新の商品の数量を ${num} に設定しました` });
-                    }
-                }
-            }
-        }
-    });
+    const detailedSaleAllocationMap = useMemo(() => {
+        const map = new Map<string, Array<{ eventId: string; clientName: string; quantity: number; dates: string[] }>>();
+        saleEvents.forEach(event => {
+            if (event.status === 'completed' || event.status === 'cancelled') return;
+            event.items.forEach(item => {
+                const list = map.get(item.productId) || [];
+                list.push({
+                    eventId: event.id,
+                    clientName: event.clientName,
+                    quantity: item.allocatedQuantity,
+                    dates: event.dates
+                });
+                map.set(item.productId, list);
+            });
+        });
+        return map;
+    }, [saleEvents]);
+
+    const wipMap = useMemo(() => {
+        const map = new Map<string, WorkInProgress[]>();
+        wipItems.forEach(item => {
+            const list = map.get(item.productId) || [];
+            list.push(item);
+            map.set(item.productId, list);
+        });
+        return map;
+    }, [wipItems]);
+
+    const supplierStockMap = useMemo(() => {
+        const map = new Map<string, number>();
+        products.forEach(product => {
+            map.set(product.id, product.supplierStock || 0);
+        });
+        return map;
+    }, [products]);
+
+    const refetch = useCallback(async () => {
+        await Promise.all([
+            refetchInventory(),
+            refetchWIP(),
+            refetchIncoming(),
+            refetchLots()
+        ]);
+    }, [refetchInventory, refetchWIP, refetchIncoming, refetchLots]);
 
     // Find product when code changes (Single Mode)
     useEffect(() => {
@@ -92,23 +145,17 @@ export default function ScanPage() {
         if (matches.length > 0) {
             setMatchingProducts(matches);
             if (matches.length === 1) {
-                const product = matches[0];
-                setScannedProduct(product);
-                const stockItem = inventory.find(i => i.productId === product.id);
-                setCurrentStock(stockItem ? stockItem.quantity : 0);
+                setDetailProduct(matches[0]);
+                setDetailDialogOpen(true);
                 setMessage({ type: 'success', text: '商品が見つかりました' });
             } else {
-                setScannedProduct(null);
-                setCurrentStock(null);
                 setMessage({ type: 'success', text: '複数の商品が見つかりました。選択してください。' });
             }
         } else {
             setMatchingProducts([]);
-            setScannedProduct(null);
-            setCurrentStock(null);
             setMessage({ type: 'error', text: `未登録のJANコードです: ${scannedCode}` });
         }
-    }, [scannedCode, products, inventory, productsLoading, scanMode]);
+    }, [scannedCode, products, inventoryData, productsLoading, scanMode]);
 
     const handleScan = useCallback((decodedText: string) => {
         if (isProcessing) return;
@@ -141,11 +188,7 @@ export default function ScanPage() {
             // Play beep sound? (Browser policy might block)
 
             setBatchItems(prev => {
-                // Check if same product is already at top? Or just add new entry?
-                // Usually stocktaking scans same item multiple times -> increment check?
-                // But typically scanned items are distinct inputs.
-                // Let's add new entry to TOP of list
-                const stockItem = inventory.find(i => i.productId === product.id);
+                const stockItem = inventoryData?.find(i => i.productId === product.id);
                 const currentStock = stockItem ? stockItem.quantity : 0;
 
                 // If the top item is SAME product, maybe just increment qty?
@@ -174,7 +217,7 @@ export default function ScanPage() {
             });
             setMessage({ type: 'success', text: `${product.name} を追加しました` });
         }
-    }, [scannedCode, isProcessing, scanMode, products, inventory]);
+    }, [scannedCode, isProcessing, scanMode, products, inventoryData]);
 
     const handleManualSearch = () => {
         if (manualCode) {
@@ -186,7 +229,7 @@ export default function ScanPage() {
 
     const selectProductForBatch = (product: Product) => {
         setMatchingProducts([]);
-        const stockItem = inventory.find(i => i.productId === product.id);
+        const stockItem = inventoryData?.find(i => i.productId === product.id);
         const currentStock = stockItem ? stockItem.quantity : 0;
 
         setBatchItems(prev => {
@@ -210,32 +253,8 @@ export default function ScanPage() {
         setMessage({ type: 'success', text: `${product.name} を追加しました` });
     }
 
-    const handleSingleStockUpdate = async (type: 'in' | 'out') => {
-        if (!scannedProduct || !adjustQty) return;
-        setIsProcessing(true);
-        const qty = parseInt(adjustQty, 10);
-        // ... (Same logic as before)
-        try {
-            const success = await updateStock(
-                scannedProduct.id,
-                qty,
-                type === 'in' ? 'incoming' : 'outgoing',
-                'モバイル・スキャン入出力'
-            );
-            if (success) {
-                setMessage({ type: 'success', text: `${type === 'in' ? '入庫' : '出庫'}完了しました` });
-                await refetchInventory();
-                const stockItem = inventory.find(i => i.productId === scannedProduct.id); // Reload from fresh inventory if possible, but use optimistic for now
-                setCurrentStock((prev) => (prev !== null ? prev + (type === 'in' ? qty : -qty) : null));
-            } else {
-                setMessage({ type: 'error', text: '更新に失敗しました' });
-            }
-        } catch (e) {
-            console.error(e);
-            setMessage({ type: 'error', text: 'エラーが発生しました' });
-        } finally {
-            setIsProcessing(false);
-        }
+    const handleSingleStockUpdate = async () => {
+        await refetch();
     };
 
     const handleBatchSubmit = async () => {
@@ -269,8 +288,8 @@ export default function ScanPage() {
         setIsProcessing(false);
         if (failCount === 0) {
             setMessage({ type: 'success', text: `${successCount} 件の登録が完了しました` });
-            setBatchItems([]); // Clear list
-            refetchInventory();
+            setBatchItems([]);
+            refetch();
         } else {
             setMessage({ type: 'error', text: `${successCount} 件成功, ${failCount} 件失敗しました` });
         }
@@ -279,9 +298,8 @@ export default function ScanPage() {
     const resetScan = () => {
         setScannedCode(null);
         setMatchingProducts([]);
-        setScannedProduct(null);
+        setDetailProduct(null);
         setMessage(null);
-        setAdjustQty('1');
     };
 
     const removeBatchItem = (index: number) => {
@@ -297,15 +315,6 @@ export default function ScanPage() {
                     </Button>
                     <h1 className="text-xl font-bold">スキャン</h1>
                 </div>
-                {hasSupport && (
-                    <div className="ml-auto">
-                        {isListening ? (
-                            <Badge variant="destructive" className="animate-pulse">音声認識中...</Badge>
-                        ) : (
-                            <Badge variant="secondary"><Mic className="h-3 w-3 mr-1" />音声可</Badge>
-                        )}
-                    </div>
-                )}
             </div>
 
             <Tabs value={scanMode} onValueChange={(v) => {
@@ -321,7 +330,7 @@ export default function ScanPage() {
             </Tabs>
 
             {/* Scanner Area - Always Visible in Batch, Visible if Empty in Single */}
-            {(scanMode === 'batch' || hidingScannerSingle(scanMode, scannedProduct, matchingProducts.length > 1)) && (
+            {(scanMode === 'batch' || hidingScannerSingle(scanMode, detailProduct, matchingProducts.length > 1)) && (
                 <div className="mb-6 space-y-4">
                     {matchingProducts.length > 1 ? (
                         <Card className="animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -346,9 +355,8 @@ export default function ScanPage() {
                                             size="sm"
                                             onClick={() => {
                                                 if (scanMode === 'single') {
-                                                    setScannedProduct(product);
-                                                    const stockItem = inventory.find(i => i.productId === product.id);
-                                                    setCurrentStock(stockItem ? stockItem.quantity : 0);
+                                                    setDetailProduct(product);
+                                                    setDetailDialogOpen(true);
                                                 } else {
                                                     selectProductForBatch(product);
                                                 }
@@ -396,22 +404,12 @@ export default function ScanPage() {
                 </div>
             )}
 
-            {/* Single Mode Result */}
-            {scanMode === 'single' && scannedProduct && (
-                <SingleScanResult
-                    product={scannedProduct}
-                    currentStock={currentStock}
-                    adjustQty={adjustQty}
-                    setAdjustQty={setAdjustQty}
-                    handleStockUpdate={handleSingleStockUpdate}
-                    resetScan={resetScan}
-                    isProcessing={isProcessing}
-                    isListening={isListening}
-                    startListening={startListening}
-                    stopListening={stopListening}
-                    hasSupport={hasSupport}
-                    transcript={transcript}
-                />
+            {/* Single Mode Result Area (Empty because we use Modal) */}
+            {scanMode === 'single' && detailProduct && (
+                <div className="text-center p-8 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
+                    <p className="mb-4">「{detailProduct.name}」を読み取りました</p>
+                    <Button variant="outline" onClick={resetScan}>次の商品をスキャン</Button>
+                </div>
             )}
 
             {/* Batch Mode List */}
@@ -479,6 +477,40 @@ export default function ScanPage() {
                     {message.text}
                 </div>
             )}
+
+            {/* 商品詳細ダイアログ */}
+            <ProductDetailDialog
+                product={detailProduct}
+                open={detailDialogOpen}
+                onOpenChange={setDetailDialogOpen}
+                currentStock={detailProduct ? (inventoryMap.get(detailProduct.id)?.quantity || 0) : 0}
+                supplierStock={detailProduct ? (supplierStockMap.get(detailProduct.id) || 0) : 0}
+                supplierStockLots={detailProduct ? (supplierStockLotsMap.get(detailProduct.id) || []) : []}
+                wipItems={detailProduct ? (wipMap.get(detailProduct.id) || []) : []}
+                saleAllocations={detailProduct ? saleAllocationMap.get(detailProduct.id) : undefined}
+                detailedAllocations={detailProduct ? (detailedSaleAllocationMap.get(detailProduct.id) || []) : []}
+                onEditProduct={(product) => {
+                    setEditingProduct(product);
+                    setFormDialogOpen(true);
+                }}
+                onSuccess={handleSingleStockUpdate}
+            />
+
+            {/* 商品フォームダイアログ */}
+            <ProductFormDialog
+                open={formDialogOpen}
+                onOpenChange={setFormDialogOpen}
+                product={editingProduct}
+                onSuccess={refetch}
+            />
+
+            {/* 入荷予定ダイアログ */}
+            <IncomingStockDialog
+                open={incomingDialogOpen}
+                onOpenChange={setIncomingDialogOpen}
+                product={incomingStockProduct}
+                onSuccess={refetch}
+            />
         </div>
     );
 }
@@ -489,72 +521,3 @@ function hidingScannerSingle(mode: string, scannedProduct: Product | null, hasMu
     return true;
 }
 
-type SingleScanResultProps = {
-    product: Product;
-    currentStock: number | null;
-    adjustQty: string;
-    setAdjustQty: (qty: string) => void;
-    handleStockUpdate: (type: 'in' | 'out') => Promise<void>;
-    resetScan: () => void;
-    isProcessing: boolean;
-    isListening: boolean;
-    startListening: () => void;
-    stopListening: () => void;
-    hasSupport: boolean;
-    transcript: string;
-};
-
-function SingleScanResult({ product, currentStock, adjustQty, setAdjustQty, handleStockUpdate, resetScan, isProcessing, isListening, startListening, stopListening, hasSupport, transcript }: SingleScanResultProps) {
-    // ... Copy existing Single UI here ...
-    // (For brevity in plan, I will assume full code in write_to_file)
-    return (
-        <Card className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <CardHeader className="bg-muted/50 pb-2">
-                <CardTitle className="text-lg flex justify-between items-start">
-                    <span>{product.name}</span>
-                    <Badge variant="outline">{product.productCode}</Badge>
-                </CardTitle>
-                <CardDescription>
-                    {product.weight ? `${product.weight}kg` : '-'} / {product.material} / {product.shape}
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-4 space-y-4">
-                <div className="flex justify-between items-center p-3 bg-secondary/20 rounded-lg">
-                    <span className="text-sm text-muted-foreground">現在在庫</span>
-                    <span className="text-3xl font-bold text-primary">
-                        {currentStock !== null ? currentStock.toLocaleString() : <Loader2 className="h-6 w-6 animate-spin" />}
-                    </span>
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">調整数量</label>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" onClick={() => setAdjustQty(Math.max(1, (parseInt(adjustQty) || 0) - 1).toString())}>
-                            <Minus className="h-4 w-4" />
-                        </Button>
-                        <Input type="number" value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} className="text-center text-lg font-bold" />
-                        <Button variant="outline" size="icon" onClick={() => setAdjustQty(((parseInt(adjustQty) || 0) + 1).toString())}>
-                            <Plus className="h-4 w-4" />
-                        </Button>
-                        {hasSupport && (
-                            <Button variant={isListening ? "destructive" : "secondary"} size="icon" onClick={isListening ? stopListening : startListening} className={cn("ml-2", isListening && "animate-pulse")}>
-                                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                            </Button>
-                        )}
-                    </div>
-                    {transcript && isListening && <p className="text-xs text-muted-foreground text-center animate-pulse">認識中: {transcript}</p>}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                    <Button variant="destructive" onClick={() => handleStockUpdate('out')} disabled={isProcessing} className="h-12">
-                        出庫 (-{adjustQty})
-                    </Button>
-                    <Button variant="default" onClick={() => handleStockUpdate('in')} disabled={isProcessing} className="h-12 bg-green-600 hover:bg-green-700">
-                        入庫 (+{adjustQty})
-                    </Button>
-                </div>
-                <Button variant="outline" className="w-full mt-4" onClick={resetScan}>次の商品をスキャン</Button>
-            </CardContent>
-        </Card>
-    );
-}
