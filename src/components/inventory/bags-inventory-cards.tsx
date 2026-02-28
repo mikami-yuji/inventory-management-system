@@ -5,7 +5,7 @@ import { Product, WorkInProgress, IncomingStock, SupplierStockLot } from "@/type
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Loader2, Upload, Trash2, Camera, ImageIcon } from "lucide-react";
+import { Pencil, Loader2, Upload, Trash2, Camera, ImageIcon, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPitch, isRollBag, bagsToMeters, metersToBags } from "@/lib/services";
 import { supabase } from "@/lib/supabase";
@@ -19,6 +19,7 @@ type BagsInventoryCardsProps = {
     supplierStockMap: Map<string, number>;
     supplierStockLotsMap: Map<string, SupplierStockLot[]>;
     incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
+    onDetail: (product: Product) => void;
     onEdit: (product: Product) => void;
     onDelete: (product: Product) => void;
     onIncomingStockClick: (product: Product) => void;
@@ -33,6 +34,7 @@ export function BagsInventoryCards({
     supplierStockMap,
     supplierStockLotsMap,
     incomingMap,
+    onDetail,
     onEdit,
     onDelete,
     onIncomingStockClick,
@@ -58,6 +60,7 @@ export function BagsInventoryCards({
                     supplierStockMap={supplierStockMap}
                     supplierStockLotsMap={supplierStockLotsMap}
                     incomingMap={incomingMap}
+                    onDetail={onDetail}
                     onEdit={onEdit}
                     onDelete={onDelete}
                     onIncomingStockClick={onIncomingStockClick}
@@ -76,6 +79,7 @@ type ProductCardProps = {
     supplierStockMap: Map<string, number>;
     supplierStockLotsMap: Map<string, SupplierStockLot[]>;
     incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
+    onDetail: (product: Product) => void;
     onEdit: (product: Product) => void;
     onDelete: (product: Product) => void;
     onIncomingStockClick: (product: Product) => void;
@@ -90,6 +94,7 @@ function ProductCard({
     supplierStockMap,
     supplierStockLotsMap,
     incomingMap,
+    onDetail,
     onEdit,
     onDelete,
     onIncomingStockClick,
@@ -198,6 +203,7 @@ function ProductCard({
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
+            onClick={() => onDetail(product)}
         >
             {/* 画像エリア - クリックで詳細でもいいが、フォームを開くのが無難 */}
             <div className="relative aspect-[4/3] bg-slate-100 group">
@@ -263,9 +269,12 @@ function ProductCard({
                                     size="sm"
                                     variant="secondary"
                                     className="h-8"
-                                    onClick={() => onEdit(product)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDetail(product);
+                                    }}
                                 >
-                                    <Pencil className="h-4 w-4 mr-1" /> 詳細
+                                    <Info className="h-4 w-4 mr-1" /> 詳細
                                 </Button>
                             </div>
                         )}

@@ -33,6 +33,7 @@ import { IncomingStockDialog } from "@/components/inventory/incoming-stock-dialo
 import type { Product, IncomingStock } from "@/types";
 import { BagsInventoryTable } from "@/components/inventory/bags-inventory-table";
 import { BagsInventoryCards } from "@/components/inventory/bags-inventory-cards";
+import { ProductDetailDialog } from "@/components/inventory/product-detail-dialog";
 import { cn } from "@/lib/utils";
 
 import {
@@ -190,6 +191,10 @@ export default function BagsInventoryPage(): React.ReactElement {
     const [incomingDialogOpen, setIncomingDialogOpen] = useState(false);
     const [incomingStockProduct, setIncomingStockProduct] = useState<Product | null>(null);
 
+    // 商品詳細ダイアログの状態
+    const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+    const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+
     const handleAddProduct = (): void => {
         setEditingProduct(null);
         setFormDialogOpen(true);
@@ -198,6 +203,11 @@ export default function BagsInventoryPage(): React.ReactElement {
     const handleEditProduct = (product: Product): void => {
         setEditingProduct(product);
         setFormDialogOpen(true);
+    };
+
+    const handleOpenDetail = (product: Product): void => {
+        setDetailProduct(product);
+        setDetailDialogOpen(true);
     };
 
     // 削除ボタンクリック時
@@ -555,6 +565,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                     supplierStockMap={supplierStockMap}
                     supplierStockLotsMap={supplierStockLotsMap}
                     incomingMap={incomingMap}
+                    onDetail={handleOpenDetail}
                     onEdit={handleEditProduct}
                     onDelete={handleDeleteClick}
                     onIncomingStockClick={(product) => {
@@ -564,6 +575,22 @@ export default function BagsInventoryPage(): React.ReactElement {
                     onRefetch={refetch}
                 />
             )}
+
+            {/* 商品詳細ダイアログ */}
+            <ProductDetailDialog
+                product={detailProduct}
+                open={detailDialogOpen}
+                onOpenChange={setDetailDialogOpen}
+                currentStock={detailProduct ? (inventoryMap.get(detailProduct.id)?.quantity || 0) : 0}
+                supplierStock={detailProduct ? (supplierStockMap.get(detailProduct.id) || 0) : 0}
+                wipItems={detailProduct ? (wipMap.get(detailProduct.id) || []) : []}
+                saleAllocations={detailProduct ? saleAllocationMap.get(detailProduct.id) : undefined}
+                onEditProduct={(product) => {
+                    setEditingProduct(product);
+                    setFormDialogOpen(true);
+                }}
+                onSuccess={refetch}
+            />
 
             {/* 商品フォームダイアログ */}
             <ProductFormDialog
