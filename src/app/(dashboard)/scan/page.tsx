@@ -39,6 +39,7 @@ export default function ScanPage() {
     // Single Mode State
     const [scannedCode, setScannedCode] = useState<string | null>(null);
     const [manualCode, setManualCode] = useState('');
+    const [matchingProducts, setMatchingProducts] = useState<Product[]>([]);
     const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
     const [currentStock, setCurrentStock] = useState<number | null>(null);
     const [adjustQty, setAdjustQty] = useState<string>('1');
@@ -86,14 +87,23 @@ export default function ScanPage() {
         if (scanMode !== 'single') return;
         if (!scannedCode || productsLoading) return;
 
-        const product = products.find(p => p.janCode === scannedCode);
+        const matches = products.filter(p => p.janCode === scannedCode);
 
-        if (product) {
-            setScannedProduct(product);
-            const stockItem = inventory.find(i => i.productId === product.id);
-            setCurrentStock(stockItem ? stockItem.quantity : 0);
-            setMessage({ type: 'success', text: '商品が見つかりました' });
+        if (matches.length > 0) {
+            setMatchingProducts(matches);
+            if (matches.length === 1) {
+                const product = matches[0];
+                setScannedProduct(product);
+                const stockItem = inventory.find(i => i.productId === product.id);
+                setCurrentStock(stockItem ? stockItem.quantity : 0);
+                setMessage({ type: 'success', text: '商品が見つかりました' });
+            } else {
+                setScannedProduct(null);
+                setCurrentStock(null);
+                setMessage({ type: 'success', text: '複数の商品が見つかりました。選択してください。' });
+            }
         } else {
+            setMatchingProducts([]);
             setScannedProduct(null);
             setCurrentStock(null);
             setMessage({ type: 'error', text: `未登録のJANコードです: ${scannedCode}` });
@@ -105,15 +115,28 @@ export default function ScanPage() {
 
         if (scanMode === 'single') {
             if (scannedCode === decodedText) return; // Prevent duplicate if same
+            setMatchingProducts([]); // Reset matching products
             setScannedCode(decodedText);
         } else {
             // Batch Mode logic
-            // Find product
-            const product = products.find(p => p.janCode === decodedText);
-            if (!product) {
+            // Find products
+            const matches = products.filter(p => p.janCode === decodedText);
+
+            if (matches.length === 0) {
                 setMessage({ type: 'error', text: `未登録: ${decodedText}` });
                 return;
             }
+
+            if (matches.length > 1) {
+                // Batch mode but multiple matches. Needs disambiguation.
+                // For simplicity, we can temporarily put the component into a modal state, 
+                // but let's just populate matchingProducts and render it exactly like Single mode for disambiguation.
+                setMatchingProducts(matches);
+                setMessage({ type: 'success', text: '複数の商品が見つかりました。選択してください。' });
+                return;
+            }
+
+            const product = matches[0];
 
             // Play beep sound? (Browser policy might block)
 
@@ -155,10 +178,37 @@ export default function ScanPage() {
 
     const handleManualSearch = () => {
         if (manualCode) {
+            setMatchingProducts([]);
             handleScan(manualCode);
             setManualCode(''); // Clear after scan
         }
     };
+
+    const selectProductForBatch = (product: Product) => {
+        setMatchingProducts([]);
+        const stockItem = inventory.find(i => i.productId === product.id);
+        const currentStock = stockItem ? stockItem.quantity : 0;
+
+        setBatchItems(prev => {
+            if (prev.length > 0 && prev[0].id === product.id) {
+                const newItems = [...prev];
+                newItems[0].adjustQty += 1;
+                return newItems;
+            }
+
+            return [{
+                id: product.id,
+                janCode: product.janCode || '',
+                productName: product.name,
+                productCode: product.sku,
+                currentStock,
+                adjustQty: 1, // Default 1
+                type: 'in',
+                timestamp: Date.now()
+            }, ...prev];
+        });
+        setMessage({ type: 'success', text: `${product.name} を追加しました` });
+    }
 
     const handleSingleStockUpdate = async (type: 'in' | 'out') => {
         if (!scannedProduct || !adjustQty) return;
@@ -228,6 +278,7 @@ export default function ScanPage() {
 
     const resetScan = () => {
         setScannedCode(null);
+        setMatchingProducts([]);
         setScannedProduct(null);
         setMessage(null);
         setAdjustQty('1');
@@ -257,7 +308,6 @@ export default function ScanPage() {
                 )}
             </div>
 
-            {/* Mode Switcher */}
             <Tabs value={scanMode} onValueChange={(v) => {
                 setScanMode(v as 'single' | 'batch');
                 resetScan();
@@ -271,19 +321,66 @@ export default function ScanPage() {
             </Tabs>
 
             {/* Scanner Area - Always Visible in Batch, Visible if Empty in Single */}
-            {(scanMode === 'batch' || hidingScannerSingle(scanMode, scannedProduct)) && (
+            {(scanMode === 'batch' || hidingScannerSingle(scanMode, scannedProduct, matchingProducts.length > 1)) && (
                 <div className="mb-6 space-y-4">
-                    <Card>
-                        <CardContent className="p-0 overflow-hidden bg-black relative min-h-[200px] flex items-center justify-center">
-                            <BarcodeScanner
-                                qrCodeSuccessCallback={handleScan}
-                                aspectRatio={1.0}
-                            />
-                            <div className="absolute inset-0 pointer-events-none border-2 border-white/30 flex items-center justify-center">
-                                <p className="text-white/70 text-xs mt-20 bg-black/50 px-2 rounded">JANコードを読み取ってください</p>
+                    {matchingProducts.length > 1 ? (
+                        <Card className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                            <CardHeader className="bg-muted/50 pb-2">
+                                <CardTitle className="text-lg">対象商品を選択 ({matchingProducts.length}件)</CardTitle>
+                                <CardDescription>同じJANコードの商品が複数あります</CardDescription>
+                            </CardHeader>
+                            <CardContent className="pt-4 space-y-2 max-h-[300px] overflow-y-auto">
+                                {matchingProducts.map(product => (
+                                    <div key={product.id} className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                                        <div className="flex-1 min-w-0 pr-4">
+                                            <div className="font-bold truncate" title={product.name}>{product.name}</div>
+                                            <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                                <span>受注№: {product.sku}</span>
+                                                {product.productCode && <span>/ 商品コード: {product.productCode}</span>}
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground">
+                                                {product.weight ? `${product.weight}kg / ` : ''}{product.material} / {product.shape}
+                                            </div>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            onClick={() => {
+                                                if (scanMode === 'single') {
+                                                    setScannedProduct(product);
+                                                    const stockItem = inventory.find(i => i.productId === product.id);
+                                                    setCurrentStock(stockItem ? stockItem.quantity : 0);
+                                                } else {
+                                                    selectProductForBatch(product);
+                                                }
+                                            }}
+                                        >
+                                            選択
+                                        </Button>
+                                    </div>
+                                ))}
+                            </CardContent>
+                            <div className="px-6 pb-6 pt-2">
+                                <Button variant="outline" className="w-full" onClick={() => {
+                                    setMatchingProducts([]);
+                                    setScannedCode(null);
+                                }}>
+                                    スキャンし直す
+                                </Button>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </Card>
+                    ) : (
+                        <Card>
+                            <CardContent className="p-0 overflow-hidden bg-black relative min-h-[200px] flex items-center justify-center">
+                                <BarcodeScanner
+                                    qrCodeSuccessCallback={handleScan}
+                                    aspectRatio={1.0}
+                                />
+                                <div className="absolute inset-0 pointer-events-none border-2 border-white/30 flex items-center justify-center">
+                                    <p className="text-white/70 text-xs mt-20 bg-black/50 px-2 rounded">JANコードを読み取ってください</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     <div className="flex gap-2">
                         <Input
@@ -387,8 +484,8 @@ export default function ScanPage() {
 }
 
 // Helper for Single Mode UI (extracted for cleanliness, but keep in same file for now)
-function hidingScannerSingle(mode: string, scannedProduct: Product | null) {
-    if (mode === 'single' && scannedProduct) return false;
+function hidingScannerSingle(mode: string, scannedProduct: Product | null, hasMultipleMatches: boolean) {
+    if (mode === 'single' && (scannedProduct || hasMultipleMatches)) return false;
     return true;
 }
 
