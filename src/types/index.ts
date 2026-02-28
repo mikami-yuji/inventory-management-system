@@ -200,7 +200,7 @@ export type WorkInProgress = {
   note: string | null;
   status: 'in_progress' | 'completed' | 'cancelled';
   termType: 'specific' | 'early' | 'mid' | 'late';
-  confirmationStatus: 'unconfirmed' | 'confirmed';
+  confirmationStatus: 'unconfirmed' | 'confirmed' | 'scheduled';
   createdAt: string;
 };
 

@@ -47,7 +47,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                     sku
                 )
             `)
-            .order('started_at', { ascending: false })
+            .order('started_at', { ascending: true })
 
         if (status !== 'all') {
             query = query.eq('status', status)
@@ -193,13 +193,19 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                         product_id: wipItem.product_id,
                         expected_date: expectedDate,
                         quantity: quantity,
-                        note: '仕掛品からの移動'
+                        note: '仕掛品からの予定'
                     } as any)
 
-                // 完了として仕掛品を削除
-                await (supabase
-                    .from('work_in_progress') as any)
-                    .delete()
+                // ユーザーからの要望により、入荷予定を追加しても「まだ仕上がっていない」ため、
+                // 仕掛品のデータ（レコードや数量）は自動で削除・減算しないように変更。
+                // 代わりに確認ステータスを「scheduled」にして入力済みであることを明示する。
+                await supabase
+                    .from('work_in_progress')
+                    // @ts-ignore
+                    .update({
+                        confirmation_status: 'scheduled',
+                        updated_at: new Date().toISOString()
+                    })
                     .eq('id', id)
             }
         } else if (action === 'to_supplier') {

@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
+import { useSupplierStockLots } from "@/hooks/use-supplier-stock-lots";
 import { useState, useEffect, useCallback } from "react";
 
 // APIから取得する発注データの型
@@ -34,12 +35,17 @@ type DashboardEvent = {
     clientName: string;
     status: string;
     dates: string[];
+    items?: Array<{
+        productName: string;
+        plannedQuantity: number;
+    }>;
 };
 
 export default function DashboardPage(): React.ReactElement {
     // Supabase APIから商品と在庫データを取得
     const { products, loading: productsLoading } = useProducts();
     const { inventory, loading: inventoryLoading } = useInventory();
+    const { lots, loading: lotsLoading } = useSupplierStockLots();
 
     // Hydrationエラー回避: 日時表示はクライアントサイドのみ
     const [currentTime, setCurrentTime] = useState<string>("");
@@ -122,7 +128,13 @@ export default function DashboardPage(): React.ReactElement {
             if (res.ok) {
                 const result = await res.json();
                 // APIは { data: [...], error: null } 形式で返す
-                setActiveEvents(result.data || []);
+                // 直近の日付順（開始日の昇順）にソート
+                const sortedData = (result.data || []).sort((a: DashboardEvent, b: DashboardEvent) => {
+                    const dateA = a.dates?.[0] || '9999-12-31';
+                    const dateB = b.dates?.[0] || '9999-12-31';
+                    return dateA.localeCompare(dateB);
+                });
+                setActiveEvents(sortedData);
             }
         } catch (err) {
             console.error('イベント取得エラー:', err);
@@ -133,7 +145,7 @@ export default function DashboardPage(): React.ReactElement {
         fetchEvents();
     }, [fetchEvents]);
 
-    const loading = productsLoading || inventoryLoading || ordersLoading;
+    const loading = productsLoading || inventoryLoading || ordersLoading || lotsLoading;
 
     // 在庫統計を計算
     const lowStockItems = inventory.filter(i => i.quantity < 50);
@@ -148,6 +160,24 @@ export default function DashboardPage(): React.ReactElement {
         const unitPrice = productPriceMap.get(productId) || 0;
         return sum + (item.quantity * unitPrice);
     }, 0);
+
+    // 長期在庫（入荷月から6ヶ月目以降）の抽出
+    const longTermLots = lots.filter(lot => {
+        const arrival = new Date(lot.stockDate);
+        const now = new Date();
+        const monthsElapsed = (now.getFullYear() - arrival.getFullYear()) * 12 + now.getMonth() - arrival.getMonth();
+        return monthsElapsed >= 5;
+    })
+        .sort((a, b) => new Date(a.stockDate).getTime() - new Date(b.stockDate).getTime())
+        .map(lot => {
+            const product = products.find(p => p.id === lot.productId);
+            return {
+                ...lot,
+                productName: product?.name || '不明な商品',
+                sku: product?.sku || ''
+            };
+        })
+        .slice(0, 5); // 最大5件表示
 
 
 
@@ -396,9 +426,73 @@ export default function DashboardPage(): React.ReactElement {
                                     <p className="text-sm text-gray-500 mt-1">
                                         {event.dates?.[0]} {event.dates?.length > 1 ? `〜 ${event.dates[event.dates.length - 1]}` : ''}
                                     </p>
+                                    {event.items && event.items.length > 0 && (
+                                        <div className="mt-2 pt-2 border-t border-pink-50 space-y-1">
+                                            {event.items.slice(0, 3).map((item, idx) => (
+                                                <div key={idx} className="flex justify-between items-center text-xs text-gray-600">
+                                                    <span className="truncate mr-2" title={item.productName}>
+                                                        {item.productName}
+                                                    </span>
+                                                    <span className="font-medium whitespace-nowrap text-pink-700">
+                                                        {item.plannedQuantity.toLocaleString()} 個
+                                                    </span>
+                                                </div>
+                                            ))}
+                                            {event.items.length > 3 && (
+                                                <div className="text-[10px] text-gray-400 text-right mt-1">他 {event.items.length - 3} 件...</div>
+                                            )}
+                                        </div>
+                                    )}
                                     <Button variant="link" className="p-0 h-auto mt-2 text-pink-600" asChild>
                                         <Link href={`/events/${event.id}`}>詳細を見る</Link>
                                     </Button>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* 長期在庫 */}
+            {longTermLots.length > 0 && (
+                <Card className="bg-red-50 border-red-200">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <div>
+                            <CardTitle className="text-red-700 flex items-center gap-2">
+                                <AlertTriangle className="h-5 w-5" />
+                                長期在庫 (メーカー在庫)
+                            </CardTitle>
+                            <CardDescription className="text-red-600/70">
+                                入荷月から6ヶ月目以降のロット
+                            </CardDescription>
+                        </div>
+                        <Button variant="ghost" size="sm" asChild className="text-red-700 hover:bg-red-100 hover:text-red-800">
+                            <Link href="/inventory">在庫管理へ</Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-3">
+                            {longTermLots.map((lot) => (
+                                <div key={lot.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white rounded border border-red-100 shadow-sm gap-2">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-medium text-sm truncate" title={lot.productName}>
+                                            {lot.productName}
+                                        </div>
+                                        <div className="text-[10px] text-muted-foreground flex gap-2 mt-0.5">
+                                            <span>SKU: {lot.sku}</span>
+                                            {lot.note && <span>/ メモ: {lot.note}</span>}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3 shrink-0">
+                                        <div className="text-right">
+                                            <div className="text-xs text-red-600 font-medium">
+                                                {new Date(lot.stockDate).toLocaleDateString('ja-JP')}
+                                            </div>
+                                            <div className="font-bold text-sm">
+                                                {lot.quantity.toLocaleString()} 個
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                         </div>

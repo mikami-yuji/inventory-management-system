@@ -26,6 +26,7 @@ import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
 import { useIncomingStock } from "@/hooks/use-incoming-stock";
 import { useSaleEvents } from "@/hooks/use-sale-events";
+import { useSupplierStockLots } from "@/hooks/use-supplier-stock-lots";
 import { useWorkInProgress, calculateWIPByProduct } from "@/hooks/use-work-in-progress";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import { IncomingStockDialog } from "@/components/inventory/incoming-stock-dialog";
@@ -100,8 +101,9 @@ export default function BagsInventoryPage(): React.ReactElement {
     const { events: saleEvents, loading: eventsLoading } = useSaleEvents();
     const { items: wipItems, loading: wipLoading, refetch: refetchWIP } = useWorkInProgress({ status: 'in_progress' });
     const { incomingStocks, loading: incomingLoading, refetch: refetchIncoming } = useIncomingStock();
+    const { lotsMap: supplierStockLotsMap, loading: lotsLoading, refetch: refetchLots } = useSupplierStockLots();
 
-    const loading = productsLoading || inventoryLoading || eventsLoading || wipLoading || incomingLoading;
+    const loading = productsLoading || inventoryLoading || eventsLoading || wipLoading || incomingLoading || lotsLoading;
     const error = productsError;
 
     // 米袋カテゴリのみをフィルタ (bag + new_rice)
@@ -173,6 +175,7 @@ export default function BagsInventoryPage(): React.ReactElement {
         refetchInventory();
         refetchWIP();
         refetchIncoming();
+        refetchLots();
     };
 
     // 商品フォームダイアログの状態
@@ -530,6 +533,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                     saleAllocationMap={saleAllocationMap}
                     wipMap={wipMap}
                     supplierStockMap={supplierStockMap}
+                    supplierStockLotsMap={supplierStockLotsMap}
                     incomingMap={incomingMap}
                     saleEvents={saleEvents || []}
                     onEdit={handleEditProduct}
@@ -547,6 +551,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                     saleAllocationMap={saleAllocationMap}
                     wipMap={wipMap}
                     supplierStockMap={supplierStockMap}
+                    supplierStockLotsMap={supplierStockLotsMap}
                     incomingMap={incomingMap}
                     onEdit={handleEditProduct}
                     onDelete={handleDeleteClick}

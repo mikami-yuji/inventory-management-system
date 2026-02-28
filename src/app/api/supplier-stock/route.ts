@@ -9,16 +9,16 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         const { searchParams } = new URL(request.url)
         const productId = searchParams.get('productId')
 
-        if (!productId) {
-            return NextResponse.json({ data: null, error: '商品IDが必要です' }, { status: 400 })
-        }
-
-        const { data, error } = await supabase
+        let query = supabase
             .from('supplier_stock_lots')
             // @ts-ignore
             .select('*')
-            .eq('product_id', productId)
-            .order('stock_date', { ascending: true })
+
+        if (productId) {
+            query = query.eq('product_id', productId)
+        }
+
+        const { data, error } = await query.order('stock_date', { ascending: true })
 
         if (error) {
             return NextResponse.json({ data: null, error: error.message }, { status: 500 })

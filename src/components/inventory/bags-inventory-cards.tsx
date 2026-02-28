@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Product, WorkInProgress, IncomingStock } from "@/types";
+import { Product, WorkInProgress, IncomingStock, SupplierStockLot } from "@/types";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ type BagsInventoryCardsProps = {
     saleAllocationMap: Map<string, { bags: number; meters: number }>;
     wipMap: Map<string, WorkInProgress[]>;
     supplierStockMap: Map<string, number>;
+    supplierStockLotsMap: Map<string, SupplierStockLot[]>;
     incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
     onEdit: (product: Product) => void;
     onDelete: (product: Product) => void;
@@ -30,6 +31,7 @@ export function BagsInventoryCards({
     saleAllocationMap,
     wipMap,
     supplierStockMap,
+    supplierStockLotsMap,
     incomingMap,
     onEdit,
     onDelete,
@@ -54,6 +56,7 @@ export function BagsInventoryCards({
                     saleAllocationMap={saleAllocationMap}
                     wipMap={wipMap}
                     supplierStockMap={supplierStockMap}
+                    supplierStockLotsMap={supplierStockLotsMap}
                     incomingMap={incomingMap}
                     onEdit={onEdit}
                     onDelete={onDelete}
@@ -71,6 +74,7 @@ type ProductCardProps = {
     saleAllocationMap: Map<string, { bags: number; meters: number }>;
     wipMap: Map<string, WorkInProgress[]>;
     supplierStockMap: Map<string, number>;
+    supplierStockLotsMap: Map<string, SupplierStockLot[]>;
     incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
     onEdit: (product: Product) => void;
     onDelete: (product: Product) => void;
@@ -84,6 +88,7 @@ function ProductCard({
     saleAllocationMap,
     wipMap,
     supplierStockMap,
+    supplierStockLotsMap,
     incomingMap,
     onEdit,
     onDelete,
@@ -101,6 +106,7 @@ function ProductCard({
     const wipList = wipMap.get(product.id) || [];
     const wipQuantity = wipList.reduce((sum, item) => sum + item.quantity, 0);
     const supplier = supplierStockMap.get(product.id) || 0;
+    const supplierLots = supplierStockLotsMap?.get(product.id) || [];
     const incoming = incomingMap.get(product.id);
 
     const isRoll = product.shape && isRollBag(product.shape);
@@ -304,6 +310,32 @@ function ProductCard({
                                                 {item.quantity.toLocaleString()}
                                             </div>
                                         ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* メーカー在庫の表示 */}
+                            {supplier > 0 && (
+                                <div className="text-orange-600 mt-2 text-[10px] text-right">
+                                    メーカー: {supplier.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                    <div className="flex flex-col gap-0.5 mt-0.5 opacity-80 font-normal">
+                                        {supplierLots.map((lot, i) => {
+                                            const now = new Date();
+                                            const arrival = new Date(lot.stockDate);
+                                            const monthsElapsed = (now.getFullYear() - arrival.getFullYear()) * 12 + now.getMonth() - arrival.getMonth();
+                                            const isLongTerm = monthsElapsed >= 5;
+
+                                            return (
+                                                <div key={i} className="flex justify-end items-center gap-1">
+                                                    {isLongTerm && (
+                                                        <Badge variant="destructive" className="h-4 px-1 text-[8px] whitespace-nowrap">長期在庫</Badge>
+                                                    )}
+                                                    <div className="text-[10px] leading-tight whitespace-nowrap">
+                                                        {new Date(lot.stockDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {lot.quantity.toLocaleString()}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
