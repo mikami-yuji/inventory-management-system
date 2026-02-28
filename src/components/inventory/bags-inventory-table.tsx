@@ -83,8 +83,8 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                         <TableHeader className="bg-background shadow-[0_1px_3px_rgba(0,0,0,0.1)]">
                             <TableRow>
                                 <TableHead className="w-[60px] sticky top-0 left-0 z-50 bg-background bg-clip-padding border-r shadow-sm">画像</TableHead>
-                                <TableHead className="w-[180px] sticky top-0 left-[60px] z-50 bg-background bg-clip-padding border-r shadow-sm">商品情報</TableHead>
-                                <TableHead className="w-[120px] sticky top-0 left-[240px] z-50 bg-background bg-clip-padding border-l shadow-[2px_2px_5px_-1px_rgba(0,0,0,0.1)]">スペック</TableHead>
+                                <TableHead className="w-[180px] sticky top-0 md:left-[60px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-sm">商品情報</TableHead>
+                                <TableHead className="w-[120px] sticky top-0 md:left-[240px] z-40 md:z-50 bg-background bg-clip-padding md:border-l md:shadow-[2px_2px_5px_-1px_rgba(0,0,0,0.1)]">スペック</TableHead>
                                 <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">現在庫</TableHead>
                                 <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">特売引当</TableHead>
                                 <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">有効在庫</TableHead>
@@ -146,7 +146,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 return (
                                     <TableRow key={product.id} className={cn("group", isOutOfStock && "bg-red-50 bg-opacity-50")}>
                                         <TableCell className={cn(
-                                            "sticky left-0 z-10 transition-colors",
+                                            "sticky left-0 z-10 transition-colors border-r",
                                             isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
                                         )}>
                                             {product.imageUrl ? (
@@ -167,7 +167,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                             )}
                                         </TableCell>
                                         <TableCell className={cn(
-                                            "sticky left-[60px] z-10 transition-colors",
+                                            "md:sticky md:left-[60px] z-0 md:z-10 transition-colors md:border-r",
                                             isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
                                         )}>
                                             <div className="max-w-[180px]">
@@ -178,7 +178,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                             </div>
                                         </TableCell>
                                         <TableCell className={cn(
-                                            "sticky left-[240px] z-10 shadow-[2px_0_5px_-1px_rgba(0,0,0,0.1)] transition-colors",
+                                            "md:sticky md:left-[240px] z-0 md:z-10 md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.1)] transition-colors",
                                             isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
                                         )}>
                                             <div className="text-sm">
