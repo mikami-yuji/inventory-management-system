@@ -191,17 +191,23 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         if (body.status !== undefined) updateData.status = body.status;
         if (body.discontinuedDate !== undefined) updateData.discontinued_date = body.discontinuedDate;
 
-        const { data, error } = await supabaseClient
+        const { data: updateResults, error } = await supabaseClient
             .from('products')
             .update(updateData)
             .eq('id', body.id)
-            .select()
-            .single() as { data: any | null; error: any };
+            .select();
 
         if (error) {
             console.error('Error updating product:', error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
+
+        if (!updateResults || updateResults.length === 0) {
+            console.error('Product not found or not updated:', body.id);
+            return NextResponse.json({ error: `商品が見つからないか、更新されませんでした (ID: ${body.id})` }, { status: 404 });
+        }
+
+        const data = updateResults[0];
 
         return NextResponse.json({
             id: data.id,

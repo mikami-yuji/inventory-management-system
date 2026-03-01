@@ -131,20 +131,25 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         }
 
         // 在庫を更新
-        const { data: updatedInventory, error: updateError } = await supabase
+        const { data: updateResults, error: updateError } = await supabase
             .from('inventory')
             .upsert({
                 product_id: productId,
                 quantity: newQuantity,
                 updated_at: new Date().toISOString()
             } as any, { onConflict: 'product_id' })
-            .select()
-            .single()
+            .select();
 
         if (updateError) {
             console.error('在庫更新エラー:', updateError)
             return NextResponse.json({ data: null, error: updateError.message }, { status: 500 })
         }
+
+        if (!updateResults || updateResults.length === 0) {
+            return NextResponse.json({ data: null, error: '在庫の更新結果を取得できませんでした' }, { status: 500 })
+        }
+
+        const updatedInventory = updateResults[0];
 
         // 履歴を記録
         await supabase.from('stock_history').insert({
