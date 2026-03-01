@@ -283,7 +283,7 @@ export default function DashboardPage(): React.ReactElement {
                             <h3 className="font-bold text-red-700 text-lg">至急発注が必要な商品</h3>
                         </div>
                         <Button variant="outline" size="sm" asChild className="shrink-0 bg-white">
-                            <Link href="/inventory">
+                            <Link href="/inventory/bags">
                                 在庫管理へ <ArrowRight className="ml-1 h-4 w-4" />
                             </Link>
                         </Button>

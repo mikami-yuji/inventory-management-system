@@ -114,7 +114,7 @@ export default function NewOrderPage(): React.ReactElement {
                     <p className="text-muted-foreground">カート内の商品を確認して発注してください</p>
                 </div>
                 <Button variant="outline" asChild>
-                    <Link href="/inventory">
+                    <Link href="/inventory/bags">
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         商品を追加
                     </Link>
@@ -128,7 +128,7 @@ export default function NewOrderPage(): React.ReactElement {
                         <h3 className="text-lg font-medium mb-2">カートは空です</h3>
                         <p className="text-muted-foreground mb-4">在庫一覧から商品を追加してください</p>
                         <Button asChild>
-                            <Link href="/inventory">商品を探す</Link>
+                            <Link href="/inventory/bags">商品を探す</Link>
                         </Button>
                     </CardContent>
                 </Card>
