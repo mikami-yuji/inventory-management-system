@@ -24,7 +24,8 @@ import { useAppSettings } from "@/hooks/use-masters";
 import {
     getDefaultMinStockAlert,
     isRollBag,
-    calculateStockStatus
+    calculateStockStatus,
+    bagsToMeters
 } from "@/lib/services";
 
 // APIから取得する発注データの型
@@ -46,7 +47,8 @@ type DashboardEvent = {
         productName: string;
         productWeight: number | null;
         plannedQuantity: number;
-        plannedMeters?: number;
+        allocatedQuantity?: number;
+        productShape?: string | null;
     }>;
 };
 
@@ -137,16 +139,18 @@ export default function DashboardPage(): React.ReactElement {
 
     const fetchEvents = useCallback(async (): Promise<void> => {
         try {
-            const res = await fetch('/api/sale-events?status=active');
+            const res = await fetch('/api/sale-events');
             if (res.ok) {
                 const result = await res.json();
-                // APIは { data: [...], error: null } 形式で返す
-                // 直近の日付順（開始日の昇順）にソート
-                const sortedData = (result.data || []).sort((a: DashboardEvent, b: DashboardEvent) => {
+                const data = result.data || [];
+                const activeOrUpcoming = data.filter((e: any) => e.status === 'active' || e.status === 'upcoming');
+
+                // 直近の日付順（開始日の昇順）にソートして最大3件
+                const sortedData = activeOrUpcoming.sort((a: any, b: any) => {
                     const dateA = a.dates?.[0] || '9999-12-31';
                     const dateB = b.dates?.[0] || '9999-12-31';
                     return dateA.localeCompare(dateB);
-                });
+                }).slice(0, 3);
                 setActiveEvents(sortedData.map((event: any) => ({
                     ...event,
                     items: event.items?.map((item: any) => ({
@@ -154,7 +158,8 @@ export default function DashboardPage(): React.ReactElement {
                         productName: item.product_name || item.productName || '不明',
                         productWeight: item.product_weight || item.productWeight || null,
                         plannedQuantity: item.planned_quantity || item.plannedQuantity || 0,
-                        plannedMeters: item.planned_meters || item.plannedMeters || 0,
+                        allocatedQuantity: item.allocated_quantity || item.allocatedQuantity || 0,
+                        productShape: item.product_shape || item.productShape || null,
                     }))
                 })));
             }
@@ -175,9 +180,15 @@ export default function DashboardPage(): React.ReactElement {
         activeEvents.forEach(event => {
             event.items?.forEach(item => {
                 const current = map.get(item.productId) || { bags: 0, meters: 0 };
+
+                const bags = item.allocatedQuantity || item.plannedQuantity || 0;
+                const isRoll = isRollBag(item.productShape || "");
+                const productWeight = item.productWeight || 5;
+                const meters = isRoll ? bagsToMeters(bags, productWeight) : 0;
+
                 map.set(item.productId, {
-                    bags: current.bags + item.plannedQuantity,
-                    meters: current.meters + (item.plannedMeters || 0)
+                    bags: current.bags + bags,
+                    meters: current.meters + meters
                 });
             });
         });

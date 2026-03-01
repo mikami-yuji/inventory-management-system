@@ -1,16 +1,15 @@
-
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { UserRole } from '@/types';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 export async function GET(request: Request) {
-    const supabase = createServerClient();
-
-    // Check if current user is admin
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const supabase = createServerClient();
 
     // Admins can see all profiles. Clients can only see their own?
     // For now, let's just return all profiles if admin.
@@ -29,6 +28,11 @@ export async function GET(request: Request) {
 }
 
 export async function PUT(request: Request) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const supabase = createServerClient();
     const body = await request.json();
 
