@@ -134,12 +134,17 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 } else if (product.statusOverride === 'low_stock') {
                                     isLowStock = true;
                                 } else {
-                                    // 自動判定
-                                    isOutOfStock = availableStock <= 0;
-                                    const alertThreshold = product.minStockAlert !== null && product.minStockAlert !== undefined
-                                        ? product.minStockAlert
-                                        : getDefaultMinStockAlert(product.shape);
-                                    isLowStock = availableStock > 0 && availableStock <= alertThreshold;
+                                    // 自動判定 (直送先在庫と廃盤は除外)
+                                    if (product.status === 'direct_delivery' || product.status === 'discontinued') {
+                                        isOutOfStock = false;
+                                        isLowStock = false;
+                                    } else {
+                                        isOutOfStock = availableStock <= 0;
+                                        const alertThreshold = product.minStockAlert !== null && product.minStockAlert !== undefined
+                                            ? product.minStockAlert
+                                            : getDefaultMinStockAlert(product.shape);
+                                        isLowStock = availableStock > 0 && availableStock <= alertThreshold;
+                                    }
                                 }
 
                                 const hasAllocation = allocation.bags > 0;

@@ -158,11 +158,19 @@ function StockReportContent(): React.ReactElement {
         }).filter(item => item.currentStock > 0 || item.monthlyUsage > 0);
     }, [filteredProducts, inventoryMap, historyByProduct]);
 
-    // サマリー統計
     const summary = useMemo(() => {
         const totalProducts = reportData.length;
-        const lowStockItems = reportData.filter(r => r.daysUntilStockout !== null && r.daysUntilStockout < 14).length;
-        const outOfStockItems = reportData.filter(r => r.currentStock === 0).length;
+        const lowStockItems = reportData.filter(r =>
+            r.daysUntilStockout !== null &&
+            r.daysUntilStockout < 14 &&
+            r.product.status !== 'direct_delivery' &&
+            r.product.status !== 'discontinued'
+        ).length;
+        const outOfStockItems = reportData.filter(r =>
+            r.currentStock === 0 &&
+            r.product.status !== 'direct_delivery' &&
+            r.product.status !== 'discontinued'
+        ).length;
         const totalMonthlyUsage = reportData.reduce((sum, r) => sum + r.monthlyUsage, 0);
 
         return { totalProducts, lowStockItems, outOfStockItems, totalMonthlyUsage };
@@ -333,8 +341,13 @@ function StockReportContent(): React.ReactElement {
                                 </TableHeader>
                                 <TableBody>
                                     {reportData.map(item => {
-                                        const isLowStock = item.daysUntilStockout !== null && item.daysUntilStockout < 14;
-                                        const isOutOfStock = item.currentStock === 0;
+                                        const isLowStock = item.daysUntilStockout !== null &&
+                                            item.daysUntilStockout < 14 &&
+                                            item.product.status !== 'direct_delivery' &&
+                                            item.product.status !== 'discontinued';
+                                        const isOutOfStock = item.currentStock === 0 &&
+                                            item.product.status !== 'direct_delivery' &&
+                                            item.product.status !== 'discontinued';
 
                                         return (
                                             <TableRow

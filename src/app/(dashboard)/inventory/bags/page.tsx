@@ -346,7 +346,7 @@ export default function BagsInventoryPage(): React.ReactElement {
             // minStockAlertを使って低在庫判定（設定がない場合はデフォルト100）
             const alertThreshold = p.minStockAlert || 100;
 
-            if (available <= 0) outOfStock++;
+            if (available <= 0 && p.status !== 'direct_delivery' && p.status !== 'discontinued') outOfStock++;
             else if (available <= alertThreshold) lowStock++;
             if (allocation.bags > 0) hasReservation++;
         });

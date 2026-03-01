@@ -120,11 +120,13 @@ function ProductCard({
     // 有効在庫
     const availableStock = Math.max(0, currentStock - (isRoll ? allocation.meters : allocation.bags));
 
-    // ステータス判定
-    const isOutOfStock = availableStock <= 0;
-    const isLowStock = isRoll
-        ? availableStock > 0 && availableStock < 50
-        : availableStock > 0 && availableStock < 100;
+    // ステータス判定 (直送先在庫と廃盤は除外)
+    const isOutOfStock = (product.status !== 'direct_delivery' && product.status !== 'discontinued') && (availableStock <= 0);
+    const isLowStock = (product.status !== 'direct_delivery' && product.status !== 'discontinued') && (
+        isRoll
+            ? availableStock > 0 && availableStock < 50
+            : availableStock > 0 && availableStock < 100
+    );
     const hasAllocation = allocation.bags > 0;
 
     // 画像アップロード処理
