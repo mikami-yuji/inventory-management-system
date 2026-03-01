@@ -204,7 +204,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
 
         if (!updateResults || updateResults.length === 0) {
             console.error('Product not found or not updated:', body.id);
-            return NextResponse.json({ error: `商品が見つからないか、更新されませんでした (ID: ${body.id})` }, { status: 404 });
+            return NextResponse.json({ error: `DIAGNOSTIC_v1: 商品が見つからないか、更新されませんでした (ID: ${body.id})` }, { status: 404 });
         }
 
         const data = updateResults[0];

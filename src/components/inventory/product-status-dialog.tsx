@@ -74,7 +74,9 @@ export function ProductStatusDialog({
                 body: JSON.stringify(payload),
             });
 
+            console.log("Response status:", response.status);
             const result = await response.json();
+            console.log("Response data:", result);
 
             if (!response.ok) {
                 throw new Error(result.error || "保存に失敗しました");
@@ -95,7 +97,7 @@ export function ProductStatusDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>ステータス変更</DialogTitle>
+                    <DialogTitle>ステータス変更 (v2)</DialogTitle>
                     <DialogDescription>
                         {product.name} の状態を変更します。
                     </DialogDescription>
