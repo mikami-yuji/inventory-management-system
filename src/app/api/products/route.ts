@@ -4,21 +4,22 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase';
 import type { Product, ApiResponse } from '@/types';
 
 // GET: 商品一覧を取得
 export async function GET(): Promise<NextResponse> {
     try {
-        const { data, error } = await supabase
+        const supabaseClient = createServerClient();
+        const { data, error } = await supabaseClient
             .from('products')
             .select('*')
             .neq('status', 'inactive') // inactive以外をすべて取得
-            .order('name');
+            .order('name') as { data: any[] | null; error: any };
 
-        if (error) {
+        if (error || !data) {
             console.error('Error fetching products:', error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ error: error?.message || 'データが見つかりません' }, { status: 500 });
         }
 
         // TypeScript型に変換
@@ -59,7 +60,7 @@ export async function GET(): Promise<NextResponse> {
 
         if (statusUpdates.length > 0) {
             const idsToUpdate = statusUpdates.map(p => p.id);
-            await supabase
+            await supabaseClient
                 .from('products')
                 .update({ status: 'plate_removed' })
                 .in('id', idsToUpdate);
@@ -80,6 +81,7 @@ export async function GET(): Promise<NextResponse> {
 // POST: 商品を新規作成
 export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
+        const supabaseClient = createServerClient();
         const body = await request.json();
 
         // バリデーション
@@ -118,11 +120,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             discontinued_date: body.discontinuedDate || null,
         };
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('products')
             .insert(productData)
             .select()
-            .single();
+            .single() as { data: any | null; error: any };
 
         if (error) {
             console.error('Error creating product:', error);
@@ -130,7 +132,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
 
         // 在庫レコードも作成
-        await supabase.from('inventory').insert({
+        await supabaseClient.from('inventory').insert({
             product_id: data.id,
             quantity: 0,
         });
@@ -150,6 +152,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 // PUT: 商品を更新
 export async function PUT(request: NextRequest): Promise<NextResponse> {
     try {
+        const supabaseClient = createServerClient();
         const body = await request.json();
 
         if (!body.id) {
@@ -188,12 +191,12 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         if (body.status !== undefined) updateData.status = body.status;
         if (body.discontinuedDate !== undefined) updateData.discontinued_date = body.discontinuedDate;
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('products')
             .update(updateData)
             .eq('id', body.id)
             .select()
-            .single();
+            .single() as { data: any | null; error: any };
 
         if (error) {
             console.error('Error updating product:', error);
@@ -214,6 +217,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
 // DELETE: 商品を削除（論理削除）
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
     try {
+        const supabaseClient = createServerClient();
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
 
@@ -225,7 +229,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
         }
 
         // 論理削除（statusをinactiveに変更）
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('products')
             .update({ status: 'inactive' })
             .eq('id', id);

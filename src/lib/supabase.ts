@@ -8,7 +8,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // サーバー用Supabaseクライアント（Service Role Key使用）
-export const createServerClient = (): ReturnType<typeof createClient> => {
+export const createServerClient = () => {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
   return createClient(supabaseUrl, serviceRoleKey)
 }

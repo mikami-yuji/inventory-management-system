@@ -4,19 +4,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase';
 import type { IncomingStock, ApiResponse } from '@/types';
 
 // GET: 入荷予定一覧を取得
 export async function GET(request: NextRequest): Promise<NextResponse> {
     try {
+        const supabaseClient = createServerClient();
         const { searchParams } = new URL(request.url);
         const productId = searchParams.get('productId');
 
-        let query = supabase
+        let query = supabaseClient
             .from('incoming_stock')
             .select('*, products(name, weight)')
-            .order('expected_date', { ascending: true });
+            .order('expected_date', { ascending: true }) as any;
 
         // 商品IDでフィルタリング
         if (productId) {
@@ -52,6 +53,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 // POST: 入荷予定を新規作成
 export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
+        const supabaseClient = createServerClient();
         const body = await request.json();
 
         // 必須チェック
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             );
         }
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('incoming_stock')
             .insert({
                 product_id: body.productId,
@@ -72,7 +74,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 note: body.note
             })
             .select()
-            .single();
+            .single() as { data: any | null; error: any };
 
         if (error) {
             console.error('入荷予定の作成エラー:', error);
@@ -96,6 +98,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 // PUT: 入荷予定を更新
 export async function PUT(request: NextRequest): Promise<NextResponse> {
     try {
+        const supabaseClient = createServerClient();
         const body = await request.json();
 
         if (!body.id) {
@@ -111,12 +114,12 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         if (body.quantity !== undefined) updateData.quantity = body.quantity;
         if (body.note !== undefined) updateData.note = body.note;
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('incoming_stock')
             .update(updateData)
             .eq('id', body.id)
             .select()
-            .single();
+            .single() as { data: any | null; error: any };
 
         if (error) {
             console.error('入荷予定の更新エラー:', error);
@@ -140,6 +143,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
 // DELETE: 入荷予定を削除
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
     try {
+        const supabaseClient = createServerClient();
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
 
@@ -150,7 +154,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
             );
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('incoming_stock')
             .delete()
             .eq('id', id);
@@ -170,33 +174,34 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
 // PATCH: 入荷予定を本在庫へ反映（またはアクション実行）
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
     try {
+        const supabaseClient = createServerClient();
         const body = await request.json();
 
         if (body.action === 'receive' && body.id) {
             // 1. 入荷予定の取得
-            const { data: incomingStock, error: fetchError } = await supabase
+            const { data: incomingStock, error: fetchError } = await supabaseClient
                 .from('incoming_stock')
                 .select('*')
                 .eq('id', body.id)
-                .single();
+                .single() as { data: any | null; error: any };
 
             if (fetchError || !incomingStock) {
                 return NextResponse.json({ error: '入荷予定が見つかりません' }, { status: 404 });
             }
 
             // 2. 現在の在庫数を取得
-            const { data: inventory } = await supabase
+            const { data: inventory } = await supabaseClient
                 .from('inventory')
                 .select('quantity')
                 .eq('product_id', incomingStock.product_id)
-                .maybeSingle();
+                .maybeSingle() as { data: any | null };
 
             // レコードがない場合は0とする
             const currentQty = (inventory as { quantity: number } | null)?.quantity || 0;
             const newQty = currentQty + incomingStock.quantity;
 
             // 3. 在庫数を更新 (upsert)
-            const { error: upsertError } = await supabase
+            const { error: upsertError } = await supabaseClient
                 .from('inventory')
                 .upsert({
                     product_id: incomingStock.product_id,
@@ -209,7 +214,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
             }
 
             // 4. 履歴を記録
-            await supabase.from('stock_history').insert({
+            await supabaseClient.from('stock_history').insert({
                 product_id: incomingStock.product_id,
                 type: 'incoming',
                 quantity: incomingStock.quantity,
@@ -217,7 +222,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
             });
 
             // 5. 入荷予定を削除
-            await supabase
+            await supabaseClient
                 .from('incoming_stock')
                 .delete()
                 .eq('id', body.id);
