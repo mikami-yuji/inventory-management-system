@@ -162,8 +162,8 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
                                 <Input
                                     id="quantity"
                                     type="number"
-                                    placeholder="0"
-                                    value={quantity}
+                                    placeholder="数量を入力"
+                                    value={quantity === "0" ? "" : quantity}
                                     onChange={(e) => setQuantity(e.target.value)}
                                     required
                                 />

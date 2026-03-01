@@ -215,7 +215,7 @@ export function SupplierStockDialog({
                                     </div>
                                     <div className="space-y-1">
                                         <Label className="text-xs">数量</Label>
-                                        <Input type="number" min={1} className="h-8" value={newLotQuantity || ""} onChange={e => setNewLotQuantity(Number(e.target.value))} />
+                                        <Input type="number" min={1} className="h-8" value={newLotQuantity === 0 ? "" : newLotQuantity} onChange={e => setNewLotQuantity(Number(e.target.value) || 0)} placeholder="数量" />
                                     </div>
                                     <div className="col-span-2 space-y-1">
                                         <Label className="text-xs">メモ (任意)</Label>
@@ -246,7 +246,7 @@ export function SupplierStockDialog({
                                         {editingLotId === lot.id ? (
                                             <div className="grid grid-cols-2 gap-2">
                                                 <Input type="date" value={editLotDate} onChange={e => setEditLotDate(e.target.value)} className="h-8 text-sm" />
-                                                <Input type="number" value={editLotQuantity} onChange={e => setEditLotQuantity(Number(e.target.value))} className="h-8 text-sm" />
+                                                <Input type="number" value={editLotQuantity === 0 ? "" : editLotQuantity} onChange={e => setEditLotQuantity(Number(e.target.value) || 0)} className="h-8 text-sm" placeholder="数量" />
                                                 <Input value={editLotNote} onChange={e => setEditLotNote(e.target.value)} placeholder="メモ" className="col-span-2 h-8 text-sm" />
                                                 <div className="col-span-2 flex justify-end gap-2 mt-1">
                                                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditingLotId(null)}>キャンセル</Button>
@@ -297,8 +297,8 @@ export function SupplierStockDialog({
                             <Input
                                 id="moveQuantity"
                                 type="number"
-                                value={moveQuantity || ""}
-                                onChange={(e) => setMoveQuantity(Number(e.target.value))}
+                                value={moveQuantity === 0 ? "" : moveQuantity}
+                                onChange={(e) => setMoveQuantity(Number(e.target.value) || 0)}
                                 placeholder="数量を入力"
                                 className="col-span-3 bg-white"
                                 min={0}

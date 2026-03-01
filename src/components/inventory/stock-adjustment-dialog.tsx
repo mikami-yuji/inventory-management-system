@@ -138,9 +138,10 @@ export function StockAdjustmentDialog({
                                 id="quantity"
                                 type="number"
                                 min="0"
-                                value={quantity}
+                                value={quantity === "0" ? "" : quantity}
                                 onChange={(e) => setQuantity(e.target.value)}
                                 className="flex-1"
+                                placeholder="数量を入力"
                             />
                             {hasSupport && (
                                 <Button

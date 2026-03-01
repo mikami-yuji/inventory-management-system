@@ -20,6 +20,9 @@ import {
     getPitch,
     isRollBag,
     getDefaultMinStockAlert,
+    bagsToMeters,
+    metersToBags,
+    calculateStockStatus,
 } from "@/lib/services";
 import { useCart } from "@/contexts/cart-context";
 import type { Product, WorkInProgress, IncomingStock } from "@/types";
@@ -31,17 +34,7 @@ import { ProductStatusDialog } from "@/components/inventory/product-status-dialo
 import type { SaleEvent } from "@/hooks/use-sale-events";
 import type { SupplierStockLot } from "@/types";
 
-// 枚数からメートルに変換
-const bagsToMeters = (bags: number, weight: number): number => {
-    const pitch = getPitch(weight);
-    return (bags * pitch) / 1000;
-};
 
-// メートルから枚数に変換
-const metersToBags = (meters: number, weight: number): number => {
-    const pitch = getPitch(weight);
-    return Math.floor((meters * 1000) / pitch);
-};
 
 export type BagsInventoryTableProps = {
     products: Product[];
@@ -94,7 +87,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">仕掛中</TableHead>
                                 <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">在庫状況</TableHead>
                                 <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">全体状況</TableHead>
-                                <TableHead className="w-[100px] sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">操作</TableHead>
+                                <TableHead className="w-[100px] sticky top-0 z-40 bg-background bg-clip-padding shadow-sm text-center">発注</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -109,46 +102,14 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 const wipQuantity = wipList.reduce((sum, item) => sum + item.quantity, 0);
                                 const supplierStock = supplierStockMap.get(product.id) || 0;
 
-                                const isRoll = product.shape && isRollBag(product.shape);
-
-                                let availableStock: number;
-                                let currentBags: number;
-                                let availableBags: number;
-
-                                if (isRoll) {
-                                    availableStock = currentStock - allocation.meters; // マイナスも許容
-                                    currentBags = metersToBags(currentStock, product.weight || 5);
-                                    availableBags = metersToBags(availableStock, product.weight || 5);
-                                } else {
-                                    availableStock = currentStock - allocation.bags; // マイナスも許容
-                                    currentBags = currentStock;
-                                    availableBags = availableStock;
-                                }
-
-                                // ステータス判定 (手動上書きを優先)
-                                let isOutOfStock = false;
-                                let isLowStock = false;
-
-                                if (product.statusOverride === 'out_of_stock') {
-                                    isOutOfStock = true;
-                                } else if (product.statusOverride === 'low_stock') {
-                                    isLowStock = true;
-                                } else {
-                                    // 自動判定 (直送先在庫、廃盤、販売中断は除外)
-                                    const shouldCheckStockStatus = !(
-                                        product.status === 'direct_delivery' ||
-                                        product.status === 'discontinued' ||
-                                        product.status === 'on_sale_break'
-                                    );
-
-                                    if (shouldCheckStockStatus) {
-                                        isOutOfStock = availableStock <= 0;
-                                        const alertThreshold = product.minStockAlert !== null && product.minStockAlert !== undefined
-                                            ? product.minStockAlert
-                                            : getDefaultMinStockAlert(product.shape);
-                                        isLowStock = availableStock > 0 && availableStock <= alertThreshold;
-                                    }
-                                }
+                                const {
+                                    availableStock,
+                                    currentBags,
+                                    availableBags,
+                                    isOutOfStock,
+                                    isLowStock,
+                                    isRoll,
+                                } = calculateStockStatus(product, currentStock, allocation);
 
                                 const hasAllocation = allocation.bags > 0;
                                 const isInCart = items.some(item => item.product.id === product.id);
@@ -446,7 +407,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 <Button
                                                     size="sm"
                                                     variant={isInCart ? "secondary" : "outline"}
-                                                    onClick={() => addToCart(product, 1)}
+                                                    onClick={() => addToCart(product, 0)}
                                                     disabled={isOutOfStock}
                                                     className="gap-1"
                                                 >

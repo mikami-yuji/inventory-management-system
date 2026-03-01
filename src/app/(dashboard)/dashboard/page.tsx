@@ -19,8 +19,12 @@ import Link from "next/link";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
 import { useSupplierStockLots } from "@/hooks/use-supplier-stock-lots";
-import { useState, useEffect, useCallback } from "react";
-import { getDefaultMinStockAlert, isRollBag } from "@/lib/services";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import {
+    getDefaultMinStockAlert,
+    isRollBag,
+    calculateStockStatus
+} from "@/lib/services";
 
 // APIから取得する発注データの型
 type DashboardOrder = {
@@ -37,9 +41,11 @@ type DashboardEvent = {
     status: string;
     dates: string[];
     items?: Array<{
+        productId: string;
         productName: string;
         productWeight: number | null;
         plannedQuantity: number;
+        plannedMeters?: number;
     }>;
 };
 
@@ -139,7 +145,16 @@ export default function DashboardPage(): React.ReactElement {
                     const dateB = b.dates?.[0] || '9999-12-31';
                     return dateA.localeCompare(dateB);
                 });
-                setActiveEvents(sortedData);
+                setActiveEvents(sortedData.map((event: any) => ({
+                    ...event,
+                    items: event.items?.map((item: any) => ({
+                        productId: item.product_id || item.productId,
+                        productName: item.product_name || item.productName || '不明',
+                        productWeight: item.product_weight || item.productWeight || null,
+                        plannedQuantity: item.planned_quantity || item.plannedQuantity || 0,
+                        plannedMeters: item.planned_meters || item.plannedMeters || 0,
+                    }))
+                })));
             }
         } catch (err) {
             console.error('イベント取得エラー:', err);
@@ -152,44 +167,52 @@ export default function DashboardPage(): React.ReactElement {
 
     const loading = productsLoading || inventoryLoading || ordersLoading || lotsLoading;
 
+    // 特売イベントから引当マップを作成
+    const allocationMap = useMemo(() => {
+        const map = new Map<string, { bags: number; meters: number }>();
+        activeEvents.forEach(event => {
+            event.items?.forEach(item => {
+                const current = map.get(item.productId) || { bags: 0, meters: 0 };
+                map.set(item.productId, {
+                    bags: current.bags + item.plannedQuantity,
+                    meters: current.meters + (item.plannedMeters || 0)
+                });
+            });
+        });
+        return map;
+    }, [activeEvents]);
+
     // 在庫アラート用に計算
-    const urgentItems = inventory.map(item => {
-        const product = products.find(p => p.id === (item.product?.id || item.productId));
-        if (!product || product.status === 'inactive' || product.status === 'discontinued' || product.status === 'direct_delivery' || product.status === 'on_sale_break') return null;
+    const urgentItems = useMemo(() => {
+        return inventory.map(item => {
+            const product = products.find(p => p.id === (item.product?.id || item.productId));
+            if (!product) return null;
 
-        const currentStock = item.quantity;
-        const isRoll = isRollBag(product.shape || "");
+            const currentStock = item.quantity;
+            const allocation = allocationMap.get(product.id) || { bags: 0, meters: 0 };
 
-        let isOutOfStock = false;
-        let isLowStock = false;
+            // 共有サービスを使用して計算
+            const status = calculateStockStatus(product, currentStock, allocation);
 
-        if (product.statusOverride === 'out_of_stock') {
-            isOutOfStock = true;
-        } else if (product.statusOverride === 'low_stock') {
-            isLowStock = true;
-        } else {
-            isOutOfStock = currentStock <= 0;
-            const threshold = product.minStockAlert !== null && product.minStockAlert !== undefined
-                ? product.minStockAlert
-                : getDefaultMinStockAlert(product.shape);
-            isLowStock = currentStock > 0 && currentStock <= threshold;
-        }
+            if (status.isOutOfStock || status.isLowStock) {
+                return {
+                    ...item,
+                    product,
+                    isOutOfStock: status.isOutOfStock,
+                    isLowStock: status.isLowStock,
+                    isNegativeStock: status.availableStock < 0,
+                    availableStock: status.availableStock,
+                    unit: status.isRoll ? 'm' : '枚',
+                    currentStock
+                };
+            }
+            return null;
+        }).filter((i): i is any => i !== null);
+    }, [inventory, products, allocationMap]);
 
-        if (isOutOfStock || isLowStock) {
-            return {
-                ...item,
-                product,
-                isOutOfStock,
-                isLowStock,
-                unit: isRoll ? 'm' : '枚',
-                currentStock
-            };
-        }
-        return null;
-    }).filter((i): i is NonNullable<typeof i> => i !== null);
-
-    const outOfStockItems = urgentItems.filter(i => i.isOutOfStock);
-    const lowStockItems = urgentItems.filter(i => i.isLowStock);
+    const negativeStockItems = urgentItems.filter((i: any) => i.isNegativeStock);
+    const outOfStockItems = urgentItems.filter((i: any) => i.isOutOfStock && !i.isNegativeStock);
+    const lowStockItems = urgentItems.filter((i: any) => i.isLowStock);
     const totalProducts = products.length;
 
     // 商品IDから単価を取得するマップを作成
@@ -254,14 +277,39 @@ export default function DashboardPage(): React.ReactElement {
                     </div>
 
                     <div className="space-y-4">
+                        {negativeStockItems.length > 0 && (
+                            <div>
+                                <h4 className="font-semibold text-purple-800 border-b border-purple-200 pb-1 mb-2 flex items-center gap-1">
+                                    【過剰引当】有効在庫がマイナス（直ちに手配が必要）
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                    {negativeStockItems.map((item: any) => (
+                                        <div key={item.product.id} className="bg-white border border-purple-200 rounded p-2 flex justify-between items-center shadow-sm">
+                                            <div className="truncate text-sm font-medium mr-2" title={`${item.product.name} (${item.product.weight}kg)`}>
+                                                {item.product.name} ({item.product.weight}kg)
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-purple-600 font-bold text-sm whitespace-nowrap">
+                                                    有効: {item.availableStock.toLocaleString()}{item.unit}
+                                                </div>
+                                                <div className="text-muted-foreground text-xs whitespace-nowrap">
+                                                    (庫内: {item.currentStock.toLocaleString()}{item.unit})
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {outOfStockItems.length > 0 && (
                             <div>
                                 <h4 className="font-semibold text-red-800 border-b border-red-200 pb-1 mb-2">【欠品】直ちに手配が必要</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                                     {outOfStockItems.map(item => (
                                         <div key={item.product.id} className="bg-white border border-red-200 rounded p-2 flex justify-between items-center shadow-sm">
-                                            <div className="truncate text-sm font-medium mr-2" title={item.product.name}>
-                                                {item.product.name}
+                                            <div className="truncate text-sm font-medium mr-2" title={`${item.product.name} (${item.product.weight}kg)`}>
+                                                {item.product.name} ({item.product.weight}kg)
                                             </div>
                                             <div className="text-red-600 font-bold text-sm whitespace-nowrap">
                                                 {item.currentStock.toLocaleString()}{item.unit}
@@ -278,8 +326,8 @@ export default function DashboardPage(): React.ReactElement {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                                     {lowStockItems.map(item => (
                                         <div key={item.product.id} className="bg-white border border-amber-200 rounded p-2 flex justify-between items-center shadow-sm">
-                                            <div className="truncate text-sm font-medium mr-2" title={item.product.name}>
-                                                {item.product.name}
+                                            <div className="truncate text-sm font-medium mr-2" title={`${item.product.name} (${item.product.weight}kg)`}>
+                                                {item.product.name} ({item.product.weight}kg)
                                             </div>
                                             <div className="text-amber-600 font-bold text-sm whitespace-nowrap">
                                                 {item.currentStock.toLocaleString()}{item.unit}
@@ -527,6 +575,7 @@ export default function DashboardPage(): React.ReactElement {
             {/* 長期在庫 */}
             {longTermLots.length > 0 && (
                 <Card className="bg-red-50 border-red-200">
+                    {/* ... (existing card content) ... */}
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <div>
                             <CardTitle className="text-red-700 flex items-center gap-2">
@@ -570,6 +619,51 @@ export default function DashboardPage(): React.ReactElement {
                     </CardContent>
                 </Card>
             )}
+
+            {/* 落版予定 */}
+            {(() => {
+                const scheduledItems = products.filter(p => p.status === 'plate_removal_scheduled').slice(0, 5);
+                if (scheduledItems.length === 0) return null;
+
+                return (
+                    <Card className="bg-slate-50 border-slate-200">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <div>
+                                <CardTitle className="text-slate-700 flex items-center gap-2">
+                                    <CalendarDays className="h-5 w-5" />
+                                    落版予定の商品
+                                </CardTitle>
+                                <CardDescription className="text-slate-600/70">
+                                    落版が予定されている商品一覧
+                                </CardDescription>
+                            </div>
+                            <Button variant="ghost" size="sm" asChild className="text-slate-700 hover:bg-slate-100 hover:text-slate-800">
+                                <Link href="/inventory">在庫管理へ</Link>
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                {scheduledItems.map((product) => (
+                                    <div key={product.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white rounded border border-slate-100 shadow-sm gap-2">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-medium text-sm truncate" title={`${product.name} (${product.weight}kg)`}>
+                                                {product.name} ({product.weight}kg)
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground flex gap-2 mt-0.5">
+                                                <span>SKU: {product.sku}</span>
+                                                <span>/ 形状: {product.shape}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3 shrink-0">
+                                            <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50">落版予定</Badge>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                );
+            })()}
         </div>
     );
 }

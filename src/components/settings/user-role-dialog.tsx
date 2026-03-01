@@ -94,6 +94,7 @@ export function UserRoleDialog({
                             <SelectContent>
                                 <SelectItem value="client">Client (利用者)</SelectItem>
                                 <SelectItem value="admin">Admin (管理者)</SelectItem>
+                                <SelectItem value="blocked">Blocked (ブロック中)</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

@@ -156,11 +156,12 @@ export function StockAllocationDialog({
                                                     <div className="flex items-center justify-end gap-1">
                                                         <Input
                                                             type="number"
-                                                            value={editQuantity}
+                                                            value={editQuantity === "0" ? "" : editQuantity}
                                                             onChange={(e) => setEditQuantity(e.target.value)}
                                                             className="w-20 h-7 text-right text-sm"
                                                             autoFocus
                                                             min={0}
+                                                            placeholder="数量"
                                                             onKeyDown={(e) => {
                                                                 if (e.key === 'Enter') handleSave(alloc);
                                                                 if (e.key === 'Escape') setEditingId(null);

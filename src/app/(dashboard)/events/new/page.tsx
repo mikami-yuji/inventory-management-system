@@ -458,10 +458,10 @@ function NewEventContent(): React.ReactElement {
                                                     <Input
                                                         type="number"
                                                         min={1}
-                                                        value={item.quantity || ""}
+                                                        value={item.quantity === 0 ? "" : item.quantity}
                                                         onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
                                                         className="w-[120px] text-right"
-                                                        placeholder="0"
+                                                        placeholder="数量を入力"
                                                     />
                                                 </TableCell>
                                                 <TableCell>

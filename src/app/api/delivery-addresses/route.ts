@@ -20,11 +20,16 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
 
     try {
         const supabase = createServerClient();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase as any)
-            .from('delivery_addresses')
-            .select('*')
-            .eq('client_id', userId)
+        const isAdmin = (session.user as any)?.role === 'admin';
+
+        let query = (supabase as any).from('delivery_addresses').select('*');
+
+        // 管理者以外は自分のデータのみ
+        if (!isAdmin) {
+            query = query.eq('client_id', userId);
+        }
+
+        const { data, error } = await query
             .order('is_default', { ascending: false })
             .order('created_at', { ascending: false });
 

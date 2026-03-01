@@ -1,5 +1,5 @@
 // ユーザーロール
-export type UserRole = 'admin' | 'client';
+export type UserRole = 'admin' | 'client' | 'blocked';
 
 // ユーザー情報
 export type User = {

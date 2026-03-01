@@ -358,9 +358,9 @@ export function ProductFormDialog({
                                 id="weight"
                                 type="number"
                                 step="0.1"
-                                value={formData.weight}
+                                value={formData.weight === "0" || formData.weight === "0.0" ? "" : formData.weight}
                                 onChange={(e) => handleChange("weight", e.target.value)}
-                                placeholder="5"
+                                placeholder="例: 5"
                             />
                         </div>
 
@@ -391,9 +391,9 @@ export function ProductFormDialog({
                             <Input
                                 id="unitPrice"
                                 type="number"
-                                value={formData.unitPrice}
+                                value={formData.unitPrice === "0" ? "" : formData.unitPrice}
                                 onChange={(e) => handleChange("unitPrice", e.target.value)}
-                                placeholder="0"
+                                placeholder="単価を入力"
                             />
                         </div>
 
@@ -402,9 +402,9 @@ export function ProductFormDialog({
                             <Input
                                 id="printingCost"
                                 type="number"
-                                value={formData.printingCost}
+                                value={formData.printingCost === "0" ? "" : formData.printingCost}
                                 onChange={(e) => handleChange("printingCost", e.target.value)}
-                                placeholder="0"
+                                placeholder="印刷代を入力"
                             />
                         </div>
 
@@ -413,9 +413,9 @@ export function ProductFormDialog({
                             <Input
                                 id="minStockAlert"
                                 type="number"
-                                value={formData.minStockAlert}
+                                value={formData.minStockAlert === "0" ? "" : formData.minStockAlert}
                                 onChange={(e) => handleChange("minStockAlert", e.target.value)}
-                                placeholder="空欄でデフォルト適用"
+                                placeholder="推奨: 3000"
                             />
                             <p className="text-[10px] text-muted-foreground whitespace-nowrap">
                                 空欄時のデフォルト: ロール 1500m / 単袋 3000枚
@@ -497,9 +497,9 @@ export function ProductFormDialog({
                                 <Input
                                     id="frontColorCount"
                                     type="number"
-                                    value={formData.frontColorCount}
+                                    value={formData.frontColorCount === "0" ? "" : formData.frontColorCount}
                                     onChange={(e) => handleChange("frontColorCount", e.target.value)}
-                                    placeholder="0"
+                                    placeholder="色数"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -507,9 +507,9 @@ export function ProductFormDialog({
                                 <Input
                                     id="backColorCount"
                                     type="number"
-                                    value={formData.backColorCount}
+                                    value={formData.backColorCount === "0" ? "" : formData.backColorCount}
                                     onChange={(e) => handleChange("backColorCount", e.target.value)}
-                                    placeholder="0"
+                                    placeholder="色数"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -517,9 +517,9 @@ export function ProductFormDialog({
                                 <Input
                                     id="totalColorCount"
                                     type="number"
-                                    value={formData.totalColorCount}
+                                    value={formData.totalColorCount === "0" ? "" : formData.totalColorCount}
                                     onChange={(e) => handleChange("totalColorCount", e.target.value)}
-                                    placeholder="0"
+                                    placeholder="色数"
                                 />
                             </div>
                         </div>

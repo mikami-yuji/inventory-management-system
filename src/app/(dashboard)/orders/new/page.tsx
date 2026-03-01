@@ -6,40 +6,41 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft, Send } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft, Send, Loader2 } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useDeliveryAddresses } from "@/hooks/use-delivery-addresses";
 import { useWorkInProgress } from "@/hooks/use-work-in-progress";
-import { useInventory } from "@/hooks/use-inventory";
+import { useSupplierStockLots } from "@/hooks/use-supplier-stock-lots";
 import { DeliveryAddressDialog } from "@/components/orders/delivery-address-dialog";
+import { isRollBag, metersToBags } from "@/lib/services/inventory-service";
+import type { WorkInProgress } from "@/types";
 
 
 export default function NewOrderPage(): React.ReactElement {
     const router = useRouter();
     const { items, updateQuantity, removeFromCart, clearCart, getTotalPrice } = useCart();
-    const { addresses, addAddress, refetch: refetchAddresses } = useDeliveryAddresses();
-    const { items: wipItems, loading: wipLoading } = useWorkInProgress();
-    const { inventory, loading: invLoading } = useInventory();
+    const { addresses, refetch: refetchAddresses, loading: loadingAddresses } = useDeliveryAddresses();
+    const { items: wipItems } = useWorkInProgress();
+    const { lotsMap } = useSupplierStockLots();
     const [loading, setLoading] = useState(false);
     const { user } = useAuthSession();
 
-    // 出荷元 ('supplier' | 'wip')
-    const [shipmentSource, setShipmentSource] = useState<'supplier' | 'wip'>('supplier');
-    // 選択された住所ID
+    // 出荷元 ('supplier' | 'wip' | 'wip-request')
+    const [shipmentSource, setShipmentSource] = useState<'supplier' | 'wip' | 'wip-request'>('supplier');
+    // 選択された住所ID ('' | addressId | 'manufacturer-storage')
     const [selectedAddressId, setSelectedAddressId] = useState<string>("");
     // 住所追加ダイアログの状態
     const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
 
     // 初期ロード時にデフォルト住所を選択
     React.useEffect(() => {
-        if (addresses.length > 0 && !selectedAddressId) {
+        if (!loadingAddresses && addresses.length > 0 && !selectedAddressId) {
             const defaultAddr = addresses.find(a => a.isDefault);
             if (defaultAddr) {
                 setSelectedAddressId(defaultAddr.id);
@@ -47,20 +48,22 @@ export default function NewOrderPage(): React.ReactElement {
                 setSelectedAddressId(addresses[0].id);
             }
         }
-    }, [addresses, selectedAddressId]);
+    }, [addresses, selectedAddressId, loadingAddresses]);
 
     const onSubmit = async (): Promise<void> => {
-        if (items.length === 0) {
-            alert("カートに商品がありません");
+        const validItems = items.filter(i => i.quantity > 0);
+        if (validItems.length === 0) {
+            alert("出荷数量を入力してください");
             return;
         }
+
         if (!user?.id) {
             alert("ログイン情報が取得できません。再ログインしてください。");
             return;
         }
 
         const selectedAddress = addresses.find(a => a.id === selectedAddressId);
-        if (!selectedAddress) {
+        if (!selectedAddress && selectedAddressId !== 'manufacturer-storage') {
             alert("納品場所を選択してください");
             return;
         }
@@ -75,14 +78,14 @@ export default function NewOrderPage(): React.ReactElement {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    items: items.map(i => ({ productId: i.product.id, quantity: i.quantity })),
+                    items: validItems.map(i => ({ productId: i.product.id, quantity: i.quantity })),
                     clientId,
                     type: 'standard', // デフォルト
                     shipmentSource,
-                    deliveryName: selectedAddress.name,
-                    deliveryAddress: selectedAddress.address,
-                    deliveryPhone: selectedAddress.phone,
-                    preferredShape: selectedAddress.preferredShape
+                    deliveryName: selectedAddressId === 'manufacturer-storage' ? 'メーカー預かり' : selectedAddress?.name,
+                    deliveryAddress: selectedAddressId === 'manufacturer-storage' ? '-' : selectedAddress?.address,
+                    deliveryPhone: selectedAddressId === 'manufacturer-storage' ? '-' : selectedAddress?.phone,
+                    preferredShape: selectedAddressId === 'manufacturer-storage' ? null : selectedAddress?.preferredShape
                 })
             });
 
@@ -131,6 +134,58 @@ export default function NewOrderPage(): React.ReactElement {
                 </Card>
             ) : (
                 <>
+                    {/* 出荷元選択 */}
+                    <Card className="mb-6">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-lg">出荷元を選択</CardTitle>
+                            <CardDescription>どこから出荷するか選択してください。利用可能数が切り替わります。</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <RadioGroup
+                                value={shipmentSource}
+                                onValueChange={(val: 'supplier' | 'wip' | 'wip-request') => {
+                                    setShipmentSource(val);
+                                    // 仕掛依頼以外に切り替えた時にメーカー預かりが選択されていたらリセット
+                                    if (val !== 'wip-request' && selectedAddressId === 'manufacturer-storage') {
+                                        setSelectedAddressId("");
+                                    }
+                                }}
+                                className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                            >
+                                <div>
+                                    <RadioGroupItem value="supplier" id="source-supplier" className="peer sr-only" />
+                                    <Label
+                                        htmlFor="source-supplier"
+                                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
+                                    >
+                                        <div className="font-bold">メーカー在庫</div>
+                                        <div className="text-xs text-muted-foreground mt-1 text-center">メーカー分を直送指示</div>
+                                    </Label>
+                                </div>
+                                <div>
+                                    <RadioGroupItem value="wip" id="source-wip" className="peer sr-only" />
+                                    <Label
+                                        htmlFor="source-wip"
+                                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
+                                    >
+                                        <div className="font-bold">仕掛中</div>
+                                        <div className="text-xs text-muted-foreground mt-1 text-center">現在の製造分（納期確定済）</div>
+                                    </Label>
+                                </div>
+                                <div>
+                                    <RadioGroupItem value="wip-request" id="source-wip-request" className="peer sr-only" />
+                                    <Label
+                                        htmlFor="source-wip-request"
+                                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
+                                    >
+                                        <div className="font-bold">仕掛依頼</div>
+                                        <div className="text-xs text-muted-foreground mt-1 text-center">新規手配依頼（メーカーへ依頼）</div>
+                                    </Label>
+                                </div>
+                            </RadioGroup>
+                        </CardContent>
+                    </Card>
+
                     {/* カート内容 */}
                     <Card>
                         <CardHeader>
@@ -148,11 +203,11 @@ export default function NewOrderPage(): React.ReactElement {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>商品名</TableHead>
-                                        <TableHead className="text-right">単価</TableHead>
-                                        <TableHead className="text-right">利用可能数</TableHead>
-                                        <TableHead className="w-[180px] text-center">数量</TableHead>
-                                        <TableHead className="text-right">小計</TableHead>
-                                        <TableHead className="w-[60px]"></TableHead>
+                                        <TableHead className="w-[120px] text-right">単価</TableHead>
+                                        <TableHead className="w-[140px] text-right">利用可能数</TableHead>
+                                        <TableHead className="w-[200px] text-center">数量</TableHead>
+                                        <TableHead className="w-[120px] text-right">小計</TableHead>
+                                        <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -178,51 +233,119 @@ export default function NewOrderPage(): React.ReactElement {
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     {(() => {
+                                                        const isRoll = isRollBag(item.product.shape || "");
+                                                        const weight = item.product.weight || 5;
+
                                                         if (shipmentSource === 'supplier') {
                                                             const stock = item.product.supplierStock || 0;
+                                                            const productLots = lotsMap.get(item.product.id) || [];
+
                                                             return (
-                                                                <div className={cn("font-medium", item.quantity > stock && "text-red-500 font-bold")}>
-                                                                    {stock.toLocaleString()}枚
-                                                                </div>
-                                                            );
-                                                        } else {
-                                                            const wipQty = wipItems
-                                                                .filter((w: any) => w.productId === item.product.id)
-                                                                .reduce((sum: number, w: any) => sum + w.quantity, 0);
-                                                            return (
-                                                                <div className={cn("font-medium", item.quantity > wipQty && "text-red-500 font-bold")}>
-                                                                    {wipQty.toLocaleString()}枚 (仕掛中)
+                                                                <div className="text-right space-y-1">
+                                                                    <div className="font-bold text-lg">
+                                                                        {stock.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                                                    </div>
+                                                                    {isRoll && <div className="text-[10px] text-muted-foreground">約{metersToBags(stock, weight).toLocaleString()}枚</div>}
+
+                                                                    {productLots.length > 0 && (
+                                                                        <div className="mt-2 pt-1 border-t border-dashed space-y-0.5">
+                                                                            {productLots.map(lot => (
+                                                                                <div key={lot.id} className="text-[10px] flex justify-between gap-2 text-muted-foreground">
+                                                                                    <span>{lot.stockDate}</span>
+                                                                                    <span className="font-medium">{lot.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             );
                                                         }
+
+                                                        if (shipmentSource === 'wip') {
+                                                            const productWips = wipItems.filter((w: WorkInProgress) => w.productId === item.product.id);
+                                                            const totalWIP = productWips.reduce((sum: number, w: WorkInProgress) => sum + w.quantity, 0);
+
+                                                            return (
+                                                                <div className="text-right space-y-1 text-purple-600">
+                                                                    <div className="font-bold text-lg">
+                                                                        {totalWIP.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                                                    </div>
+                                                                    {isRoll && <div className="text-[10px] opacity-80">約{metersToBags(totalWIP, weight).toLocaleString()}枚</div>}
+                                                                    <div className="text-[10px] bg-purple-50 px-1 py-0.5 rounded inline-block">全仕掛（確定・未確定含）</div>
+
+                                                                    {productWips.length > 0 && (
+                                                                        <div className="mt-2 pt-1 border-t border-dashed border-purple-200 space-y-0.5">
+                                                                            {productWips.map((w: WorkInProgress) => (
+                                                                                <div key={w.id} className="text-[10px] flex justify-between gap-2 opacity-80">
+                                                                                    <span>
+                                                                                        {w.expectedCompletion ? (() => {
+                                                                                            const d = new Date(w.expectedCompletion);
+                                                                                            const month = d.getMonth() + 1;
+                                                                                            if (w.termType === 'early') return `${month}月上旬`;
+                                                                                            if (w.termType === 'mid') return `${month}月中旬`;
+                                                                                            if (w.termType === 'late') return `${month}月下旬`;
+                                                                                            return w.expectedCompletion;
+                                                                                        })() : '未定'}
+                                                                                    </span>
+                                                                                    <span className="font-medium">{w.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        }
+
+                                                        if (shipmentSource === 'wip-request') {
+                                                            return (
+                                                                <div className="text-right py-2">
+                                                                    <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">新規手配依頼</Badge>
+                                                                    <div className="text-[10px] text-muted-foreground mt-1">メーカーへ新規製造を依頼します</div>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
                                                     })()}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-8 w-8"
-                                                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                                                        >
-                                                            <Minus className="h-3 w-3" />
-                                                        </Button>
-                                                        <Input
-                                                            type="number"
-                                                            min="1"
-                                                            value={item.quantity}
-                                                            onChange={(e) => updateQuantity(item.product.id, parseInt(e.target.value) || 1)}
-                                                            className="w-20 text-center"
-                                                        />
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-8 w-8"
-                                                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                                                        >
-                                                            <Plus className="h-3 w-3" />
-                                                        </Button>
-                                                    </div>
+                                                    {(() => {
+                                                        const isRoll = isRollBag(item.product.shape || "");
+                                                        return (
+                                                            <>
+                                                                <div className="flex items-center justify-center gap-2">
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="icon"
+                                                                        className="h-8 w-8"
+                                                                        onClick={() => updateQuantity(item.product.id, Math.max(0, item.quantity - 100))}
+                                                                    >
+                                                                        <Minus className="h-3 w-3" />
+                                                                    </Button>
+                                                                    <Input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        value={item.quantity === 0 ? '' : item.quantity}
+                                                                        onChange={(e) => updateQuantity(item.product.id, parseInt(e.target.value) || 0)}
+                                                                        placeholder="数量入力"
+                                                                        className="w-24 text-center"
+                                                                    />
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="icon"
+                                                                        className="h-8 w-8"
+                                                                        onClick={() => updateQuantity(item.product.id, item.quantity + 100)}
+                                                                    >
+                                                                        <Plus className="h-3 w-3" />
+                                                                    </Button>
+                                                                </div>
+                                                                {isRoll && (
+                                                                    <div className="text-[10px] text-muted-foreground text-center mt-1">
+                                                                        約{metersToBags(item.quantity, item.product.weight || 5).toLocaleString()}枚相当
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </TableCell>
                                                 <TableCell className="text-right font-medium">
                                                     ¥{subtotal.toLocaleString()}
@@ -257,7 +380,12 @@ export default function NewOrderPage(): React.ReactElement {
                             </CardHeader>
                             <CardContent className="pt-4">
                                 <div className="space-y-4">
-                                    {addresses.length === 0 ? (
+                                    {loading || loadingAddresses ? (
+                                        <div className="flex flex-col items-center justify-center py-8 gap-2">
+                                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                            <span className="text-sm text-muted-foreground">納品場所を読み込み中...</span>
+                                        </div>
+                                    ) : addresses.length === 0 ? (
                                         <div className="text-center py-4 text-muted-foreground text-sm">
                                             納品場所が登録されていません。<br />
                                             「新規追加」から登録してください。
@@ -268,6 +396,19 @@ export default function NewOrderPage(): React.ReactElement {
                                             onValueChange={setSelectedAddressId}
                                             className="space-y-3"
                                         >
+                                            {shipmentSource === 'wip-request' && (
+                                                <div className="flex items-start space-x-3 border p-3 rounded-md border-primary bg-primary/5 hover:bg-primary/10 cursor-pointer" onClick={() => setSelectedAddressId('manufacturer-storage')}>
+                                                    <RadioGroupItem value="manufacturer-storage" id="manufacturer-storage" className="mt-1" />
+                                                    <div className="flex-1 cursor-pointer">
+                                                        <Label htmlFor="manufacturer-storage" className="font-bold cursor-pointer text-primary">
+                                                            メーカー預かり
+                                                        </Label>
+                                                        <div className="text-sm text-primary/80 mt-1">
+                                                            <div>仕掛完了後、そのままメーカー倉庫に保管（預かり）とします。</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                             {addresses.map((addr) => (
                                                 <div key={addr.id} className="flex items-start space-x-3 border p-3 rounded-md hover:bg-muted/50 cursor-pointer" onClick={() => setSelectedAddressId(addr.id)}>
                                                     <RadioGroupItem value={addr.id} id={`addr-${addr.id}`} className="mt-1" />
@@ -287,29 +428,15 @@ export default function NewOrderPage(): React.ReactElement {
                                     )}
 
                                     <div className="bg-slate-50 p-3 rounded-md border text-xs text-muted-foreground mt-4">
-                                        <p className="font-medium mb-1">出荷について</p>
-                                        <div className="space-y-3 mt-2">
-                                            <RadioGroup
-                                                value={shipmentSource}
-                                                onValueChange={(val) => setShipmentSource(val as any)}
-                                            >
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem value="supplier" id="source-supplier" />
-                                                    <Label htmlFor="source-supplier" className="cursor-pointer">メーカー在庫（直送）</Label>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem value="wip" id="source-wip" />
-                                                    <Label htmlFor="source-wip" className="cursor-pointer">仕掛仕上がり分（WIP）</Label>
-                                                </div>
-                                            </RadioGroup>
-
-                                            <div className="p-2 bg-amber-50 border border-amber-200 rounded text-amber-800">
-                                                {shipmentSource === 'supplier' ? (
-                                                    <p>メーカーの現在庫から即座に出荷します。自社内の在庫は変動しません。</p>
-                                                ) : (
-                                                    <p>現在製造中の仕掛品が完成次第、出荷します。仕掛中の残り数を確認してください。</p>
-                                                )}
-                                            </div>
+                                        <p className="font-medium mb-1">出荷先と条件の確認</p>
+                                        <div className="p-2 bg-blue-50 border border-blue-200 rounded text-blue-800">
+                                            {shipmentSource === 'supplier' ? (
+                                                <p>メーカーの現在庫から即座に出荷します。自庫内の在庫は変動しません。</p>
+                                            ) : shipmentSource === 'wip' ? (
+                                                <p>現在製造中の仕掛品（回答待ち分含む）が完成次第、出荷します。内訳を確認してください。</p>
+                                            ) : (
+                                                <p>新規の手配依頼を出します。「メーカー預かり」を選択すると在庫として保管されます。</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

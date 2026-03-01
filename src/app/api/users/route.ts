@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     // In a real app, we should check the role first.
 
     const { data: profiles, error } = await (supabase
-        .from('profiles') as any)
+        .from('users') as any)
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -42,7 +42,7 @@ export async function PUT(request: Request) {
     // For now, we assume the request is valid to unblock development.
 
     const { data, error } = await (supabase
-        .from('profiles') as any)
+        .from('users') as any)
         .update({ role })
         .eq('id', id)
         .select()

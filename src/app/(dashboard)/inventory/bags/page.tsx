@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
     Search,
     X,
@@ -20,7 +22,8 @@ import {
     List
 } from "lucide-react";
 import {
-    bagsToMeters
+    bagsToMeters,
+    calculateStockStatus
 } from "@/lib/services";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
@@ -95,6 +98,7 @@ export default function BagsInventoryPage(): React.ReactElement {
     const [weightFilter, setWeightFilter] = useState("all");
     const [shapeFilter, setShapeFilter] = useState("all");
     const [stockFilter, setStockFilter] = useState("all");
+    const [showRemovedZeroStock, setShowRemovedZeroStock] = useState(false);
 
     // Supabase APIから商品と在庫を取得
     const { products: allProducts, loading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
@@ -271,6 +275,15 @@ export default function BagsInventoryPage(): React.ReactElement {
     const filteredProducts = useMemo(() => {
         let products = bagProducts;
 
+        // 落版かつ現在庫0のものをデフォルトで非表示にする
+        if (!showRemovedZeroStock) {
+            products = products.filter(p => {
+                const isPlateRemoved = p.status === 'plate_removed';
+                const currentStock = inventoryMap.get(p.id)?.quantity || 0;
+                return !(isPlateRemoved && currentStock === 0);
+            });
+        }
+
         // 検索フィルター
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
@@ -297,15 +310,16 @@ export default function BagsInventoryPage(): React.ReactElement {
         if (stockFilter === "low") {
             products = products.filter(p => {
                 const qty = inventoryMap.get(p.id)?.quantity || 0;
-                const allocated = saleAllocationMap.get(p.id)?.meters || 0;
-                const available = qty - allocated;
-                return available > 0 && available < 50;
+                const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
+                const { isLowStock } = calculateStockStatus(p, qty, allocation);
+                return isLowStock;
             });
         } else if (stockFilter === "out") {
             products = products.filter(p => {
                 const qty = inventoryMap.get(p.id)?.quantity || 0;
-                const allocated = saleAllocationMap.get(p.id)?.meters || 0;
-                return qty - allocated <= 0;
+                const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
+                const { isOutOfStock } = calculateStockStatus(p, qty, allocation);
+                return isOutOfStock;
             });
         } else if (stockFilter === "reserved") {
             products = products.filter(p => (saleAllocationMap.get(p.id)?.bags || 0) > 0);
@@ -331,7 +345,7 @@ export default function BagsInventoryPage(): React.ReactElement {
             // 4. 重量順 (小さい順)
             return (a.weight || 0) - (b.weight || 0);
         });
-    }, [bagProducts, searchQuery, weightFilter, shapeFilter, stockFilter, inventoryMap, saleAllocationMap]);
+    }, [bagProducts, searchQuery, weightFilter, shapeFilter, stockFilter, showRemovedZeroStock, inventoryMap, saleAllocationMap]);
 
     // サマリー計算
     const summary = useMemo(() => {
@@ -342,12 +356,10 @@ export default function BagsInventoryPage(): React.ReactElement {
         bagProducts.forEach(p => {
             const qty = inventoryMap.get(p.id)?.quantity || 0;
             const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
-            const available = qty - allocation.meters;
-            // minStockAlertを使って低在庫判定（設定がない場合はデフォルト100）
-            const alertThreshold = p.minStockAlert || 100;
+            const { isOutOfStock, isLowStock } = calculateStockStatus(p, qty, allocation);
 
-            if (available <= 0 && p.status !== 'direct_delivery' && p.status !== 'discontinued' && p.status !== 'on_sale_break') outOfStock++;
-            else if (available <= alertThreshold) lowStock++;
+            if (isOutOfStock) outOfStock++;
+            else if (isLowStock) lowStock++;
             if (allocation.bags > 0) hasReservation++;
         });
 
@@ -553,6 +565,26 @@ export default function BagsInventoryPage(): React.ReactElement {
                             )}
                         </div>
                     )}
+                    <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t">
+                        <div className="flex items-center gap-2">
+                            <Label className="text-sm font-medium whitespace-nowrap text-muted-foreground">落版(在庫0)を表示:</Label>
+                            <RadioGroup
+                                defaultValue="off"
+                                className="flex items-center gap-4"
+                                onValueChange={(val) => setShowRemovedZeroStock(val === "on")}
+                                value={showRemovedZeroStock ? "on" : "off"}
+                            >
+                                <div className="flex items-center space-x-1">
+                                    <RadioGroupItem value="off" id="removed-off-bags" />
+                                    <Label htmlFor="removed-off-bags" className="text-xs font-normal">OFF</Label>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                    <RadioGroupItem value="on" id="removed-on-bags" />
+                                    <Label htmlFor="removed-on-bags" className="text-xs font-normal">ON</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
 

@@ -155,8 +155,9 @@ export function OrderSheetDialog({ products, inventoryMap, trigger }: OrderSheet
                                             <Input
                                                 type="number"
                                                 min={0}
-                                                value={orderQuantities.get(product.id) || 0}
+                                                value={orderQuantities.get(product.id) === 0 ? '' : (orderQuantities.get(product.id) || 0)}
                                                 onChange={(e) => handleQuantityChange(product.id, parseInt(e.target.value) || 0)}
+                                                placeholder="数量入力"
                                                 className="h-8 text-right"
                                                 disabled={!isSelected}
                                             />

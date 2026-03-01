@@ -69,7 +69,9 @@ export default function UsersPage() {
                                         <TableCell>{user.email}</TableCell>
                                         <TableCell>
                                             {user.role === 'admin' ? (
-                                                <Badge className="bg-purple-500">Admin</Badge>
+                                                <Badge className="bg-purple-500 hover:bg-purple-600">Admin</Badge>
+                                            ) : user.role === 'blocked' ? (
+                                                <Badge variant="destructive">Blocked</Badge>
                                             ) : (
                                                 <Badge variant="outline">Client</Badge>
                                             )}

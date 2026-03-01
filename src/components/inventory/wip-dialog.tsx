@@ -191,9 +191,10 @@ export function WIPDialog({
                                 <Label className="text-right">数量</Label>
                                 <Input
                                     type="number"
-                                    value={confirmQuantity}
-                                    onChange={(e) => setConfirmQuantity(Number(e.target.value))}
+                                    value={confirmQuantity === 0 ? "" : confirmQuantity}
+                                    onChange={(e) => setConfirmQuantity(Number(e.target.value) || 0)}
                                     className="col-span-3"
+                                    placeholder="数量を入力"
                                 />
                             </div>
 
@@ -330,10 +331,11 @@ export function WIPDialog({
                                     <Input
                                         id="quantity"
                                         type="number"
-                                        value={quantity}
-                                        onChange={(e) => setQuantity(Number(e.target.value))}
+                                        value={quantity === 0 ? "" : quantity}
+                                        onChange={(e) => setQuantity(Number(e.target.value) || 0)}
                                         className="col-span-3"
                                         min={1}
+                                        placeholder="数量を入力"
                                     />
                                 </div>
 

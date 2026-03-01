@@ -50,6 +50,11 @@ export const authOptions: NextAuthOptions = {
                         return null
                     }
 
+                    if (userData.role === 'blocked') {
+                        console.error('ブロックされたユーザーのログイン試行:', userData.email)
+                        return null
+                    }
+
                     const user = userData as UserData
                     return {
                         id: user.id,

@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
     Search,
     X,
@@ -31,7 +33,8 @@ import {
 import {
     getPitch,
     isRollBag,
-    getApproxBagCount
+    getApproxBagCount,
+    calculateStockStatus
 } from "@/lib/services";
 import { useCart } from "@/contexts/cart-context";
 import { useProducts } from "@/hooks/use-products";
@@ -96,64 +99,14 @@ const getProductGroup = (p: Product): number => {
     return 0;
 };
 
-// Helper: Calculate Stock Status (Extracted logic)
-const calculateStockStatus = (
-    product: Product,
-    inventoryMap: Map<string, number>,
-    saleAllocationMap: Map<string, { bags: number; meters: number }>,
-    wipMap: Map<string, number>,
-    supplierStockMap: Map<string, number>,
-    incomingMap: Map<string, { quantity: number; nextDate: string | null }>
-) => {
-    const currentStock = inventoryMap.get(product.id) || 0;
-    const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
-    const incoming = incomingMap.get(product.id);
-    const wipQuantity = wipMap.get(product.id) || 0;
-    const supplierStock = supplierStockMap.get(product.id) || 0;
 
-    const isRoll = product.shape && isRollBag(product.shape);
-
-    let availableStock: number;
-    let currentBags: number;
-    let availableBags: number;
-
-    if (isRoll) {
-        availableStock = Math.max(0, currentStock - allocation.meters);
-        currentBags = metersToBags(currentStock, product.weight || 5);
-        availableBags = metersToBags(availableStock, product.weight || 5);
-    } else {
-        availableStock = Math.max(0, currentStock - allocation.bags);
-        currentBags = currentStock;
-        availableBags = availableStock;
-    }
-
-    const isOutOfStock = availableStock <= 0 && product.status !== 'direct_delivery' && product.status !== 'discontinued' && product.status !== 'on_sale_break';
-    const isLowStock = isRoll
-        ? (availableStock > 0 && availableStock < 50)
-        : (availableStock > 0 && availableStock < 100);
-    const hasAllocation = allocation.bags > 0;
-
-    return {
-        currentStock,
-        allocation,
-        incoming,
-        wipQuantity,
-        supplierStock,
-        isRoll,
-        availableStock,
-        currentBags,
-        availableBags,
-        isOutOfStock,
-        isLowStock,
-        hasAllocation
-    };
-};
 
 export default function InventoryPage(): React.ReactElement {
     const [currentTab, setCurrentTab] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [weightFilter, setWeightFilter] = useState("all");
     const [stockFilter, setStockFilter] = useState("all");
+    const [showRemovedZeroStock, setShowRemovedZeroStock] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false); // Mobile filter state
     const { toggleFavorite, isFavorite } = useFavorites();
 
@@ -212,6 +165,16 @@ export default function InventoryPage(): React.ReactElement {
     // Filters
     const filteredProducts = useMemo(() => {
         let products = currentTab === "all" ? allProducts : allProducts.filter(p => p.category === currentTab);
+
+        // 落版かつ現在庫0のものをデフォルトで非表示にする
+        if (!showRemovedZeroStock) {
+            products = products.filter(p => {
+                const isPlateRemoved = p.status === 'plate_removed';
+                const currentStock = inventoryMap.get(p.id) || 0;
+                return !(isPlateRemoved && currentStock === 0);
+            });
+        }
+
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
             products = products.filter(p =>
@@ -227,12 +190,16 @@ export default function InventoryPage(): React.ReactElement {
         }
         if (stockFilter === "low") {
             products = products.filter(p => {
-                const { isLowStock } = calculateStockStatus(p, inventoryMap, saleAllocationMap, wipQuantityMap, supplierStockMap, incomingMap);
+                const qty = inventoryMap.get(p.id) || 0;
+                const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
+                const { isLowStock } = calculateStockStatus(p, qty, allocation);
                 return isLowStock;
             });
         } else if (stockFilter === "out") {
             products = products.filter(p => {
-                const { isOutOfStock } = calculateStockStatus(p, inventoryMap, saleAllocationMap, wipQuantityMap, supplierStockMap, incomingMap);
+                const qty = inventoryMap.get(p.id) || 0;
+                const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
+                const { isOutOfStock } = calculateStockStatus(p, qty, allocation);
                 return isOutOfStock;
             });
         } else if (stockFilter === "reserved") {
@@ -254,7 +221,7 @@ export default function InventoryPage(): React.ReactElement {
             if (prefA !== prefB) return prefA - prefB;
             return (a.weight || 0) - (b.weight || 0);
         });
-    }, [allProducts, currentTab, searchQuery, weightFilter, stockFilter, inventoryMap, saleAllocationMap, wipQuantityMap, supplierStockMap, incomingMap, isFavorite]);
+    }, [allProducts, currentTab, searchQuery, weightFilter, stockFilter, showRemovedZeroStock, inventoryMap, saleAllocationMap, wipQuantityMap, supplierStockMap, incomingMap, isFavorite]);
 
     const loading = productsLoading || inventoryLoading || eventsLoading || wipLoading;
     const error = productsError;
@@ -284,34 +251,31 @@ export default function InventoryPage(): React.ReactElement {
         } catch (err) { console.error(err); }
     };
 
-    const hasActiveFilters = searchQuery || weightFilter !== "all" || stockFilter !== "all";
+    const hasActiveFilters = searchQuery || weightFilter !== "all" || stockFilter !== "all" || showRemovedZeroStock;
     const availableWeights = useMemo(() => {
         const weights = [...new Set(allProducts.map(p => p.weight).filter(Boolean))] as number[];
         return weights.sort((a, b) => a - b);
     }, [allProducts]);
 
-    const clearFilters = () => { setSearchQuery(""); setWeightFilter("all"); setStockFilter("all"); };
+    const clearFilters = () => { setSearchQuery(""); setWeightFilter("all"); setStockFilter("all"); setShowRemovedZeroStock(false); };
 
     // Summary (Restored)
     const summary = useMemo(() => {
         const totalProducts = allProducts.length;
-        const outOfStock = allProducts.filter(p => {
+        let outOfStock = 0;
+        let lowStock = 0;
+        let hasReservation = 0;
+
+        allProducts.forEach(p => {
             const qty = inventoryMap.get(p.id) || 0;
-            const allocated = saleAllocationMap.get(p.id)?.meters || 0;
-            return (qty - allocated) <= 0 && p.status !== 'direct_delivery' && p.status !== 'discontinued' && p.status !== 'on_sale_break';
-        }).length;
-        const lowStock = allProducts.filter(p => {
-            const qty = inventoryMap.get(p.id) || 0;
-            const allocated = saleAllocationMap.get(p.id)?.meters || 0;
-            const available = qty - allocated;
-            const isRoll = p.shape && isRollBag(p.shape);
-            const threshold = isRoll ? 50 : 100; // Assuming 50 for roll, 100 for others as per calculateStockStatus
-            return available > 0 && available < threshold && p.status !== 'direct_delivery' && p.status !== 'discontinued' && p.status !== 'on_sale_break';
-        }).length;
-        const hasReservation = allProducts.filter(p => {
-            const allocated = saleAllocationMap.get(p.id);
-            return allocated && allocated.bags > 0;
-        }).length;
+            const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
+            const { isOutOfStock, isLowStock } = calculateStockStatus(p, qty, allocation);
+
+            if (isOutOfStock) outOfStock++;
+            else if (isLowStock) lowStock++;
+            if (allocation.bags > 0) hasReservation++;
+        });
+
         return { totalProducts, outOfStock, lowStock, hasReservation };
     }, [allProducts, inventoryMap, saleAllocationMap]);
 
@@ -455,13 +419,39 @@ export default function InventoryPage(): React.ReactElement {
                                 </SelectContent>
                             </Select>
                         </div>
-                        {/* クリアボタン */}
-                        {hasActiveFilters && (
-                            <Button variant="outline" onClick={clearFilters} className="gap-2 h-9 text-sm">
-                                <X className="h-4 w-4" />
-                                クリア
-                            </Button>
-                        )}
+                        {/* フィルター */}
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex items-center gap-2">
+                                <Label className="text-sm font-medium whitespace-nowrap">落版(在庫0)を表示:</Label>
+                                <RadioGroup
+                                    defaultValue="off"
+                                    className="flex items-center gap-4"
+                                    onValueChange={(val) => setShowRemovedZeroStock(val === "on")}
+                                    value={showRemovedZeroStock ? "on" : "off"}
+                                >
+                                    <div className="flex items-center space-x-1">
+                                        <RadioGroupItem value="off" id="removed-off" />
+                                        <Label htmlFor="removed-off" className="text-xs font-normal">OFF</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                        <RadioGroupItem value="on" id="removed-on" />
+                                        <Label htmlFor="removed-on" className="text-xs font-normal">ON</Label>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+
+                            {hasActiveFilters && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={clearFilters}
+                                    className="h-8 text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-4 w-4 mr-1" />
+                                    リセット
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -575,8 +565,13 @@ function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, sup
                     </TableHeader>
                     <TableBody>
                         {products.map(product => {
-                            const status = calculateStockStatus(product, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap);
-                            // ... (render rows using status object) ...
+                            const currentStock = inventoryMap.get(product.id) || 0;
+                            const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
+                            const status = calculateStockStatus(product, currentStock, allocation);
+                            const wipQuantity = wipMap.get(product.id) || 0;
+                            const supplierStock = supplierStockMap.get(product.id) || 0;
+                            const hasAllocation = allocation.bags > 0;
+
                             return (
                                 <TableRow key={product.id} className={cn(status.isOutOfStock && "bg-red-50")}>
                                     <TableCell>
@@ -598,10 +593,10 @@ function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, sup
                                         <div className="text-sm">{product.weight}kg / {product.shape}</div>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        {status.isRoll ? `${status.currentStock.toLocaleString()}m` : `${status.currentStock.toLocaleString()}枚`}
+                                        {status.isRoll ? `${currentStock.toLocaleString()}m` : `${currentStock.toLocaleString()}枚`}
                                     </TableCell>
                                     <TableCell className="text-right hidden sm:table-cell">
-                                        {status.hasAllocation ? <span className="text-blue-600">{status.allocation.bags.toLocaleString()}枚</span> : "-"}
+                                        {hasAllocation ? <span className="text-blue-600">{allocation.bags.toLocaleString()}枚</span> : "-"}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className={cn("font-bold", status.isOutOfStock && "text-red-600", status.isLowStock && "text-amber-600")}>
@@ -616,10 +611,10 @@ function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, sup
                                         />
                                     </TableCell>
                                     <TableCell className="text-right hidden lg:table-cell">
-                                        {status.supplierStock > 0 ? `${status.supplierStock.toLocaleString()}` : "-"}
+                                        {supplierStock > 0 ? `${supplierStock.toLocaleString()}` : "-"}
                                     </TableCell>
                                     <TableCell className="text-right hidden lg:table-cell">
-                                        {status.wipQuantity > 0 ? `${status.wipQuantity.toLocaleString()}` : "-"}
+                                        {wipQuantity > 0 ? `${wipQuantity.toLocaleString()}` : "-"}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex justify-end gap-2">
@@ -641,7 +636,7 @@ function InventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, sup
                     open={!!editSupplierStock}
                     onOpenChange={(open) => !open && setEditSupplierStock(null)}
                     product={editSupplierStock}
-                    currentStock={calculateStockStatus(editSupplierStock, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap).supplierStock}
+                    currentStock={supplierStockMap.get(editSupplierStock.id) || 0}
                     onSuccess={onRefetch}
                 />
             )}
@@ -669,7 +664,13 @@ function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap
     return (
         <div className="space-y-4">
             {products.map(product => {
-                const status = calculateStockStatus(product, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap);
+                const currentStock = inventoryMap.get(product.id) || 0;
+                const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
+                const status = calculateStockStatus(product, currentStock, allocation);
+                const wipQuantity = wipMap.get(product.id) || 0;
+                const supplierStock = supplierStockMap.get(product.id) || 0;
+                const hasAllocation = allocation.bags > 0;
+
                 return (
                     <Card key={product.id} className={cn("overflow-hidden", status.isOutOfStock && "border-red-200 bg-red-50/50")}>
                         <CardHeader className="p-4 pb-2">
@@ -683,7 +684,7 @@ function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap
                                         <Star className={cn("h-5 w-5", isFavorite(product.id) ? "fill-yellow-400 text-yellow-400" : "text-gray-300 dark:text-gray-600")} />
                                     </button>
                                     <div>
-                                        <h3 className="font-bold text-lg">{product.name}</h3>
+                                        <h3 className="font-bold text-lg">{product.name} ({product.weight}kg)</h3>
                                         <p className="text-sm text-muted-foreground">{product.productCode} / {product.janCode}</p>
                                     </div>
                                 </div>
@@ -716,9 +717,9 @@ function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap
                                 </div>
                                 <div className="bg-white dark:bg-card p-2 rounded border">
                                     <div className="text-muted-foreground text-xs">実在庫</div>
-                                    <div className="font-bold text-lg">{status.currentStock.toLocaleString()}<span className="text-xs font-normal text-muted-foreground">{status.isRoll ? 'm' : '枚'}</span></div>
-                                    {status.hasAllocation && (
-                                        <div className="text-xs text-blue-600">引当: {status.allocation.bags.toLocaleString()}枚</div>
+                                    <div className="font-bold text-lg">{currentStock.toLocaleString()}<span className="text-xs font-normal text-muted-foreground">{status.isRoll ? 'm' : '枚'}</span></div>
+                                    {hasAllocation && (
+                                        <div className="text-xs text-blue-600">引当: {allocation.bags.toLocaleString()}枚</div>
                                     )}
                                 </div>
                             </div>
@@ -726,11 +727,11 @@ function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap
                             <div className="flex gap-2 text-xs">
                                 <div className="flex-1 bg-slate-50 p-2 rounded">
                                     <span className="text-muted-foreground block">メーカー在庫</span>
-                                    <span className="font-medium">{status.supplierStock > 0 ? status.supplierStock.toLocaleString() : '-'}</span>
+                                    <span className="font-medium">{supplierStock > 0 ? supplierStock.toLocaleString() : '-'}</span>
                                 </div>
                                 <div className="flex-1 bg-slate-50 p-2 rounded">
                                     <span className="text-muted-foreground block">加工中</span>
-                                    <span className="font-medium">{status.wipQuantity > 0 ? status.wipQuantity.toLocaleString() : '-'}</span>
+                                    <span className="font-medium">{wipQuantity > 0 ? wipQuantity.toLocaleString() : '-'}</span>
                                 </div>
                             </div>
 
@@ -758,7 +759,7 @@ function MobileInventoryList({ products, inventoryMap, saleAllocationMap, wipMap
                     open={!!editSupplierStock}
                     onOpenChange={(open) => !open && setEditSupplierStock(null)}
                     product={editSupplierStock}
-                    currentStock={calculateStockStatus(editSupplierStock, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap).supplierStock}
+                    currentStock={supplierStockMap.get(editSupplierStock.id) || 0}
                     onSuccess={onRefetch}
                 />
             )}

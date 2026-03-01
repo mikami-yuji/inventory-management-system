@@ -18,6 +18,7 @@ type CartContextType = {
     clearCart: () => void;
     getTotalItems: () => number;
     getTotalPrice: () => number;
+    getTotalQuantity: () => number;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -50,7 +51,7 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
     }, [items, isHydrated]);
 
     // カートに追加
-    const addToCart = useCallback((product: Product, quantity: number = 1): void => {
+    const addToCart = useCallback((product: Product, quantity: number = 0): void => {
         setItems((prev) => {
             const existing = prev.find((item) => item.product.id === product.id);
             if (existing) {
@@ -71,24 +72,25 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
 
     // 数量更新
     const updateQuantity = useCallback((productId: string, quantity: number): void => {
-        if (quantity <= 0) {
-            removeFromCart(productId);
-            return;
-        }
         setItems((prev) =>
             prev.map((item) =>
-                item.product.id === productId ? { ...item, quantity } : item
+                item.product.id === productId ? { ...item, quantity: Math.max(0, quantity) } : item
             )
         );
-    }, [removeFromCart]);
+    }, []);
 
     // カートをクリア
     const clearCart = useCallback((): void => {
         setItems([]);
     }, []);
 
-    // 合計アイテム数
+    // 合計アイテム数（種類数）
     const getTotalItems = useCallback((): number => {
+        return items.length;
+    }, [items]);
+
+    // 合計数量（全アイテムの総数）
+    const getTotalQuantity = useCallback((): number => {
         return items.reduce((sum, item) => sum + item.quantity, 0);
     }, [items]);
 
@@ -110,6 +112,7 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
                 clearCart,
                 getTotalItems,
                 getTotalPrice,
+                getTotalQuantity,
             }}
         >
             {children}
