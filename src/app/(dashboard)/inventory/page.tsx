@@ -36,10 +36,10 @@ import {
     getApproxBagCount,
     calculateStockStatus
 } from "@/lib/services";
-import { useCart } from "@/contexts/cart-context";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
 import { useSaleEvents } from "@/hooks/use-sale-events";
+import { useAppSettings } from "@/hooks/use-masters";
 import { useWorkInProgress, calculateWIPByProduct, useWIPActions } from "@/hooks/use-work-in-progress";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import { ProductAnalysisDialog } from "@/components/inventory/product-analysis-dialog";
@@ -109,6 +109,7 @@ export default function InventoryPage(): React.ReactElement {
     const [showRemovedZeroStock, setShowRemovedZeroStock] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false); // Mobile filter state
     const { toggleFavorite, isFavorite } = useFavorites();
+    const { settings } = useAppSettings();
 
     const { products: allProducts, loading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
     const { inventory: inventoryData, loading: inventoryLoading, refetch: refetchInventory } = useInventory();
@@ -192,14 +193,14 @@ export default function InventoryPage(): React.ReactElement {
             products = products.filter(p => {
                 const qty = inventoryMap.get(p.id) || 0;
                 const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
-                const { isLowStock } = calculateStockStatus(p, qty, allocation);
+                const { isLowStock } = calculateStockStatus(p, qty, allocation, settings);
                 return isLowStock;
             });
         } else if (stockFilter === "out") {
             products = products.filter(p => {
                 const qty = inventoryMap.get(p.id) || 0;
                 const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
-                const { isOutOfStock } = calculateStockStatus(p, qty, allocation);
+                const { isOutOfStock } = calculateStockStatus(p, qty, allocation, settings);
                 return isOutOfStock;
             });
         } else if (stockFilter === "reserved") {
@@ -221,7 +222,7 @@ export default function InventoryPage(): React.ReactElement {
             if (prefA !== prefB) return prefA - prefB;
             return (a.weight || 0) - (b.weight || 0);
         });
-    }, [allProducts, currentTab, searchQuery, weightFilter, stockFilter, showRemovedZeroStock, inventoryMap, saleAllocationMap, wipQuantityMap, supplierStockMap, incomingMap, isFavorite]);
+    }, [allProducts, currentTab, searchQuery, weightFilter, stockFilter, showRemovedZeroStock, inventoryMap, saleAllocationMap, wipQuantityMap, supplierStockMap, incomingMap, isFavorite, settings]);
 
     const loading = productsLoading || inventoryLoading || eventsLoading || wipLoading;
     const error = productsError;

@@ -33,6 +33,7 @@ import { StockAllocationDialog } from "@/components/inventory/stock-allocation-d
 import { ProductStatusDialog } from "@/components/inventory/product-status-dialog";
 import type { SaleEvent } from "@/hooks/use-sale-events";
 import type { SupplierStockLot } from "@/types";
+import { useAppSettings } from "@/hooks/use-masters";
 
 
 
@@ -58,6 +59,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
     const [adjustStock, setAdjustStock] = useState<Product | null>(null);
     const [editStatusProduct, setEditStatusProduct] = useState<Product | null>(null);
     const { addToCart, items } = useCart();
+    const { settings } = useAppSettings();
 
     // 画像拡大用ステート
     const [selectedImage, setSelectedImage] = useState<{ url: string; alt: string; name: string } | null>(null);
@@ -109,7 +111,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                     isOutOfStock,
                                     isLowStock,
                                     isRoll,
-                                } = calculateStockStatus(product, currentStock, allocation);
+                                } = calculateStockStatus(product, currentStock, allocation, settings);
 
                                 const hasAllocation = allocation.bags > 0;
                                 const isInCart = items.some(item => item.product.id === product.id);

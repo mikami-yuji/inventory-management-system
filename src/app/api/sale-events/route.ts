@@ -188,23 +188,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         });
 
         // レスポンス形式に変換
-        const events: SaleEvent[] = filteredData.map((event: {
-            id: string
-            client_name: string
-            schedule_type: string
-            dates: string[]
-            status: string
-            description: string | null
-            created_at: string
-            sale_event_items: Array<{
-                id: string
-                product_id: string
-                planned_quantity: number
-                allocated_quantity: number
-                actual_quantity: number | null
-                products: { id: string; name: string; sku: string | null; shape: string | null; weight: number | null }
-            }>
-        }) => ({
+        const events: SaleEvent[] = filteredData.map((event: any) => ({
             id: event.id,
             clientName: event.client_name,
             scheduleType: event.schedule_type as 'single' | 'monthly',
@@ -212,7 +196,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             status: event.status as SaleEvent['status'],
             description: event.description,
             createdAt: event.created_at,
-            items: event.sale_event_items.map(item => ({
+            items: event.sale_event_items.map((item: any) => ({
                 id: item.id,
                 productId: item.product_id,
                 productName: item.products?.name || '',

@@ -20,6 +20,7 @@ import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
 import { useSupplierStockLots } from "@/hooks/use-supplier-stock-lots";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useAppSettings } from "@/hooks/use-masters";
 import {
     getDefaultMinStockAlert,
     isRollBag,
@@ -54,6 +55,7 @@ export default function DashboardPage(): React.ReactElement {
     const { products, loading: productsLoading } = useProducts();
     const { inventory, loading: inventoryLoading } = useInventory();
     const { lots, loading: lotsLoading } = useSupplierStockLots();
+    const { settings } = useAppSettings();
 
     // Hydrationエラー回避: 日時表示はクライアントサイドのみ
     const [currentTime, setCurrentTime] = useState<string>("");
@@ -192,7 +194,7 @@ export default function DashboardPage(): React.ReactElement {
             const allocation = allocationMap.get(product.id) || { bags: 0, meters: 0 };
 
             // 共有サービスを使用して計算
-            const status = calculateStockStatus(product, currentStock, allocation);
+            const status = calculateStockStatus(product, currentStock, allocation, settings);
 
             if (status.isOutOfStock || status.isLowStock) {
                 return {
@@ -208,7 +210,7 @@ export default function DashboardPage(): React.ReactElement {
             }
             return null;
         }).filter((i): i is any => i !== null);
-    }, [inventory, products, allocationMap]);
+    }, [inventory, products, allocationMap, settings]);
 
     const negativeStockItems = urgentItems.filter((i: any) => i.isNegativeStock);
     const outOfStockItems = urgentItems.filter((i: any) => i.isOutOfStock && !i.isNegativeStock);

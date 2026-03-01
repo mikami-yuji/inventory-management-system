@@ -25,9 +25,13 @@ export const isRollBag = (shape: string): boolean => {
 };
 
 // デフォルトの在庫アラート閾値を取得
-// ロールは1500m、単袋・その他は3000枚
-export const getDefaultMinStockAlert = (shape?: string | null): number => {
-    return isRollBag(shape || "") ? 1500 : 3000;
+// ロールは1500m、単袋・その他は3000枚 (設定で上書き可能)
+export const getDefaultMinStockAlert = (shape?: string | null, settings?: any): number => {
+    const isRoll = isRollBag(shape || "");
+    if (isRoll) {
+        return settings?.default_min_stock_alert_roll !== undefined ? Number(settings.default_min_stock_alert_roll) : 1500;
+    }
+    return settings?.default_min_stock_alert_bag !== undefined ? Number(settings.default_min_stock_alert_bag) : 3000;
 };
 
 // 1ロールあたりの長さ (mm) - 300m
@@ -55,7 +59,8 @@ export const metersToBags = (meters: number, weight: number): number => {
 export const calculateStockStatus = (
     product: Product,
     currentStock: number,
-    allocation: { bags: number; meters: number }
+    allocation: { bags: number; meters: number },
+    settings?: any
 ) => {
     const isRoll = product.shape && isRollBag(product.shape);
 
@@ -94,7 +99,7 @@ export const calculateStockStatus = (
             isOutOfStock = availableStock <= 0;
             const alertThreshold = product.minStockAlert !== null && product.minStockAlert !== undefined
                 ? product.minStockAlert
-                : getDefaultMinStockAlert(product.shape);
+                : getDefaultMinStockAlert(product.shape, settings);
             isLowStock = availableStock > 0 && availableStock <= alertThreshold;
         }
     }

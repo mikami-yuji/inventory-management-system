@@ -30,6 +30,7 @@ import { useInventory } from "@/hooks/use-inventory";
 import { useIncomingStock } from "@/hooks/use-incoming-stock";
 import { useSaleEvents } from "@/hooks/use-sale-events";
 import { useSupplierStockLots } from "@/hooks/use-supplier-stock-lots";
+import { useAppSettings } from "@/hooks/use-masters";
 import { useWorkInProgress, calculateWIPByProduct } from "@/hooks/use-work-in-progress";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import { IncomingStockDialog } from "@/components/inventory/incoming-stock-dialog";
@@ -107,6 +108,7 @@ export default function BagsInventoryPage(): React.ReactElement {
     const { items: wipItems, loading: wipLoading, refetch: refetchWIP } = useWorkInProgress({ status: 'in_progress' });
     const { incomingStocks, loading: incomingLoading, refetch: refetchIncoming } = useIncomingStock();
     const { lotsMap: supplierStockLotsMap, loading: lotsLoading, refetch: refetchLots } = useSupplierStockLots();
+    const { settings } = useAppSettings();
 
     const loading = productsLoading || inventoryLoading || eventsLoading || wipLoading || incomingLoading || lotsLoading;
     const error = productsError;
@@ -311,14 +313,14 @@ export default function BagsInventoryPage(): React.ReactElement {
             products = products.filter(p => {
                 const qty = inventoryMap.get(p.id)?.quantity || 0;
                 const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
-                const { isLowStock } = calculateStockStatus(p, qty, allocation);
+                const { isLowStock } = calculateStockStatus(p, qty, allocation, settings);
                 return isLowStock;
             });
         } else if (stockFilter === "out") {
             products = products.filter(p => {
                 const qty = inventoryMap.get(p.id)?.quantity || 0;
                 const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
-                const { isOutOfStock } = calculateStockStatus(p, qty, allocation);
+                const { isOutOfStock } = calculateStockStatus(p, qty, allocation, settings);
                 return isOutOfStock;
             });
         } else if (stockFilter === "reserved") {
@@ -345,7 +347,7 @@ export default function BagsInventoryPage(): React.ReactElement {
             // 4. 重量順 (小さい順)
             return (a.weight || 0) - (b.weight || 0);
         });
-    }, [bagProducts, searchQuery, weightFilter, shapeFilter, stockFilter, showRemovedZeroStock, inventoryMap, saleAllocationMap]);
+    }, [bagProducts, searchQuery, weightFilter, shapeFilter, stockFilter, showRemovedZeroStock, inventoryMap, saleAllocationMap, settings]);
 
     // サマリー計算
     const summary = useMemo(() => {

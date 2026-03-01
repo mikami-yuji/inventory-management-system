@@ -69,20 +69,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         }
 
         // レスポンス形式に変換
-        const items: WorkInProgress[] = (data || []).map((item: {
-            id: string
-            product_id: string
-            quantity: number
-            started_at: string
-            expected_completion: string | null
-            completed_at: string | null
-            note: string | null
-            status: string
-            term_type: string | null
-            confirmation_status: string | null
-            created_at: string
-            products: { id: string; name: string; sku: string | null } | null
-        }) => ({
+        const items: WorkInProgress[] = (data || []).map((item: any) => ({
             id: item.id,
             productId: item.product_id,
             productName: item.products?.name || '',

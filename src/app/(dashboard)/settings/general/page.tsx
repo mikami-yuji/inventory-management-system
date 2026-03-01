@@ -12,13 +12,19 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function GeneralSettingsPage() {
     const { settings, isLoading, isError, mutate } = useAppSettings();
-    const [minStockAlert, setMinStockAlert] = useState<string>("100");
+    const [minStockAlertRoll, setMinStockAlertRoll] = useState<string>("1500");
+    const [minStockAlertBag, setMinStockAlertBag] = useState<string>("3000");
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     useEffect(() => {
-        if (settings && settings.default_min_stock_alert) {
-            setMinStockAlert(String(settings.default_min_stock_alert));
+        if (settings) {
+            if (settings.default_min_stock_alert_roll !== undefined) {
+                setMinStockAlertRoll(String(settings.default_min_stock_alert_roll));
+            }
+            if (settings.default_min_stock_alert_bag !== undefined) {
+                setMinStockAlertBag(String(settings.default_min_stock_alert_bag));
+            }
         }
     }, [settings]);
 
@@ -27,16 +33,25 @@ export default function GeneralSettingsPage() {
         setMessage(null);
 
         try {
-            const res = await fetch("/api/settings", {
+            const res1 = await fetch("/api/settings", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    key: "default_min_stock_alert",
-                    value: Number(minStockAlert)
+                    key: "default_min_stock_alert_roll",
+                    value: Number(minStockAlertRoll)
                 }),
             });
 
-            if (!res.ok) throw new Error("Failed to update settings");
+            const res2 = await fetch("/api/settings", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    key: "default_min_stock_alert_bag",
+                    value: Number(minStockAlertBag)
+                }),
+            });
+
+            if (!res1.ok || !res2.ok) throw new Error("Failed to update settings");
 
             await mutate();
             setMessage({ type: 'success', text: "設定を保存しました" });
@@ -71,22 +86,37 @@ export default function GeneralSettingsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="min-stock">デフォルト在庫アラート閾値</Label>
-                        <div className="flex items-center gap-2">
-                            <Input
-                                id="min-stock"
-                                type="number"
-                                value={minStockAlert}
-                                onChange={(e) => setMinStockAlert(e.target.value)}
-                                className="w-32"
-                            />
-                            <span className="text-sm text-muted-foreground">個 / 枚</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="min-stock-roll">ロール袋 (m)</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    id="min-stock-roll"
+                                    type="number"
+                                    value={minStockAlertRoll}
+                                    onChange={(e) => setMinStockAlertRoll(e.target.value)}
+                                    className="w-32"
+                                />
+                                <span className="text-sm text-muted-foreground">m</span>
+                            </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                            この数値を下回ると、在庫一覧やダッシュボードで警告が表示されます。
-                        </p>
+                        <div className="space-y-2">
+                            <Label htmlFor="min-stock-bag">単袋・その他 (枚)</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    id="min-stock-bag"
+                                    type="number"
+                                    value={minStockAlertBag}
+                                    onChange={(e) => setMinStockAlertBag(e.target.value)}
+                                    className="w-32"
+                                />
+                                <span className="text-sm text-muted-foreground">枚</span>
+                            </div>
+                        </div>
                     </div>
+                    <p className="text-sm text-muted-foreground pt-2">
+                        この数値を下回ると、在庫一覧やダッシュボードで警告が表示されます。
+                    </p>
 
                     {message && (
                         <Alert variant={message.type === 'error' ? "destructive" : "default"} className={message.type === 'success' ? "border-green-500 text-green-700 bg-green-50" : ""}>

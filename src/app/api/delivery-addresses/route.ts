@@ -20,7 +20,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
 
     try {
         const supabase = createServerClient();
-        const isAdmin = (session.user as any)?.role === 'admin';
+        const isAdmin = (session?.user as any)?.role === 'admin';
 
         let query = (supabase as any).from('delivery_addresses').select('*');
 
