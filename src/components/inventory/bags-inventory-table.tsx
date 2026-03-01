@@ -134,11 +134,14 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 } else if (product.statusOverride === 'low_stock') {
                                     isLowStock = true;
                                 } else {
-                                    // 自動判定 (直送先在庫と廃盤は除外)
-                                    if (product.status === 'direct_delivery' || product.status === 'discontinued') {
-                                        isOutOfStock = false;
-                                        isLowStock = false;
-                                    } else {
+                                    // 自動判定 (直送先在庫、廃盤、販売中断は除外)
+                                    const shouldCheckStockStatus = !(
+                                        product.status === 'direct_delivery' ||
+                                        product.status === 'discontinued' ||
+                                        product.status === 'on_sale_break'
+                                    );
+
+                                    if (shouldCheckStockStatus) {
                                         isOutOfStock = availableStock <= 0;
                                         const alertThreshold = product.minStockAlert !== null && product.minStockAlert !== undefined
                                             ? product.minStockAlert
@@ -423,7 +426,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 ) : product.status === 'direct_delivery' ? (
                                                     <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50 group-hover:bg-blue-100 transition-colors whitespace-nowrap">直送先在庫</Badge>
                                                 ) : product.status === 'on_sale_break' ? (
-                                                    <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50 group-hover:bg-yellow-100 transition-colors whitespace-nowrap">販売開始中断</Badge>
+                                                    <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50 group-hover:bg-yellow-100 transition-colors whitespace-nowrap">販売中断</Badge>
                                                 ) : product.status === 'discontinued' ? (
                                                     <Badge variant="outline" className="border-gray-400 text-gray-500 bg-gray-50 group-hover:bg-gray-100 transition-colors whitespace-nowrap">廃盤</Badge>
                                                 ) : (

@@ -127,7 +127,7 @@ const calculateStockStatus = (
         availableBags = availableStock;
     }
 
-    const isOutOfStock = availableStock <= 0 && product.status !== 'direct_delivery' && product.status !== 'discontinued';
+    const isOutOfStock = availableStock <= 0 && product.status !== 'direct_delivery' && product.status !== 'discontinued' && product.status !== 'on_sale_break';
     const isLowStock = isRoll
         ? (availableStock > 0 && availableStock < 50)
         : (availableStock > 0 && availableStock < 100);
@@ -298,7 +298,7 @@ export default function InventoryPage(): React.ReactElement {
         const outOfStock = allProducts.filter(p => {
             const qty = inventoryMap.get(p.id) || 0;
             const allocated = saleAllocationMap.get(p.id)?.meters || 0;
-            return (qty - allocated) <= 0 && p.status !== 'direct_delivery' && p.status !== 'discontinued';
+            return (qty - allocated) <= 0 && p.status !== 'direct_delivery' && p.status !== 'discontinued' && p.status !== 'on_sale_break';
         }).length;
         const lowStock = allProducts.filter(p => {
             const qty = inventoryMap.get(p.id) || 0;
@@ -306,7 +306,7 @@ export default function InventoryPage(): React.ReactElement {
             const available = qty - allocated;
             const isRoll = p.shape && isRollBag(p.shape);
             const threshold = isRoll ? 50 : 100; // Assuming 50 for roll, 100 for others as per calculateStockStatus
-            return available > 0 && available < threshold && p.status !== 'direct_delivery' && p.status !== 'discontinued';
+            return available > 0 && available < threshold && p.status !== 'direct_delivery' && p.status !== 'discontinued' && p.status !== 'on_sale_break';
         }).length;
         const hasReservation = allProducts.filter(p => {
             const allocated = saleAllocationMap.get(p.id);

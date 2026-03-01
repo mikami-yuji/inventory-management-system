@@ -155,7 +155,7 @@ export default function DashboardPage(): React.ReactElement {
     // 在庫アラート用に計算
     const urgentItems = inventory.map(item => {
         const product = products.find(p => p.id === (item.product?.id || item.productId));
-        if (!product || product.status === 'inactive' || product.status === 'discontinued' || product.status === 'direct_delivery') return null;
+        if (!product || product.status === 'inactive' || product.status === 'discontinued' || product.status === 'direct_delivery' || product.status === 'on_sale_break') return null;
 
         const currentStock = item.quantity;
         const isRoll = isRollBag(product.shape || "");

@@ -164,12 +164,14 @@ function StockReportContent(): React.ReactElement {
             r.daysUntilStockout !== null &&
             r.daysUntilStockout < 14 &&
             r.product.status !== 'direct_delivery' &&
-            r.product.status !== 'discontinued'
+            r.product.status !== 'discontinued' &&
+            r.product.status !== 'on_sale_break'
         ).length;
         const outOfStockItems = reportData.filter(r =>
             r.currentStock === 0 &&
             r.product.status !== 'direct_delivery' &&
-            r.product.status !== 'discontinued'
+            r.product.status !== 'discontinued' &&
+            r.product.status !== 'on_sale_break'
         ).length;
         const totalMonthlyUsage = reportData.reduce((sum, r) => sum + r.monthlyUsage, 0);
 
@@ -344,10 +346,12 @@ function StockReportContent(): React.ReactElement {
                                         const isLowStock = item.daysUntilStockout !== null &&
                                             item.daysUntilStockout < 14 &&
                                             item.product.status !== 'direct_delivery' &&
-                                            item.product.status !== 'discontinued';
+                                            item.product.status !== 'discontinued' &&
+                                            item.product.status !== 'on_sale_break';
                                         const isOutOfStock = item.currentStock === 0 &&
                                             item.product.status !== 'direct_delivery' &&
-                                            item.product.status !== 'discontinued';
+                                            item.product.status !== 'discontinued' &&
+                                            item.product.status !== 'on_sale_break';
 
                                         return (
                                             <TableRow

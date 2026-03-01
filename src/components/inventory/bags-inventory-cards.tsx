@@ -121,7 +121,7 @@ function ProductCard({
     const availableStock = Math.max(0, currentStock - (isRoll ? allocation.meters : allocation.bags));
 
     // ステータス判定 (直送先在庫と廃盤は除外)
-    const isOutOfStock = (product.status !== 'direct_delivery' && product.status !== 'discontinued') && (availableStock <= 0);
+    const isOutOfStock = (product.status !== 'direct_delivery' && product.status !== 'discontinued' && product.status !== 'on_sale_break') && (availableStock <= 0);
     const isLowStock = (product.status !== 'direct_delivery' && product.status !== 'discontinued') && (
         isRoll
             ? availableStock > 0 && availableStock < 50
@@ -236,7 +236,7 @@ function ProductCard({
                     ) : product.status === 'direct_delivery' ? (
                         <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50 shadow-sm">直送先在庫</Badge>
                     ) : product.status === 'on_sale_break' ? (
-                        <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50 shadow-sm">販売開始中断</Badge>
+                        <Badge variant="outline" className="border-yellow-400 text-yellow-600 bg-yellow-50 shadow-sm">販売中断</Badge>
                     ) : product.status === 'discontinued' ? (
                         <Badge variant="outline" className="border-gray-400 text-gray-500 bg-gray-50 shadow-sm">廃盤</Badge>
                     ) : null}

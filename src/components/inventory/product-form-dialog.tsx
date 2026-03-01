@@ -460,7 +460,7 @@ export function ProductFormDialog({
                                     <SelectItem value="plate_removal_scheduled">落版予定</SelectItem>
                                     <SelectItem value="plate_removed">落版</SelectItem>
                                     <SelectItem value="direct_delivery">直送先在庫</SelectItem>
-                                    <SelectItem value="on_sale_break">販売停止中</SelectItem>
+                                    <SelectItem value="on_sale_break">販売中断</SelectItem>
                                     <SelectItem value="discontinued">廃盤</SelectItem>
                                     <SelectItem value="inactive">非表示（削除扱い）</SelectItem>
                                 </SelectContent>

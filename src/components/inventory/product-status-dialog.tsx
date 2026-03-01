@@ -145,7 +145,7 @@ export function ProductStatusDialog({
                                     <SelectItem value="plate_removed">落版</SelectItem>
                                     <SelectItem value="discontinued">廃盤</SelectItem>
                                     <SelectItem value="direct_delivery">直送先在庫</SelectItem>
-                                    <SelectItem value="on_sale_break">販売開始中断</SelectItem>
+                                    <SelectItem value="on_sale_break">販売中断</SelectItem>
                                     <SelectItem value="inactive">無効 (非表示)</SelectItem>
                                 </SelectContent>
                             </Select>
