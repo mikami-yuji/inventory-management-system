@@ -349,47 +349,47 @@ export default function InventoryPage(): React.ReactElement {
             {/* サマリーカード (Restored) */}
             <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
                 <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium flex items-center gap-2">
-                            <Package className="h-4 w-4" />
+                    <CardHeader className="p-2 pb-0 md:p-3 md:pb-0">
+                        <CardTitle className="text-xs md:text-sm font-medium flex items-center gap-1">
+                            <Package className="h-3 w-3" />
                             総商品
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{summary.totalProducts}</div>
+                    <CardContent className="p-2 pt-1 md:p-3 md:pt-1">
+                        <div className="text-lg md:text-xl font-bold">{summary.totalProducts}</div>
                     </CardContent>
                 </Card>
                 <Card className="border-red-200">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-red-600 flex items-center gap-2">
-                            <TrendingDown className="h-4 w-4" />
+                    <CardHeader className="p-2 pb-0 md:p-3 md:pb-0">
+                        <CardTitle className="text-xs md:text-sm font-medium text-red-600 flex items-center gap-1">
+                            <TrendingDown className="h-3 w-3" />
                             欠品
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-red-600">{summary.outOfStock}</div>
+                    <CardContent className="p-2 pt-1 md:p-3 md:pt-1">
+                        <div className="text-lg md:text-xl font-bold text-red-600">{summary.outOfStock}</div>
                     </CardContent>
                 </Card>
                 <Card className="border-amber-200">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-amber-600 flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4" />
+                    <CardHeader className="p-2 pb-0 md:p-3 md:pb-0">
+                        <CardTitle className="text-xs md:text-sm font-medium text-amber-600 flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
                             低在庫
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-amber-600">{summary.lowStock}</div>
+                    <CardContent className="p-2 pt-1 md:p-3 md:pt-1">
+                        <div className="text-lg md:text-xl font-bold text-amber-600">{summary.lowStock}</div>
                     </CardContent>
                 </Card>
                 <Card className="border-blue-200">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-blue-600 flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
+                    <CardHeader className="p-2 pb-0 md:p-3 md:pb-0">
+                        <CardTitle className="text-xs md:text-sm font-medium text-blue-600 flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
                             引当
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-blue-600">{summary.hasReservation}</div>
+                    <CardContent className="p-2 pt-1 md:p-3 md:pt-1">
+                        <div className="text-lg md:text-xl font-bold text-blue-600">{summary.hasReservation}</div>
                     </CardContent>
                 </Card>
             </div>
@@ -406,26 +406,26 @@ export default function InventoryPage(): React.ReactElement {
                         {isFilterOpen ? <TrendingUp className="h-4 w-4 rotate-180" /> : <TrendingDown className="h-4 w-4" />}
                     </Button>
                 </div>
-                <CardContent className={cn("pt-6", isFilterOpen ? "block" : "hidden md:block")}>
-                    <div className="flex flex-col gap-4 md:flex-row md:items-end">
+                <CardContent className={cn("pt-4 pb-4 md:pt-4", isFilterOpen ? "block" : "hidden md:block")}>
+                    <div className="flex flex-col gap-3 md:flex-row md:items-end">
                         {/* 検索入力 */}
                         <div className="flex-1">
-                            <label className="text-sm font-medium mb-2 block">商品検索</label>
+                            <label className="text-xs font-medium mb-1 block">商品検索</label>
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     placeholder="商品名、JAN、ID..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-10"
+                                    className="pl-9 h-9 text-sm"
                                 />
                             </div>
                         </div>
                         {/* 重量フィルター */}
-                        <div className="w-full md:w-40">
-                            <label className="text-sm font-medium mb-2 block">重量</label>
+                        <div className="w-full md:w-32">
+                            <label className="text-xs font-medium mb-1 block">重量</label>
                             <Select value={weightFilter} onValueChange={setWeightFilter}>
-                                <SelectTrigger>
+                                <SelectTrigger className="h-9 text-sm">
                                     <SelectValue placeholder="すべて" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -439,10 +439,10 @@ export default function InventoryPage(): React.ReactElement {
                             </Select>
                         </div>
                         {/* 在庫状態フィルター */}
-                        <div className="w-full md:w-48">
-                            <label className="text-sm font-medium mb-2 block">在庫状態</label>
+                        <div className="w-full md:w-40">
+                            <label className="text-xs font-medium mb-1 block">在庫状態</label>
                             <Select value={stockFilter} onValueChange={setStockFilter}>
-                                <SelectTrigger>
+                                <SelectTrigger className="h-9 text-sm">
                                     <SelectValue placeholder="すべて" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -455,7 +455,7 @@ export default function InventoryPage(): React.ReactElement {
                         </div>
                         {/* クリアボタン */}
                         {hasActiveFilters && (
-                            <Button variant="outline" onClick={clearFilters} className="gap-2">
+                            <Button variant="outline" onClick={clearFilters} className="gap-2 h-9 text-sm">
                                 <X className="h-4 w-4" />
                                 クリア
                             </Button>

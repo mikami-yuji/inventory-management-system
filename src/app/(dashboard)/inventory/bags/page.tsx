@@ -420,73 +420,73 @@ export default function BagsInventoryPage(): React.ReactElement {
             {/* サマリーカード */}
             <div className="grid grid-cols-2 gap-2 md:gap-4 md:grid-cols-4">
                 <Card>
-                    <CardHeader className="p-3 pb-1 md:p-6 md:pb-2">
-                        <CardTitle className="text-xs md:text-sm font-medium flex items-center gap-1 md:gap-2">
-                            <Package className="h-3 w-3 md:h-4 md:h-4" />
+                    <CardHeader className="p-2 md:p-3 md:pb-0">
+                        <CardTitle className="text-[10px] md:text-sm font-medium flex items-center gap-1">
+                            <Package className="h-3 w-3" />
                             総商品数
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-                        <div className="text-xl md:text-2xl font-bold">{summary.total}</div>
+                    <CardContent className="p-2 pt-1 md:p-3 md:pt-1">
+                        <div className="text-lg md:text-xl font-bold">{summary.total}</div>
                     </CardContent>
                 </Card>
                 <Card className="border-red-200">
-                    <CardHeader className="p-3 pb-1 md:p-6 md:pb-2">
-                        <CardTitle className="text-xs md:text-sm font-medium text-red-600 flex items-center gap-1 md:gap-2">
-                            <TrendingDown className="h-3 w-3 md:h-4 md:h-4" />
+                    <CardHeader className="p-2 md:p-3 md:pb-0">
+                        <CardTitle className="text-[10px] md:text-sm font-medium text-red-600 flex items-center gap-1">
+                            <TrendingDown className="h-3 w-3" />
                             欠品
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-                        <div className="text-xl md:text-2xl font-bold text-red-600">{summary.outOfStock}</div>
+                    <CardContent className="p-2 pt-1 md:p-3 md:pt-1">
+                        <div className="text-lg md:text-xl font-bold text-red-600">{summary.outOfStock}</div>
                     </CardContent>
                 </Card>
                 <Card className="border-amber-200">
-                    <CardHeader className="p-3 pb-1 md:p-6 md:pb-2">
-                        <CardTitle className="text-xs md:text-sm font-medium text-amber-600 flex items-center gap-1 md:gap-2">
-                            <AlertTriangle className="h-3 w-3 md:h-4 md:h-4" />
+                    <CardHeader className="p-2 md:p-3 md:pb-0">
+                        <CardTitle className="text-[10px] md:text-sm font-medium text-amber-600 flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
                             低在庫
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-                        <div className="text-xl md:text-2xl font-bold text-amber-600">{summary.lowStock}</div>
+                    <CardContent className="p-2 pt-1 md:p-3 md:pt-1">
+                        <div className="text-lg md:text-xl font-bold text-amber-600">{summary.lowStock}</div>
                     </CardContent>
                 </Card>
                 <Card className="border-blue-200">
-                    <CardHeader className="p-3 pb-1 md:p-6 md:pb-2">
-                        <CardTitle className="text-xs md:text-sm font-medium text-blue-600 flex items-center gap-1 md:gap-2">
-                            <Calendar className="h-3 w-3 md:h-4 md:h-4" />
+                    <CardHeader className="p-2 md:p-3 md:pb-0">
+                        <CardTitle className="text-[10px] md:text-sm font-medium text-blue-600 flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
                             特売引当中
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-                        <div className="text-xl md:text-2xl font-bold text-blue-600">{summary.hasReservation}</div>
+                    <CardContent className="p-2 pt-1 md:p-3 md:pt-1">
+                        <div className="text-lg md:text-xl font-bold text-blue-600">{summary.hasReservation}</div>
                     </CardContent>
                 </Card>
             </div>
 
             {/* 検索・フィルターエリア */}
             <Card>
-                <CardContent className="p-4 md:pt-6">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4">
+                <CardContent className="p-3 md:p-4 md:pt-4">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-end md:gap-3">
                         <div className="flex-1">
-                            <label className="text-xs md:text-sm font-medium mb-1.5 md:mb-2 block text-muted-foreground">商品検索</label>
+                            <label className="text-xs font-medium mb-1 block text-muted-foreground">商品検索</label>
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                                 <Input
                                     placeholder="商品名、JAN、商品ID..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-10 h-9 md:h-10 text-sm"
+                                    className="pl-9 h-8 md:h-9 text-xs md:text-sm"
                                 />
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 md:flex md:gap-4 md:items-end">
-                            <div className="md:w-32">
-                                <label className="text-[10px] md:text-sm font-medium mb-1 md:mb-2 block text-muted-foreground">重量</label>
+                        <div className="grid grid-cols-3 gap-2 md:flex md:gap-3 md:items-end">
+                            <div className="md:w-28">
+                                <label className="text-[10px] md:text-xs font-medium mb-1 block text-muted-foreground">重量</label>
                                 <Select value={weightFilter} onValueChange={setWeightFilter}>
-                                    <SelectTrigger className="h-8 md:h-10 text-xs md:text-sm px-2">
+                                    <SelectTrigger className="h-8 md:h-9 text-xs px-2">
                                         <SelectValue placeholder="すべて" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -500,10 +500,10 @@ export default function BagsInventoryPage(): React.ReactElement {
                                 </Select>
                             </div>
 
-                            <div className="md:w-32">
-                                <label className="text-[10px] md:text-sm font-medium mb-1 md:mb-2 block text-muted-foreground">形状</label>
+                            <div className="md:w-28">
+                                <label className="text-[10px] md:text-xs font-medium mb-1 block text-muted-foreground">形状</label>
                                 <Select value={shapeFilter} onValueChange={setShapeFilter}>
-                                    <SelectTrigger className="h-8 md:h-10 text-xs md:text-sm px-2">
+                                    <SelectTrigger className="h-8 md:h-9 text-xs px-2">
                                         <SelectValue placeholder="すべて" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -515,10 +515,10 @@ export default function BagsInventoryPage(): React.ReactElement {
                                 </Select>
                             </div>
 
-                            <div className="md:w-40">
-                                <label className="text-[10px] md:text-sm font-medium mb-1 md:mb-2 block text-muted-foreground">状態</label>
+                            <div className="md:w-36">
+                                <label className="text-[10px] md:text-xs font-medium mb-1 block text-muted-foreground">状態</label>
                                 <Select value={stockFilter} onValueChange={setStockFilter}>
-                                    <SelectTrigger className="h-8 md:h-10 text-xs md:text-sm px-2">
+                                    <SelectTrigger className="h-8 md:h-9 text-xs px-2">
                                         <SelectValue placeholder="すべて" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -532,8 +532,8 @@ export default function BagsInventoryPage(): React.ReactElement {
                         </div>
 
                         {hasActiveFilters && (
-                            <Button variant="outline" onClick={clearFilters} className="gap-2 h-8 md:h-10 text-xs md:text-sm">
-                                <X className="h-4 w-4" />
+                            <Button variant="outline" onClick={clearFilters} className="gap-1.5 h-8 md:h-9 text-xs">
+                                <X className="h-3.5 w-3.5" />
                                 <span className="hidden md:inline">クリア</span>
                             </Button>
                         )}
