@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CalculableInput } from "@/components/ui/calculable-input";
 import { Label } from "@/components/ui/label";
 import { Pencil, Package, Clock, CalendarDays, Loader2, Mic, MicOff, TrendingDown, Info, Barcode, Hash } from "lucide-react";
 import { useUpdateInventory } from "@/hooks/use-inventory";
@@ -177,13 +178,12 @@ export function ProductDetailDialog({
 
                                 <div className="flex items-center gap-2">
                                     <div className="relative flex-1">
-                                        <Input
+                                        <CalculableInput
                                             id="quantity"
-                                            type="number"
-                                            min="0"
                                             value={quantity}
-                                            onChange={(e) => setQuantity(e.target.value)}
+                                            onChange={(value) => setQuantity(value === null ? "" : String(value))}
                                             className="pr-12 text-base font-bold h-10 border-slate-200 focus:border-primary focus:ring-primary/20"
+                                            stringifyOnComplete
                                         />
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
                                             {unit}

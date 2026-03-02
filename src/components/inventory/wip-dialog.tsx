@@ -11,6 +11,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { CalculableInput } from "@/components/ui/calculable-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -189,10 +190,9 @@ export function WIPDialog({
                         <div className="grid gap-4">
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label className="text-right">数量</Label>
-                                <Input
-                                    type="number"
+                                <CalculableInput
                                     value={confirmQuantity === 0 ? "" : confirmQuantity}
-                                    onChange={(e) => setConfirmQuantity(Number(e.target.value) || 0)}
+                                    onChange={(value) => setConfirmQuantity(Number(value) || 0)}
                                     className="col-span-3"
                                     placeholder="数量を入力"
                                 />
@@ -328,13 +328,11 @@ export function WIPDialog({
                                 {/* 数量 */}
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label htmlFor="quantity" className="text-right">数量</Label>
-                                    <Input
+                                    <CalculableInput
                                         id="quantity"
-                                        type="number"
                                         value={quantity === 0 ? "" : quantity}
-                                        onChange={(e) => setQuantity(Number(e.target.value) || 0)}
+                                        onChange={(value) => setQuantity(Number(value) || 0)}
                                         className="col-span-3"
-                                        min={1}
                                         placeholder="数量を入力"
                                     />
                                 </div>

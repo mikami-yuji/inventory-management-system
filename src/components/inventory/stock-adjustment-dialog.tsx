@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { CalculableInput } from "@/components/ui/calculable-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -134,14 +135,13 @@ export function StockAdjustmentDialog({
                             変更後
                         </Label>
                         <div className="col-span-3 flex items-center gap-2">
-                            <Input
+                            <CalculableInput
                                 id="quantity"
-                                type="number"
-                                min="0"
                                 value={quantity === "0" ? "" : quantity}
-                                onChange={(e) => setQuantity(e.target.value)}
+                                onChange={(value) => setQuantity(value === null ? "" : String(value))}
                                 className="flex-1"
                                 placeholder="数量を入力"
+                                stringifyOnComplete
                             />
                             {hasSupport && (
                                 <Button

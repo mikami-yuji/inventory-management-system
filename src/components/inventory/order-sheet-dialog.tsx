@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CalculableInput } from "@/components/ui/calculable-input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -152,11 +153,9 @@ export function OrderSheetDialog({ products, inventoryMap, trigger }: OrderSheet
                                             {stock.toLocaleString()}
                                         </TableCell>
                                         <TableCell>
-                                            <Input
-                                                type="number"
-                                                min={0}
+                                            <CalculableInput
                                                 value={orderQuantities.get(product.id) === 0 ? '' : (orderQuantities.get(product.id) || 0)}
-                                                onChange={(e) => handleQuantityChange(product.id, parseInt(e.target.value) || 0)}
+                                                onChange={(value) => handleQuantityChange(product.id, typeof value === 'number' ? value : parseInt(value as string) || 0)}
                                                 placeholder="数量入力"
                                                 className="h-8 text-right"
                                                 disabled={!isSelected}

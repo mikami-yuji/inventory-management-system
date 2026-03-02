@@ -9,6 +9,7 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CalculableInput } from "@/components/ui/calculable-input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -159,13 +160,13 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
                         <div className="grid gap-2">
                             <Label htmlFor="quantity">数量</Label>
                             <div className="flex items-center gap-2">
-                                <Input
+                                <CalculableInput
                                     id="quantity"
-                                    type="number"
                                     placeholder="数量を入力"
                                     value={quantity === "0" ? "" : quantity}
-                                    onChange={(e) => setQuantity(e.target.value)}
+                                    onChange={(value) => setQuantity(value === null ? "" : String(value))}
                                     required
+                                    stringifyOnComplete
                                 />
                                 <span className="text-sm text-muted-foreground whitespace-nowrap">
                                     {product.shape?.includes('RZ') || product.shape?.includes('RA') ? 'm' : '枚'}

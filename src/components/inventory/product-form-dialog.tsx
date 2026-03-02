@@ -14,9 +14,10 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { CalculableInput } from "@/components/ui/calculable-input";
 import {
     Select,
     SelectContent,
@@ -354,13 +355,12 @@ export function ProductFormDialog({
                     <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="weight">重量 (kg)</Label>
-                            <Input
+                            <CalculableInput
                                 id="weight"
-                                type="number"
-                                step="0.1"
                                 value={formData.weight === "0" || formData.weight === "0.0" ? "" : formData.weight}
-                                onChange={(e) => handleChange("weight", e.target.value)}
+                                onChange={(value) => handleChange("weight", value === null ? "" : String(value))}
                                 placeholder="例: 5"
+                                stringifyOnComplete
                             />
                         </div>
 
@@ -388,34 +388,34 @@ export function ProductFormDialog({
                     <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="unitPrice">単価 (円)</Label>
-                            <Input
+                            <CalculableInput
                                 id="unitPrice"
-                                type="number"
                                 value={formData.unitPrice === "0" ? "" : formData.unitPrice}
-                                onChange={(e) => handleChange("unitPrice", e.target.value)}
+                                onChange={(value) => handleChange("unitPrice", value === null ? "" : String(value))}
                                 placeholder="単価を入力"
+                                stringifyOnComplete
                             />
                         </div>
 
                         <div className="space-y-2">
                             <Label htmlFor="printingCost">印刷代 (円)</Label>
-                            <Input
+                            <CalculableInput
                                 id="printingCost"
-                                type="number"
                                 value={formData.printingCost === "0" ? "" : formData.printingCost}
-                                onChange={(e) => handleChange("printingCost", e.target.value)}
+                                onChange={(value) => handleChange("printingCost", value === null ? "" : String(value))}
                                 placeholder="印刷代を入力"
+                                stringifyOnComplete
                             />
                         </div>
 
                         <div className="space-y-2">
                             <Label htmlFor="minStockAlert">在庫アラート (個別設定)</Label>
-                            <Input
+                            <CalculableInput
                                 id="minStockAlert"
-                                type="number"
                                 value={formData.minStockAlert === "0" ? "" : formData.minStockAlert}
-                                onChange={(e) => handleChange("minStockAlert", e.target.value)}
+                                onChange={(value) => handleChange("minStockAlert", value === null ? "" : String(value))}
                                 placeholder="推奨: 3000"
+                                stringifyOnComplete
                             />
                             <p className="text-[10px] text-muted-foreground whitespace-nowrap">
                                 空欄時のデフォルト: ロール 1500m / 単袋 3000枚
