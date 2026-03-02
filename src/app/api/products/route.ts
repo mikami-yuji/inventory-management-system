@@ -118,6 +118,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             product_type: body.productType || null,
             status_override: body.statusOverride || 'normal',
             discontinued_date: body.discontinuedDate || null,
+            front_color_count: body.frontColorCount !== undefined && body.frontColorCount !== null ? Number(body.frontColorCount) : null,
+            back_color_count: body.backColorCount !== undefined && body.backColorCount !== null ? Number(body.backColorCount) : null,
+            total_color_count: body.totalColorCount !== undefined && body.totalColorCount !== null ? Number(body.totalColorCount) : null,
+            supplier_id: body.supplierId === 'none' || !body.supplierId ? null : body.supplierId,
         };
 
         const { data, error } = await supabaseClient
@@ -190,6 +194,10 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         if (body.statusOverride !== undefined) updateData.status_override = body.statusOverride;
         if (body.status !== undefined) updateData.status = body.status;
         if (body.discontinuedDate !== undefined) updateData.discontinued_date = body.discontinuedDate;
+        if (body.frontColorCount !== undefined) updateData.front_color_count = body.frontColorCount !== null ? Number(body.frontColorCount) : null;
+        if (body.backColorCount !== undefined) updateData.back_color_count = body.backColorCount !== null ? Number(body.backColorCount) : null;
+        if (body.totalColorCount !== undefined) updateData.total_color_count = body.totalColorCount !== null ? Number(body.totalColorCount) : null;
+        if (body.supplierId !== undefined) updateData.supplier_id = body.supplierId === 'none' || !body.supplierId ? null : body.supplierId;
 
         const { data: updateResults, error } = await supabaseClient
             .from('products')
