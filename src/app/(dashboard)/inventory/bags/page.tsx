@@ -99,6 +99,9 @@ export default function BagsInventoryPage(): React.ReactElement {
     const [weightFilter, setWeightFilter] = useState("all");
     const [shapeFilter, setShapeFilter] = useState("all");
     const [stockFilter, setStockFilter] = useState("all");
+    const [originFilter, setOriginFilter] = useState("all");
+    const [varietyFilter, setVarietyFilter] = useState("all");
+    const [statusFilter, setStatusFilter] = useState("all");
     const [showRemovedZeroStock, setShowRemovedZeroStock] = useState(false);
 
     // Supabase APIから商品と在庫を取得
@@ -273,6 +276,28 @@ export default function BagsInventoryPage(): React.ReactElement {
         return Array.from(shapes) as string[];
     }, [bagProducts]);
 
+    // 利用可能な産地リストを取得
+    const availableOrigins = useMemo(() => {
+        const origins = new Set(bagProducts.map(p => p.origin).filter(Boolean));
+        return Array.from(origins).sort((a, b) => (a || "").localeCompare(b || "", "ja")) as string[];
+    }, [bagProducts]);
+
+    // 利用可能な品種リストを取得
+    const availableVarieties = useMemo(() => {
+        const varieties = new Set(bagProducts.map(p => p.variety).filter(Boolean));
+        return Array.from(varieties).sort((a, b) => (a || "").localeCompare(b || "", "ja")) as string[];
+    }, [bagProducts]);
+
+    // ステータスの表示名マップ
+    const statusLabels: Record<string, string> = {
+        active: "通常 (稼働中)",
+        plate_removal_scheduled: "落版予定",
+        plate_removed: "落版",
+        direct_delivery: "直送先在庫",
+        on_sale_break: "販売中断",
+        discontinued: "廃盤",
+    };
+
     // フィルタリングされた商品
     const filteredProducts = useMemo(() => {
         let products = bagProducts;
@@ -327,6 +352,21 @@ export default function BagsInventoryPage(): React.ReactElement {
             products = products.filter(p => (saleAllocationMap.get(p.id)?.bags || 0) > 0);
         }
 
+        // 産地フィルター
+        if (originFilter !== "all") {
+            products = products.filter(p => p.origin === originFilter);
+        }
+
+        // 品種フィルター
+        if (varietyFilter !== "all") {
+            products = products.filter(p => p.variety === varietyFilter);
+        }
+
+        // ステータスフィルター
+        if (statusFilter !== "all") {
+            products = products.filter(p => p.status === statusFilter);
+        }
+
         // ソート実行（filter後の配列をソート）
         return [...products].sort((a, b) => {
             // 1. グループ順 (通常 -> NB -> 新米)
@@ -347,7 +387,7 @@ export default function BagsInventoryPage(): React.ReactElement {
             // 4. 重量順 (小さい順)
             return (a.weight || 0) - (b.weight || 0);
         });
-    }, [bagProducts, searchQuery, weightFilter, shapeFilter, stockFilter, showRemovedZeroStock, inventoryMap, saleAllocationMap, settings]);
+    }, [bagProducts, searchQuery, weightFilter, shapeFilter, stockFilter, originFilter, varietyFilter, statusFilter, showRemovedZeroStock, inventoryMap, saleAllocationMap, settings]);
 
     // サマリー計算
     const summary = useMemo(() => {
@@ -368,13 +408,16 @@ export default function BagsInventoryPage(): React.ReactElement {
         return { total: bagProducts.length, lowStock, outOfStock, hasReservation };
     }, [bagProducts, inventoryMap, saleAllocationMap]);
 
-    const hasActiveFilters = searchQuery || weightFilter !== "all" || shapeFilter !== "all" || stockFilter !== "all";
+    const hasActiveFilters = searchQuery || weightFilter !== "all" || shapeFilter !== "all" || stockFilter !== "all" || originFilter !== "all" || varietyFilter !== "all" || statusFilter !== "all";
 
     const clearFilters = (): void => {
         setSearchQuery("");
         setWeightFilter("all");
         setShapeFilter("all");
         setStockFilter("all");
+        setOriginFilter("all");
+        setVarietyFilter("all");
+        setStatusFilter("all");
     };
 
     // 初回ロード時のみローディング表示（データがある場合は更新中も表示し続ける）
@@ -545,6 +588,53 @@ export default function BagsInventoryPage(): React.ReactElement {
                             </div>
                         </div>
 
+                        <div className="grid grid-cols-3 gap-2 md:flex md:gap-3 md:items-end">
+                            <div className="md:w-36">
+                                <label className="text-[10px] md:text-xs font-medium mb-1 block text-muted-foreground">産地</label>
+                                <Select value={originFilter} onValueChange={setOriginFilter}>
+                                    <SelectTrigger className="h-8 md:h-9 text-xs px-2">
+                                        <SelectValue placeholder="すべて" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">すべて</SelectItem>
+                                        {availableOrigins.map(o => (
+                                            <SelectItem key={o} value={o}>{o}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="md:w-36">
+                                <label className="text-[10px] md:text-xs font-medium mb-1 block text-muted-foreground">品種</label>
+                                <Select value={varietyFilter} onValueChange={setVarietyFilter}>
+                                    <SelectTrigger className="h-8 md:h-9 text-xs px-2">
+                                        <SelectValue placeholder="すべて" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">すべて</SelectItem>
+                                        {availableVarieties.map(v => (
+                                            <SelectItem key={v} value={v}>{v}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="md:w-40">
+                                <label className="text-[10px] md:text-xs font-medium mb-1 block text-muted-foreground">全体状況</label>
+                                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                    <SelectTrigger className="h-8 md:h-9 text-xs px-2">
+                                        <SelectValue placeholder="すべて" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">すべて</SelectItem>
+                                        {Object.entries(statusLabels).map(([value, label]) => (
+                                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
                         {hasActiveFilters && (
                             <Button variant="outline" onClick={clearFilters} className="gap-1.5 h-8 md:h-9 text-xs">
                                 <X className="h-3.5 w-3.5" />
@@ -565,6 +655,9 @@ export default function BagsInventoryPage(): React.ReactElement {
                                     {stockFilter === "low" ? "低在庫" : stockFilter === "out" ? "欠品" : "特売引当あり"}
                                 </Badge>
                             )}
+                            {originFilter !== "all" && <Badge variant="secondary">産地: {originFilter}</Badge>}
+                            {varietyFilter !== "all" && <Badge variant="secondary">品種: {varietyFilter}</Badge>}
+                            {statusFilter !== "all" && <Badge variant="secondary">状況: {statusLabels[statusFilter]}</Badge>}
                         </div>
                     )}
                     <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t">
