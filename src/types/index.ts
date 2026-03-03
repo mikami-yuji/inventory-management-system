@@ -122,7 +122,6 @@ export type SaleEventInput = {
   dates: string[];
   description?: string;
   items: Array<{ productId: string; quantity: number }>;
-  allocateStock?: boolean;
 };
 
 // 発注ステータス

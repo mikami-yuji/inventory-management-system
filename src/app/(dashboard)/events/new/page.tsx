@@ -67,7 +67,6 @@ function NewEventContent(): React.ReactElement {
     });
     const [description, setDescription] = useState("");
     const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
-    const [allocateStock, setAllocateStock] = useState(false);
 
     // 商品検索
     const [productSearch, setProductSearch] = useState("");
@@ -199,16 +198,6 @@ function NewEventContent(): React.ReactElement {
             return;
         }
 
-        // 在庫不足チェック
-        if (allocateStock) {
-            const shortItems = saleItems.filter(item => item.quantity > item.currentStock);
-            if (shortItems.length > 0) {
-                const names = shortItems.map(i => i.product.name).join(", ");
-                if (!confirm(`以下の商品は在庫が不足しています。続行しますか？\n${names}`)) {
-                    return;
-                }
-            }
-        }
 
         const dates = scheduleType === "single"
             ? [format(singleDate!, "yyyy-MM-dd")]
@@ -222,8 +211,7 @@ function NewEventContent(): React.ReactElement {
             items: saleItems.map(item => ({
                 productId: item.product.id,
                 quantity: item.quantity
-            })),
-            allocateStock
+            }))
         });
 
         if (result.success) {
@@ -511,27 +499,6 @@ function NewEventContent(): React.ReactElement {
                     </CardContent>
                 </Card>
 
-                {/* オプション */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <PackageCheck className="h-5 w-5" />
-                            オプション
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="allocateStock"
-                                checked={allocateStock}
-                                onCheckedChange={(checked) => setAllocateStock(checked === true)}
-                            />
-                            <Label htmlFor="allocateStock" className="text-sm font-normal cursor-pointer">
-                                登録時に在庫から引当を行う（在庫数を減らします）
-                            </Label>
-                        </div>
-                    </CardContent>
-                </Card>
 
                 {/* 送信ボタン */}
                 <div className="flex justify-end gap-2">

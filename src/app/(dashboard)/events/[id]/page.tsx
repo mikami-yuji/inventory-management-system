@@ -43,7 +43,7 @@ export default function EventDetailPage(): React.ReactElement {
 
     // データ取得
     const { events, loading, refetch } = useSaleEvents();
-    const { updateStatus, updateActual, allocateStock, deleteEvent, loading: updating } = useUpdateSaleEvent();
+    const { updateStatus, updateActual, deleteEvent, loading: updating } = useUpdateSaleEvent();
 
     // 現在のイベントを取得
     const event = useMemo(() => {
@@ -64,18 +64,6 @@ export default function EventDetailPage(): React.ReactElement {
         }
     };
 
-    // 在庫引当
-    const handleAllocate = async (): Promise<void> => {
-        if (!confirm('在庫から引当を行います。よろしいですか？')) return;
-
-        const success = await allocateStock(eventId);
-        if (success) {
-            refetch();
-            alert('在庫引当が完了しました');
-        } else {
-            alert('在庫引当に失敗しました');
-        }
-    };
 
     // 実績保存
     const handleSaveActual = async (): Promise<void> => {
@@ -146,9 +134,7 @@ export default function EventDetailPage(): React.ReactElement {
 
     // 統計
     const totalPlanned = event.items.reduce((sum, i) => sum + i.plannedQuantity, 0);
-    const totalAllocated = event.items.reduce((sum, i) => sum + i.allocatedQuantity, 0);
     const totalActual = event.items.reduce((sum, i) => sum + (i.actualQuantity ?? 0), 0);
-    const allAllocated = event.items.every(i => i.allocatedQuantity >= i.plannedQuantity);
 
     const statusConfig = {
         upcoming: { label: "予定", variant: "outline" as const },
@@ -248,7 +234,7 @@ export default function EventDetailPage(): React.ReactElement {
                 </Card>
 
                 {/* サマリーカード */}
-                <div className="grid gap-4 md:grid-cols-4 mb-6 print:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-3 mb-6 print:grid-cols-3">
                     <Card>
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -268,25 +254,7 @@ export default function EventDetailPage(): React.ReactElement {
                             <div className="text-2xl font-bold">{totalPlanned.toLocaleString()}</div>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <PackageCheck className="h-4 w-4" />
-                                引当済
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className={cn(
-                                "text-2xl font-bold",
-                                allAllocated ? "text-green-600" : "text-amber-600"
-                            )}>
-                                {totalAllocated.toLocaleString()}
-                            </div>
-                            {!allAllocated && (
-                                <p className="text-xs text-amber-600">未引当あり</p>
-                            )}
-                        </CardContent>
-                    </Card>
+
                     <Card>
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-medium">実績数量</CardTitle>
@@ -301,12 +269,7 @@ export default function EventDetailPage(): React.ReactElement {
 
                 {/* アクションボタン（印刷時非表示） */}
                 <div className="flex items-center gap-2 mb-4 print:hidden">
-                    {(!allAllocated && totalActual === 0) && (
-                        <Button onClick={handleAllocate} disabled={updating} className="gap-1">
-                            <PackageCheck className="h-4 w-4" />
-                            在庫引当
-                        </Button>
-                    )}
+
                     {!editMode ? (
                         <Button variant="outline" onClick={() => setEditMode(true)}>
                             実績入力
@@ -340,14 +303,12 @@ export default function EventDetailPage(): React.ReactElement {
                                     <TableHead>商品名</TableHead>
                                     <TableHead className="text-right">現在庫</TableHead>
                                     <TableHead className="text-right">計画数</TableHead>
-                                    <TableHead className="text-right">引当数</TableHead>
                                     <TableHead className="text-right">実績数</TableHead>
                                     <TableHead className="text-center">状態</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {event.items.map(item => {
-                                    const isAllocated = item.allocatedQuantity >= item.plannedQuantity;
                                     const stockShort = item.currentStock < item.plannedQuantity;
 
                                     const isRoll = isRollBag(item.productShape || "");
@@ -375,14 +336,7 @@ export default function EventDetailPage(): React.ReactElement {
                                             <TableCell className="text-right font-medium">
                                                 {item.plannedQuantity.toLocaleString()} <span className="text-xs text-muted-foreground">枚</span>
                                             </TableCell>
-                                            <TableCell className="text-right">
-                                                <span className={cn(
-                                                    "font-medium",
-                                                    isAllocated ? "text-green-600" : "text-amber-600"
-                                                )}>
-                                                    {item.allocatedQuantity.toLocaleString()} <span className="text-xs">枚</span>
-                                                </span>
-                                            </TableCell>
+
                                             <TableCell className="text-right">
                                                 {editMode ? (
                                                     <Input
@@ -402,12 +356,10 @@ export default function EventDetailPage(): React.ReactElement {
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                {isAllocated ? (
-                                                    <CheckCircle className="h-5 w-5 text-green-500 mx-auto" />
-                                                ) : stockShort ? (
-                                                    <AlertTriangle className="h-5 w-5 text-red-500 mx-auto" />
-                                                ) : (
+                                                {stockShort ? (
                                                     <AlertTriangle className="h-5 w-5 text-amber-500 mx-auto" />
+                                                ) : (
+                                                    <CheckCircle className="h-5 w-5 text-green-500 mx-auto" />
                                                 )}
                                             </TableCell>
                                         </TableRow>

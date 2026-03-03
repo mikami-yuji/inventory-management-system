@@ -45,47 +45,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                 for (const event of eventsToComplete) {
                     const items = event.sale_event_items as Array<{ product_id: string, allocated_quantity: number }>;
 
-                    // 1. 在庫の差し戻し処理
-                    for (const item of items) {
-                        if (item.allocated_quantity > 0) {
-                            // 現在の在庫を取得
-                            const { data: inventory } = await supabase
-                                .from('inventory')
-                                .select('quantity')
-                                .eq('product_id', item.product_id)
-                                .single<any>();
-
-                            const currentQty = inventory?.quantity || 0;
-                            const newQty = currentQty + item.allocated_quantity;
-
-                            // 在庫を増やす
-                            await supabase
-                                .from('inventory')
-                                .upsert({
-                                    product_id: item.product_id,
-                                    quantity: newQty,
-                                    updated_at: new Date().toISOString()
-                                } as any, { onConflict: 'product_id' });
-
-                            // 履歴を記録
-                            await supabase.from('stock_history').insert({
-                                product_id: item.product_id,
-                                type: 'incoming',
-                                quantity: item.allocated_quantity,
-                                note: `特売期限切れによる引当解除: ${event.client_name}`
-                            } as any);
-
-                            // 引当数量をリセット
-                            await supabase
-                                .from('sale_event_items')
-                                // @ts-ignore
-                                .update({ allocated_quantity: 0 })
-                                .eq('event_id', event.id)
-                                .eq('product_id', item.product_id);
-                        }
-                    }
-
-                    // 2. ステータスを完了に更新
+                    // 1. ステータスを完了に更新
                     await supabase
                         .from('sale_events')
                         // @ts-ignore
@@ -231,15 +191,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             scheduleType,
             dates,
             description,
-            items,
-            allocateStock = false // 在庫引当オプション
+            items
         } = body as {
             clientName: string
             scheduleType: 'single' | 'monthly'
             dates: string[]
             description?: string
             items: Array<{ productId: string; quantity: number }>
-            allocateStock?: boolean
         }
 
         // バリデーション
@@ -268,12 +226,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             return NextResponse.json({ data: null, error: eventError.message }, { status: 500 })
         }
 
-        // イベント商品を追加
+        // イベント商品を追加（現在庫からは減らさず、全量を有効在庫計算用の特売引当としてセット）
         const eventItems = items.map(item => ({
             event_id: eventData.id,
             product_id: item.productId,
             planned_quantity: item.quantity,
-            allocated_quantity: allocateStock ? item.quantity : 0
+            allocated_quantity: item.quantity
         }))
 
         const { error: itemsError } = await supabase
@@ -287,37 +245,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             return NextResponse.json({ data: null, error: itemsError.message }, { status: 500 })
         }
 
-        // 在庫引当処理
-        if (allocateStock) {
-            for (const item of items) {
-                // 現在の在庫を取得
-                const { data: inventory } = await supabase
-                    .from('inventory')
-                    .select('quantity')
-                    .eq('product_id', item.productId)
-                    .single<any>()
 
-                const currentQty = inventory?.quantity || 0
-                const newQty = Math.max(0, currentQty - item.quantity)
-
-                // 在庫を減らす
-                await supabase
-                    .from('inventory')
-                    .upsert({
-                        product_id: item.productId,
-                        quantity: newQty,
-                        updated_at: new Date().toISOString()
-                    } as any, { onConflict: 'product_id' })
-
-                // 履歴を記録
-                await supabase.from('stock_history').insert({
-                    product_id: item.productId,
-                    type: 'outgoing',
-                    quantity: item.quantity,
-                    note: `特売引当: ${clientName}`
-                } as any)
-            }
-        }
 
         return NextResponse.json({ data: eventData, error: null })
     } catch (error) {
@@ -372,46 +300,10 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     .single<any>()
 
                 if (currentItem) {
-                    const oldActual = currentItem.actual_quantity || 0
-                    const allocated = currentItem.allocated_quantity || 0
-                    const newActual = item.actualQuantity
+                    const newActual = item.actualQuantity;
+                    // 現在庫は更新しない（特売は有効在庫にのみ影響。物理在庫は棚卸で調整）
 
-                    // 在庫調整量の計算
-                    // 初回確定時（引当があるとき）: 実績 - 引当
-                    // 更新時（引当がなく、実績を上書きするとき）: 新実績 - 旧実績
-                    const adjustment = (allocated > 0)
-                        ? (newActual - allocated)
-                        : (newActual - oldActual)
-
-                    if (adjustment !== 0) {
-                        // 在庫を更新
-                        const { data: inventory } = await supabase
-                            .from('inventory')
-                            .select('quantity')
-                            .eq('product_id', currentItem.product_id)
-                            .single<any>()
-
-                        const currentQty = inventory?.quantity || 0
-                        const newQty = Math.max(0, currentQty - adjustment)
-
-                        await supabase
-                            .from('inventory')
-                            .upsert({
-                                product_id: currentItem.product_id,
-                                quantity: newQty,
-                                updated_at: new Date().toISOString()
-                            } as any, { onConflict: 'product_id' })
-
-                        // 在庫履歴を記録
-                        await supabase.from('stock_history').insert({
-                            product_id: currentItem.product_id,
-                            type: adjustment > 0 ? 'outgoing' : 'incoming',
-                            quantity: Math.abs(adjustment),
-                            note: `特売実績確定調整: ${event?.client_name || '不明'}`
-                        } as any)
-                    }
-
-                    // アイテムの実績を更新し、引当を0にする
+                    // アイテムの実績を更新し、引当数量はそのままで完了を区別
                     await supabase
                         .from('sale_event_items')
                         // @ts-ignore
@@ -423,7 +315,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 }
             }
         } else if (action === 'allocateStock') {
-            // 在庫引当
+            // 在庫引当（物理在庫を減らさない運用のため、単に全量引当済みに更新するだけ）
             const { data: eventItems } = await supabase
                 .from('sale_event_items')
                 .select('product_id, planned_quantity, allocated_quantity, actual_quantity')
@@ -431,31 +323,9 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 .returns<any[]>()
 
             for (const item of eventItems || []) {
-                // すでに実績が入力されている場合は引当をスキップ（二重減算防止）
                 if (item.actual_quantity > 0) continue;
 
-                const toAllocate = item.planned_quantity - item.allocated_quantity
-                if (toAllocate <= 0) continue
-
-                // 在庫を減らす
-                const { data: inventory } = await supabase
-                    .from('inventory')
-                    .select('quantity')
-                    .eq('product_id', item.product_id)
-                    .single<any>()
-
-                const currentQty = inventory?.quantity || 0
-                const newQty = Math.max(0, currentQty - toAllocate)
-
-                await supabase
-                    .from('inventory')
-                    .upsert({
-                        product_id: item.product_id,
-                        quantity: newQty,
-                        updated_at: new Date().toISOString()
-                    } as any, { onConflict: 'product_id' })
-
-                // 引当数量を更新
+                // 引当数量（有効在庫引当用）を計画数に更新
                 await supabase
                     .from('sale_event_items')
                     // @ts-ignore
@@ -539,23 +409,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             // 削除された商品を特定し、引当を解除する
             for (const existingItem of existingItems || []) {
                 if (!newProductIds.has(existingItem.product_id)) {
-                    // 引当がある場合は解除（在庫に戻す）
-                    if (existingItem.allocated_quantity > 0) {
-                        const { data: inventory } = await supabase
-                            .from('inventory')
-                            .select('quantity')
-                            .eq('product_id', existingItem.product_id)
-                            .single<any>();
-
-                        const currentQty = inventory?.quantity || 0;
-                        await supabase
-                            .from('inventory')
-                            .upsert({
-                                product_id: existingItem.product_id,
-                                quantity: currentQty + existingItem.allocated_quantity,
-                                updated_at: new Date().toISOString()
-                            } as any, { onConflict: 'product_id' });
-                    }
+                    // 現在庫は減らしていないため、在庫を戻す処理は不要
                     // レコード削除
                     await supabase.from('sale_event_items').delete().eq('id', existingItem.id);
                 }
