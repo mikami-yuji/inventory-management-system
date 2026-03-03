@@ -28,6 +28,9 @@ import {
     bagsToMeters
 } from "@/lib/services";
 
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
+
 // APIから取得する発注データの型
 type DashboardOrder = {
     id: string;
@@ -665,6 +668,9 @@ export default function DashboardPage(): React.ReactElement {
                                             <div className="text-[10px] text-muted-foreground flex gap-2 mt-0.5">
                                                 <span>SKU: {product.sku}</span>
                                                 <span>/ 形状: {product.shape}</span>
+                                                {product.discontinuedDate && (
+                                                    <span>/ 落版日: {format(new Date(product.discontinuedDate), "yyyy年M月d日", { locale: ja })}</span>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3 shrink-0">
