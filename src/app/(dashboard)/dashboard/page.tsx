@@ -638,7 +638,14 @@ export default function DashboardPage(): React.ReactElement {
 
             {/* 落版予定 */}
             {(() => {
-                const scheduledItems = products.filter(p => p.status === 'plate_removal_scheduled').slice(0, 5);
+                const scheduledItems = products
+                    .filter(p => p.status === 'plate_removal_scheduled')
+                    .sort((a, b) => {
+                        const dateA = a.discontinuedDate ? new Date(a.discontinuedDate).getTime() : Infinity;
+                        const dateB = b.discontinuedDate ? new Date(b.discontinuedDate).getTime() : Infinity;
+                        return dateA - dateB;
+                    })
+                    .slice(0, 5);
                 if (scheduledItems.length === 0) return null;
 
                 return (
@@ -668,13 +675,18 @@ export default function DashboardPage(): React.ReactElement {
                                             <div className="text-[10px] text-muted-foreground flex gap-2 mt-0.5">
                                                 <span>SKU: {product.sku}</span>
                                                 <span>/ 形状: {product.shape}</span>
-                                                {product.discontinuedDate && (
-                                                    <span>/ 落版日: {format(new Date(product.discontinuedDate), "yyyy年M月d日", { locale: ja })}</span>
-                                                )}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-3 shrink-0">
-                                            <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50">落版予定</Badge>
+                                        <div className="flex flex-col items-end gap-1.5 shrink-0 mt-2 sm:mt-0">
+                                            <div className="flex items-center gap-2">
+                                                {product.discontinuedDate && (
+                                                    <div className="text-xs font-bold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded flex items-center gap-1">
+                                                        <CalendarDays className="h-3 w-3" />
+                                                        {format(new Date(product.discontinuedDate), "yyyy年M月d日", { locale: ja })}
+                                                    </div>
+                                                )}
+                                                <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50">落版予定</Badge>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
