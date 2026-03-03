@@ -25,6 +25,7 @@ import {
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
 import { useSaleEvents, useUpdateSaleEvent } from "@/hooks/use-sale-events";
+import { bagsToMeters } from "@/lib/services";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -406,8 +407,8 @@ function EditEventContent(): React.ReactElement {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>商品名</TableHead>
-                                        <TableHead className="text-right">現在庫</TableHead>
-                                        <TableHead className="text-right w-[150px]">計画数 *</TableHead>
+                                        <TableHead className="text-right">現在庫(枚)</TableHead>
+                                        <TableHead className="text-right w-[150px]">計画数 *(枚)</TableHead>
                                         <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -421,7 +422,16 @@ function EditEventContent(): React.ReactElement {
                                                 <div className="text-xs text-gray-500">{item.product.sku}</div>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                {item.currentStock.toLocaleString()}
+                                                <span className={cn(
+                                                    "font-medium tracking-tight",
+                                                    item.currentStock === 0 && "text-red-600",
+                                                    item.currentStock < item.quantity && item.currentStock > 0 && "text-amber-600"
+                                                )}>
+                                                    {item.currentStock.toLocaleString()}
+                                                </span>
+                                                <div className="text-[10px] text-muted-foreground mt-0.5">
+                                                    約 {Math.round(bagsToMeters(item.currentStock, item.product.weight || 5)).toLocaleString()} m
+                                                </div>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <Input
@@ -432,6 +442,9 @@ function EditEventContent(): React.ReactElement {
                                                     className="w-[120px] text-right"
                                                     placeholder="数量を入力"
                                                 />
+                                                <div className="text-[10px] text-muted-foreground mt-1 text-right">
+                                                    約 {Math.round(bagsToMeters(item.quantity, item.product.weight || 5)).toLocaleString()} m
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <Button
