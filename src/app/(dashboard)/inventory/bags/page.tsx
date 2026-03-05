@@ -97,7 +97,6 @@ export default function BagsInventoryPage(): React.ReactElement {
 
     const [searchQuery, setSearchQuery] = useState("");
     const [weightFilter, setWeightFilter] = useState("all");
-    const [shapeFilter, setShapeFilter] = useState("all");
     const [stockFilter, setStockFilter] = useState("all");
     const [originFilter, setOriginFilter] = useState("all");
     const [varietyFilter, setVarietyFilter] = useState("all");
@@ -270,12 +269,6 @@ export default function BagsInventoryPage(): React.ReactElement {
         return Array.from(weights).sort((a, b) => (a || 0) - (b || 0)) as number[];
     }, [bagProducts]);
 
-    // 利用可能な形状リストを取得
-    const availableShapes = useMemo(() => {
-        const shapes = new Set(bagProducts.map(p => p.shape).filter(Boolean));
-        return Array.from(shapes) as string[];
-    }, [bagProducts]);
-
     // 利用可能な産地リストを取得
     const availableOrigins = useMemo(() => {
         const origins = new Set(bagProducts.map(p => p.origin).filter(Boolean));
@@ -326,11 +319,6 @@ export default function BagsInventoryPage(): React.ReactElement {
         if (weightFilter !== "all") {
             const weight = parseFloat(weightFilter);
             products = products.filter(p => p.weight === weight);
-        }
-
-        // 形状フィルター
-        if (shapeFilter !== "all") {
-            products = products.filter(p => p.shape === shapeFilter);
         }
 
         // 在庫フィルター
@@ -387,7 +375,7 @@ export default function BagsInventoryPage(): React.ReactElement {
             // 4. 重量順 (小さい順)
             return (a.weight || 0) - (b.weight || 0);
         });
-    }, [bagProducts, searchQuery, weightFilter, shapeFilter, stockFilter, originFilter, varietyFilter, statusFilter, showRemovedZeroStock, inventoryMap, saleAllocationMap, settings]);
+    }, [bagProducts, searchQuery, weightFilter, stockFilter, originFilter, varietyFilter, statusFilter, showRemovedZeroStock, inventoryMap, saleAllocationMap, settings]);
 
     // サマリー計算
     const summary = useMemo(() => {
@@ -408,12 +396,11 @@ export default function BagsInventoryPage(): React.ReactElement {
         return { total: bagProducts.length, lowStock, outOfStock, hasReservation };
     }, [bagProducts, inventoryMap, saleAllocationMap]);
 
-    const hasActiveFilters = searchQuery || weightFilter !== "all" || shapeFilter !== "all" || stockFilter !== "all" || originFilter !== "all" || varietyFilter !== "all" || statusFilter !== "all";
+    const hasActiveFilters = searchQuery || weightFilter !== "all" || stockFilter !== "all" || originFilter !== "all" || varietyFilter !== "all" || statusFilter !== "all";
 
     const clearFilters = (): void => {
         setSearchQuery("");
         setWeightFilter("all");
-        setShapeFilter("all");
         setStockFilter("all");
         setOriginFilter("all");
         setVarietyFilter("all");
@@ -557,38 +544,6 @@ export default function BagsInventoryPage(): React.ReactElement {
                                 </Select>
                             </div>
 
-                            <div className="md:w-28">
-                                <label className="text-[10px] md:text-xs font-medium mb-1 block text-muted-foreground">形状</label>
-                                <Select value={shapeFilter} onValueChange={setShapeFilter}>
-                                    <SelectTrigger className="h-8 md:h-9 text-xs px-2">
-                                        <SelectValue placeholder="すべて" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">すべて</SelectItem>
-                                        {availableShapes.map(s => (
-                                            <SelectItem key={s} value={s}>{s}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="md:w-36">
-                                <label className="text-[10px] md:text-xs font-medium mb-1 block text-muted-foreground">状態</label>
-                                <Select value={stockFilter} onValueChange={setStockFilter}>
-                                    <SelectTrigger className="h-8 md:h-9 text-xs px-2">
-                                        <SelectValue placeholder="すべて" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">すべて</SelectItem>
-                                        <SelectItem value="low">低在庫</SelectItem>
-                                        <SelectItem value="out">欠品</SelectItem>
-                                        <SelectItem value="reserved">引当あり</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-2 md:flex md:gap-3 md:items-end">
                             <div className="md:w-36">
                                 <label className="text-[10px] md:text-xs font-medium mb-1 block text-muted-foreground">産地</label>
                                 <Select value={originFilter} onValueChange={setOriginFilter}>
@@ -615,6 +570,21 @@ export default function BagsInventoryPage(): React.ReactElement {
                                         {availableVarieties.map(v => (
                                             <SelectItem key={v} value={v}>{v}</SelectItem>
                                         ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="md:w-36">
+                                <label className="text-[10px] md:text-xs font-medium mb-1 block text-muted-foreground">状態</label>
+                                <Select value={stockFilter} onValueChange={setStockFilter}>
+                                    <SelectTrigger className="h-8 md:h-9 text-xs px-2">
+                                        <SelectValue placeholder="すべて" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">すべて</SelectItem>
+                                        <SelectItem value="low">低在庫</SelectItem>
+                                        <SelectItem value="out">欠品</SelectItem>
+                                        <SelectItem value="reserved">引当あり</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -649,7 +619,6 @@ export default function BagsInventoryPage(): React.ReactElement {
                             <span>フィルター適用中:</span>
                             {searchQuery && <Badge variant="secondary">検索: &quot;{searchQuery}&quot;</Badge>}
                             {weightFilter !== "all" && <Badge variant="secondary">{weightFilter}kg</Badge>}
-                            {shapeFilter !== "all" && <Badge variant="secondary">{shapeFilter}</Badge>}
                             {stockFilter !== "all" && (
                                 <Badge variant="secondary">
                                     {stockFilter === "low" ? "低在庫" : stockFilter === "out" ? "欠品" : "特売引当あり"}
