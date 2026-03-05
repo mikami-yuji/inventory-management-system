@@ -82,30 +82,46 @@ describe('isRollBag', () => {
 });
 
 describe('getApproxBagCount', () => {
-    // 1ロール = 300m = 300,000mm
+    // デフォルト: 1ロール = 400m = 400,000mm
 
-    test('10kg (ピッチ570mm) の場合約526枚を返す', () => {
+    test('10kg (ピッチ570mm) デフォルト400mの場合約701枚を返す', () => {
+        // 400000 / 570 = 701.75...
+        expect(getApproxBagCount(10)).toBe(701);
+    });
+
+    test('5kg (ピッチ470mm) デフォルト400mの場合約851枚を返す', () => {
+        // 400000 / 470 = 851.06...
+        expect(getApproxBagCount(5)).toBe(851);
+    });
+
+    test('3kg (ピッチ400mm) デフォルト400mの場合1000枚を返す', () => {
+        // 400000 / 400 = 1000
+        expect(getApproxBagCount(3)).toBe(1000);
+    });
+
+    test('2kg (ピッチ350mm) デフォルト400mの場合約1142枚を返す', () => {
+        // 400000 / 350 = 1142.85...
+        expect(getApproxBagCount(2)).toBe(1142);
+    });
+
+    test('1kg (ピッチ280mm) デフォルト400mの場合約1428枚を返す', () => {
+        // 400000 / 280 = 1428.57...
+        expect(getApproxBagCount(1)).toBe(1428);
+    });
+
+    // 300m指定のテストケース
+    test('10kg (ピッチ570mm) 300m指定の場合約526枚を返す', () => {
         // 300000 / 570 = 526.31...
-        expect(getApproxBagCount(10)).toBe(526);
+        expect(getApproxBagCount(10, 300)).toBe(526);
     });
 
-    test('5kg (ピッチ470mm) の場合約638枚を返す', () => {
+    test('5kg (ピッチ470mm) 300m指定の場合約638枚を返す', () => {
         // 300000 / 470 = 638.29...
-        expect(getApproxBagCount(5)).toBe(638);
+        expect(getApproxBagCount(5, 300)).toBe(638);
     });
 
-    test('3kg (ピッチ400mm) の場合750枚を返す', () => {
+    test('3kg (ピッチ400mm) 300m指定の場合750枚を返す', () => {
         // 300000 / 400 = 750
-        expect(getApproxBagCount(3)).toBe(750);
-    });
-
-    test('2kg (ピッチ350mm) の場合約857枚を返す', () => {
-        // 300000 / 350 = 857.14...
-        expect(getApproxBagCount(2)).toBe(857);
-    });
-
-    test('1kg (ピッチ280mm) の場合約1071枚を返す', () => {
-        // 300000 / 280 = 1071.42...
-        expect(getApproxBagCount(1)).toBe(1071);
+        expect(getApproxBagCount(3, 300)).toBe(750);
     });
 });

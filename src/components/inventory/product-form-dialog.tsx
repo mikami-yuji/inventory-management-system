@@ -58,6 +58,7 @@ type ProductFormData = {
     status: ProductStatus;
     supplierId: string;
     discontinuedDate: string;
+    metersPerRoll: string; // 1巻あたりメートル数 (300 or 400)
 };
 
 type ProductFormDialogProps = {
@@ -92,6 +93,7 @@ const initialFormData: ProductFormData = {
     status: 'active',
     supplierId: "",
     discontinuedDate: "",
+    metersPerRoll: "400",
 };
 
 export function ProductFormDialog({
@@ -135,6 +137,7 @@ export function ProductFormDialog({
                 status: product.status || 'active',
                 supplierId: product.supplierId || "",
                 discontinuedDate: product.discontinuedDate || "",
+                metersPerRoll: product.metersPerRoll?.toString() || "400",
             });
         } else {
             setFormData(initialFormData);
@@ -183,6 +186,7 @@ export function ProductFormDialog({
                 status: formData.status,
                 supplierId: formData.supplierId || undefined,
                 discontinuedDate: formData.discontinuedDate || undefined,
+                metersPerRoll: formData.metersPerRoll ? Number(formData.metersPerRoll) : 400,
             };
 
             const response = await fetch("/api/products", {
@@ -383,6 +387,26 @@ export function ProductFormDialog({
                                 placeholder="ポリ, 紙 など"
                             />
                         </div>
+                    </div>
+
+                    {/* 1巻あたりメートル数 */}
+                    <div className="space-y-2">
+                        <Label htmlFor="metersPerRoll">1巻あたりメートル数</Label>
+                        <Select
+                            value={formData.metersPerRoll}
+                            onValueChange={(val) => handleChange("metersPerRoll", val)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="400m" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="300">300m</SelectItem>
+                                <SelectItem value="400">400m</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-[10px] text-muted-foreground">
+                            ※ロール袋の1巻あたりの長さ（デフォルト: 400m）
+                        </p>
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">

@@ -46,6 +46,7 @@ export type Product = {
   statusOverride?: 'normal' | 'low_stock' | 'out_of_stock'; // ステータス手動上書き
   supplierId?: string; // 仕入先ID
   discontinuedDate?: string; // 落版日/廃盤日 (YYYY-MM-DD)
+  metersPerRoll?: number; // 1巻あたりのメートル数 (300 or 400、デフォルト400)
 };
 
 // 仕入先マスタ
