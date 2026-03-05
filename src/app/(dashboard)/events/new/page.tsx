@@ -27,7 +27,7 @@ import {
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
 import { useSaleEvents, useCreateSaleEvent } from "@/hooks/use-sale-events";
-import { bagsToMeters, isRollBag, getApproxBagCount } from "@/lib/services/inventory-service";
+import { bagsToMeters, metersToBags, isRollBag, getApproxBagCount } from "@/lib/services/inventory-service";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -420,7 +420,7 @@ function NewEventContent(): React.ReactElement {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>商品名</TableHead>
-                                            <TableHead className="text-right">現在庫(枚)</TableHead>
+                                            <TableHead className="text-right">現在庫</TableHead>
                                             <TableHead className="text-right w-[150px]">数量 *(枚)</TableHead>
                                             <TableHead className="w-[50px]"></TableHead>
                                         </TableRow>
@@ -448,9 +448,14 @@ function NewEventContent(): React.ReactElement {
                                                         item.currentStock < item.quantity && item.currentStock > 0 && "text-amber-600"
                                                     )}>
                                                         {item.currentStock.toLocaleString()}
+                                                        {isRollBag(item.product.shape || "") && <span className="text-[10px] ml-0.5">m</span>}
                                                     </span>
                                                     <div className="text-[10px] text-muted-foreground mt-0.5">
-                                                        約 {Math.round(bagsToMeters(item.currentStock, item.product.weight || 5)).toLocaleString()} m
+                                                        {isRollBag(item.product.shape || "") ? (
+                                                            <>約 {metersToBags(item.currentStock, item.product.weight || 5).toLocaleString()} 枚</>
+                                                        ) : (
+                                                            <>約 {Math.round(bagsToMeters(item.currentStock, item.product.weight || 5)).toLocaleString()} m</>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-right">
