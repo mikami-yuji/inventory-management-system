@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CalculableInput } from "@/components/ui/calculable-input";
 import { Label } from "@/components/ui/label";
-import { Pencil, Package, Clock, CalendarDays, Loader2, Mic, MicOff, TrendingDown, Info, Barcode, Hash } from "lucide-react";
+import { Pencil, Package, Clock, CalendarDays, Loader2, Mic, MicOff, TrendingDown, Info, Barcode, Hash, LineChart } from "lucide-react";
 import { useUpdateInventory } from "@/hooks/use-inventory";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 import { cn } from "@/lib/utils";
 import { isRollBag, getPitch, bagsToMeters } from "@/lib/services";
 import type { Product, WorkInProgress, SupplierStockLot } from "@/types";
+import { ProductAnalysisDialog } from "@/components/inventory/product-analysis-dialog";
 
 export type SaleAllocationDetail = {
     eventId: string;
@@ -49,6 +50,7 @@ export function ProductDetailDialog({
     onSuccess
 }: ProductDetailDialogProps): React.ReactElement {
     const [quantity, setQuantity] = useState<string>("");
+    const [analysisOpen, setAnalysisOpen] = useState(false);
     const { updateStock, loading, error } = useUpdateInventory();
 
     const isRoll = product?.shape && isRollBag(product.shape);
@@ -142,7 +144,17 @@ export function ProductDetailDialog({
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="w-full h-7 md:h-8 text-[10px] md:text-xs gap-1.5 mt-1 md:mt-4"
+                                        className="w-full h-7 md:h-8 text-[10px] md:text-xs gap-1.5 mt-1 md:mt-2"
+                                        onClick={() => setAnalysisOpen(true)}
+                                    >
+                                        <LineChart className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                                        在庫分析・予測
+                                    </Button>
+
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full h-7 md:h-8 text-[10px] md:text-xs gap-1.5 mt-1"
                                         onClick={() => {
                                             onOpenChange(false);
                                             onEditProduct(product);
@@ -335,6 +347,14 @@ export function ProductDetailDialog({
                         </div>
                     </div>
                 </div>
+
+                {/* 在庫分析ダイアログ */}
+                <ProductAnalysisDialog
+                    product={product}
+                    currentStock={currentStock}
+                    open={analysisOpen}
+                    onOpenChange={setAnalysisOpen}
+                />
             </DialogContent>
         </Dialog>
     );

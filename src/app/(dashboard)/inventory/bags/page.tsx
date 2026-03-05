@@ -38,6 +38,7 @@ import type { Product, IncomingStock } from "@/types";
 import { BagsInventoryTable } from "@/components/inventory/bags-inventory-table";
 import { BagsInventoryCards } from "@/components/inventory/bags-inventory-cards";
 import { ProductDetailDialog } from "@/components/inventory/product-detail-dialog";
+import { ProductAnalysisDialog } from "@/components/inventory/product-analysis-dialog";
 import { cn } from "@/lib/utils";
 
 import {
@@ -221,6 +222,10 @@ export default function BagsInventoryPage(): React.ReactElement {
     // 商品詳細ダイアログの状態
     const [detailDialogOpen, setDetailDialogOpen] = useState(false);
     const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+
+    // 商品分析ダイアログの状態
+    const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
+    const [analysisProduct, setAnalysisProduct] = useState<Product | null>(null);
 
     const handleAddProduct = (): void => {
         setEditingProduct(null);
@@ -669,6 +674,10 @@ export default function BagsInventoryPage(): React.ReactElement {
                         setIncomingStockProduct(product);
                         setIncomingDialogOpen(true);
                     }}
+                    onAnalyze={(product) => {
+                        setAnalysisProduct(product);
+                        setAnalysisDialogOpen(true);
+                    }}
                     onRefetch={refetch}
                 />
             ) : (
@@ -708,6 +717,16 @@ export default function BagsInventoryPage(): React.ReactElement {
                 }}
                 onSuccess={refetch}
             />
+
+            {/* 商品分析ダイアログ */}
+            {analysisProduct && (
+                <ProductAnalysisDialog
+                    product={analysisProduct}
+                    currentStock={inventoryMap.get(analysisProduct.id)?.quantity || 0}
+                    open={analysisDialogOpen}
+                    onOpenChange={setAnalysisDialogOpen}
+                />
+            )}
 
             {/* 商品フォームダイアログ */}
             <ProductFormDialog

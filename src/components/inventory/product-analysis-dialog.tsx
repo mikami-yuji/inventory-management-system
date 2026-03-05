@@ -26,9 +26,12 @@ import {
     Minus,
     Calendar,
     AlertTriangle,
-    Info
+    Info,
+    Layers
 } from "lucide-react";
 import { useStockHistoryAnalysis } from "@/hooks/use-stock-history-analysis";
+import { isRollBag, getApproxBagCount } from "@/lib/services";
+import { cn } from "@/lib/utils";
 
 import { Product } from "@/types";
 import {
@@ -79,28 +82,35 @@ export function ProductAnalysisDialog({
         // Sort by date ASC
         const sorted = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        // Calculate Stock Level over time
-        // Strategy: Forward Replay from 0 (or initial adjustment)
-        let runningStock = 0;
-        const dataPoints = sorted.map(h => {
-            if (h.type === 'adjustment') {
-                runningStock = h.quantity;
-            } else if (h.type === 'incoming') {
-                runningStock += h.quantity;
-            } else if (h.type === 'outgoing') {
-                runningStock -= h.quantity;
-            } else if (h.type === 'order') {
-                // order is also outgoing in terms of stock
-                runningStock -= h.quantity;
-            }
+        // Calculate Stock Level over time (Backwards Replay)
+        // Strategy: Start from current stock and subtract/add changes backwards
+        let runningStock = currentStock;
+        const dataPoints = [];
 
-            return {
+        // Sort by date DESC for backward replay
+        const sortedDesc = [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        for (const h of sortedDesc) {
+            dataPoints.push({
                 date: h.date,
                 stock: runningStock
-            };
-        });
+            });
 
-        const recent = dataPoints.slice(-30);
+            // Reverse the changes
+            if (h.type === 'adjustment') {
+                // Adjustment means we set it to something. Backwards, we don't know the delta unless stored.
+                // Assuming h.changeAmount is the delta (qty_after - qty_before)
+                runningStock -= (h.changeAmount || 0);
+            } else if (h.type === 'incoming') {
+                runningStock -= (h.changeAmount || h.quantity);
+            } else if (h.type === 'outgoing' || h.type === 'order') {
+                runningStock += (h.changeAmount || h.quantity);
+            }
+        }
+
+        // Reverse back to chronological for chart
+        const chronoData = dataPoints.reverse();
+        const recent = chronoData.slice(-30);
 
         return {
             labels: recent.map(p => {
@@ -153,7 +163,17 @@ export function ProductAnalysisDialog({
         );
     }
 
-    // If no analysis data (empty history)
+    const isRoll = isRollBag(product.shape || "");
+    const unit = isRoll ? "m" : "枚";
+    const subUnit = isRoll ? "巻" : null;
+
+    // ロール袋の巻数計算
+    const getSubUnitValue = (val: number) => {
+        if (!isRoll) return null;
+        const rollMeters = product.metersPerRoll || 400;
+        return Math.floor(val / rollMeters);
+    };
+
     if (!analysis || !stockLevelChartData) {
         return (
             <Dialog open={open} onOpenChange={onOpenChange}>
@@ -199,7 +219,12 @@ export function ProductAnalysisDialog({
                                 <CardTitle className="text-xs font-medium text-muted-foreground">週間使用数</CardTitle>
                             </CardHeader>
                             <CardContent className="p-3 pt-1">
-                                <div className="text-2xl font-bold">{analysis.weekly}</div>
+                                <div className="text-2xl font-bold">{analysis.weekly.toLocaleString()}</div>
+                                {subUnit && (
+                                    <div className="text-[10px] text-muted-foreground">
+                                        約 {getSubUnitValue(analysis.weekly)} {subUnit}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                         <Card className="bg-slate-50">
@@ -207,7 +232,12 @@ export function ProductAnalysisDialog({
                                 <CardTitle className="text-xs font-medium text-muted-foreground">月間使用数</CardTitle>
                             </CardHeader>
                             <CardContent className="p-3 pt-1">
-                                <div className="text-2xl font-bold">{analysis.monthly}</div>
+                                <div className="text-2xl font-bold">{analysis.monthly.toLocaleString()}</div>
+                                {subUnit && (
+                                    <div className="text-[10px] text-muted-foreground">
+                                        約 {getSubUnitValue(analysis.monthly)} {subUnit}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                         <Card className="bg-slate-50">
@@ -215,7 +245,12 @@ export function ProductAnalysisDialog({
                                 <CardTitle className="text-xs font-medium text-muted-foreground">3ヶ月使用数</CardTitle>
                             </CardHeader>
                             <CardContent className="p-3 pt-1">
-                                <div className="text-2xl font-bold">{analysis.quarterly}</div>
+                                <div className="text-2xl font-bold">{analysis.quarterly.toLocaleString()}</div>
+                                {subUnit && (
+                                    <div className="text-[10px] text-muted-foreground">
+                                        約 {getSubUnitValue(analysis.quarterly)} {subUnit}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                         <Card className="bg-slate-50">
@@ -223,16 +258,24 @@ export function ProductAnalysisDialog({
                                 <CardTitle className="text-xs font-medium text-muted-foreground">1日平均</CardTitle>
                             </CardHeader>
                             <CardContent className="p-3 pt-1">
-                                <div className="text-2xl font-bold">{analysis.dailyAverage}</div>
+                                <div className="text-2xl font-bold">{analysis.dailyAverage.toLocaleString()}</div>
+                                {subUnit && (
+                                    <div className="text-[10px] text-muted-foreground">
+                                        約 {((analysis.dailyAverage / (product.metersPerRoll || 400)).toFixed(2))} {subUnit}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
 
                     {/* 在庫予測＆推奨 */}
                     <div className="grid md:grid-cols-2 gap-4">
-                        <Card className={analysis.daysUntilStockout !== null && analysis.daysUntilStockout < 14 ? "border-amber-400 bg-amber-50" : ""}>
-                            <CardHeader>
-                                <CardTitle className="text-base flex items-center gap-2">
+                        <Card className={cn(
+                            analysis.daysUntilStockout !== null && analysis.daysUntilStockout < 7 ? "border-red-400 bg-red-50" :
+                                analysis.daysUntilStockout !== null && analysis.daysUntilStockout < 14 ? "border-amber-400 bg-amber-50" : ""
+                        )}>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-bold flex items-center gap-2">
                                     <Calendar className="h-4 w-4" />
                                     在庫切れ予測
                                 </CardTitle>
@@ -241,50 +284,69 @@ export function ProductAnalysisDialog({
                                 {analysis.daysUntilStockout !== null ? (
                                     <div className="space-y-1">
                                         <div className="flex items-end gap-2">
-                                            <span className="text-3xl font-bold">
+                                            <span className={cn(
+                                                "text-3xl font-bold",
+                                                analysis.daysUntilStockout < 7 ? "text-red-700" :
+                                                    analysis.daysUntilStockout < 14 ? "text-amber-700" : ""
+                                            )}>
                                                 あと {analysis.daysUntilStockout} 日
                                             </span>
                                         </div>
-                                        <p className="text-sm text-muted-foreground">
-                                            現在のペース（1日 {analysis.dailyAverage}個）で消費した場合
+                                        <p className="text-[11px] text-muted-foreground">
+                                            現在のペース（1日 {analysis.dailyAverage}{unit}）で消費した場合
                                         </p>
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-muted-foreground">データ不足のため算出できません</p>
+                                    <p className="text-sm text-muted-foreground py-2">データ不足のため算出できません</p>
                                 )}
                             </CardContent>
                         </Card>
 
                         <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base flex items-center gap-2">
-                                    <Info className="h-4 w-4" />
-                                    使用傾向
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                    <TrendingUp className="h-4 w-4" />
+                                    分析とリコメンド
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent>
-                                <div className="flex items-center gap-3 mb-2">
+                            <CardContent className="space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs text-muted-foreground">トレンド:</span>
                                     {analysis.trend === 'increasing' ? (
-                                        <Badge className="bg-red-100 text-red-700 hover:bg-red-100 gap-1 pl-1 pr-2">
-                                            <TrendingUp className="h-4 w-4" />
-                                            増加傾向
+                                        <Badge className="bg-red-100 text-red-700 hover:bg-red-100 gap-1 pl-1 pr-2 text-[10px]">
+                                            <TrendingUp className="h-3 w-3" />
+                                            消費増加
                                         </Badge>
                                     ) : analysis.trend === 'decreasing' ? (
-                                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 gap-1 pl-1 pr-2">
-                                            <TrendingDown className="h-4 w-4" />
-                                            減少傾向
+                                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 gap-1 pl-1 pr-2 text-[10px]">
+                                            <TrendingDown className="h-3 w-3" />
+                                            消費減少
                                         </Badge>
                                     ) : (
-                                        <Badge variant="outline" className="gap-1 pl-1 pr-2">
-                                            <Minus className="h-4 w-4" />
+                                        <Badge variant="outline" className="gap-1 pl-1 pr-2 text-[10px]">
+                                            <Minus className="h-3 w-3" />
                                             安定
                                         </Badge>
                                     )}
                                 </div>
-                                <p className="text-sm text-muted-foreground">
-                                    推奨発注数は <strong>{analysis.suggestedOrderQuantity}</strong> 個です
-                                    （月間使用数の1.2倍）
-                                </p>
+                                <div>
+                                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 mb-1">
+                                        <Layers className="h-3.5 w-3.5" />
+                                        推奨発注数
+                                    </div>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-xl font-bold text-primary">{analysis.suggestedOrderQuantity.toLocaleString()}</span>
+                                        <span className="text-[10px] text-muted-foreground">{unit}</span>
+                                        {subUnit && (
+                                            <span className="text-xs text-slate-500 ml-2">
+                                                (約 {getSubUnitValue(analysis.suggestedOrderQuantity)} {subUnit})
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground mt-1">
+                                        ※月間使用数の1.2倍を基準に算出
+                                    </p>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
