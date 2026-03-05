@@ -333,6 +333,7 @@ export default function NewOrderPage(): React.ReactElement {
                                                                         onChange={(e) => updateQuantity(item.product.id, parseInt(e.target.value) || 0)}
                                                                         placeholder="数量入力"
                                                                         className="w-24 text-center"
+                                                                        inputMode="numeric"
                                                                     />
                                                                     <Button
                                                                         variant="outline"

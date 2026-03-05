@@ -453,6 +453,7 @@ function EditEventContent(): React.ReactElement {
                                                     onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
                                                     className="w-[120px] text-right"
                                                     placeholder="数量を入力"
+                                                    inputMode="numeric"
                                                 />
                                                 <div className="text-[10px] text-muted-foreground mt-1 text-right flex flex-col items-end">
                                                     <span>約 {Math.round(bagsToMeters(item.quantity, item.product.weight || 5)).toLocaleString()} m</span>
