@@ -347,7 +347,7 @@ export default function NewOrderPage(): React.ReactElement {
                                                                     <div className="text-[10px] text-muted-foreground text-center mt-1 flex flex-col items-center">
                                                                         <span>約{metersToBags(item.quantity, item.product.weight || 5).toLocaleString()}枚相当</span>
                                                                         <span className="text-blue-600 font-medium">
-                                                                            約 {(item.quantity / getApproxBagCount(item.product.weight || 5, item.product.metersPerRoll)).toFixed(1)} 巻
+                                                                            約 {(item.quantity / (item.product.metersPerRoll || 400)).toFixed(1)} 巻
                                                                         </span>
                                                                     </div>
                                                                 )}
