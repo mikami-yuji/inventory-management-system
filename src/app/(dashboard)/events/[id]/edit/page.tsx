@@ -25,7 +25,7 @@ import {
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
 import { useSaleEvents, useUpdateSaleEvent } from "@/hooks/use-sale-events";
-import { bagsToMeters } from "@/lib/services";
+import { bagsToMeters, isRollBag, getApproxBagCount } from "@/lib/services/inventory-service";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -419,7 +419,14 @@ function EditEventContent(): React.ReactElement {
                                                 <div className="font-medium">
                                                     {item.product.name} {item.product.weight ? `${item.product.weight}kg` : ''}
                                                 </div>
-                                                <div className="text-xs text-gray-500">{item.product.sku}</div>
+                                                <div className="text-xs text-gray-500 flex items-center gap-2">
+                                                    <span>{item.product.sku}</span>
+                                                    {isRollBag(item.product.shape || "") && (
+                                                        <Badge variant="outline" className="text-[10px] h-4 px-1 font-normal border-blue-200 text-blue-700 bg-blue-50">
+                                                            1巻: {item.product.metersPerRoll || 400}m
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <span className={cn(
@@ -442,8 +449,13 @@ function EditEventContent(): React.ReactElement {
                                                     className="w-[120px] text-right"
                                                     placeholder="数量を入力"
                                                 />
-                                                <div className="text-[10px] text-muted-foreground mt-1 text-right">
-                                                    約 {Math.round(bagsToMeters(item.quantity, item.product.weight || 5)).toLocaleString()} m
+                                                <div className="text-[10px] text-muted-foreground mt-1 text-right flex flex-col items-end">
+                                                    <span>約 {Math.round(bagsToMeters(item.quantity, item.product.weight || 5)).toLocaleString()} m</span>
+                                                    {isRollBag(item.product.shape || "") && (
+                                                        <span className="text-blue-600 font-medium">
+                                                            約 {(item.quantity / getApproxBagCount(item.product.weight || 5, item.product.metersPerRoll)).toFixed(1)} 巻
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                             <TableCell>

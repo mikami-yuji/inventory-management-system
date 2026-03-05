@@ -18,7 +18,7 @@ import { useDeliveryAddresses } from "@/hooks/use-delivery-addresses";
 import { useWorkInProgress } from "@/hooks/use-work-in-progress";
 import { useSupplierStockLots } from "@/hooks/use-supplier-stock-lots";
 import { DeliveryAddressDialog } from "@/components/orders/delivery-address-dialog";
-import { isRollBag, metersToBags } from "@/lib/services/inventory-service";
+import { isRollBag, metersToBags, getApproxBagCount } from "@/lib/services/inventory-service";
 import type { WorkInProgress } from "@/types";
 
 
@@ -219,8 +219,13 @@ export default function NewOrderPage(): React.ReactElement {
                                             <TableRow key={item.product.id}>
                                                 <TableCell>
                                                     <div className="font-medium">{item.product.name}</div>
-                                                    <div className="text-xs text-muted-foreground">
-                                                        {item.product.weight}kg / {item.product.shape || '-'}
+                                                    <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                                        <span>{item.product.weight}kg / {item.product.shape || '-'}</span>
+                                                        {isRollBag(item.product.shape || "") && (
+                                                            <Badge variant="outline" className="text-[10px] h-4 px-1 font-normal border-blue-200 text-blue-700 bg-blue-50">
+                                                                1巻: {item.product.metersPerRoll || 400}m
+                                                            </Badge>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-right">
@@ -339,8 +344,11 @@ export default function NewOrderPage(): React.ReactElement {
                                                                     </Button>
                                                                 </div>
                                                                 {isRoll && (
-                                                                    <div className="text-[10px] text-muted-foreground text-center mt-1">
-                                                                        約{metersToBags(item.quantity, item.product.weight || 5).toLocaleString()}枚相当
+                                                                    <div className="text-[10px] text-muted-foreground text-center mt-1 flex flex-col items-center">
+                                                                        <span>約{metersToBags(item.quantity, item.product.weight || 5).toLocaleString()}枚相当</span>
+                                                                        <span className="text-blue-600 font-medium">
+                                                                            約 {(item.quantity / getApproxBagCount(item.product.weight || 5, item.product.metersPerRoll)).toFixed(1)} 巻
+                                                                        </span>
                                                                     </div>
                                                                 )}
                                                             </>
