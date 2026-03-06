@@ -89,12 +89,13 @@ export const calculateStockStatus = (
     } else if (product.statusOverride === 'low_stock') {
         isLowStock = true;
     } else {
-        // 自動判定 (直送先在庫、廃盤、落版、販売中断は除外)
+        // 自動判定 (直送先在庫、廃盤、落版、販売中断、スポットは除外)
         const shouldCheckStockStatus = !(
             product.status === 'direct_delivery' ||
             product.status === 'discontinued' ||
             product.status === 'plate_removed' ||
-            product.status === 'on_sale_break'
+            product.status === 'on_sale_break' ||
+            product.status === 'spot'
         );
 
         if (shouldCheckStockStatus) {
