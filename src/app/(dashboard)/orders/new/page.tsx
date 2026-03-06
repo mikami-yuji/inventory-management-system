@@ -245,7 +245,12 @@ export default function NewOrderPage(): React.ReactElement {
                                                                     <div className="font-bold text-lg">
                                                                         {stock.toLocaleString()}{isRoll ? 'm' : '枚'}
                                                                     </div>
-                                                                    {isRoll && <div className="text-[10px] text-muted-foreground">約{metersToBags(stock, weight).toLocaleString()}枚</div>}
+                                                                    {isRoll && (
+                                                                        <div className="text-[10px] text-muted-foreground">
+                                                                            約{metersToBags(stock, weight).toLocaleString()}枚
+                                                                            {item.product.metersPerRoll ? ` / 約${(stock / item.product.metersPerRoll).toFixed(1)}巻` : ''}
+                                                                        </div>
+                                                                    )}
 
                                                                     {productLots.length > 0 && (
                                                                         <div className="mt-2 pt-1 border-t border-dashed space-y-0.5">
@@ -270,7 +275,12 @@ export default function NewOrderPage(): React.ReactElement {
                                                                     <div className="font-bold text-lg">
                                                                         {totalWIP.toLocaleString()}{isRoll ? 'm' : '枚'}
                                                                     </div>
-                                                                    {isRoll && <div className="text-[10px] opacity-80">約{metersToBags(totalWIP, weight).toLocaleString()}枚</div>}
+                                                                    {isRoll && (
+                                                                        <div className="text-[10px] opacity-80">
+                                                                            約{metersToBags(totalWIP, weight).toLocaleString()}枚
+                                                                            {item.product.metersPerRoll ? ` / 約${(totalWIP / item.product.metersPerRoll).toFixed(1)}巻` : ''}
+                                                                        </div>
+                                                                    )}
                                                                     <div className="text-[10px] bg-purple-50 px-1 py-0.5 rounded inline-block">全仕掛（確定・未確定含）</div>
 
                                                                     {productWips.length > 0 && (
@@ -341,6 +351,7 @@ export default function NewOrderPage(): React.ReactElement {
                                                                 {isRoll && (
                                                                     <div className="text-[10px] text-muted-foreground text-center mt-1">
                                                                         約{metersToBags(item.quantity, item.product.weight || 5).toLocaleString()}枚相当
+                                                                        {item.product.metersPerRoll ? ` / 約${(item.quantity / item.product.metersPerRoll).toFixed(1)}巻` : ''}
                                                                     </div>
                                                                 )}
                                                             </>

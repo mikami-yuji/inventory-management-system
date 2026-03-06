@@ -162,6 +162,11 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                         ピッチ: {getPitch(product.weight || 0)}mm
                                                     </div>
                                                 )}
+                                                {product.metersPerRoll && (
+                                                    <div className="text-xs text-indigo-600">
+                                                        1巻/{product.metersPerRoll}m
+                                                    </div>
+                                                )}
                                             </div>
                                         </TableCell>
                                         <TableCell

@@ -70,6 +70,9 @@ export function useWIPActions(): {
     updateSupplierStock: (productId: string, stock: number) => Promise<boolean>;
     moveSupplierStockToIncoming: (productId: string, quantity: number, expectedDate: string, note?: string) => Promise<boolean>;
 
+    updateWIP: (id: string, updateData: Partial<WIPInput>) => Promise<boolean>;
+    arrangeShipping: (id: string) => Promise<boolean>;
+
     // 新規ロット管理メソッド
     getSupplierStockLots: (productId: string) => Promise<import('@/types').SupplierStockLot[]>;
     addSupplierStockLot: (productId: string, quantity: number, stockDate: string, note?: string) => Promise<boolean>;
@@ -142,6 +145,40 @@ export function useWIPActions(): {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id, action: 'cancel' })
+            });
+            const result = await response.json();
+            return !result.error;
+        } catch {
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const updateWIP = async (id: string, updateData: Partial<WIPInput>): Promise<boolean> => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/work-in-progress', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, action: 'update', data: updateData })
+            });
+            const result = await response.json();
+            return !result.error;
+        } catch {
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const arrangeShipping = async (id: string): Promise<boolean> => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/work-in-progress', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, action: 'arrange_shipping' })
             });
             const result = await response.json();
             return !result.error;
@@ -272,6 +309,8 @@ export function useWIPActions(): {
         transferToIncoming,
         transferToSupplier,
         cancelWIP,
+        updateWIP,
+        arrangeShipping,
         deleteWIP,
         updateSupplierStock,
         moveSupplierStockToIncoming,

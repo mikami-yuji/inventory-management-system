@@ -154,7 +154,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
 
         const { id, action, data: updateData, confirmedDate, quantity, supplierStock, expectedDate } = body as {
             id: string
-            action: 'to_incoming' | 'to_supplier' | 'cancel' | 'update' | 'confirm'
+            action: 'to_incoming' | 'to_supplier' | 'cancel' | 'update' | 'confirm' | 'arrange_shipping'
             data?: Record<string, unknown>
             confirmedDate?: string
             quantity?: number
@@ -163,7 +163,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         }
 
         if (action === 'to_incoming') {
-            // 仕掛品を入荷予定へ移動
+            // 仕掛品を入荷予定へ移動（部分移動対応・WIPレコードの状態は変更しない）
             if (!expectedDate || !quantity) {
                 return NextResponse.json({ data: null, error: '入荷予定日と数量は必須です' }, { status: 400 })
             }
@@ -183,20 +183,10 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                         note: '仕掛品からの予定'
                     } as any)
 
-                // ユーザーからの要望により、入荷予定を追加しても「まだ仕上がっていない」ため、
-                // 仕掛品のデータ（レコードや数量）は自動で削除・減算しないように変更。
-                // 代わりに確認ステータスを「scheduled」にして入力済みであることを明示する。
-                await supabase
-                    .from('work_in_progress')
-                    // @ts-ignore
-                    .update({
-                        confirmation_status: 'scheduled',
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', id)
+                // WIPレコードの状態は変更しない（フロントエンドで残数管理）
             }
         } else if (action === 'to_supplier') {
-            // 仕掛品をメーカー在庫へ移動
+            // 仕掛品をメーカー在庫へ移動（部分移動対応・WIPレコードは削除しない）
             if (!quantity) {
                 return NextResponse.json({ data: null, error: '数量は必須です' }, { status: 400 })
             }
@@ -207,6 +197,17 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 .single<any>()
 
             if (wipItem) {
+                // supplier_stock_lotsテーブルにロットとして追加
+                await supabase
+                    .from('supplier_stock_lots')
+                    .insert({
+                        product_id: wipItem.product_id,
+                        stock_date: new Date().toISOString().split('T')[0],
+                        quantity: quantity,
+                        note: '仕掛品からの移動'
+                    } as any)
+
+                // productsテーブルのsupplier_stockも更新
                 const { data: product } = await supabase
                     .from('products')
                     .select('supplier_stock')
@@ -224,11 +225,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     })
                     .eq('id', wipItem.product_id)
 
-                // 完了として仕掛品を削除
-                await (supabase
-                    .from('work_in_progress') as any)
-                    .delete()
-                    .eq('id', id)
+                // WIPレコードは削除しない（フロントエンドで残数管理）
             }
         } else if (action === 'confirm') {
             // 納期確定処理
@@ -280,6 +277,18 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 .from('work_in_progress') as any)
                 // @ts-ignore
                 .update({ status: 'cancelled' })
+                .eq('id', id)
+        } else if (action === 'arrange_shipping') {
+            // 出荷手配（完了扱いとして履歴に残す）
+            await (supabase
+                .from('work_in_progress') as any)
+                // @ts-ignore
+                .update({
+                    status: 'completed',
+                    confirmation_status: 'shipping_arranged',
+                    completed_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
                 .eq('id', id)
         } else if (action === 'update' && updateData) {
             await (supabase

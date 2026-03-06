@@ -22,6 +22,7 @@ import { Plus, Check, Loader2, Trash2, CalendarClock, PackageCheck } from "lucid
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "react-hot-toast";
 import type { WorkInProgress } from "@/types";
 
 interface WIPDialogProps {
@@ -39,16 +40,36 @@ export function WIPDialog({
 }: WIPDialogProps) {
     const [activeTab, setActiveTab] = useState("list");
 
-    // itemsの取得
-    const { items, loading: loadingItems, refetch } = useWorkInProgress({
+    // itemsの取得 (in_progress)
+    const { items: inProgressItems, loading: loadingInProgress, refetch: refetchInProgress } = useWorkInProgress({
         productId: product?.id,
         status: 'in_progress'
     });
 
-    // アクション
-    const { createWIP, transferToIncoming, transferToSupplier, deleteWIP, loading: actionLoading } = useWIPActions();
+    // itemsの取得 (completed)
+    const { items: completedItems, loading: loadingCompleted, refetch: refetchCompleted } = useWorkInProgress({
+        productId: product?.id,
+        status: 'completed'
+    });
 
-    // フォーム状態 (新規作成)
+    const refetch = () => {
+        refetchInProgress();
+        if (activeTab === 'history') {
+            refetchCompleted();
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'history') {
+            refetchCompleted();
+        }
+    }, [activeTab, refetchCompleted]);
+
+    // アクション
+    const { createWIP, updateWIP, arrangeShipping, transferToIncoming, transferToSupplier, deleteWIP, loading: actionLoading } = useWIPActions();
+
+    // フォーム状態
+    const [editingWIPId, setEditingWIPId] = useState<string | null>(null);
     const [quantity, setQuantity] = useState(0);
     const [startedAt, setStartedAt] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [dateType, setDateType] = useState<'specific' | 'vague'>('specific');
@@ -60,26 +81,52 @@ export function WIPDialog({
 
     const [note, setNote] = useState("");
 
-    // 確定処理用ステート
+    // 確定処理用ステート（分割移動対応）
     const [confirmingId, setConfirmingId] = useState<string | null>(null);
-    const [transferAction, setTransferAction] = useState<'incoming' | 'supplier' | null>(null);
-    const [confirmDate, setConfirmDate] = useState(format(new Date(), 'yyyy-MM-dd')); // 入荷日
-    const [confirmQuantity, setConfirmQuantity] = useState(0); // 個数
+    const [confirmingItem, setConfirmingItem] = useState<WorkInProgress | null>(null);
+    const [supplierQuantity, setSupplierQuantity] = useState(0); // メーカー在庫への数量
+    const [incomingQuantity, setIncomingQuantity] = useState(0); // 入荷予定への数量
+    const [confirmDate, setConfirmDate] = useState(format(new Date(), 'yyyy-MM-dd')); // 入荷予定日
 
     // ダイアログが開いたときに再取得
     useEffect(() => {
         if (open && product) {
             refetch();
-            // eslint-disable-next-line
             setActiveTab("list");
-            setQuantity(0);
-            setNote("");
+            resetForm();
             setConfirmingId(null);
-            setTransferAction(null);
+            setConfirmingItem(null);
         }
     }, [open, product, refetch]);
 
-    const handleCreate = async () => {
+    const resetForm = () => {
+        setEditingWIPId(null);
+        setQuantity(0);
+        setNote("");
+        setStartedAt(format(new Date(), 'yyyy-MM-dd'));
+        setDateType('specific');
+        setSpecificDate("");
+    };
+
+    const handleEditClick = (item: WorkInProgress) => {
+        setEditingWIPId(item.id);
+        setQuantity(item.quantity);
+        setStartedAt(format(new Date(item.startedAt), 'yyyy-MM-dd'));
+        setNote(item.note || "");
+        if (item.termType === 'specific' || !item.termType) {
+            setDateType('specific');
+            setSpecificDate(item.expectedCompletion ? format(new Date(item.expectedCompletion), 'yyyy-MM-dd') : "");
+        } else {
+            setDateType('vague');
+            setVagueTerm(item.termType as 'early' | 'mid' | 'late');
+            if (item.expectedCompletion) {
+                setVagueMonth(format(new Date(item.expectedCompletion), 'yyyy-MM'));
+            }
+        }
+        setActiveTab("add");
+    };
+
+    const handleCreateOrUpdate = async () => {
         if (!product) return;
         if (quantity <= 0) return;
 
@@ -103,39 +150,95 @@ export function WIPDialog({
             }
         }
 
-        const result = await createWIP({
-            productId: product.id,
-            quantity,
-            startedAt,
-            expectedCompletion,
-            termType,
-            note: note || undefined,
-        });
+        let result;
+        if (editingWIPId) {
+            result = await updateWIP(editingWIPId, {
+                quantity,
+                startedAt,
+                expectedCompletion,
+                termType,
+                note: note || undefined,
+            });
+            result = { success: result }; // normalize hook return
+        } else {
+            result = await createWIP({
+                productId: product.id,
+                quantity,
+                startedAt,
+                expectedCompletion,
+                termType,
+                note: note || undefined,
+            });
+        }
 
         if (result.success) {
             onSuccess();
             refetch();
             setActiveTab("list");
-            setQuantity(0);
-            setNote("");
+            resetForm();
         }
     };
 
-    const handleSubmitConfirm = async () => {
-        if (!confirmingId || !transferAction) return;
+    const handleArrangeShipping = async (id: string) => {
+        if (!confirm("手配した数量を出荷済みにし、仕掛中から完了させます。よろしいですか？")) return;
+        const success = await arrangeShipping(id);
+        if (success) {
+            toast.success("出荷手配を完了しました");
+            onSuccess();
+            refetch();
+        } else {
+            toast.error("処理に失敗しました");
+        }
+    };
 
-        let success = false;
-        if (transferAction === 'incoming') {
-            success = await transferToIncoming(confirmingId, confirmDate, confirmQuantity);
-        } else if (transferAction === 'supplier') {
-            success = await transferToSupplier(confirmingId, confirmQuantity);
+    // 仕上がり移動開始
+    const handleStartTransfer = (item: WorkInProgress) => {
+        setConfirmingId(item.id);
+        setConfirmingItem(item);
+        setSupplierQuantity(0);
+        setIncomingQuantity(0);
+        setConfirmDate(format(new Date(), 'yyyy-MM-dd'));
+    };
+
+    // 分割移動の合計数量
+    const totalTransferQuantity = supplierQuantity + incomingQuantity;
+    const remainingQuantity = confirmingItem ? confirmingItem.quantity - totalTransferQuantity : 0;
+    const isTransferValid = totalTransferQuantity > 0 && totalTransferQuantity <= (confirmingItem?.quantity || 0);
+
+    const handleSubmitConfirm = async () => {
+        if (!confirmingId || !confirmingItem) return;
+        if (!isTransferValid) return;
+
+        let success = true;
+
+        // メーカー在庫への移動
+        if (supplierQuantity > 0) {
+            const result = await transferToSupplier(confirmingId, supplierQuantity);
+            if (!result) success = false;
+        }
+
+        // 入荷予定への移動
+        if (incomingQuantity > 0 && success) {
+            const result = await transferToIncoming(confirmingId, confirmDate, incomingQuantity);
+            if (!result) success = false;
         }
 
         if (success) {
+            // 全量移動の場合はWIPを削除
+            if (remainingQuantity <= 0) {
+                await deleteWIP(confirmingId);
+                toast.success('仕掛品を移動しました');
+            } else {
+                // 残数がある場合はWIPの数量を残数に更新
+                await updateWIP(confirmingId, { quantity: remainingQuantity });
+                toast.success(`${totalTransferQuantity.toLocaleString()}を移動、${remainingQuantity.toLocaleString()}を仕掛中として残しました`);
+            }
             onSuccess();
             refetch();
             setConfirmingId(null);
-            setTransferAction(null);
+            setConfirmingItem(null);
+        } else {
+            toast.error('移動処理に失敗しました');
         }
     };
 
@@ -178,70 +281,100 @@ export function WIPDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                {confirmingId && transferAction ? (
-                    // 確定処理画面
+                {confirmingId && confirmingItem ? (
+                    // 仕上がり移動画面（分割対応）
                     <div className="space-y-4 py-2">
                         <div className="bg-blue-50 p-3 rounded-md border border-blue-200 text-sm mb-4">
-                            {transferAction === 'incoming'
-                                ? '仕掛完了とし、入荷予定として登録します。'
-                                : '仕掛完了とし、メーカー在庫に追加します。'}
+                            仕掛中の商品（{confirmingItem.quantity.toLocaleString()}）を移動先に振り分けてください。
+                            一部のみ移動し、残りを仕掛中に残すことも可能です。
                         </div>
 
                         <div className="grid gap-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">数量</Label>
+                            {/* メーカー在庫への移動 */}
+                            <div className="border rounded-lg p-4 space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">メーカー在庫</Badge>
+                                    <span className="text-sm text-muted-foreground">に移動する数量</span>
+                                </div>
                                 <CalculableInput
-                                    value={confirmQuantity === 0 ? "" : confirmQuantity}
-                                    onChange={(value) => setConfirmQuantity(Number(value) || 0)}
-                                    className="col-span-3"
-                                    placeholder="数量を入力"
+                                    value={supplierQuantity === 0 ? "" : supplierQuantity}
+                                    onChange={(value) => setSupplierQuantity(Number(value) || 0)}
+                                    placeholder="0 (移動しない場合は空欄)"
                                 />
                             </div>
 
-                            {transferAction === 'incoming' && (
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right">入荷予定日</Label>
-                                    <Input
-                                        type="date"
-                                        value={confirmDate}
-                                        onChange={(e) => setConfirmDate(e.target.value)}
-                                        className="col-span-3"
-                                    />
+                            {/* 入荷予定への移動 */}
+                            <div className="border rounded-lg p-4 space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">入荷予定</Badge>
+                                    <span className="text-sm text-muted-foreground">に移動する数量</span>
                                 </div>
-                            )}
+                                <CalculableInput
+                                    value={incomingQuantity === 0 ? "" : incomingQuantity}
+                                    onChange={(value) => setIncomingQuantity(Number(value) || 0)}
+                                    placeholder="0 (移動しない場合は空欄)"
+                                />
+                                {incomingQuantity > 0 && (
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <Label className="text-sm whitespace-nowrap">入荷予定日</Label>
+                                        <Input
+                                            type="date"
+                                            value={confirmDate}
+                                            onChange={(e) => setConfirmDate(e.target.value)}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 残数サマリー */}
+                            <div className={`p-3 rounded-md text-sm ${totalTransferQuantity > (confirmingItem?.quantity || 0) ? 'bg-red-50 border border-red-200 text-red-700' : remainingQuantity > 0 ? 'bg-amber-50 border border-amber-200 text-amber-700' : 'bg-green-50 border border-green-200 text-green-700'}`}>
+                                <div className="flex justify-between items-center">
+                                    <span>仕掛中の数量:</span>
+                                    <span className="font-medium">{confirmingItem.quantity.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span>移動合計:</span>
+                                    <span className="font-medium">{totalTransferQuantity.toLocaleString()}</span>
+                                </div>
+                                <hr className="my-1 border-current opacity-30" />
+                                <div className="flex justify-between items-center font-bold">
+                                    <span>{remainingQuantity > 0 ? '仕掛中に残る数量:' : '状態:'}</span>
+                                    <span>{remainingQuantity > 0 ? remainingQuantity.toLocaleString() : totalTransferQuantity > (confirmingItem?.quantity || 0) ? '超過しています' : '全量移動'}</span>
+                                </div>
+                            </div>
                         </div>
 
                         <DialogFooter className="mt-6">
                             <Button variant="outline" onClick={() => {
                                 setConfirmingId(null);
-                                setTransferAction(null);
+                                setConfirmingItem(null);
                             }}>キャンセル</Button>
-                            <Button onClick={handleSubmitConfirm} disabled={actionLoading || confirmQuantity <= 0}>
+                            <Button onClick={handleSubmitConfirm} disabled={actionLoading || !isTransferValid}>
                                 {actionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 確定して移動
                             </Button>
                         </DialogFooter>
                     </div>
                 ) : (
-                    // 通常画面 (一覧/登録)
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="list">一覧 ({items.length})</TabsTrigger>
-                            <TabsTrigger value="add">新規登録</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="list" onClick={resetForm}>一覧 ({inProgressItems.length})</TabsTrigger>
+                            <TabsTrigger value="add" onClick={resetForm}>{editingWIPId ? '編集' : '新規登録'}</TabsTrigger>
+                            <TabsTrigger value="history" onClick={resetForm}>履歴 ({completedItems.length})</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="list" className="mt-4 space-y-4">
-                            {loadingItems ? (
+                            {loadingInProgress ? (
                                 <div className="flex justify-center py-8">
                                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                                 </div>
-                            ) : items.length === 0 ? (
+                            ) : inProgressItems.length === 0 ? (
                                 <div className="text-center py-8 text-muted-foreground">
                                     仕掛中のアイテムはありません。
                                 </div>
                             ) : (
                                 <div className="space-y-3">
-                                    {items.map((item) => (
+                                    {inProgressItems.map((item) => (
                                         <div key={item.id} className="flex flex-col p-4 border rounded-lg gap-3">
                                             <div className="flex items-center justify-between">
                                                 <div className="font-medium flex items-center gap-2">
@@ -261,35 +394,33 @@ export function WIPDialog({
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    {!item.confirmationStatus && (
-                                                        <div className="flex gap-1">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                className="text-orange-600 hover:bg-orange-50 border-orange-200 text-xs px-2 h-8"
-                                                                onClick={() => {
-                                                                    setTransferAction('supplier');
-                                                                    setConfirmingId(item.id);
-                                                                    setConfirmQuantity(item.quantity);
-                                                                }}
-                                                            >
-                                                                メーカー在庫へ
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 h-8 flex items-center gap-1"
-                                                                onClick={() => {
-                                                                    setTransferAction('incoming');
-                                                                    setConfirmingId(item.id);
-                                                                    setConfirmDate(format(new Date(), 'yyyy-MM-dd'));
-                                                                    setConfirmQuantity(item.quantity);
-                                                                }}
-                                                            >
-                                                                <PackageCheck className="h-3 w-3" />
-                                                                入荷予定へ
-                                                            </Button>
-                                                        </div>
-                                                    )}
+                                                    <div className="flex gap-1 flex-wrap justify-end">
+                                                        <Button
+                                                            size="sm"
+                                                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 h-8 flex items-center gap-1"
+                                                            onClick={() => handleStartTransfer(item)}
+                                                        >
+                                                            <PackageCheck className="h-3 w-3" />
+                                                            仕上がり移動
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="text-indigo-600 hover:bg-indigo-50 border-indigo-200 text-xs px-2 h-8"
+                                                            onClick={() => handleArrangeShipping(item.id)}
+                                                        >
+                                                            出荷手配
+                                                        </Button>
+                                                    </div>
+
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="text-slate-500 hover:text-slate-800 h-8 w-8 p-0"
+                                                        onClick={() => handleEditClick(item)}
+                                                    >
+                                                        編集
+                                                    </Button>
 
                                                     <Button
                                                         size="sm"
@@ -418,14 +549,61 @@ export function WIPDialog({
                                 </div>
                             </div>
                             <div className="flex justify-end gap-2">
-                                <Button variant="outline" onClick={() => setActiveTab("list")}>
+                                <Button variant="outline" onClick={() => { setActiveTab("list"); resetForm(); }}>
                                     キャンセル
                                 </Button>
-                                <Button onClick={handleCreate} disabled={actionLoading || quantity <= 0}>
+                                <Button onClick={handleCreateOrUpdate} disabled={actionLoading || quantity <= 0}>
                                     {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
-                                    登録
+                                    {editingWIPId ? '更新' : '登録'}
                                 </Button>
                             </div>
+                        </TabsContent>
+
+                        <TabsContent value="history" className="mt-4 space-y-4">
+                            {loadingCompleted ? (
+                                <div className="flex justify-center py-8">
+                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : completedItems.length === 0 ? (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    完了履歴はありません。
+                                </div>
+                            ) : (
+                                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                                    {completedItems.map((item) => (
+                                        <div key={item.id} className="flex flex-col p-4 border rounded-lg gap-2 bg-slate-50 opacity-80">
+                                            <div className="flex items-center justify-between">
+                                                <div className="font-medium flex items-center gap-2">
+                                                    <span className="text-lg">{item.quantity.toLocaleString()}</span>
+                                                    {item.confirmationStatus === 'shipping_arranged' ? (
+                                                        <Badge variant="outline" className="text-indigo-600 border-indigo-200 bg-indigo-50">
+                                                            出荷手配済
+                                                        </Badge>
+                                                    ) : item.confirmationStatus === 'scheduled' ? (
+                                                        <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">
+                                                            入荷予定済
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="outline" className="text-slate-600 border-slate-200 bg-slate-100">
+                                                            完了
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                {item.completedAt && (
+                                                    <div className="text-sm text-muted-foreground">
+                                                        完了: {format(new Date(item.completedAt), 'yyyy/MM/dd')}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {item.note && (
+                                                <div className="text-xs text-muted-foreground">
+                                                    メモ: {item.note}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </TabsContent>
                     </Tabs>
                 )}

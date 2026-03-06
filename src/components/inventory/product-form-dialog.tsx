@@ -58,6 +58,7 @@ type ProductFormData = {
     status: ProductStatus;
     supplierId: string;
     discontinuedDate: string;
+    metersPerRoll: string;
 };
 
 type ProductFormDialogProps = {
@@ -92,6 +93,7 @@ const initialFormData: ProductFormData = {
     status: 'active',
     supplierId: "",
     discontinuedDate: "",
+    metersPerRoll: "",
 };
 
 export function ProductFormDialog({
@@ -135,6 +137,7 @@ export function ProductFormDialog({
                 status: product.status || 'active',
                 supplierId: product.supplierId || "",
                 discontinuedDate: product.discontinuedDate || "",
+                metersPerRoll: product.metersPerRoll?.toString() || "",
             });
         } else {
             setFormData(initialFormData);
@@ -183,6 +186,7 @@ export function ProductFormDialog({
                 status: formData.status,
                 supplierId: formData.supplierId || undefined,
                 discontinuedDate: formData.discontinuedDate || undefined,
+                metersPerRoll: formData.metersPerRoll ? Number(formData.metersPerRoll) : undefined,
             };
 
             const response = await fetch("/api/products", {
@@ -381,6 +385,17 @@ export function ProductFormDialog({
                                 value={formData.material}
                                 onChange={(e) => handleChange("material", e.target.value)}
                                 placeholder="ポリ, 紙 など"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="metersPerRoll">1巻あたりのm数 (ロール品用)</Label>
+                            <CalculableInput
+                                id="metersPerRoll"
+                                value={formData.metersPerRoll === "0" ? "" : formData.metersPerRoll}
+                                onChange={(value) => handleChange("metersPerRoll", value === null ? "" : String(value))}
+                                placeholder="例: 1000"
+                                stringifyOnComplete
                             />
                         </div>
                     </div>

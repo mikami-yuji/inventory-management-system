@@ -46,6 +46,7 @@ export type Product = {
   statusOverride?: 'normal' | 'low_stock' | 'out_of_stock'; // ステータス手動上書き
   supplierId?: string; // 仕入先ID
   discontinuedDate?: string; // 落版日/廃盤日 (YYYY-MM-DD)
+  metersPerRoll?: number; // 1巻あたりのm数 (ロール品の場合)
 };
 
 // 仕入先マスタ
@@ -199,7 +200,7 @@ export type WorkInProgress = {
   note: string | null;
   status: 'in_progress' | 'completed' | 'cancelled';
   termType: 'specific' | 'early' | 'mid' | 'late';
-  confirmationStatus: 'unconfirmed' | 'confirmed' | 'scheduled';
+  confirmationStatus: 'unconfirmed' | 'confirmed' | 'scheduled' | 'shipping_arranged';
   createdAt: string;
 };
 

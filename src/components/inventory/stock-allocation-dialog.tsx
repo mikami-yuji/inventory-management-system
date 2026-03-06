@@ -113,6 +113,11 @@ export function StockAllocationDialog({
                         <span className="font-medium">引当合計</span>
                         <span className="text-lg font-bold text-blue-600">
                             {totalAllocated.toLocaleString()} {product.category === 'bag' || product.category === 'new_rice' ? '枚' : '個'}
+                            {product.metersPerRoll && (
+                                <span className="text-sm font-normal text-muted-foreground ml-2">
+                                    / 約{(totalAllocated / product.metersPerRoll).toFixed(1)}巻
+                                </span>
+                            )}
                         </span>
                     </div>
 
@@ -176,7 +181,12 @@ export function StockAllocationDialog({
                                                     </div>
                                                 ) : (
                                                     <div className="font-medium flex items-center justify-end gap-2 group/edit cursor-pointer" onClick={() => handleEdit(alloc)}>
-                                                        {alloc.quantity.toLocaleString()}
+                                                        <div className="flex flex-col items-end">
+                                                            <span>{alloc.quantity.toLocaleString()}</span>
+                                                            {product.metersPerRoll && (
+                                                                <span className="text-[10px] text-muted-foreground">約{(alloc.quantity / product.metersPerRoll).toFixed(1)}巻</span>
+                                                            )}
+                                                        </div>
                                                         <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity" />
                                                     </div>
                                                 )}
