@@ -282,8 +282,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                     </div>
                                                     <div className="flex flex-col gap-0.5 mt-0.5">
                                                         {incoming.items.map((item, i) => (
-                                                            <div key={i} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
+                                                            <div key={i} className="text-[10px] leading-tight opacity-80 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]" title={item.note || ''}>
                                                                 {new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {item.quantity.toLocaleString()}
+                                                                {item.note && <span className="ml-1 text-[9px] text-emerald-700">({item.note})</span>}
                                                             </div>
                                                         ))}
                                                     </div>
