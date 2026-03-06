@@ -61,8 +61,22 @@ export function SupplierStockDialog({
         updateSupplierStockLot,
         deleteSupplierStockLot,
         moveSupplierStockToIncoming,
+        syncSupplierStock,
         loading
     } = useWIPActions();
+
+    const handleSync = async () => {
+        if (!confirm("すべての商品のメーカー在庫を、ロットの合計値に合わせる再計算（同期）を行ってもよろしいですか？")) return;
+
+        const success = await syncSupplierStock();
+        if (success) {
+            toast.success("在庫数を再計算しました");
+            fetchLots();
+            onSuccess();
+        } else {
+            toast.error("再計算に失敗しました");
+        }
+    };
 
     const fetchLots = async () => {
         if (!product) return;
@@ -181,6 +195,16 @@ export function SupplierStockDialog({
                                 <p className="text-3xl font-bold">{displayStock.toLocaleString()}</p>
                             </div>
                         </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-8 border-blue-200 text-blue-600 hover:bg-blue-50"
+                            onClick={handleSync}
+                            disabled={loading}
+                        >
+                            {loading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Save className="h-3 w-3 mr-1" />}
+                            再計算
+                        </Button>
                     </div>
 
                     <Separator />

@@ -78,6 +78,7 @@ export function useWIPActions(): {
     addSupplierStockLot: (productId: string, quantity: number, stockDate: string, note?: string) => Promise<boolean>;
     updateSupplierStockLot: (lotId: string, quantity: number, stockDate: string, note?: string) => Promise<boolean>;
     deleteSupplierStockLot: (lotId: string) => Promise<boolean>;
+    syncSupplierStock: () => Promise<boolean>;
 
     loading: boolean;
 } {
@@ -304,6 +305,23 @@ export function useWIPActions(): {
         }
     };
 
+    const syncSupplierStock = async (): Promise<boolean> => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/supplier-stock', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'sync_all' })
+            });
+            const result = await response.json();
+            return !result.error;
+        } catch {
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return {
         createWIP,
         transferToIncoming,
@@ -318,6 +336,7 @@ export function useWIPActions(): {
         addSupplierStockLot,
         updateSupplierStockLot,
         deleteSupplierStockLot,
+        syncSupplierStock,
         loading
     };
 }

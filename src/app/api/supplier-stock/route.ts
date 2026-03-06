@@ -188,6 +188,31 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             return NextResponse.json({ data: { success: true }, error: null })
         }
 
+        // 在庫数の同期（ロットの合計値をproducts.supplier_stockへ反映）
+        if (action === 'sync_all') {
+            const { data: products } = await supabase
+                .from('products')
+                .select('id')
+
+            if (products) {
+                for (const p of products) {
+                    const { data: lotSum } = await supabase
+                        .from('supplier_stock_lots')
+                        .select('quantity')
+                        .eq('product_id', p.id)
+
+                    const total = (lotSum as any[] || []).reduce((sum, lot) => sum + lot.quantity, 0)
+
+                    await supabase
+                        .from('products')
+                        .update({ supplier_stock: total } as any)
+                        .eq('id', p.id)
+                }
+            }
+
+            return NextResponse.json({ data: { success: true }, error: null })
+        }
+
         return NextResponse.json({ data: null, error: '不正なリクエストです' }, { status: 400 })
 
     } catch (error) {

@@ -104,7 +104,13 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 const incoming = incomingMap.get(product.id);
                                 const wipList = wipMap.get(product.id) || [];
                                 const wipQuantity = wipList.reduce((sum, item) => sum + item.quantity, 0);
-                                const supplierStock = supplierStockMap.get(product.id) || 0;
+
+                                // ロットがある場合はロットの合計を優先表示（DB同期ズレ対策）
+                                const supplierStockLots = supplierStockLotsMap?.get(product.id) || [];
+                                const supplierStockFromLots = supplierStockLots.length > 0
+                                    ? supplierStockLots.reduce((sum, lot) => sum + lot.quantity, 0)
+                                    : (supplierStockMap.get(product.id) || 0);
+                                const supplierStock = supplierStockFromLots;
 
                                 const {
                                     availableStock,
@@ -117,7 +123,6 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
 
                                 const hasAllocation = allocation.bags > 0;
                                 const isInCart = items.some(item => item.product.id === product.id);
-                                const supplierStockLots = supplierStockLotsMap?.get(product.id) || [];
 
                                 return (
                                     <TableRow key={product.id} className={cn("group", isOutOfStock && "bg-red-50 bg-opacity-50")}>
