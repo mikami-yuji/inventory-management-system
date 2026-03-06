@@ -106,7 +106,9 @@ export function WIPDialog({
         try {
             const res = await fetch('/api/delivery-addresses');
             const result = await res.json();
-            if (result.data) {
+            if (Array.isArray(result)) {
+                setDeliveryAddresses(result);
+            } else if (result && result.data && Array.isArray(result.data)) {
                 setDeliveryAddresses(result.data);
             }
         } catch (e) {
