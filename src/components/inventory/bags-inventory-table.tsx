@@ -395,7 +395,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                             onClick={() => setEditStatusProduct(product)}
                                         >
                                             <div className="flex flex-col items-center gap-1 relative">
-                                                {product.status === 'spot' ? (
+                                                {product.status === 'wip_check' ? (
+                                                    <Badge variant="outline" className="border-indigo-400 text-indigo-600 bg-indigo-50 group-hover:bg-indigo-100 transition-colors whitespace-nowrap">仕掛確認</Badge>
+                                                ) : product.status === 'spot' ? (
                                                     <Badge variant="outline" className="border-emerald-400 text-emerald-600 bg-emerald-50 group-hover:bg-emerald-100 transition-colors whitespace-nowrap">スポット</Badge>
                                                 ) : product.status === 'plate_removal_scheduled' ? (
                                                     <Badge variant="outline" className="border-amber-400 text-amber-600 bg-amber-50 group-hover:bg-amber-100 transition-colors whitespace-nowrap">落版予定</Badge>

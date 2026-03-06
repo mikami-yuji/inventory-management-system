@@ -29,5 +29,6 @@ CHECK (status IN (
   'direct_delivery', 
   'on_sale_break', 
   'discontinued',
-  'spot'
+  'spot',
+  'wip_check'
 ));

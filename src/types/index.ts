@@ -13,7 +13,7 @@ export type User = {
 export type ProductCategory = 'bag' | 'sticker' | 'other' | 'new_rice';
 
 // 商品ステータス
-export type ProductStatus = 'active' | 'inactive' | 'plate_removal_scheduled' | 'plate_removed' | 'direct_delivery' | 'on_sale_break' | 'discontinued' | 'spot';
+export type ProductStatus = 'active' | 'inactive' | 'plate_removal_scheduled' | 'plate_removed' | 'direct_delivery' | 'on_sale_break' | 'discontinued' | 'spot' | 'wip_check';
 
 // 商品マスタ
 export type Product = {

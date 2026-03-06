@@ -636,6 +636,51 @@ export default function DashboardPage(): React.ReactElement {
                 </Card>
             )}
 
+            {/* 仕掛確認 */}
+            {(() => {
+                const wipCheckItems = products.filter(p => p.status === 'wip_check');
+                if (wipCheckItems.length === 0) return null;
+
+                return (
+                    <Card className="bg-indigo-50 border-indigo-200">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <div>
+                                <CardTitle className="text-indigo-700 flex items-center gap-2">
+                                    <AlertTriangle className="h-5 w-5" />
+                                    仕掛確認が必要な商品
+                                </CardTitle>
+                                <CardDescription className="text-indigo-600/70">
+                                    ステータスが「仕掛確認」に設定されている商品
+                                </CardDescription>
+                            </div>
+                            <Button variant="ghost" size="sm" asChild className="text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800">
+                                <Link href="/inventory">在庫管理へ</Link>
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                {wipCheckItems.map((product) => (
+                                    <div key={product.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white rounded border border-indigo-100 shadow-sm gap-2">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-medium text-sm truncate" title={`${product.name} (${product.weight}kg)`}>
+                                                {product.name} ({product.weight}kg)
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground flex gap-2 mt-0.5">
+                                                <span>SKU: {product.sku}</span>
+                                                <span>/ 形状: {product.shape}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <Badge variant="outline" className="text-indigo-600 border-indigo-200 bg-indigo-50">仕掛確認</Badge>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                );
+            })()}
+
             {/* 落版予定 */}
             {(() => {
                 const scheduledItems = products

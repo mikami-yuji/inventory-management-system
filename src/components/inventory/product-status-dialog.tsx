@@ -143,6 +143,7 @@ export function ProductStatusDialog({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="active">有効/正常</SelectItem>
+                                    <SelectItem value="wip_check">仕掛確認</SelectItem>
                                     <SelectItem value="spot">スポット</SelectItem>
                                     <SelectItem value="plate_removal_scheduled">落版予定</SelectItem>
                                     <SelectItem value="plate_removed">落版</SelectItem>
