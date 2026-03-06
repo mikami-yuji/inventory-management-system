@@ -63,7 +63,7 @@ export function useWorkInProgress(options?: { status?: string; productId?: strin
  */
 export function useWIPActions(): {
     createWIP: (input: WIPInput) => Promise<{ success: boolean; error?: string }>;
-    transferToIncoming: (id: string, expectedDate: string, quantity: number) => Promise<boolean>;
+    transferToIncoming: (id: string, schedules: { expectedDate: string, quantity: number, note?: string }[]) => Promise<boolean>;
     transferToSupplier: (id: string, quantity: number) => Promise<boolean>;
     cancelWIP: (id: string) => Promise<boolean>;
     deleteWIP: (id: string) => Promise<boolean>;
@@ -105,13 +105,13 @@ export function useWIPActions(): {
         }
     };
 
-    const transferToIncoming = async (id: string, expectedDate: string, quantity: number): Promise<boolean> => {
+    const transferToIncoming = async (id: string, schedules: { expectedDate: string, quantity: number, note?: string }[]): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/work-in-progress', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, action: 'to_incoming', expectedDate, quantity })
+                body: JSON.stringify({ id, action: 'to_incoming', schedules })
             });
             const result = await response.json();
             return !result.error;

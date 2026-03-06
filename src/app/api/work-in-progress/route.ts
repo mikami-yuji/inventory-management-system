@@ -163,10 +163,13 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         }
 
         if (action === 'to_incoming') {
-            // 仕掛品を入荷予定へ移動（部分移動対応・WIPレコードの状態は変更しない）
-            if (!expectedDate || !quantity) {
-                return NextResponse.json({ data: null, error: '入荷予定日と数量は必須です' }, { status: 400 })
+            // 仕掛品を入荷予定へ移動（複数スケジュール・部分移動対応）
+            const { schedules } = body as { schedules: { expectedDate: string, quantity: number, note?: string }[] }
+
+            if (!schedules || !Array.isArray(schedules) || schedules.length === 0) {
+                return NextResponse.json({ data: null, error: '入荷予定のスケジュールが必要です' }, { status: 400 })
             }
+
             const { data: wipItem } = await supabase
                 .from('work_in_progress')
                 .select('product_id')
@@ -174,16 +177,21 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 .single<any>()
 
             if (wipItem) {
-                await supabase
-                    .from('incoming_stock')
-                    .insert({
-                        product_id: wipItem.product_id,
-                        expected_date: expectedDate,
-                        quantity: quantity,
-                        note: '仕掛品からの予定'
-                    } as any)
+                const insertData = schedules.map(s => ({
+                    product_id: wipItem.product_id,
+                    expected_date: s.expectedDate,
+                    quantity: s.quantity,
+                    note: s.note || '仕掛品からの予定'
+                }))
 
-                // WIPレコードの状態は変更しない（フロントエンドで残数管理）
+                const { error: insertError } = await supabase
+                    .from('incoming_stock')
+                    .insert(insertData as any)
+
+                if (insertError) {
+                    console.error('入荷予定登録エラー:', insertError)
+                    return NextResponse.json({ data: null, error: insertError.message }, { status: 500 })
+                }
             }
         } else if (action === 'to_supplier') {
             // 仕掛品をメーカー在庫へ移動（部分移動対応・WIPレコードは削除しない）

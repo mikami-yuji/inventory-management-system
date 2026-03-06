@@ -23,7 +23,8 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "react-hot-toast";
-import type { WorkInProgress } from "@/types";
+import type { WorkInProgress, DeliveryAddress } from "@/types";
+import { X } from "lucide-react";
 
 interface WIPDialogProps {
     product: Product | null;
@@ -84,9 +85,40 @@ export function WIPDialog({
     const [confirmingId, setConfirmingId] = useState<string | null>(null);
     const [confirmingItem, setConfirmingItem] = useState<WorkInProgress | null>(null);
     const [supplierQuantity, setSupplierQuantity] = useState(0); // メーカー在庫への数量
-    const [incomingQuantity, setIncomingQuantity] = useState(0); // 入荷予定への数量
+
+    // 入荷予定の複数スケジュール管理
+    type ArrivalSchedule = {
+        id: string;
+        expectedDate: string;
+        quantity: number;
+        note: string;
+    };
+    const [arrivalSchedules, setArrivalSchedules] = useState<ArrivalSchedule[]>([
+        { id: Math.random().toString(36).substr(2, 9), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
+    ]);
+
     const [lossQuantity, setLossQuantity] = useState(0); // ロス数量
-    const [confirmDate, setConfirmDate] = useState(format(new Date(), 'yyyy-MM-dd')); // 入荷予定日
+
+    // 納品先リスト
+    const [deliveryAddresses, setDeliveryAddresses] = useState<DeliveryAddress[]>([]);
+
+    const fetchDeliveryAddresses = async () => {
+        try {
+            const res = await fetch('/api/delivery-addresses');
+            const result = await res.json();
+            if (result.data) {
+                setDeliveryAddresses(result.data);
+            }
+        } catch (e) {
+            console.error("納品先取得エラー", e);
+        }
+    };
+
+    useEffect(() => {
+        if (open) {
+            fetchDeliveryAddresses();
+        }
+    }, [open]);
 
     // ダイアログが開いたときに再取得（refetchを依存配列から除外して無限ループ防止）
     useEffect(() => {
@@ -197,13 +229,31 @@ export function WIPDialog({
         setConfirmingId(item.id);
         setConfirmingItem(item);
         setSupplierQuantity(0);
-        setIncomingQuantity(0);
+        setArrivalSchedules([
+            { id: Math.random().toString(36).substr(2, 9), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
+        ]);
         setLossQuantity(0);
-        setConfirmDate(format(new Date(), 'yyyy-MM-dd'));
+    };
+
+    const addArrivalRow = () => {
+        setArrivalSchedules([
+            ...arrivalSchedules,
+            { id: Math.random().toString(36).substr(2, 9), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
+        ]);
+    };
+
+    const removeArrivalRow = (id: string) => {
+        if (arrivalSchedules.length <= 1) return;
+        setArrivalSchedules(arrivalSchedules.filter(s => s.id !== id));
+    };
+
+    const updateArrivalRow = (id: string, updates: Partial<ArrivalSchedule>) => {
+        setArrivalSchedules(arrivalSchedules.map(s => s.id === id ? { ...s, ...updates } : s));
     };
 
     // 分割移動の合計数量（ロス含む）
-    const totalTransferQuantity = supplierQuantity + incomingQuantity;
+    const incomingTotal = arrivalSchedules.reduce((sum, s) => sum + s.quantity, 0);
+    const totalTransferQuantity = supplierQuantity + incomingTotal;
     const totalConsumedQuantity = totalTransferQuantity + lossQuantity;
     const remainingQuantity = confirmingItem ? confirmingItem.quantity - totalConsumedQuantity : 0;
     const isTransferValid = totalConsumedQuantity > 0 && totalConsumedQuantity <= (confirmingItem?.quantity || 0);
@@ -221,8 +271,13 @@ export function WIPDialog({
         }
 
         // 入荷予定への移動
-        if (incomingQuantity > 0 && success) {
-            const result = await transferToIncoming(confirmingId, confirmDate, incomingQuantity);
+        const activeSchedules = arrivalSchedules.filter(s => s.quantity > 0);
+        if (activeSchedules.length > 0 && success) {
+            const result = await transferToIncoming(confirmingId, activeSchedules.map(s => ({
+                expectedDate: s.expectedDate,
+                quantity: s.quantity,
+                note: s.note
+            })));
             if (!result) success = false;
         }
 
@@ -314,26 +369,75 @@ export function WIPDialog({
                             </div>
 
                             {/* 入荷予定への移動 */}
-                            <div className="border rounded-lg p-4 space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">入荷予定</Badge>
-                                    <span className="text-sm text-muted-foreground">に移動する数量</span>
-                                </div>
-                                <CalculableInput
-                                    value={incomingQuantity === 0 ? "" : incomingQuantity}
-                                    onChange={(value) => setIncomingQuantity(Number(value) || 0)}
-                                    placeholder="0 (移動しない場合は空欄)"
-                                />
-                                {incomingQuantity > 0 && (
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <Label className="text-sm whitespace-nowrap">入荷予定日</Label>
-                                        <Input
-                                            type="date"
-                                            value={confirmDate}
-                                            onChange={(e) => setConfirmDate(e.target.value)}
-                                        />
+                            <div className="border rounded-lg p-4 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">入荷予定</Badge>
+                                        <span className="text-sm text-muted-foreground">に移動する数量（複数回答可）</span>
                                     </div>
-                                )}
+                                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addArrivalRow}>
+                                        <Plus className="h-3 w-3 mr-1" />
+                                        予定追加
+                                    </Button>
+                                </div>
+
+                                <div className="space-y-4 pt-2">
+                                    {arrivalSchedules.map((schedule, index) => (
+                                        <div key={schedule.id} className="relative bg-muted/20 p-3 rounded-md border space-y-3">
+                                            {arrivalSchedules.length > 1 && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-red-500"
+                                                    onClick={() => removeArrivalRow(schedule.id)}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            )}
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1">
+                                                    <Label className="text-xs">着日（入荷予定日）</Label>
+                                                    <Input
+                                                        type="date"
+                                                        value={schedule.expectedDate}
+                                                        onChange={(e) => updateArrivalRow(schedule.id, { expectedDate: e.target.value })}
+                                                        size={1}
+                                                        className="h-8"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label className="text-xs">数量</Label>
+                                                    <CalculableInput
+                                                        value={schedule.quantity === 0 ? "" : schedule.quantity}
+                                                        onChange={(value) => updateArrivalRow(schedule.id, { quantity: Number(value) || 0 })}
+                                                        placeholder="数量"
+                                                        className="h-8"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <Label className="text-xs">出荷先（納品先マスターから選択）</Label>
+                                                <Select
+                                                    value={schedule.note}
+                                                    onValueChange={(val) => updateArrivalRow(schedule.id, { note: val })}
+                                                >
+                                                    <SelectTrigger className="h-8">
+                                                        <SelectValue placeholder="出荷先を選択（任意）" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {deliveryAddresses.map(addr => (
+                                                            <SelectItem key={addr.id} value={addr.name}>
+                                                                {addr.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
                             {/* ロス */}
