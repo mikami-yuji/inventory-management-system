@@ -207,23 +207,8 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                         note: '仕掛品からの移動'
                     } as any)
 
-                // productsテーブルのsupplier_stockも更新
-                const { data: product } = await supabase
-                    .from('products')
-                    .select('supplier_stock')
-                    .eq('id', wipItem.product_id)
-                    .single<any>()
-
-                const currentStock = product?.supplier_stock || 0
-
-                await supabase
-                    .from('products')
-                    // @ts-ignore
-                    .update({
-                        supplier_stock: currentStock + quantity,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', wipItem.product_id)
+                // productsテーブルのsupplier_stockはDBトリガー(trigger_update_supplier_stock_total)で自動更新されるため、
+                // ここでの手動更新は不要（二重加算の原因になるため削除）
 
                 // WIPレコードは削除しない（フロントエンドで残数管理）
             }
