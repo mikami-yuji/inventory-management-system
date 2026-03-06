@@ -12,9 +12,10 @@ import {
     Plus,
     Pencil,
     Trash2,
-    Package,
     Download,
     X,
+    LineChart,
+    Package,
 } from "lucide-react";
 import {
     getPitch,
@@ -49,10 +50,11 @@ export type BagsInventoryTableProps = {
     onEdit: (product: Product) => void;
     onDelete: (product: Product) => void;
     onIncomingStockClick: (product: Product) => void;
+    onAnalyze?: (product: Product) => void;
     onRefetch: () => void;
 };
 
-export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, supplierStockLotsMap, incomingMap, saleEvents, onEdit, onDelete, onIncomingStockClick, onRefetch }: BagsInventoryTableProps): React.ReactElement {
+export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, supplierStockLotsMap, incomingMap, saleEvents, onEdit, onDelete, onIncomingStockClick, onAnalyze, onRefetch }: BagsInventoryTableProps): React.ReactElement {
     const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
     const [editWIP, setEditWIP] = useState<Product | null>(null);
     const [viewAllocation, setViewAllocation] = useState<Product | null>(null);
@@ -158,9 +160,14 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                             <div className="text-sm">
                                                 <span className="font-medium">{product.weight}kg</span> / {product.shape}
                                                 {isRoll && (
-                                                    <div className="text-xs text-blue-600 mt-1">
-                                                        ピッチ: {getPitch(product.weight || 0)}mm
-                                                    </div>
+                                                    <>
+                                                        <div className="text-xs text-blue-600 mt-1">
+                                                            ピッチ: {getPitch(product.weight || 0)}mm
+                                                        </div>
+                                                        <div className="text-xs text-green-600">
+                                                            1巻: {product.metersPerRoll || 400}m
+                                                        </div>
+                                                    </>
                                                 )}
                                                 {product.metersPerRoll && (
                                                     <div className="text-xs text-indigo-600">
@@ -420,7 +427,10 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 >
                                                     {isInCart ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
                                                 </Button>
-                                                <Button size="sm" variant="ghost" onClick={() => onEdit(product)} title="編集">
+                                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onAnalyze?.(product); }} title="在庫分析">
+                                                    <LineChart className="h-3 w-3 text-blue-600" />
+                                                </Button>
+                                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onEdit(product); }} title="編集">
                                                     <Pencil className="h-3 w-3" />
                                                 </Button>
                                                 <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onDelete(product); }} title="削除" className="text-red-500 hover:text-red-600">

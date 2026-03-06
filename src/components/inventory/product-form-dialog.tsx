@@ -58,7 +58,7 @@ type ProductFormData = {
     status: ProductStatus;
     supplierId: string;
     discontinuedDate: string;
-    metersPerRoll: string;
+    metersPerRoll: string; // 1巻あたりメートル数 (300 or 400)
 };
 
 type ProductFormDialogProps = {
@@ -93,7 +93,7 @@ const initialFormData: ProductFormData = {
     status: 'active',
     supplierId: "",
     discontinuedDate: "",
-    metersPerRoll: "",
+    metersPerRoll: "400",
 };
 
 export function ProductFormDialog({
@@ -137,7 +137,7 @@ export function ProductFormDialog({
                 status: product.status || 'active',
                 supplierId: product.supplierId || "",
                 discontinuedDate: product.discontinuedDate || "",
-                metersPerRoll: product.metersPerRoll?.toString() || "",
+                metersPerRoll: product.metersPerRoll?.toString() || "400",
             });
         } else {
             setFormData(initialFormData);
@@ -186,7 +186,7 @@ export function ProductFormDialog({
                 status: formData.status,
                 supplierId: formData.supplierId || undefined,
                 discontinuedDate: formData.discontinuedDate || undefined,
-                metersPerRoll: formData.metersPerRoll ? Number(formData.metersPerRoll) : undefined,
+                metersPerRoll: formData.metersPerRoll ? Number(formData.metersPerRoll) : 400,
             };
 
             const response = await fetch("/api/products", {
@@ -242,6 +242,7 @@ export function ProductFormDialog({
                                     value={formData.prefix}
                                     onChange={(e) => handleChange("prefix", e.target.value)}
                                     placeholder="（ロゴ無）、【使用禁止】"
+                                    inputMode="text"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -251,6 +252,7 @@ export function ProductFormDialog({
                                     value={formData.origin}
                                     onChange={(e) => handleChange("origin", e.target.value)}
                                     placeholder="JA京都やましろ、魚沼"
+                                    inputMode="text"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -260,6 +262,7 @@ export function ProductFormDialog({
                                     value={formData.variety}
                                     onChange={(e) => handleChange("variety", e.target.value)}
                                     placeholder="ひのひかり、コシヒカリ"
+                                    inputMode="text"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -269,6 +272,7 @@ export function ProductFormDialog({
                                     value={formData.suffix}
                                     onChange={(e) => handleChange("suffix", e.target.value)}
                                     placeholder="RASP雲竜柄無地"
+                                    inputMode="text"
                                 />
                             </div>
                         </div>
@@ -332,6 +336,7 @@ export function ProductFormDialog({
                                 value={formData.sku}
                                 onChange={(e) => handleChange("sku", e.target.value)}
                                 placeholder="受注№"
+                                inputMode="text"
                             />
                         </div>
 
@@ -342,6 +347,7 @@ export function ProductFormDialog({
                                 value={formData.productCode}
                                 onChange={(e) => handleChange("productCode", e.target.value)}
                                 placeholder="商品コード"
+                                inputMode="text"
                             />
                         </div>
 
@@ -352,6 +358,7 @@ export function ProductFormDialog({
                                 value={formData.janCode}
                                 onChange={(e) => handleChange("janCode", e.target.value)}
                                 placeholder="JANコード"
+                                inputMode="numeric"
                             />
                         </div>
                     </div>
@@ -365,6 +372,7 @@ export function ProductFormDialog({
                                 onChange={(value) => handleChange("weight", value === null ? "" : String(value))}
                                 placeholder="例: 5"
                                 stringifyOnComplete
+                                inputMode="decimal"
                             />
                         </div>
 
@@ -375,6 +383,7 @@ export function ProductFormDialog({
                                 value={formData.shape}
                                 onChange={(e) => handleChange("shape", e.target.value)}
                                 placeholder="RZ, H など"
+                                inputMode="text"
                             />
                         </div>
 
@@ -385,6 +394,7 @@ export function ProductFormDialog({
                                 value={formData.material}
                                 onChange={(e) => handleChange("material", e.target.value)}
                                 placeholder="ポリ, 紙 など"
+                                inputMode="text"
                             />
                         </div>
 
@@ -400,6 +410,26 @@ export function ProductFormDialog({
                         </div>
                     </div>
 
+                    {/* 1巻あたりメートル数 */}
+                    <div className="space-y-2">
+                        <Label htmlFor="metersPerRoll">1巻あたりメートル数</Label>
+                        <Select
+                            value={formData.metersPerRoll}
+                            onValueChange={(val) => handleChange("metersPerRoll", val)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="400m" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="300">300m</SelectItem>
+                                <SelectItem value="400">400m</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-[10px] text-muted-foreground">
+                            ※ロール袋の1巻あたりの長さ（デフォルト: 400m）
+                        </p>
+                    </div>
+
                     <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="unitPrice">単価 (円)</Label>
@@ -409,6 +439,7 @@ export function ProductFormDialog({
                                 onChange={(value) => handleChange("unitPrice", value === null ? "" : String(value))}
                                 placeholder="単価を入力"
                                 stringifyOnComplete
+                                inputMode="numeric"
                             />
                         </div>
 
@@ -420,6 +451,7 @@ export function ProductFormDialog({
                                 onChange={(value) => handleChange("printingCost", value === null ? "" : String(value))}
                                 placeholder="印刷代を入力"
                                 stringifyOnComplete
+                                inputMode="numeric"
                             />
                         </div>
 
@@ -431,6 +463,7 @@ export function ProductFormDialog({
                                 onChange={(value) => handleChange("minStockAlert", value === null ? "" : String(value))}
                                 placeholder="推奨: 3000"
                                 stringifyOnComplete
+                                inputMode="numeric"
                             />
                             <p className="text-[10px] text-muted-foreground whitespace-nowrap">
                                 空欄時のデフォルト: ロール 1500m / 単袋 3000枚
@@ -515,6 +548,7 @@ export function ProductFormDialog({
                                     value={formData.frontColorCount === "0" ? "" : formData.frontColorCount}
                                     onChange={(e) => handleChange("frontColorCount", e.target.value)}
                                     placeholder="色数"
+                                    inputMode="numeric"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -525,6 +559,7 @@ export function ProductFormDialog({
                                     value={formData.backColorCount === "0" ? "" : formData.backColorCount}
                                     onChange={(e) => handleChange("backColorCount", e.target.value)}
                                     placeholder="色数"
+                                    inputMode="numeric"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -535,6 +570,7 @@ export function ProductFormDialog({
                                     value={formData.totalColorCount === "0" ? "" : formData.totalColorCount}
                                     onChange={(e) => handleChange("totalColorCount", e.target.value)}
                                     placeholder="色数"
+                                    inputMode="numeric"
                                 />
                             </div>
                         </div>
@@ -547,6 +583,7 @@ export function ProductFormDialog({
                             value={formData.description}
                             onChange={(e) => handleChange("description", e.target.value)}
                             placeholder="商品の説明"
+                            inputMode="text"
                         />
                     </div>
 

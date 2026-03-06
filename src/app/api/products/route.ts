@@ -48,7 +48,7 @@ export async function GET(): Promise<NextResponse> {
             supplierStock: item.supplier_stock && !isNaN(Number(item.supplier_stock)) ? Number(item.supplier_stock) : 0,
             statusOverride: item.status_override,
             discontinuedDate: item.discontinued_date,
-            metersPerRoll: item.meters_per_roll ? Number(item.meters_per_roll) : undefined,
+            metersPerRoll: item.meters_per_roll !== null && item.meters_per_roll !== undefined ? Number(item.meters_per_roll) : 400,
         }));
 
         // 「落版予定」から「落版」への自動遷移ロジック
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             back_color_count: body.backColorCount !== undefined && body.backColorCount !== null ? Number(body.backColorCount) : null,
             total_color_count: body.totalColorCount !== undefined && body.totalColorCount !== null ? Number(body.totalColorCount) : null,
             supplier_id: body.supplierId === 'none' || !body.supplierId ? null : body.supplierId,
-            meters_per_roll: body.metersPerRoll !== undefined && body.metersPerRoll !== null && body.metersPerRoll !== '' ? Number(body.metersPerRoll) : null,
+            meters_per_roll: body.metersPerRoll !== undefined && body.metersPerRoll !== null ? Number(body.metersPerRoll) : 400,
         };
 
         const { data, error } = await supabaseClient
@@ -200,7 +200,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         if (body.backColorCount !== undefined) updateData.back_color_count = body.backColorCount !== null ? Number(body.backColorCount) : null;
         if (body.totalColorCount !== undefined) updateData.total_color_count = body.totalColorCount !== null ? Number(body.totalColorCount) : null;
         if (body.supplierId !== undefined) updateData.supplier_id = body.supplierId === 'none' || !body.supplierId ? null : body.supplierId;
-        if (body.metersPerRoll !== undefined) updateData.meters_per_roll = body.metersPerRoll !== null && body.metersPerRoll !== '' ? Number(body.metersPerRoll) : null;
+        if (body.metersPerRoll !== undefined) updateData.meters_per_roll = body.metersPerRoll !== null ? Number(body.metersPerRoll) : 400;
 
         const { data: updateResults, error } = await supabaseClient
             .from('products')

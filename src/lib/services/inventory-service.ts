@@ -34,13 +34,15 @@ export const getDefaultMinStockAlert = (shape?: string | null, settings?: any): 
     return settings?.default_min_stock_alert_bag !== undefined ? Number(settings.default_min_stock_alert_bag) : 3000;
 };
 
-// 1ロールあたりの長さ (mm) - 300m
-const ROLL_LENGTH_MM = 300 * 1000;
+// 1ロールあたりのデフォルト長さ (m)
+const DEFAULT_METERS_PER_ROLL = 400;
 
 // 1ロールあたりの概算枚数を計算
-export const getApproxBagCount = (weight: number): number => {
+// metersPerRoll: 1巻あたりのメートル数（商品ごとに異なる、デフォルト400m）
+export const getApproxBagCount = (weight: number, metersPerRoll: number = DEFAULT_METERS_PER_ROLL): number => {
     const pitch = getPitch(weight);
-    return Math.floor(ROLL_LENGTH_MM / pitch);
+    const rollLengthMm = metersPerRoll * 1000;
+    return Math.floor(rollLengthMm / pitch);
 };
 
 // 枚数からメートルに変換
