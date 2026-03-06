@@ -85,6 +85,7 @@ export function WIPDialog({
     const [confirmingItem, setConfirmingItem] = useState<WorkInProgress | null>(null);
     const [supplierQuantity, setSupplierQuantity] = useState(0); // メーカー在庫への数量
     const [incomingQuantity, setIncomingQuantity] = useState(0); // 入荷予定への数量
+    const [lossQuantity, setLossQuantity] = useState(0); // ロス数量
     const [confirmDate, setConfirmDate] = useState(format(new Date(), 'yyyy-MM-dd')); // 入荷予定日
 
     // ダイアログが開いたときに再取得（refetchを依存配列から除外して無限ループ防止）
@@ -197,13 +198,15 @@ export function WIPDialog({
         setConfirmingItem(item);
         setSupplierQuantity(0);
         setIncomingQuantity(0);
+        setLossQuantity(0);
         setConfirmDate(format(new Date(), 'yyyy-MM-dd'));
     };
 
-    // 分割移動の合計数量
+    // 分割移動の合計数量（ロス含む）
     const totalTransferQuantity = supplierQuantity + incomingQuantity;
-    const remainingQuantity = confirmingItem ? confirmingItem.quantity - totalTransferQuantity : 0;
-    const isTransferValid = totalTransferQuantity > 0 && totalTransferQuantity <= (confirmingItem?.quantity || 0);
+    const totalConsumedQuantity = totalTransferQuantity + lossQuantity;
+    const remainingQuantity = confirmingItem ? confirmingItem.quantity - totalConsumedQuantity : 0;
+    const isTransferValid = totalConsumedQuantity > 0 && totalConsumedQuantity <= (confirmingItem?.quantity || 0);
 
     const handleSubmitConfirm = async () => {
         if (!confirmingId || !confirmingItem) return;
@@ -224,14 +227,21 @@ export function WIPDialog({
         }
 
         if (success) {
-            // 全量移動の場合はWIPを削除
+            // 全量消化の場合はWIPを削除
             if (remainingQuantity <= 0) {
                 await deleteWIP(confirmingId);
-                toast.success('仕掛品を移動しました');
+                const parts = [];
+                if (totalTransferQuantity > 0) parts.push(`${totalTransferQuantity.toLocaleString()}を移動`);
+                if (lossQuantity > 0) parts.push(`ロス ${lossQuantity.toLocaleString()}`);
+                toast.success(parts.join('、'));
             } else {
                 // 残数がある場合はWIPの数量を残数に更新
                 await updateWIP(confirmingId, { quantity: remainingQuantity });
-                toast.success(`${totalTransferQuantity.toLocaleString()}を移動、${remainingQuantity.toLocaleString()}を仕掛中として残しました`);
+                const parts = [];
+                if (totalTransferQuantity > 0) parts.push(`${totalTransferQuantity.toLocaleString()}を移動`);
+                if (lossQuantity > 0) parts.push(`ロス ${lossQuantity.toLocaleString()}`);
+                parts.push(`${remainingQuantity.toLocaleString()}を仕掛中に残しました`);
+                toast.success(parts.join('、'));
             }
             onSuccess();
             refetch();
@@ -326,8 +336,21 @@ export function WIPDialog({
                                 )}
                             </div>
 
+                            {/* ロス */}
+                            <div className="border rounded-lg p-4 space-y-3 border-dashed border-red-200">
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50">ロス</Badge>
+                                    <span className="text-sm text-muted-foreground">加工ロス・廃棄分</span>
+                                </div>
+                                <CalculableInput
+                                    value={lossQuantity === 0 ? "" : lossQuantity}
+                                    onChange={(value) => setLossQuantity(Number(value) || 0)}
+                                    placeholder="0 (ロスなしの場合は空欄)"
+                                />
+                            </div>
+
                             {/* 残数サマリー */}
-                            <div className={`p-3 rounded-md text-sm ${totalTransferQuantity > (confirmingItem?.quantity || 0) ? 'bg-red-50 border border-red-200 text-red-700' : remainingQuantity > 0 ? 'bg-amber-50 border border-amber-200 text-amber-700' : 'bg-green-50 border border-green-200 text-green-700'}`}>
+                            <div className={`p-3 rounded-md text-sm ${totalConsumedQuantity > (confirmingItem?.quantity || 0) ? 'bg-red-50 border border-red-200 text-red-700' : remainingQuantity > 0 ? 'bg-amber-50 border border-amber-200 text-amber-700' : 'bg-green-50 border border-green-200 text-green-700'}`}>
                                 <div className="flex justify-between items-center">
                                     <span>仕掛中の数量:</span>
                                     <span className="font-medium">{confirmingItem.quantity.toLocaleString()}</span>
@@ -336,10 +359,16 @@ export function WIPDialog({
                                     <span>移動合計:</span>
                                     <span className="font-medium">{totalTransferQuantity.toLocaleString()}</span>
                                 </div>
+                                {lossQuantity > 0 && (
+                                    <div className="flex justify-between items-center text-red-600">
+                                        <span>ロス:</span>
+                                        <span className="font-medium">-{lossQuantity.toLocaleString()}</span>
+                                    </div>
+                                )}
                                 <hr className="my-1 border-current opacity-30" />
                                 <div className="flex justify-between items-center font-bold">
                                     <span>{remainingQuantity > 0 ? '仕掛中に残る数量:' : '状態:'}</span>
-                                    <span>{remainingQuantity > 0 ? remainingQuantity.toLocaleString() : totalTransferQuantity > (confirmingItem?.quantity || 0) ? '超過しています' : '全量移動'}</span>
+                                    <span>{remainingQuantity > 0 ? remainingQuantity.toLocaleString() : totalConsumedQuantity > (confirmingItem?.quantity || 0) ? '超過しています' : '全量消化'}</span>
                                 </div>
                             </div>
                         </div>
