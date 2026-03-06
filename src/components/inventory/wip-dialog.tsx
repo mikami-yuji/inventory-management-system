@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Product } from "@/types";
 import {
     Dialog,
@@ -52,12 +52,11 @@ export function WIPDialog({
         status: 'completed'
     });
 
-    const refetch = () => {
+    // refetchをuseCallbackで安定化して無限ループを防止
+    const refetch = useCallback(() => {
         refetchInProgress();
-        if (activeTab === 'history') {
-            refetchCompleted();
-        }
-    };
+        refetchCompleted();
+    }, [refetchInProgress, refetchCompleted]);
 
     useEffect(() => {
         if (activeTab === 'history') {
@@ -88,16 +87,17 @@ export function WIPDialog({
     const [incomingQuantity, setIncomingQuantity] = useState(0); // 入荷予定への数量
     const [confirmDate, setConfirmDate] = useState(format(new Date(), 'yyyy-MM-dd')); // 入荷予定日
 
-    // ダイアログが開いたときに再取得
+    // ダイアログが開いたときに再取得（refetchを依存配列から除外して無限ループ防止）
     useEffect(() => {
         if (open && product) {
-            refetch();
+            refetchInProgress();
             setActiveTab("list");
             resetForm();
             setConfirmingId(null);
             setConfirmingItem(null);
         }
-    }, [open, product, refetch]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, product?.id]);
 
     const resetForm = () => {
         setEditingWIPId(null);
