@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Product, SupplierStockLot } from "@/types";
+import { Product, SupplierStockLot, DeliveryAddress } from "@/types";
 import {
     Dialog,
     DialogContent,
@@ -15,6 +15,8 @@ import { CalculableInput } from "@/components/ui/calculable-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format } from "date-fns";
 import { useWIPActions } from "@/hooks/use-work-in-progress";
 import { Package, ArrowRight, Loader2, Plus, Trash2, Save, X, Edit2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -49,11 +51,39 @@ export function SupplierStockDialog({
     const [editLotDate, setEditLotDate] = useState<string>('');
     const [editLotNote, setEditLotNote] = useState<string>('');
 
-    // 入荷予定への移動
-    const [moveQuantity, setMoveQuantity] = useState<number>(0);
-    const [expectedDate, setExpectedDate] = useState<string>(
-        new Date().toISOString().split('T')[0]
-    );
+    // 入荷予定の複数スケジュール管理
+    type ArrivalSchedule = {
+        id: string;
+        expectedDate: string;
+        quantity: number;
+        note: string;
+    };
+    const [arrivalSchedules, setArrivalSchedules] = useState<ArrivalSchedule[]>([
+        { id: Math.random().toString(36).substr(2, 9), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
+    ]);
+
+    // 納品先リスト
+    const [deliveryAddresses, setDeliveryAddresses] = useState<DeliveryAddress[]>([]);
+
+    const fetchDeliveryAddresses = async () => {
+        try {
+            const res = await fetch('/api/delivery-addresses');
+            const result = await res.json();
+            if (Array.isArray(result)) {
+                setDeliveryAddresses(result);
+            } else if (result && result.data && Array.isArray(result.data)) {
+                setDeliveryAddresses(result.data);
+            }
+        } catch (e) {
+            console.error("納品先取得エラー", e);
+        }
+    };
+
+    useEffect(() => {
+        if (open) {
+            fetchDeliveryAddresses();
+        }
+    }, [open]);
 
     const {
         getSupplierStockLots,
@@ -89,8 +119,9 @@ export function SupplierStockDialog({
     // ダイアログが開くたびに初期値をセット
     useEffect(() => {
         if (open && product) {
-            setMoveQuantity(0);
-            setExpectedDate(new Date().toISOString().split('T')[0]);
+            setArrivalSchedules([
+                { id: Math.random().toString(36).substr(2, 9), expectedDate: new Date().toISOString().split('T')[0], quantity: 0, note: '' }
+            ]);
 
             // フォームのリセット
             setNewLotQuantity(0);
@@ -156,14 +187,39 @@ export function SupplierStockDialog({
         }
     };
 
+    const addArrivalRow = () => {
+        setArrivalSchedules([
+            ...arrivalSchedules,
+            { id: Math.random().toString(36).substr(2, 9), expectedDate: new Date().toISOString().split('T')[0], quantity: 0, note: '' }
+        ]);
+    };
+
+    const removeArrivalRow = (id: string) => {
+        if (arrivalSchedules.length <= 1) return;
+        setArrivalSchedules(arrivalSchedules.filter(s => s.id !== id));
+    };
+
+    const updateArrivalRow = (id: string, updates: Partial<ArrivalSchedule>) => {
+        setArrivalSchedules(arrivalSchedules.map(s => s.id === id ? { ...s, ...updates } : s));
+    };
+
     const handleMove = async () => {
-        if (!product || moveQuantity <= 0 || !expectedDate) return;
-        if (moveQuantity > displayStock) {
+        const activeSchedules = arrivalSchedules.filter(s => s.quantity > 0);
+        if (!product || activeSchedules.length === 0) return;
+
+        const totalMoveQuantity = activeSchedules.reduce((sum, s) => sum + s.quantity, 0);
+
+        if (totalMoveQuantity > displayStock) {
             toast.error("メーカー在庫以上の数量は移動できません");
             return;
         }
 
-        const success = await moveSupplierStockToIncoming(product.id, moveQuantity, expectedDate, 'メーカー在庫から出荷指示');
+        const success = await moveSupplierStockToIncoming(product.id, activeSchedules.map(s => ({
+            expectedDate: s.expectedDate,
+            quantity: s.quantity,
+            note: s.note
+        })));
+
         if (success) {
             toast.success("入荷予定へ移動しました");
             onSuccess();
@@ -315,39 +371,89 @@ export function SupplierStockDialog({
                             メーカー在庫の合算値から指定数量を出荷させ、自社の入荷予定に移動します。<br />
                             内部的には、最も古い日付のロットから順に自動で消費されます（FIFO方式）。
                         </p>
-                        <div className="grid grid-cols-4 items-center gap-3">
-                            <Label htmlFor="moveQuantity" className="text-right text-sm">
-                                移動数量
-                            </Label>
-                            <CalculableInput
-                                id="moveQuantity"
-                                value={moveQuantity === 0 ? "" : moveQuantity}
-                                onChange={(value) => setMoveQuantity(Number(value) || 0)}
-                                placeholder="数量を入力"
-                                className="col-span-3 bg-white"
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-3">
-                            <Label htmlFor="expectedDate" className="text-right text-sm">
-                                入荷予定日
-                            </Label>
-                            <div className="col-span-3 flex items-center gap-2">
-                                <Input
-                                    id="expectedDate"
-                                    type="date"
-                                    value={expectedDate}
-                                    onChange={(e) => setExpectedDate(e.target.value)}
-                                    className="bg-white"
-                                />
-                                <Button
-                                    variant="default"
-                                    onClick={handleMove}
-                                    disabled={loading || moveQuantity <= 0 || moveQuantity > displayStock || !expectedDate}
-                                    className="whitespace-nowrap bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
-                                >
-                                    移動実行
-                                </Button>
+                        <div className="flex items-center justify-between mb-4 mt-2">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-orange-900 border-b-2 border-orange-500 pb-0.5">入荷予定</span>
+                                <span className="text-xs text-orange-700">に移動する数量（複数回答可）</span>
                             </div>
+                            <Button variant="outline" size="sm" className="h-7 text-xs bg-white hover:bg-orange-50 text-orange-700 border-orange-200" onClick={addArrivalRow}>
+                                <Plus className="h-3 w-3 mr-1" />
+                                予定追加
+                            </Button>
+                        </div>
+
+                        <div className="space-y-3">
+                            {arrivalSchedules.map((schedule) => (
+                                <div key={schedule.id} className="relative bg-white p-3 rounded-md border border-orange-200 shadow-sm space-y-3">
+                                    {arrivalSchedules.length > 1 && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-red-500 hover:bg-red-50"
+                                            onClick={() => removeArrivalRow(schedule.id)}
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    )}
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1">
+                                            <Label className="text-xs text-orange-800">着日（入荷予定日）</Label>
+                                            <Input
+                                                type="date"
+                                                value={schedule.expectedDate}
+                                                onChange={(e) => updateArrivalRow(schedule.id, { expectedDate: e.target.value })}
+                                                size={1}
+                                                className="h-8 border-orange-100 focus-visible:ring-orange-500 input-placeholder-orange focus:border-orange-500"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs text-orange-800">移動数量</Label>
+                                            <CalculableInput
+                                                value={schedule.quantity === 0 ? "" : schedule.quantity}
+                                                onChange={(value) => updateArrivalRow(schedule.id, { quantity: Number(value) || 0 })}
+                                                placeholder="数量"
+                                                className="h-8 border-orange-100 focus-visible:ring-orange-500 input-placeholder-orange focus:border-orange-500"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-orange-800">出荷先（納品先マスターから選択）</Label>
+                                        <Select
+                                            value={schedule.note}
+                                            onValueChange={(val) => updateArrivalRow(schedule.id, { note: val })}
+                                        >
+                                            <SelectTrigger className="h-8 border-orange-100 bg-white focus:ring-orange-500">
+                                                <SelectValue placeholder="出荷先を選択（任意）" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {deliveryAddresses.map(addr => (
+                                                    <SelectItem key={addr.id} value={addr.name}>
+                                                        {addr.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t border-orange-200">
+                            <div className="text-sm">
+                                <span className="text-orange-900">移動合計: </span>
+                                <span className="font-bold text-orange-700 text-lg">{arrivalSchedules.reduce((sum, s) => sum + s.quantity, 0).toLocaleString()}</span>
+                            </div>
+                            <Button
+                                variant="default"
+                                onClick={handleMove}
+                                disabled={loading || arrivalSchedules.reduce((sum, s) => sum + s.quantity, 0) <= 0 || arrivalSchedules.reduce((sum, s) => sum + s.quantity, 0) > displayStock}
+                                className="whitespace-nowrap bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
+                            >
+                                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                移動実行
+                            </Button>
                         </div>
                     </div>
                 </div>

@@ -68,7 +68,7 @@ export function useWIPActions(): {
     cancelWIP: (id: string) => Promise<boolean>;
     deleteWIP: (id: string) => Promise<boolean>;
     updateSupplierStock: (productId: string, stock: number) => Promise<boolean>;
-    moveSupplierStockToIncoming: (productId: string, quantity: number, expectedDate: string, note?: string) => Promise<boolean>;
+    moveSupplierStockToIncoming: (productId: string, schedules: { expectedDate: string, quantity: number, note?: string }[]) => Promise<boolean>;
 
     updateWIP: (id: string, updateData: Partial<WIPInput>) => Promise<boolean>;
     arrangeShipping: (id: string) => Promise<boolean>;
@@ -222,7 +222,7 @@ export function useWIPActions(): {
         }
     };
 
-    const moveSupplierStockToIncoming = async (productId: string, quantity: number, expectedDate: string, note?: string): Promise<boolean> => {
+    const moveSupplierStockToIncoming = async (productId: string, schedules: { expectedDate: string, quantity: number, note?: string }[]): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/supplier-stock', {
@@ -231,9 +231,7 @@ export function useWIPActions(): {
                 body: JSON.stringify({
                     productId,
                     action: 'move_to_incoming',
-                    movementQuantity: quantity,
-                    expectedDate,
-                    note
+                    schedules
                 })
             });
             const result = await response.json();

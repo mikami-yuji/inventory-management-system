@@ -112,8 +112,16 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
 
         // 入荷予定へ移動 (FIFO方式で古いロットから消費)
         if (action === 'move_to_incoming') {
-            if (!productId || !movementQuantity || movementQuantity <= 0 || !expectedDate) {
-                return NextResponse.json({ data: null, error: '正の移動数量と入荷予定日を指定してください' }, { status: 400 })
+            const { schedules } = body as { schedules?: { expectedDate: string, quantity: number, note?: string }[] };
+
+            if (!productId || !schedules || !Array.isArray(schedules) || schedules.length === 0) {
+                return NextResponse.json({ data: null, error: '移動数量と入荷予定日を指定してください' }, { status: 400 })
+            }
+
+            const totalMovementQuantity = schedules.reduce((sum, s) => sum + (s.quantity || 0), 0);
+
+            if (totalMovementQuantity <= 0) {
+                return NextResponse.json({ data: null, error: '正の移動数量を指定してください' }, { status: 400 })
             }
 
             // 1. 現在のメーカー在庫（ロット）を古い順に取得
@@ -130,12 +138,12 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             }
 
             const totalCurrentStock = ((lots as any[]) || []).reduce((sum, lot) => sum + lot.quantity, 0)
-            if (totalCurrentStock < movementQuantity) {
+            if (totalCurrentStock < totalMovementQuantity) {
                 return NextResponse.json({ data: null, error: 'メーカー在庫が不足しています' }, { status: 400 })
             }
 
             // 2. FIFOでロットを減算
-            let remainingToMove = movementQuantity
+            let remainingToMove = totalMovementQuantity
             for (const lot of ((lots as any[]) || [])) {
                 if (remainingToMove <= 0) break
 
@@ -155,15 +163,17 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 remainingToMove -= deductQuantity
             }
 
-            // 3. 入荷予定を作成する
+            // 3. 入荷予定を複数作成する
+            const incomingRecords = schedules.map(s => ({
+                product_id: productId,
+                expected_date: s.expectedDate,
+                quantity: s.quantity,
+                note: s.note || 'メーカー在庫からの出荷指示'
+            }));
+
             const { error: incomingStockError } = await supabase
                 .from('incoming_stock')
-                .insert({
-                    product_id: productId,
-                    expected_date: expectedDate,
-                    quantity: movementQuantity,
-                    note: note || 'メーカー在庫からの出荷指示'
-                } as any)
+                .insert(incomingRecords as any)
 
             if (incomingStockError) {
                 return NextResponse.json({ data: null, error: '入荷予定の作成に失敗しました' }, { status: 500 })
