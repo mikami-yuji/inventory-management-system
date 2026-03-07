@@ -23,6 +23,9 @@ type OrderFromAPI = {
         productId: string;
         quantity: number;
         productName: string;
+        sku: string;
+        weight: number | null;
+        shape: string;
     }[];
 };
 
@@ -108,15 +111,19 @@ export default function OrdersPage(): React.ReactElement {
                 <table>
                     <thead>
                         <tr>
+                            <th>受注No</th>
                             <th>商品名</th>
+                            <th>量目</th>
                             <th>数量</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${order.items.map(item => `
                             <tr>
+                                <td>${item.sku}</td>
                                 <td>${item.productName}</td>
-                                <td>${item.quantity}</td>
+                                <td>${item.weight ? `${item.weight}kg` : ''} ${item.shape || ''}</td>
+                                <td>${item.quantity} ${item.shape?.includes('巻') || item.shape?.includes('ロール') ? 'm' : '枚'}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -212,16 +219,27 @@ export default function OrdersPage(): React.ReactElement {
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <ul className="list-disc list-inside text-sm">
+                                            <div className="space-y-2">
                                                 {order.items.slice(0, 2).map((item, idx) => (
-                                                    <li key={idx} className="truncate max-w-[200px]">
-                                                        {item.productName.slice(0, 30)}{item.productName.length > 30 ? '...' : ''} × {item.quantity}
-                                                    </li>
+                                                    <div key={idx} className="flex justify-between items-start text-sm border-b pb-1 last:border-0 last:pb-0">
+                                                        <div className="flex-1 min-w-0 pr-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-mono text-xs text-muted-foreground">{item.sku}</span>
+                                                                <span className="font-medium truncate">{item.productName}</span>
+                                                            </div>
+                                                            <div className="text-xs text-muted-foreground mt-0.5">
+                                                                {item.weight ? `${item.weight}kg / ` : ''}{item.shape || '-'}
+                                                            </div>
+                                                        </div>
+                                                        <div className="font-medium whitespace-nowrap pl-2 text-right">
+                                                            × {item.quantity.toLocaleString()} {item.shape?.includes('巻') || item.shape?.includes('ロール') ? 'm' : '枚'}
+                                                        </div>
+                                                    </div>
                                                 ))}
                                                 {order.items.length > 2 && (
-                                                    <li className="text-muted-foreground">他 {order.items.length - 2}件</li>
+                                                    <div className="text-muted-foreground text-xs text-right w-full">他 {order.items.length - 2}件</div>
                                                 )}
-                                            </ul>
+                                            </div>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">

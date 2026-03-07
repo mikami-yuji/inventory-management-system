@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import type { ApiResponse, Order } from '@/types'
+import { sendOrderNotificationEmail } from '@/lib/mail'
 
 // GET: 発注一覧を取得
 export async function GET(): Promise<NextResponse> {
@@ -25,6 +26,9 @@ export async function GET(): Promise<NextResponse> {
                     products (
                         id,
                         name,
+                        sku,
+                        weight,
+                        shape,
                         unit_price,
                         printing_cost
                     )
@@ -50,6 +54,9 @@ export async function GET(): Promise<NextResponse> {
                 productId: item.product_id,
                 quantity: item.quantity,
                 productName: item.products?.name || '不明な商品',
+                sku: item.products?.sku || '-',
+                weight: item.products?.weight || null,
+                shape: item.products?.shape || '-',
                 unitPrice: item.products?.unit_price || 0,
                 printingCost: item.products?.printing_cost || 0,
             })),
@@ -225,6 +232,47 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             .from('orders') as any)
             .update({ status: 'shipped' })
             .eq('id', orderId)
+
+        // -------------------------
+        // メール送信処理
+        // -------------------------
+        try {
+            // プロフィールの取得 (送信者名)
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('name')
+                .eq('id', clientId)
+                .single();
+
+            // メール用の商品情報の取得
+            const productIds = items.map(i => i.productId);
+            const { data: products } = await supabase
+                .from('products')
+                .select('id, name, shape')
+                .in('id', productIds);
+
+            const emailItems = items.map(item => {
+                const product = products?.find(p => p.id === item.productId);
+                return {
+                    productName: product?.name || '不明な商品',
+                    quantity: item.quantity,
+                    unit: product?.shape?.includes('巻') || product?.shape?.includes('ロール') ? 'm' : '枚'
+                };
+            });
+
+            await sendOrderNotificationEmail({
+                orderId: orderId,
+                clientName: profile?.name || 'ユーザー',
+                items: emailItems,
+                shipmentSource: shipmentSource,
+                deliveryName: body.deliveryName,
+                deliveryAddress: body.deliveryAddress,
+                deliveryPhone: body.deliveryPhone
+            });
+        } catch (emailError) {
+            console.error('Failed to send order notification email:', emailError);
+            // メール送信失敗でも発注処理自体は成功として扱う
+        }
 
         return NextResponse.json({
             data: {
