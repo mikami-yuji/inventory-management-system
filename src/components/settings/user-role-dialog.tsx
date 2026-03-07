@@ -20,6 +20,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 
 interface UserRoleDialogProps {
@@ -37,10 +38,12 @@ export function UserRoleDialog({
 }: UserRoleDialogProps) {
     const [loading, setLoading] = useState(false);
     const [role, setRole] = useState<UserRole>("client");
+    const [receivesOrderEmails, setReceivesOrderEmails] = useState(false);
 
     useEffect(() => {
         if (open && user) {
             setRole(user.role);
+            setReceivesOrderEmails(user.receivesOrderEmails ?? false);
         }
     }, [open, user]);
 
@@ -54,7 +57,7 @@ export function UserRoleDialog({
             const res = await fetch("/api/users", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id: user.id, role }),
+                body: JSON.stringify({ id: user.id, role, receivesOrderEmails }),
             });
 
             if (!res.ok) throw new Error("Failed to update role");
@@ -97,6 +100,22 @@ export function UserRoleDialog({
                                 <SelectItem value="blocked">Blocked (ブロック中)</SelectItem>
                             </SelectContent>
                         </Select>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="receives-emails" className="text-right leading-tight">
+                            注文通知<br />メール受信
+                        </Label>
+                        <div className="col-span-3 flex items-center space-x-2">
+                            <Switch
+                                id="receives-emails"
+                                checked={receivesOrderEmails}
+                                onCheckedChange={setReceivesOrderEmails}
+                                disabled={loading}
+                            />
+                            <Label htmlFor="receives-emails" className="text-sm font-normal text-muted-foreground">
+                                管理者宛の発注通知を受信する
+                            </Label>
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button type="submit" disabled={loading}>

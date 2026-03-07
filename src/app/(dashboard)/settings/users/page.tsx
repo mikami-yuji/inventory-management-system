@@ -52,6 +52,7 @@ export default function UsersPage() {
                                     <TableHead>名前</TableHead>
                                     <TableHead>メールアドレス</TableHead>
                                     <TableHead>権限</TableHead>
+                                    <TableHead>通知設定</TableHead>
                                     <TableHead className="text-right">操作</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -76,6 +77,13 @@ export default function UsersPage() {
                                                 <Badge variant="outline">Client</Badge>
                                             )}
                                         </TableCell>
+                                        <TableCell>
+                                            {user.receivesOrderEmails ? (
+                                                <Badge variant="default" className="bg-blue-500 hover:bg-blue-600">受信ON</Badge>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">OFF</span>
+                                            )}
+                                        </TableCell>
                                         <TableCell className="text-right">
                                             <Button
                                                 variant="ghost"
@@ -89,7 +97,7 @@ export default function UsersPage() {
                                 ))}
                                 {users?.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                                             ユーザーが見つかりません
                                         </TableCell>
                                     </TableRow>

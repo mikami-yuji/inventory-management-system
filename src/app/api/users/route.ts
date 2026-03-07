@@ -24,7 +24,15 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ data: profiles });
+    const formattedProfiles = profiles?.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        email: p.email,
+        role: p.role,
+        receivesOrderEmails: p.receives_order_emails,
+    }));
+
+    return NextResponse.json({ data: formattedProfiles });
 }
 
 export async function PUT(request: Request) {
@@ -36,7 +44,7 @@ export async function PUT(request: Request) {
     const supabase = createServerClient();
     const body = await request.json();
 
-    const { id, role } = body;
+    const { id, role, receivesOrderEmails } = body;
 
     if (!id || !role) {
         return NextResponse.json({ error: 'ID and Role are required' }, { status: 400 });
@@ -47,7 +55,10 @@ export async function PUT(request: Request) {
 
     const { data, error } = await (supabase
         .from('users') as any)
-        .update({ role })
+        .update({
+            role,
+            receives_order_emails: receivesOrderEmails
+        })
         .eq('id', id)
         .select()
         .single();

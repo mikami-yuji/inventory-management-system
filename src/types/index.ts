@@ -7,6 +7,7 @@ export type User = {
   name: string;
   role: UserRole;
   email: string;
+  receivesOrderEmails: boolean;
 };
 
 // 商品カテゴリ

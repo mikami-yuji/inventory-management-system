@@ -260,6 +260,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 };
             });
 
+            // 通知先メールアドレスの取得
+            const { data: adminProfiles } = await supabase
+                .from('profiles')
+                .select('email')
+                .eq('receives_order_emails', true);
+
+            const toAddresses = (adminProfiles || [])
+                .map((p: any) => p.email)
+                .filter(Boolean);
+
             await sendOrderNotificationEmail({
                 orderId: orderId,
                 clientName: profile?.name || 'ユーザー',
@@ -267,7 +277,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 shipmentSource: shipmentSource,
                 deliveryName: body.deliveryName,
                 deliveryAddress: body.deliveryAddress,
-                deliveryPhone: body.deliveryPhone
+                deliveryPhone: body.deliveryPhone,
+                toAddresses: toAddresses
             });
         } catch (emailError) {
             console.error('Failed to send order notification email:', emailError);

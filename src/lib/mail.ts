@@ -16,6 +16,7 @@ interface OrderEmailParams {
     deliveryName?: string;
     deliveryAddress?: string;
     deliveryPhone?: string;
+    toAddresses?: string[];
 }
 
 export async function sendOrderNotificationEmail(params: OrderEmailParams) {
@@ -27,10 +28,20 @@ export async function sendOrderNotificationEmail(params: OrderEmailParams) {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     const fromAddress = process.env.MAIL_FROM_ADDRESS || 'onboarding@resend.dev';
-    const toAddress = process.env.MAIL_ADMIN_ADDRESS;
 
-    if (!toAddress) {
-        console.error('MAIL_ADMIN_ADDRESS is not set.');
+    let toAddresses: string[] = [];
+
+    if (params.toAddresses && params.toAddresses.length > 0) {
+        toAddresses = params.toAddresses;
+    } else {
+        const toAddressStr = process.env.MAIL_ADMIN_ADDRESS;
+        if (toAddressStr) {
+            toAddresses = toAddressStr.split(',').map(email => email.trim()).filter(Boolean);
+        }
+    }
+
+    if (toAddresses.length === 0) {
+        console.error('No valid email addresses found in MAIL_ADMIN_ADDRESS.');
         return;
     }
 
@@ -51,7 +62,7 @@ export async function sendOrderNotificationEmail(params: OrderEmailParams) {
 
         const { data, error } = await resend.emails.send({
             from: `在庫管理システム <${fromAddress}>`,
-            to: [toAddress],
+            to: toAddresses,
             subject: `【新規出荷依頼】注文ID: ${params.orderId.substring(0, 8)} - ${params.clientName}様`,
             html: `
                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
