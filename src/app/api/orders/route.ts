@@ -237,9 +237,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         // メール送信処理
         // -------------------------
         try {
-            // プロフィールの取得 (送信者名)
-            const { data: profile } = await supabase
-                .from('profiles')
+            // 送信者情報（ユーザー名）の取得
+            const { data: userProfile } = await supabase
+                .from('users')
                 .select('name')
                 .eq('id', clientId)
                 .single();
@@ -260,19 +260,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 };
             });
 
-            // 通知先メールアドレスの取得
-            const { data: adminProfiles } = await supabase
-                .from('profiles')
+            // 通知先メールアドレス（管理者かつ通知ONのユーザー）の取得
+            const { data: adminUsers } = await supabase
+                .from('users')
                 .select('email')
                 .eq('receives_order_emails', true);
 
-            const toAddresses = (adminProfiles || [])
-                .map((p: any) => p.email)
+            const toAddresses = (adminUsers || [])
+                .map((u: any) => u.email)
                 .filter(Boolean);
 
             await sendOrderNotificationEmail({
                 orderId: orderId,
-                clientName: profile?.name || 'ユーザー',
+                clientName: userProfile?.name || 'ユーザー',
                 items: emailItems,
                 shipmentSource: shipmentSource,
                 deliveryName: body.deliveryName,
