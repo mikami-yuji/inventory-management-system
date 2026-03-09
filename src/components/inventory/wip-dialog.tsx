@@ -187,14 +187,14 @@ export function WIPDialog({
 
         let result;
         if (editingWIPId) {
-            result = await updateWIP(editingWIPId, {
+            const success = await updateWIP(editingWIPId, {
                 quantity,
-                startedAt,
-                expectedCompletion,
-                termType,
+                started_at: startedAt,
+                expected_completion: expectedCompletion,
+                term_type: termType,
                 note: note || undefined,
-            });
-            result = { success: result }; // normalize hook return
+            } as any);
+            result = { success };
         } else {
             result = await createWIP({
                 productId: product.id,
