@@ -41,9 +41,11 @@ export async function sendOrderNotificationEmail(params: OrderEmailParams) {
     }
 
     if (toAddresses.length === 0) {
-        console.error('No valid email addresses found in MAIL_ADMIN_ADDRESS.');
-        return;
+        console.error('Email sending failed: No valid recipient addresses (MAIL_ADMIN_ADDRESS or users with receives_order_emails=true)');
+        return { success: false, error: 'No recipients found' };
     }
+
+    console.log(`Attempting to send order notification email to: ${toAddresses.join(', ')} from: ${fromAddress}`);
 
     try {
         const itemsListHtml = params.items.map(item => `
