@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
+import { sendWIPNotificationEmail } from '@/lib/mail'
 import type { ApiResponse } from '@/types'
 
 // 仕掛中アイテムの型
@@ -172,7 +173,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
 
             const { data: wipItem } = await supabase
                 .from('work_in_progress')
-                .select('product_id')
+                .select('product_id, products(name, unit)')
                 .eq('id', id)
                 .single<any>()
 
@@ -192,6 +193,36 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     console.error('入荷予定登録エラー:', insertError)
                     return NextResponse.json({ data: null, error: insertError.message }, { status: 500 })
                 }
+
+                // メール通知用のデータ収集
+                try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    const userName = user?.user_metadata?.name || user?.email || 'システム利用ユーザー';
+
+                    // 管理者（通知ON）の取得
+                    const { data: admins } = await supabase
+                        .from('users')
+                        .select('email')
+                        .eq('receives_order_emails', true);
+
+                    const toAddresses = (admins || []).map((a: any) => a.email).filter(Boolean);
+
+                    if (toAddresses.length > 0) {
+                        await sendWIPNotificationEmail({
+                            userName,
+                            toAddresses,
+                            items: schedules.map(s => ({
+                                productName: wipItem.products?.name || '不明な商品',
+                                quantity: s.quantity,
+                                unit: wipItem.products?.unit || '個',
+                                destination: `入荷予定 (${s.expectedDate})`,
+                                note: s.note
+                            }))
+                        });
+                    }
+                } catch (emailError) {
+                    console.error('WIP通知メール送信失敗:', emailError);
+                }
             }
         } else if (action === 'to_supplier') {
             // 仕掛品をメーカー在庫へ移動（部分移動対応・WIPレコードは削除しない）
@@ -200,7 +231,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             }
             const { data: wipItem } = await supabase
                 .from('work_in_progress')
-                .select('product_id')
+                .select('product_id, products(name, unit)')
                 .eq('id', id)
                 .single<any>()
 
@@ -215,8 +246,34 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                         note: '仕掛品からの移動'
                     } as any)
 
-                // productsテーブルのsupplier_stockはDBトリガー(trigger_update_supplier_stock_total)で自動更新されるため、
-                // ここでの手動更新は不要（二重加算の原因になるため削除）
+                // メール通知用のデータ収集
+                try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    const userName = user?.user_metadata?.name || user?.email || 'システム利用ユーザー';
+
+                    const { data: admins } = await supabase
+                        .from('users')
+                        .select('email')
+                        .eq('receives_order_emails', true);
+
+                    const toAddresses = (admins || []).map((a: any) => a.email).filter(Boolean);
+
+                    if (toAddresses.length > 0) {
+                        await sendWIPNotificationEmail({
+                            userName,
+                            toAddresses,
+                            items: [{
+                                productName: wipItem.products?.name || '不明な商品',
+                                quantity: quantity,
+                                unit: wipItem.products?.unit || '個',
+                                destination: 'メーカー在庫',
+                                note: '仕掛品からの移動'
+                            }]
+                        });
+                    }
+                } catch (emailError) {
+                    console.error('WIP通知メール送信失敗:', emailError);
+                }
 
                 // WIPレコードは削除しない（フロントエンドで残数管理）
             }

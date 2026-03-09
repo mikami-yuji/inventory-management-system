@@ -19,6 +19,18 @@ interface OrderEmailParams {
     toAddresses?: string[];
 }
 
+interface WIPEmailParams {
+    userName: string;
+    items: {
+        productName: string;
+        quantity: number;
+        unit: string;
+        destination: string; // '入荷予定 (2026-03-10)' or 'メーカー在庫'
+        note?: string;
+    }[];
+    toAddresses?: string[];
+}
+
 export async function sendOrderNotificationEmail(params: OrderEmailParams) {
     if (!process.env.RESEND_API_KEY) {
         console.warn('RESEND_API_KEY is not set. Skipping email notification.');
@@ -123,6 +135,90 @@ export async function sendOrderNotificationEmail(params: OrderEmailParams) {
         return { success: true, data };
     } catch (error) {
         console.error('Unexpected error sending email:', error);
+        return { success: false, error };
+    }
+}
+
+export async function sendWIPNotificationEmail(params: WIPEmailParams) {
+    if (!process.env.RESEND_API_KEY) {
+        console.warn('RESEND_API_KEY is not set. Skipping WIP notification email.');
+        return;
+    }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const fromAddress = process.env.MAIL_FROM_ADDRESS || 'onboarding@resend.dev';
+
+    let toAddresses: string[] = [];
+    if (params.toAddresses && params.toAddresses.length > 0) {
+        toAddresses = params.toAddresses;
+    } else {
+        const toAddressStr = process.env.MAIL_ADMIN_ADDRESS;
+        if (toAddressStr) {
+            toAddresses = toAddressStr.split(',').map(email => email.trim()).filter(Boolean);
+        }
+    }
+
+    if (toAddresses.length === 0) {
+        console.error('Email sending failed: No valid recipient addresses for WIP notification');
+        return { success: false, error: 'No recipients found' };
+    }
+
+    try {
+        const itemsListHtml = params.items.map(item => `
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                    <strong>${item.productName}</strong><br/>
+                    <span style="font-size: 12px; color: #666;">備考: ${item.note || '-'}</span>
+                </td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.destination}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${item.quantity.toLocaleString()} ${item.unit}</td>
+            </tr>
+        `).join('');
+
+        const { data, error } = await resend.emails.send({
+            from: `在庫管理システム <${fromAddress}>`,
+            to: toAddresses,
+            subject: `【仕掛移動報告】${params.userName}様による在庫移動`,
+            html: `
+                <div style="font-family: sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+                    <h2 style="color: #333; border-bottom: 2px solid #52c41a; padding-bottom: 10px;">仕掛品の移動報告</h2>
+                    
+                    <p style="color: #666;">仕掛中アイテムの転送（仕上がり登録）が完了しました。以下の通り在庫が更新されました。</p>
+                    
+                    <div style="margin: 20px 0; padding: 10px; background-color: #f6ffed; border: 1px solid #b7eb8f; border-radius: 4px;">
+                        <strong>実行者:</strong> ${params.userName} 様
+                    </div>
+
+                    <h3 style="margin-top: 30px; color: #444;">移動明細</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #fafafa;">
+                                <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: left;">商品名</th>
+                                <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: center;">移動先</th>
+                                <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: right;">数量</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsListHtml}
+                        </tbody>
+                    </table>
+                    
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #888; font-size: 12px;">
+                        <p>このメールは在庫管理システムから自動送信されています。</p>
+                        <p>最新の在庫状況は管理画面で確認してください。</p>
+                    </div>
+                </div>
+            `
+        });
+
+        if (error) {
+            console.error('Error sending WIP email via Resend:', error);
+            return { success: false, error };
+        }
+
+        return { success: true, data };
+    } catch (error) {
+        console.error('Unexpected error sending WIP email:', error);
         return { success: false, error };
     }
 }
