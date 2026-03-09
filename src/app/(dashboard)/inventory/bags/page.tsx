@@ -669,7 +669,6 @@ export default function BagsInventoryPage(): React.ReactElement {
                     incomingMap={incomingMap}
                     saleEvents={saleEvents || []}
                     onEdit={handleEditProduct}
-                    onDelete={handleDeleteClick}
                     onIncomingStockClick={(product) => {
                         setIncomingStockProduct(product);
                         setIncomingDialogOpen(true);
@@ -690,12 +689,6 @@ export default function BagsInventoryPage(): React.ReactElement {
                     supplierStockLotsMap={supplierStockLotsMap}
                     incomingMap={incomingMap}
                     onDetail={handleOpenDetail}
-                    onEdit={handleEditProduct}
-                    onDelete={handleDeleteClick}
-                    onIncomingStockClick={(product) => {
-                        setIncomingStockProduct(product);
-                        setIncomingDialogOpen(true);
-                    }}
                     onRefetch={refetch}
                 />
             )}
@@ -734,6 +727,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                 onOpenChange={setFormDialogOpen}
                 product={editingProduct}
                 onSuccess={refetch}
+                onDelete={handleDeleteClick}
             />
 
             {/* 入荷予定ダイアログ */}

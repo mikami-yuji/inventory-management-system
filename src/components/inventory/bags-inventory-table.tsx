@@ -11,7 +11,6 @@ import {
     Check,
     Plus,
     Pencil,
-    Trash2,
     Download,
     X,
     LineChart,
@@ -44,13 +43,12 @@ export type BagsInventoryTableProps = {
     incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
     saleEvents: SaleEvent[];
     onEdit: (product: Product) => void;
-    onDelete: (product: Product) => void;
     onIncomingStockClick: (product: Product) => void;
     onAnalyze?: (product: Product) => void;
     onRefetch: () => void;
 };
 
-export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, supplierStockLotsMap, incomingMap, saleEvents, onEdit, onDelete, onIncomingStockClick, onAnalyze, onRefetch }: BagsInventoryTableProps): React.ReactElement {
+export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, supplierStockLotsMap, incomingMap, saleEvents, onEdit, onIncomingStockClick, onAnalyze, onRefetch }: BagsInventoryTableProps): React.ReactElement {
     const [editSupplierStock, setEditSupplierStock] = useState<Product | null>(null);
     const [editWIP, setEditWIP] = useState<Product | null>(null);
     const [viewAllocation, setViewAllocation] = useState<Product | null>(null);
@@ -430,11 +428,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onAnalyze?.(product); }} title="在庫分析">
                                                     <LineChart className="h-3 w-3 text-blue-600" />
                                                 </Button>
-                                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onEdit(product); }} title="編集">
-                                                    <Pencil className="h-3 w-3" />
-                                                </Button>
-                                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onDelete(product); }} title="削除" className="text-red-500 hover:text-red-600">
-                                                    <Trash2 className="h-3 w-3" />
+                                                <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); onEdit(product); }} title="編集">
+                                                    <Pencil className="h-4 w-4 mr-2" />
+                                                    編集
                                                 </Button>
                                             </div>
                                         </TableCell>

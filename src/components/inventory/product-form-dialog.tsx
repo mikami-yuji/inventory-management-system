@@ -25,7 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { useSuppliers } from "@/hooks/use-masters";
 import type { Product, ProductStatus } from "@/types";
@@ -66,6 +66,7 @@ type ProductFormDialogProps = {
     onOpenChange: (open: boolean) => void;
     product?: Product | null; // 編集時は既存の商品データ
     onSuccess: () => void; // 保存成功時のコールバック
+    onDelete?: (product: Product) => void;
 };
 
 const initialFormData: ProductFormData = {
@@ -101,6 +102,7 @@ export function ProductFormDialog({
     onOpenChange,
     product,
     onSuccess,
+    onDelete,
 }: ProductFormDialogProps): React.ReactElement {
     const [formData, setFormData] = useState<ProductFormData>(initialFormData);
     const [loading, setLoading] = useState(false);
@@ -597,19 +599,36 @@ export function ProductFormDialog({
                         />
                     </div>
 
-                    <DialogFooter className="pt-4">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => onOpenChange(false)}
-                            disabled={loading}
-                        >
-                            キャンセル
-                        </Button>
-                        <Button type="submit" disabled={loading}>
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isEdit ? "更新する" : "追加する"}
-                        </Button>
+                    <DialogFooter className="pt-4 flex flex-col sm:flex-row gap-2">
+                        {isEdit && onDelete && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50 sm:mr-auto"
+                                onClick={() => {
+                                    if (product) {
+                                        onDelete(product);
+                                    }
+                                }}
+                            >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                商品を削除
+                            </Button>
+                        )}
+                        <div className="flex gap-2 justify-end">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => onOpenChange(false)}
+                                disabled={loading}
+                            >
+                                キャンセル
+                            </Button>
+                            <Button type="submit" disabled={loading}>
+                                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {isEdit ? "更新する" : "追加する"}
+                            </Button>
+                        </div>
                     </DialogFooter>
                 </form>
             </DialogContent>
