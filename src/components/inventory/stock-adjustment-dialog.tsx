@@ -34,7 +34,7 @@ export function StockAdjustmentDialog({
     saleAllocations,
     onSuccess
 }: StockAdjustmentDialogProps): React.ReactElement {
-    const [quantity, setQuantity] = useState<string>("");
+    const [quantity, setQuantity] = useState<string>(currentStock.toString());
     const [note, setNote] = useState<string>("");
     const { updateStock, loading, error } = useUpdateInventory();
 
@@ -51,7 +51,8 @@ export function StockAdjustmentDialog({
 
     useEffect(() => {
         if (open && product) {
-            setQuantity(currentStock.toString());
+            const currentStockStr = currentStock.toString();
+            setQuantity(prev => (prev !== currentStockStr) ? currentStockStr : prev);
             setNote("");
         }
     }, [open, product, currentStock]);

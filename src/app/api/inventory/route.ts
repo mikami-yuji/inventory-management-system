@@ -137,7 +137,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 product_id: productId,
                 quantity: newQuantity,
                 updated_at: new Date().toISOString()
-            } as any, { onConflict: 'product_id' })
+            }, { onConflict: 'product_id' })
             .select();
 
         if (updateError) {
@@ -157,7 +157,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             type,
             quantity,
             note
-        } as any)
+        })
 
         return NextResponse.json({ data: updatedInventory, error: null })
     } catch (error) {

@@ -93,9 +93,7 @@ export function WIPDialog({
         quantity: number;
         note: string;
     };
-    const [arrivalSchedules, setArrivalSchedules] = useState<ArrivalSchedule[]>([
-        { id: Math.random().toString(36).substr(2, 9), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
-    ]);
+    const [arrivalSchedules, setArrivalSchedules] = useState<ArrivalSchedule[]>([]);
 
     const [lossQuantity, setLossQuantity] = useState(0); // ロス数量
 
@@ -117,17 +115,18 @@ export function WIPDialog({
     };
 
     useEffect(() => {
+        let isMounted = true;
         if (open) {
             fetchDeliveryAddresses();
         }
+        return () => { isMounted = false; };
     }, [open]);
 
     // ダイアログが開いたときに再取得（refetchを依存配列から除外して無限ループ防止）
     useEffect(() => {
         if (open && product) {
             refetchInProgress();
-            setActiveTab("list");
-            resetForm();
+            setArrivalSchedules([]);
             setConfirmingId(null);
             setConfirmingItem(null);
         }
@@ -232,7 +231,7 @@ export function WIPDialog({
         setConfirmingItem(item);
         setSupplierQuantity(0);
         setArrivalSchedules([
-            { id: Math.random().toString(36).substr(2, 9), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
+            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
         ]);
         setLossQuantity(0);
     };
@@ -240,7 +239,7 @@ export function WIPDialog({
     const addArrivalRow = () => {
         setArrivalSchedules([
             ...arrivalSchedules,
-            { id: Math.random().toString(36).substr(2, 9), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
+            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
         ]);
     };
 

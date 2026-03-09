@@ -19,10 +19,6 @@ import {
 } from "lucide-react";
 import {
     getPitch,
-    isRollBag,
-    getDefaultMinStockAlert,
-    bagsToMeters,
-    metersToBags,
     calculateStockStatus,
 } from "@/lib/services";
 import { useCart } from "@/contexts/cart-context";
@@ -103,7 +99,6 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
                                 const incoming = incomingMap.get(product.id);
                                 const wipList = wipMap.get(product.id) || [];
-                                const wipQuantity = wipList.reduce((sum, item) => sum + item.quantity, 0);
 
                                 // ロットがある場合はロットの合計を優先表示（DB同期ズレ対策）
                                 const supplierStockLots = supplierStockLotsMap?.get(product.id) || [];
@@ -225,8 +220,8 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                                 return [];
                                                             })
                                                             .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
-                                                            .map((alloc, i) => (
-                                                                <div key={i} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
+                                                            .map((alloc, index) => (
+                                                                <div key={index} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
                                                                     {alloc.date ? (new Date(alloc.date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })) : '-'}:{" "}
                                                                     {alloc.client}: {alloc.quantity.toLocaleString()}
                                                                 </div>
@@ -276,8 +271,8 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                         {incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}
                                                     </div>
                                                     <div className="flex flex-col gap-0.5 mt-0.5">
-                                                        {incoming.items.map((item, i) => (
-                                                            <div key={i} className="text-[10px] leading-tight opacity-80 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]" title={item.note || ''}>
+                                                        {incoming.items.map((item, index) => (
+                                                            <div key={index} className="text-[10px] leading-tight opacity-80 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]" title={item.note || ''}>
                                                                 {new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {item.quantity.toLocaleString()}
                                                                 {item.note && <span className="ml-1 text-[9px] text-emerald-700">({item.note})</span>}
                                                             </div>

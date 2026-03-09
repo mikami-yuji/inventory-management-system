@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import type { DeliveryAddress, ApiResponse } from '@/types';
+// import type { DeliveryAddress, ApiResponse } from '@/types';
 
 // セッションからユーザーIDを取得するヘルパー
 function getUserId(session: { user?: Record<string, unknown> } | null): string | null {
@@ -11,7 +11,7 @@ function getUserId(session: { user?: Record<string, unknown> } | null): string |
     return (session.user as Record<string, unknown>).id as string | null;
 }
 
-export async function GET(_request: NextRequest): Promise<NextResponse> {
+export async function GET(): Promise<NextResponse> {
     const session = await getServerSession(authOptions);
     const userId = getUserId(session);
     if (!userId) {
@@ -20,9 +20,9 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
 
     try {
         const supabase = createServerClient();
-        const isAdmin = (session?.user as any)?.role === 'admin';
+        const isAdmin = (session?.user as { role?: string })?.role === 'admin';
 
-        let query = (supabase as any).from('delivery_addresses').select('*');
+        let query = supabase.from('delivery_addresses').select('*');
 
         // 管理者以外は自分のデータのみ
         if (!isAdmin) {
@@ -73,15 +73,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         // デフォルト設定の場合、既存のデフォルトを解除
         const supabase = createServerClient();
         if (isDefault) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (supabase as any)
+            await supabase
                 .from('delivery_addresses')
                 .update({ is_default: false })
                 .eq('client_id', userId);
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase as any)
+        const { data, error } = await supabase
             .from('delivery_addresses')
             .insert({
                 client_id: userId,
@@ -120,8 +118,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
 
     try {
         const supabase = createServerClient();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any)
+        const { error } = await supabase
             .from('delivery_addresses')
             .delete()
             .eq('id', id)
@@ -154,15 +151,13 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
 
         // デフォルト設定の場合、既存のデフォルトを解除
         if (isDefault) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (supabase as any)
+            await supabase
                 .from('delivery_addresses')
                 .update({ is_default: false })
                 .eq('client_id', userId);
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase as any)
+        const { data, error } = await supabase
             .from('delivery_addresses')
             .update({
                 name,

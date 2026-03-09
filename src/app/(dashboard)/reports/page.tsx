@@ -15,7 +15,6 @@ import {
     ShoppingCart,
     Calendar,
     DollarSign,
-    Loader2,
     FileText,
     RefreshCw,
 } from "lucide-react";
@@ -50,8 +49,8 @@ ChartJS.register(
 
 export default function ReportsPage(): React.ReactElement {
     // APIから商品・在庫データを取得
-    const { products, loading: productsLoading } = useProducts();
-    const { inventory, loading: inventoryLoading } = useInventory();
+    const { products } = useProducts();
+    const { inventory } = useInventory();
 
     // 発注データをAPIから取得
     const [orders, setOrders] = useState<Array<{
@@ -63,7 +62,7 @@ export default function ReportsPage(): React.ReactElement {
             quantity: number;
         }>;
     }>>([]);
-    const [ordersLoading, setOrdersLoading] = useState(true);
+    const [, setOrdersLoading] = useState(true);
 
     const fetchOrders = useCallback(async (): Promise<void> => {
         try {
@@ -82,8 +81,6 @@ export default function ReportsPage(): React.ReactElement {
     useEffect(() => {
         fetchOrders();
     }, [fetchOrders]);
-
-    const loading = productsLoading || inventoryLoading || ordersLoading;
 
     // 月別の発注サマリー（実データ集計）
     const monthlyData = useMemo(() => {

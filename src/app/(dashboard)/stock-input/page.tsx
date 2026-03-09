@@ -9,12 +9,9 @@ import {
     Search,
     Check,
     X,
-    Package,
     ArrowLeft,
     Save,
     Undo2,
-    ChevronUp,
-    ChevronDown,
     BarChart3,
     Loader2,
     Trash2
@@ -45,7 +42,7 @@ export default function StockInputPage(): React.ReactElement {
     // Supabase Hooks
     const { products: allProducts, loading: productsLoading, refetch: refetchProducts } = useProducts();
     const { inventory, loading: inventoryLoading, refetch: refetchInventory } = useInventory();
-    const { updateStock, loading: updateLoading } = useUpdateInventory();
+    const { updateStock } = useUpdateInventory();
 
     const isLoading = productsLoading || inventoryLoading;
 
@@ -63,7 +60,7 @@ export default function StockInputPage(): React.ReactElement {
     // 検索でフィルタ
     const filteredProducts = useMemo(() => {
         // 袋カテゴリのみを表示（シール、その他を除外）
-        let targetProducts = allProducts.filter(p => p.category === 'bag' || p.category === 'new_rice');
+        const targetProducts = allProducts.filter(p => p.category === 'bag' || p.category === 'new_rice');
 
         // ソート順定義: アメリカ産 -> 既製品 -> その他 (NB)
         const getPriority = (p: Product) => {

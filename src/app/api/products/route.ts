@@ -5,8 +5,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import type { Product, ApiResponse } from '@/types';
-
 // GET: 商品一覧を取得
 export async function GET(): Promise<NextResponse> {
     try {
@@ -15,7 +13,7 @@ export async function GET(): Promise<NextResponse> {
             .from('products')
             .select('*')
             .neq('status', 'inactive') // inactive以外をすべて取得
-            .order('name') as { data: any[] | null; error: any };
+            .order('name');
 
         if (error || !data) {
             console.error('Error fetching products:', error);
@@ -23,7 +21,7 @@ export async function GET(): Promise<NextResponse> {
         }
 
         // TypeScript型に変換
-        const products = data.map(item => ({
+        const products = data.map((item: Record<string, unknown>) => ({
             id: item.id,
             name: item.name,
             sku: item.sku, // 受注№ (Col A)
@@ -130,7 +128,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             .from('products')
             .insert(productData)
             .select()
-            .single() as { data: any | null; error: any };
+            .single();
 
         if (error) {
             console.error('Error creating product:', error);
@@ -138,16 +136,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
 
         // 在庫レコードも作成
-        await supabaseClient.from('inventory').insert({
-            product_id: data.id,
-            quantity: 0,
-        });
+        if (data && data.id) {
+            await supabaseClient.from('inventory').insert({
+                product_id: data.id,
+                quantity: 0,
+            });
+        }
 
         return NextResponse.json({
-            id: data.id,
-            name: data.name,
-            sku: data.sku,
-            category: data.category,
+            id: data?.id,
+            name: data?.name,
+            sku: data?.sku,
+            category: data?.category,
         }, { status: 201 });
     } catch (err) {
         console.error('Unexpected error:', err);

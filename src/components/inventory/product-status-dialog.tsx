@@ -117,7 +117,7 @@ export function ProductStatusDialog({
                             </Label>
                             <Select
                                 value={statusOverride}
-                                onValueChange={(val) => setStatusOverride(val as any)}
+                                onValueChange={(val) => setStatusOverride(val as 'normal' | 'low_stock' | 'out_of_stock')}
                             >
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="選択してください" />
@@ -136,7 +136,7 @@ export function ProductStatusDialog({
                             </Label>
                             <Select
                                 value={status}
-                                onValueChange={(val) => setStatus(val as any)}
+                                onValueChange={(val) => setStatus(val as Product['status'])}
                             >
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="選択してください" />

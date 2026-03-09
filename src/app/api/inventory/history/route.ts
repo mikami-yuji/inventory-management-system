@@ -40,14 +40,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         }
 
         // Map DB types (snake_case) to Frontend types (camelCase)
-        const history: StockHistory[] = (data || []).map((item: any) => ({
-            id: item.id,
-            productId: item.product_id,
-            date: item.created_at,
-            type: item.type,
-            quantity: item.quantity,
-            changeAmount: item.type === 'adjustment' ? undefined : item.quantity, // For consistency, though quantity is used differently
-            note: item.note
+        const history: StockHistory[] = (data || []).map((item: Record<string, unknown>) => ({
+            id: item.id as string,
+            productId: item.product_id as string,
+            date: item.created_at as string,
+            type: item.type as StockHistory['type'],
+            quantity: item.quantity as number,
+            changeAmount: item.type === 'adjustment' ? undefined : (item.quantity as number), // For consistency, though quantity is used differently
+            note: item.note as string | undefined
         }))
 
         return NextResponse.json({ data: history, error: null })

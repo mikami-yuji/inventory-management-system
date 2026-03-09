@@ -1,0 +1,155 @@
+﻿
+> inventory-system@0.5.0 lint
+> eslint
+
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\sale-events\route.ts
+  285:27  warning  'event' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  335:27  warning  'event' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\supplier-stock\route.ts
+    6:83   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   14:13   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+   27:32   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   27:56   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   62:13   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+   68:18   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   87:51   warning  'movementQuantity' is assigned a value but never used                                                                @typescript-eslint/no-unused-vars
+   87:69   warning  'expectedDate' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+   87:128  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   97:17   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  103:22   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  130:17   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  140:49   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  147:41   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  155:21   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  156:99   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  176:44   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  196:22   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  214:46   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  218:62   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  247:13   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\suppliers\route.ts
+  10:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  61:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  92:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\users\route.ts
+   6:27  warning  'request' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+  18:5   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  20:27  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+  57:5   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  59:27  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\work-in-progress\route.ts
+   73:80  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  121:9   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  123:42  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  131:52  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  157:87  warning  'expectedDate' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+  179:40  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  238:40  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  290:13  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  292:46  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  322:21  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  331:13  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  333:46  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  334:17  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  339:13  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  341:46  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  342:17  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  351:13  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  353:46  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  354:17  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  380:9   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  382:42  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\events\sale-event-calendar.tsx
+  57:74  error  Parsing error: Unterminated string literal
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\bags-inventory-cards.tsx
+  230:85  error  Parsing error: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\bags-inventory-table.tsx
+  84:152  error  Parsing error: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\barcode-scanner.tsx
+  14:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\incoming-stock-dialog.tsx
+  115:130  error  Parsing error: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\order-sheet-dialog.tsx
+  130:78  error  Parsing error: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\product-analysis-dialog.tsx
+  168:36  error  Parsing error: Unterminated string literal
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\product-detail-dialog.tsx
+  58:36  error  Parsing error: Unterminated string literal
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\product-status-dialog.tsx
+  147:84  error  Parsing error: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\stock-adjustment-dialog.tsx
+  45:44  error  Parsing error: Unterminated regular expression literal
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\supplier-stock-dialog.tsx
+  100:113  error  Parsing error: Unterminated string literal
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\wip-dialog.tsx
+   21:16  warning  'Check' is defined but never used         @typescript-eslint/no-unused-vars
+  196:18  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  387:70  warning  'index' is defined but never used         @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\ui\calculable-input.tsx
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@next/next/no-img-element')
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\ui\image-upload.tsx
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\hooks\use-favorites.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@next/next/no-img-element')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\hooks\use-inventory.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@next/next/no-img-element')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\hooks\use-masters.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@next/next/no-img-element')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\hooks\use-supplier-stock-lots.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@next/next/no-img-element')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\hooks\use-voice-input.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@next/next/no-img-element')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\lib\services\inventory-service.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@next/next/no-img-element')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+
+笨・97 problems (51 errors, 46 warnings)
+  0 errors and 38 warnings potentially fixable with the `--fix` option.
+

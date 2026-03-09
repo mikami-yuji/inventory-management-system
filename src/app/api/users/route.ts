@@ -3,7 +3,7 @@ import { createServerClient } from '@/lib/supabase';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
-export async function GET(request: Request) {
+export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -15,8 +15,8 @@ export async function GET(request: Request) {
     // For now, let's just return all profiles if admin.
     // In a real app, we should check the role first.
 
-    const { data: profiles, error } = await (supabase
-        .from('users') as any)
+    const { data: profiles, error } = await supabase
+        .from('users')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const formattedProfiles = profiles?.map((p: any) => ({
+    const formattedProfiles = (profiles as Record<string, unknown>[] || []).map((p: Record<string, unknown>) => ({
         id: p.id,
         name: p.name,
         email: p.email,
@@ -53,8 +53,8 @@ export async function PUT(request: Request) {
     // Security check: Only admins should be able to change roles.
     // For now, we assume the request is valid to unblock development.
 
-    const { data, error } = await (supabase
-        .from('users') as any)
+    const { data, error } = await supabase
+        .from('users')
         .update({
             role,
             receives_order_emails: receivesOrderEmails

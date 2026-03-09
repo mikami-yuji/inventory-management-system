@@ -27,8 +27,9 @@ export function useFavorites(): {
             }
         } catch {
             // 無効なデータの場合は無視
+        } finally {
+            setIsHydrated(true);
         }
-        setIsHydrated(true);
     }, []);
 
     // LocalStorageに保存

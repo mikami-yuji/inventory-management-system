@@ -1,0 +1,352 @@
+﻿
+> inventory-system@0.5.0 lint
+> eslint
+
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\(dashboard)\dashboard\page.tsx
+  148:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  158:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  346:68  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\(dashboard)\events\[id]\edit\page.tsx
+    5:52  warning  'CardDescription' is defined but never used         @typescript-eslint/no-unused-vars
+  239:11  warning  'totalQuantity' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\(dashboard)\events\[id]\page.tsx
+  16:5  warning  'PackageCheck' is defined but never used  @typescript-eslint/no-unused-vars
+  28:5  warning  'bagsToMeters' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\(dashboard)\events\new\page.tsx
+  11:10  warning  'Checkbox' is defined but never used      @typescript-eslint/no-unused-vars
+  23:5   warning  'PackageCheck' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\(dashboard)\notifications\page.tsx
+  8:27  warning  'useEffect' is defined but never used    @typescript-eslint/no-unused-vars
+  8:38  warning  'useCallback' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\(dashboard)\orders\new\page.tsx
+  21:35  warning  'getApproxBagCount' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\(dashboard)\reports\page.tsx
+  18:5   warning  'Loader2' is defined but never used           @typescript-eslint/no-unused-vars
+  86:11  warning  'loading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\(dashboard)\scan\page.tsx
+    3:44  warning  'useRef' is defined but never used                            @typescript-eslint/no-unused-vars
+   11:10  warning  'Badge' is defined but never used                             @typescript-eslint/no-unused-vars
+   23:24  warning  'IncomingStock' is defined but never used                     @typescript-eslint/no-unused-vars
+   23:55  warning  'SupplierStockLot' is defined but never used                  @typescript-eslint/no-unused-vars
+   43:13  warning  'incomingStocks' is assigned a value but never used           @typescript-eslint/no-unused-vars
+   54:34  warning  'setIncomingStockProduct' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  284:22  warning  'e' is defined but never used                                 @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\(dashboard)\stock-input\page.tsx
+  12:5   warning  'Package' is defined but never used                 @typescript-eslint/no-unused-vars
+  16:5   warning  'ChevronUp' is defined but never used               @typescript-eslint/no-unused-vars
+  17:5   warning  'ChevronDown' is defined but never used             @typescript-eslint/no-unused-vars
+  48:35  warning  'updateLoading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\auth\register\route.ts
+  72:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\delivery-addresses\route.ts
+   6:15  warning  'DeliveryAddress' is defined but never used  @typescript-eslint/no-unused-vars
+   6:32  warning  'ApiResponse' is defined but never used      @typescript-eslint/no-unused-vars
+  14:27  warning  'request' is defined but never used          @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\incoming-stock\route.ts
+  8:15  warning  'IncomingStock' is defined but never used  @typescript-eslint/no-unused-vars
+  8:30  warning  'ApiResponse' is defined but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\inventory\export\route.ts
+  22:27  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\orders\route.ts
+  149:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  191:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  270:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\products\export\route.ts
+  22:27  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\products\route.ts
+  8:15  warning  'Product' is defined but never used      @typescript-eslint/no-unused-vars
+  8:24  warning  'ApiResponse' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\sale-events\route.ts
+    3:39  warning  'SaleEventItem' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   45:27  warning  'items' is assigned a value but never used                                                                           @typescript-eslint/no-unused-vars
+   50:25  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+   75:21  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  158:54  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  275:50  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  283:42  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  286:27  warning  'event' is assigned a value but never used                                                                           @typescript-eslint/no-unused-vars
+  336:27  warning  'event' is assigned a value but never used                                                                           @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\settings\route.ts
+   5:27  warning  'request' is defined but never used       @typescript-eslint/no-unused-vars
+   9:34  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  17:55  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  17:66  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:34  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\supplier-stock\route.ts
+    6:83   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   14:13   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+   27:32   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   27:56   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   62:13   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+   68:18   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   87:51   warning  'movementQuantity' is assigned a value but never used                                                                @typescript-eslint/no-unused-vars
+   87:69   warning  'expectedDate' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+   87:128  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   97:17   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  103:22   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  130:17   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  140:49   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  147:41   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  155:21   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  156:99   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  176:44   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  196:22   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  214:46   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  218:62   error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  247:13   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\suppliers\route.ts
+  10:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  61:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  92:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\users\route.ts
+   6:27  warning  'request' is defined but never used       @typescript-eslint/no-unused-vars
+  19:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  27:49  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  57:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\work-in-progress\route.ts
+   73:65  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  122:42  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  130:37  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  156:87  warning  'expectedDate' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+  178:25  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  190:43  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  208:64  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  236:25  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  247:26  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  259:64  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  288:46  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  311:22  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  317:21  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  327:46  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  328:17  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  334:46  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  335:17  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  345:46  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  346:17  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  373:42  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\events\sale-event-calendar.tsx
+   6:37  warning  'Store' is defined but never used  @typescript-eslint/no-unused-vars
+  82:45  warning  'i' is defined but never used      @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\bags-inventory-cards.tsx
+    5:29  warning  'CardHeader' is defined but never used                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+    5:41  warning  'CardFooter' is defined but never used                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+    8:10  warning  'Pencil' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+    8:35  warning  'Trash2' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+    8:43  warning  'Camera' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   10:10  warning  'getPitch' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   10:31  warning  'bagsToMeters' is defined but never used                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   10:45  warning  'metersToBags' is defined but never used                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   98:5   warning  'onEdit' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   99:5   warning  'onDelete' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  118:11  warning  'weight' is assigned a value but never used                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  213:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  309:61  warning  'i' is defined but never used                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\bags-inventory-table.tsx
+   22:5   warning  'isRollBag' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   23:5   warning  'getDefaultMinStockAlert' is defined but never used                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   24:5   warning  'bagsToMeters' is defined but never used                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   25:5   warning  'metersToBags' is defined but never used                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  106:39  warning  'wipQuantity' is assigned a value but never used                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  138:53  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  345:77  warning  'i' is defined but never used                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  510:29  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\barcode-scanner.tsx
+  14:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\incoming-stock-dialog.tsx
+  20:24  warning  'IncomingStock' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\order-sheet-dialog.tsx
+   7:10  warning  'Input' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   9:10  warning  'Label' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  12:27  warning  'Loader2' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  12:36  warning  'RefreshCw' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+  14:10  warning  'useProducts' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  15:10  warning  'useInventory' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  68:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\order-sheet-dialog.tsx:68:13
+  66 |                 }
+  67 |             });
+> 68 |             setSelectedProducts(initialSelection);
+     |             ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  69 |             setOrderQuantities(initialQuantities);
+  70 |             setIsInitialized(true);
+  71 |         } else if (!open) {  react-hooks/set-state-in-effect
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\product-analysis-dialog.tsx
+   12:10  warning  'Button' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+   17:5   warning  'CardDescription' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+   22:5   warning  'LineChart' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   23:5   warning  'BarChart3' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   28:5   warning  'AlertTriangle' is defined but never used                                                                      @typescript-eslint/no-unused-vars
+   29:5   warning  'Info' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+   33:21  warning  'getApproxBagCount' is defined but never used                                                                  @typescript-eslint/no-unused-vars
+   83:15  warning  'sorted' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+  130:8   warning  React Hook useMemo has a missing dependency: 'currentStock'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\product-detail-dialog.tsx
+    7:10  warning  'Input' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   14:21  warning  'getPitch' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+   14:31  warning  'bagsToMeters' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+   72:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\product-detail-dialog.tsx:72:13
+  70 |     useEffect(() => {
+  71 |         if (open && product && !isInitialized) {
+> 72 |             setQuantity(currentStock.toString());
+     |             ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  73 |             setIsInitialized(true);
+  74 |         } else if (!open) {
+  75 |             setIsInitialized(false);  react-hooks/set-state-in-effect
+  115:41  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @next/next/no-img-element
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\product-status-dialog.tsx
+  120:82  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:74  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\stock-adjustment-dialog.tsx
+   7:10  warning  'Input' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  12:62  warning  'ArrowRight' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+  14:40  warning  'SaleEvent' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  41:69  warning  'transcript' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  55:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\stock-adjustment-dialog.tsx:55:13
+  53 |     useEffect(() => {
+  54 |         if (open && product && !isInitialized) {
+> 55 |             setQuantity(currentStock.toString());
+     |             ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  56 |             setNote("");
+  57 |             setIsInitialized(true);
+  58 |         } else if (!open) {  react-hooks/set-state-in-effect
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\supplier-stock-dialog.tsx
+    9:5   warning  'DialogFooter' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   62:15  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\supplier-stock-dialog.tsx:62:15
+  60 |     };
+  61 |     const [arrivalSchedules, setArrivalSchedules] = useState<ArrivalSchedule[]>([
+> 62 |         { id: Math.random().toString(36).substr(2, 9), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
+     |               ^^^^^^^^^^^^^ Cannot call impure function
+  63 |     ]);
+  64 |
+  65 |     // 邏榊刀蜈医Μ繧ｹ繝・ react-hooks/purity
+  135:8   warning  React Hook useEffect has a missing dependency: 'fetchLots'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   react-hooks/exhaustive-deps
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\inventory\wip-dialog.tsx
+   21:16  warning  'Check' is defined but never used         @typescript-eslint/no-unused-vars
+  196:18  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  387:70  warning  'index' is defined but never used         @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\ui\calculable-input.tsx
+  46:22  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\components\ui\image-upload.tsx
+   12:30  warning  'ImageIcon' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  163:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\hooks\use-favorites.ts
+  26:17  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\hooks\use-favorites.ts:26:17
+  24 |             if (stored) {
+  25 |                 const parsed = JSON.parse(stored) as string[];
+> 26 |                 setFavorites(new Set(parsed));
+     |                 ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  27 |             }
+  28 |         } catch {
+  29 |             // 辟｡蜉ｹ縺ｪ繝・・繧ｿ縺ｮ蝣ｴ蜷医・辟｡隕・ react-hooks/set-state-in-effect
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\hooks\use-inventory.ts
+  65:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  66:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\hooks\use-masters.ts
+  43:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\hooks\use-supplier-stock-lots.ts
+  22:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\hooks\use-voice-input.ts
+   35:55  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   36:53  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   37:73  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   38:77  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  102:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\hooks\use-voice-input.ts:102:13
+  100 |             recognitionRef.current = recognition;
+  101 |         } else {
+> 102 |             setError("Browser does not support speech recognition.");
+      |             ^^^^^^^^ Avoid calling setState() directly within an effect
+  103 |         }
+  104 |
+  105 |         return () => {  react-hooks/set-state-in-effect
+
+C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\lib\services\inventory-service.ts
+  29:75  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  65:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+笨・175 problems (81 errors, 94 warnings)
+

@@ -42,7 +42,7 @@ export async function GET(): Promise<NextResponse> {
         }
 
         // TypeScript型に変換
-        const orders = (ordersData || []).map((order: any) => ({
+        const orders = (ordersData || []).map((order: Record<string, unknown>) => ({
             id: order.id,
             clientId: order.client_id,
             status: order.status,
@@ -50,15 +50,15 @@ export async function GET(): Promise<NextResponse> {
             eventId: order.event_id,
             shipmentSource: order.shipment_source,
             createdAt: order.created_at,
-            items: (order.order_items || []).map((item: any) => ({
+            items: ((order.order_items as Record<string, unknown>[]) || []).map((item: Record<string, unknown>) => ({
                 productId: item.product_id,
                 quantity: item.quantity,
-                productName: item.products?.name || '不明な商品',
-                sku: item.products?.sku || '-',
-                weight: item.products?.weight || null,
-                shape: item.products?.shape || '-',
-                unitPrice: item.products?.unit_price || 0,
-                printingCost: item.products?.printing_cost || 0,
+                productName: (item.products as Record<string, unknown>)?.name || '不明な商品',
+                sku: (item.products as Record<string, unknown>)?.sku || '-',
+                weight: (item.products as Record<string, unknown>)?.weight || null,
+                shape: (item.products as Record<string, unknown>)?.shape || '-',
+                unitPrice: (item.products as Record<string, unknown>)?.unit_price || 0,
+                printingCost: (item.products as Record<string, unknown>)?.printing_cost || 0,
             })),
         }))
 
@@ -102,9 +102,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 delivery_address: body.deliveryAddress,
                 delivery_phone: body.deliveryPhone,
                 preferred_shape: preferredShape
-            } as any)
+            })
             .select()
-            .single<any>()
+            .single();
 
         if (orderError) {
             console.error('発注作成エラー:', orderError)
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
         const { error: itemsError } = await supabase
             .from('order_items')
-            .insert(orderItems as any)
+            .insert(orderItems);
 
         if (itemsError) {
             console.error('発注明細作成エラー:', itemsError)
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         for (const item of items) {
             if (shipmentSource === 'supplier') {
                 // メーカー在庫から減らす
-                const { data: product }: any = await supabase
+                const { data: product } = await supabase
                     .from('products')
                     .select('supplier_stock')
                     .eq('id', item.productId)
@@ -154,8 +154,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
                 if (product && typeof product.supplier_stock === 'number') {
                     const newStock = Math.max(0, product.supplier_stock - item.quantity)
-                    await (supabase
-                        .from('products') as any)
+                    await supabase
+                        .from('products')
                         .update({
                             supplier_stock: newStock,
                             supplier_stock_updated_at: new Date().toISOString()
@@ -180,7 +180,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                         // 混乱を招くので、メーカー直送の場合は note に記載する程度にするか、あるいは専用のログか。
                         // 今回は note に記載する。
                         note: `メーカー直送 (残: ${newStock})`
-                    } as any)
+                    })
                 }
             } else if (shipmentSource === 'inventory') {
                 // 自社在庫から減らす (従来のInventory)
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                     .from('inventory')
                     .select('quantity')
                     .eq('product_id', item.productId)
-                    .single<any>()
+                    .single<{ quantity: number }>()
 
                 const currentQty = inv?.quantity || 0
                 const newQty = currentQty - item.quantity
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                         product_id: item.productId,
                         quantity: newQty,
                         updated_at: new Date().toISOString()
-                    } as any, { onConflict: 'product_id' })
+                    }, { onConflict: 'product_id' })
 
                 // 履歴記録
                 await supabase.from('stock_history').insert({
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                     quantity: newQty,
                     change_amount: -item.quantity,
                     note: '出荷依頼'
-                } as any)
+                })
             } else if (shipmentSource === 'wip') {
                 // 仕掛分からの出荷
                 // WIPの在庫自体は 'completed' タイミングで inventory に入るが、
@@ -220,7 +220,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                     quantity: 0, // WIPなので現在庫には影響させない
                     change_amount: -item.quantity,
                     note: '仕掛仕上がり分からの出荷依頼'
-                } as any)
+                })
             }
         }
 
@@ -228,8 +228,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         // とりあえず requested のままだが、在庫は減らした。整合性をとるため shipped にする？
         // User request is "Shipment from..." implies the action IS shipment.
         // Let's set status to 'shipped' to reflect that stock has moved.
-        await (supabase
-            .from('orders') as any)
+        await supabase
+            .from('orders')
             .update({ status: 'shipped' })
             .eq('id', orderId)
 
@@ -267,7 +267,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 .eq('receives_order_emails', true);
 
             const toAddresses = (adminUsers || [])
-                .map((u: any) => u.email)
+                .map((u: { email: string }) => u.email)
                 .filter(Boolean);
 
             await sendOrderNotificationEmail({

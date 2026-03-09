@@ -18,7 +18,7 @@ import { useDeliveryAddresses } from "@/hooks/use-delivery-addresses";
 import { useWorkInProgress } from "@/hooks/use-work-in-progress";
 import { useSupplierStockLots } from "@/hooks/use-supplier-stock-lots";
 import { DeliveryAddressDialog } from "@/components/orders/delivery-address-dialog";
-import { isRollBag, metersToBags, getApproxBagCount } from "@/lib/services/inventory-service";
+import { isRollBag, metersToBags } from "@/lib/services/inventory-service";
 import type { WorkInProgress } from "@/types";
 
 

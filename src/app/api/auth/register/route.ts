@@ -69,7 +69,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<RegisterR
                 email,
                 name,
                 role: 'admin', // 初回登録は管理者として設定
-            } as any)
+            })
 
         if (dbError) {
             console.error('usersテーブル登録エラー:', dbError)

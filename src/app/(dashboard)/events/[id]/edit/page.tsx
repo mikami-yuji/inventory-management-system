@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,36 +77,42 @@ function EditEventContent(): React.ReactElement {
         return map;
     }, [inventoryData]);
 
-    // 初期データ読み込み
+    // 初期データ読み込み (初回のみ)
+    const [isInitialized, setIsInitialized] = useState(false);
+
     useEffect(() => {
-        if (event && products.length > 0) {
-            setClientName(event.clientName);
-            setScheduleType(event.scheduleType);
-            setDescription(event.description || "");
+        if (event && products.length > 0 && !isInitialized) {
+            // setTimeoutによる非同期処理化でカスケードレンダリングを防ぐ
+            setTimeout(() => {
+                setClientName(event.clientName);
+                setScheduleType(event.scheduleType);
+                setDescription(event.description || "");
 
-            // 日付のパース
-            const dates = event.dates.map(d => parseISO(d));
-            if (event.scheduleType === "single") {
-                setSingleDate(dates[0]);
-            } else {
-                setMonthlyDates(dates);
-            }
+                // 日付のパース
+                const dates = event.dates.map(d => parseISO(d));
+                if (event.scheduleType === "single") {
+                    setSingleDate(dates[0]);
+                } else {
+                    setMonthlyDates(dates);
+                }
 
-            // 商品の復元
-            const items: SaleItem[] = event.items.map(item => {
-                const product = products.find(p => p.id === item.productId);
-                if (!product) return null;
-                return {
-                    id: Math.random().toString(36).substr(2, 9),
-                    product,
-                    quantity: item.plannedQuantity,
-                    currentStock: inventoryMap.get(item.productId) || 0
-                };
-            }).filter((item): item is SaleItem => item !== null);
+                // 商品の復元
+                const items: SaleItem[] = event.items.map(item => {
+                    const product = products.find(p => p.id === item.productId);
+                    if (!product) return null;
+                    return {
+                        id: Math.random().toString(36).substr(2, 9),
+                        product,
+                        quantity: item.plannedQuantity,
+                        currentStock: inventoryMap.get(item.productId) || 0
+                    };
+                }).filter((item): item is SaleItem => item !== null);
 
-            setSaleItems(items);
+                setSaleItems(items);
+                setIsInitialized(true);
+            }, 0);
         }
-    }, [event, products, inventoryMap]);
+    }, [event, products, inventoryMap, isInitialized]);
 
     // 商品検索結果
     const filteredProducts = useMemo(() => {
@@ -230,8 +236,9 @@ function EditEventContent(): React.ReactElement {
     }
 
     // 統計計算
-    const totalQuantity = saleItems.reduce((sum, item) => sum + item.quantity, 0);
     const hasStockWarning = saleItems.some(item => item.quantity > item.currentStock);
+
+    // 特売イベント編集画面の描画
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">

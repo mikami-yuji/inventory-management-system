@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
+// import { format } from "date-fns"; // Unused
 import { useWIPActions } from "@/hooks/use-work-in-progress";
 import { Package, ArrowRight, Loader2, Plus, Trash2, Save, X, Edit2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -58,9 +58,7 @@ export function SupplierStockDialog({
         quantity: number;
         note: string;
     };
-    const [arrivalSchedules, setArrivalSchedules] = useState<ArrivalSchedule[]>([
-        { id: Math.random().toString(36).substr(2, 9), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
-    ]);
+    const [arrivalSchedules, setArrivalSchedules] = useState<ArrivalSchedule[]>([]);
 
     // 納品先リスト
     const [deliveryAddresses, setDeliveryAddresses] = useState<DeliveryAddress[]>([]);
@@ -80,9 +78,13 @@ export function SupplierStockDialog({
     };
 
     useEffect(() => {
+        let isMounted = true;
         if (open) {
-            fetchDeliveryAddresses();
+            fetchDeliveryAddresses().then(() => {
+                // If we need to do something after fetch
+            });
         }
+        return () => { isMounted = false; };
     }, [open]);
 
     const {
@@ -120,7 +122,7 @@ export function SupplierStockDialog({
     useEffect(() => {
         if (open && product) {
             setArrivalSchedules([
-                { id: Math.random().toString(36).substr(2, 9), expectedDate: new Date().toISOString().split('T')[0], quantity: 0, note: '' }
+                { id: crypto.randomUUID(), expectedDate: new Date().toISOString().split('T')[0], quantity: 0, note: '' }
             ]);
 
             // フォームのリセット
@@ -190,7 +192,7 @@ export function SupplierStockDialog({
     const addArrivalRow = () => {
         setArrivalSchedules([
             ...arrivalSchedules,
-            { id: Math.random().toString(36).substr(2, 9), expectedDate: new Date().toISOString().split('T')[0], quantity: 0, note: '' }
+            { id: crypto.randomUUID(), expectedDate: new Date().toISOString().split('T')[0], quantity: 0, note: '' }
         ]);
     };
 

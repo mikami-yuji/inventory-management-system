@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Store, Plus, CheckCircle2, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -79,7 +79,7 @@ export function SaleEventCalendar({ events }: SaleEventCalendarProps): React.Rea
 
                 {/* カレンダーグリッド */}
                 <div className="grid grid-cols-7 gap-1 auto-rows-fr">
-                    {calendarDays.map((day, i) => {
+                    {calendarDays.map((day) => {
                         const dayEvents = getEventsForDay(day);
                         const isCurrentMonth = isSameMonth(day, currentDate);
                         const isToday = isSameDay(day, new Date());

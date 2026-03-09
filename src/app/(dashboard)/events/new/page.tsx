@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -20,7 +19,6 @@ import {
     Package,
     Loader2,
     ArrowLeft,
-    PackageCheck,
     AlertTriangle,
     Copy
 } from "lucide-react";
@@ -87,32 +85,37 @@ function NewEventContent(): React.ReactElement {
         return map;
     }, [inventoryData]);
 
-    // コピー元イベントからデータを読み込む
+    // コピー元イベントからデータを読み込む (初回のみ)
+    const [isInitialized, setIsInitialized] = useState(false);
+
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
-        if (copyFromId && existingEvents.length > 0 && products.length > 0) {
+        if (copyFromId && existingEvents.length > 0 && products.length > 0 && !isInitialized) {
             const sourceEvent = existingEvents.find(e => e.id === copyFromId);
             if (sourceEvent) {
-                setClientName(sourceEvent.clientName + " (コピー)");
-                setScheduleType(sourceEvent.scheduleType);
-                setDescription(sourceEvent.description || "");
+                // setTimeoutによる非同期処理化でカスケードレンダリングを防ぐ
+                setTimeout(() => {
+                    setClientName(sourceEvent.clientName + " (コピー)");
+                    setScheduleType(sourceEvent.scheduleType);
+                    setDescription(sourceEvent.description || "");
 
-                // 商品を復元
-                const items: SaleItem[] = sourceEvent.items.map(item => {
-                    const product = products.find(p => p.id === item.productId);
-                    if (!product) return null;
-                    return {
-                        id: Math.random().toString(36).substr(2, 9),
-                        product,
-                        quantity: item.plannedQuantity,
-                        currentStock: inventoryMap.get(item.productId) || 0
-                    };
-                }).filter((item): item is SaleItem => item !== null);
+                    // 商品を復元
+                    const items: SaleItem[] = sourceEvent.items.map(item => {
+                        const product = products.find(p => p.id === item.productId);
+                        if (!product) return null;
+                        return {
+                            id: Math.random().toString(36).substr(2, 9),
+                            product,
+                            quantity: item.plannedQuantity,
+                            currentStock: inventoryMap.get(item.productId) || 0
+                        };
+                    }).filter((item): item is SaleItem => item !== null);
 
-                setSaleItems(items);
+                    setSaleItems(items);
+                    setIsInitialized(true);
+                }, 0);
             }
         }
-    }, [copyFromId, existingEvents, products, inventoryMap]);
+    }, [copyFromId, existingEvents, products, inventoryMap, isInitialized]);
 
     // 日付パラメータの処理 (カレンダーからの遷移など)
 

@@ -5,8 +5,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import type { IncomingStock, ApiResponse } from '@/types';
-
 // GET: 入荷予定一覧を取得
 export async function GET(request: NextRequest): Promise<NextResponse> {
     try {
@@ -17,7 +15,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         let query = supabaseClient
             .from('incoming_stock')
             .select('*, products(name, weight)')
-            .order('expected_date', { ascending: true }) as any;
+            .order('expected_date', { ascending: true });
 
         // 商品IDでフィルタリング
         if (productId) {
@@ -74,7 +72,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 note: body.note
             })
             .select()
-            .single() as { data: any | null; error: any };
+            .single();
 
         if (error) {
             console.error('入荷予定の作成エラー:', error);
@@ -108,7 +106,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
             );
         }
 
-        const updateData: any = {};
+        const updateData: Record<string, string | number | null> = {};
         if (body.expectedDate) updateData.expected_date = body.expectedDate;
         if (body.shippedDate !== undefined) updateData.shipped_date = body.shippedDate;
         if (body.quantity !== undefined) updateData.quantity = body.quantity;
@@ -119,7 +117,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
             .update(updateData)
             .eq('id', body.id)
             .select()
-            .single() as { data: any | null; error: any };
+            .single();
 
         if (error) {
             console.error('入荷予定の更新エラー:', error);
@@ -183,7 +181,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
                 .from('incoming_stock')
                 .select('*')
                 .eq('id', body.id)
-                .single() as { data: any | null; error: any };
+                .single();
 
             if (fetchError || !incomingStock) {
                 return NextResponse.json({ error: '入荷予定が見つかりません' }, { status: 404 });
@@ -194,7 +192,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
                 .from('inventory')
                 .select('quantity')
                 .eq('product_id', incomingStock.product_id)
-                .maybeSingle() as { data: any | null };
+                .maybeSingle();
 
             // レコードがない場合は0とする
             const currentQty = (inventory as { quantity: number } | null)?.quantity || 0;

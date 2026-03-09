@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { isRollBag, getPitch, bagsToMeters } from "@/lib/services";
 import type { Product, WorkInProgress, SupplierStockLot } from "@/types";
 import { ProductAnalysisDialog } from "@/components/inventory/product-analysis-dialog";
+import Image from "next/image";
 
 export type SaleAllocationDetail = {
     eventId: string;
@@ -49,7 +50,7 @@ export function ProductDetailDialog({
     onEditProduct,
     onSuccess
 }: ProductDetailDialogProps): React.ReactElement {
-    const [quantity, setQuantity] = useState<string>("");
+    const [quantity, setQuantity] = useState<string>(currentStock.toString());
     const [analysisOpen, setAnalysisOpen] = useState(false);
     const { updateStock, loading, error } = useUpdateInventory();
 
@@ -68,7 +69,8 @@ export function ProductDetailDialog({
 
     useEffect(() => {
         if (open && product) {
-            setQuantity(currentStock.toString());
+            const currentStockStr = currentStock.toString();
+            setQuantity(prev => (prev !== currentStockStr) ? currentStockStr : prev);
         }
     }, [open, product, currentStock]);
 
@@ -108,7 +110,13 @@ export function ProductDetailDialog({
                             <div className="flex flex-row md:flex-col items-center md:items-start gap-4 md:gap-0">
                                 <div className="w-24 h-24 md:w-full md:aspect-square bg-white rounded-lg border shadow-sm overflow-hidden md:mb-4 flex-shrink-0">
                                     {product.imageUrl ? (
-                                        <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                                        <Image
+                                            src={product.imageUrl}
+                                            alt={product.name}
+                                            width={200}
+                                            height={200}
+                                            className="w-full h-full object-cover"
+                                        />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-slate-100">
                                             <Package className="h-8 w-8 opacity-20" />

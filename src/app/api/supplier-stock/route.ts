@@ -3,7 +3,7 @@ import { createServerClient } from '@/lib/supabase'
 import type { ApiResponse } from '@/types'
 
 // GET: ロット一覧の取得
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<any[]>>> {
+export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<Record<string, unknown>[]>>> {
     try {
         const supabase = createServerClient()
         const { searchParams } = new URL(request.url)
@@ -11,7 +11,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
         let query = supabase
             .from('supplier_stock_lots')
-            // @ts-ignore
             .select('*')
 
         if (productId) {
@@ -24,7 +23,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             return NextResponse.json({ data: null, error: error.message }, { status: 500 })
         }
 
-        const lots = ((data as any[]) || []).map((lot: any) => ({
+        const lots = ((data as Record<string, unknown>[]) || []).map((lot: Record<string, unknown>) => ({
             id: lot.id,
             productId: lot.product_id,
             stockDate: lot.stock_date,
@@ -59,13 +58,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
         const { error } = await supabase
             .from('supplier_stock_lots')
-            // @ts-ignore
             .insert({
-                product_id: productId,
+                product_id: productId as string,
                 quantity,
                 stock_date: stockDate,
                 note
-            } as any)
+            } as Record<string, unknown>)
 
         if (error) {
             return NextResponse.json({ data: null, error: error.message }, { status: 500 })
@@ -84,7 +82,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         const supabase = createServerClient()
         const body = await request.json()
 
-        const { productId, supplierStock, action, movementQuantity, expectedDate, note, lotId, quantity, stockDate } = body as any
+        const { productId, supplierStock, action, note, lotId, quantity, stockDate } = body as Record<string, unknown>
 
         // ロットの数量・日付・メモの更新
         if (action === 'update_lot') {
@@ -94,13 +92,13 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
 
             const { error } = await supabase
                 .from('supplier_stock_lots')
-                // @ts-ignore
+                // @ts-expect-error - ignore supabase update type
                 .update({
                     quantity,
                     stock_date: stockDate,
                     note,
                     updated_at: new Date().toISOString()
-                } as any)
+                } as Record<string, unknown>)
                 .eq('id', lotId)
 
             if (error) {
@@ -127,7 +125,6 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             // 1. 現在のメーカー在庫（ロット）を古い順に取得
             const { data: lots, error: lotsError } = await supabase
                 .from('supplier_stock_lots')
-                // @ts-ignore
                 .select('*')
                 .eq('product_id', productId)
                 .gt('quantity', 0)
@@ -137,23 +134,22 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 return NextResponse.json({ data: null, error: 'ロットの取得に失敗しました' }, { status: 500 })
             }
 
-            const totalCurrentStock = ((lots as any[]) || []).reduce((sum, lot) => sum + lot.quantity, 0)
+            const totalCurrentStock = ((lots as Record<string, unknown>[]) || []).reduce((sum, lot) => sum + (lot.quantity as number), 0)
             if (totalCurrentStock < totalMovementQuantity) {
                 return NextResponse.json({ data: null, error: 'メーカー在庫が不足しています' }, { status: 400 })
             }
 
             // 2. FIFOでロットを減算
             let remainingToMove = totalMovementQuantity
-            for (const lot of ((lots as any[]) || [])) {
+            for (const lot of ((lots as Record<string, unknown>[]) || [])) {
                 if (remainingToMove <= 0) break
 
-                const deductQuantity = Math.min(lot.quantity, remainingToMove)
-                const newLotQuantity = lot.quantity - deductQuantity
+                const deductQuantity = Math.min(lot.quantity as number, remainingToMove)
+                const newLotQuantity = (lot.quantity as number) - deductQuantity
 
                 const { error: updateError } = await supabase
                     .from('supplier_stock_lots')
-                    // @ts-ignore
-                    .update({ quantity: newLotQuantity, updated_at: new Date().toISOString() } as any)
+                    .update({ quantity: newLotQuantity, updated_at: new Date().toISOString() } as Record<string, unknown>)
                     .eq('id', lot.id)
 
                 if (updateError) {
@@ -173,7 +169,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
 
             const { error: incomingStockError } = await supabase
                 .from('incoming_stock')
-                .insert(incomingRecords as any)
+                .insert(incomingRecords as Record<string, unknown>[])
 
             if (incomingStockError) {
                 return NextResponse.json({ data: null, error: '入荷予定の作成に失敗しました' }, { status: 500 })
@@ -187,13 +183,13 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         if (supplierStock !== undefined && productId) {
             // 既存のロットをすべて削除して、指定された合計値で新しいロット「調整」を作る簡易的な実装
             await supabase.from('supplier_stock_lots').delete().eq('product_id', productId);
-            if (supplierStock > 0) {
+            if (typeof supplierStock === 'number' && supplierStock > 0) {
                 await supabase.from('supplier_stock_lots').insert({
-                    product_id: productId,
+                    product_id: productId as string,
                     quantity: supplierStock,
                     stock_date: new Date().toISOString().split('T')[0],
                     note: '一括調整'
-                } as any);
+                } as Record<string, unknown>);
             }
             return NextResponse.json({ data: { success: true }, error: null })
         }
@@ -211,11 +207,11 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                         .select('quantity')
                         .eq('product_id', p.id)
 
-                    const total = (lotSum as any[] || []).reduce((sum, lot) => sum + lot.quantity, 0)
+                    const total = (lotSum as Record<string, unknown>[] || []).reduce((sum, lot) => sum + (lot.quantity as number), 0)
 
                     await supabase
                         .from('products')
-                        .update({ supplier_stock: total } as any)
+                        .update({ supplier_stock: total } as Record<string, unknown>)
                         .eq('id', p.id)
                 }
             }
@@ -244,7 +240,6 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
 
         const { error } = await supabase
             .from('supplier_stock_lots')
-            // @ts-ignore
             .delete()
             .eq('id', lotId)
 

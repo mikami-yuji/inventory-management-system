@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import { Product, WorkInProgress, IncomingStock, SupplierStockLot } from "@/types";
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Loader2, Upload, Trash2, Camera, ImageIcon, Info } from "lucide-react";
+import { Loader2, Upload, ImageIcon, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getPitch, isRollBag, bagsToMeters, metersToBags } from "@/lib/services";
+import { isRollBag } from "@/lib/services";
 import { supabase } from "@/lib/supabase";
 import imageCompression from "browser-image-compression";
 
@@ -20,9 +20,6 @@ type BagsInventoryCardsProps = {
     supplierStockLotsMap: Map<string, SupplierStockLot[]>;
     incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
     onDetail: (product: Product) => void;
-    onEdit: (product: Product) => void;
-    onDelete: (product: Product) => void;
-    onIncomingStockClick: (product: Product) => void;
     onRefetch: () => void;
 };
 
@@ -35,9 +32,6 @@ export function BagsInventoryCards({
     supplierStockLotsMap,
     incomingMap,
     onDetail,
-    onEdit,
-    onDelete,
-    onIncomingStockClick,
     onRefetch
 }: BagsInventoryCardsProps): React.ReactElement {
     if (products.length === 0) {
@@ -61,9 +55,6 @@ export function BagsInventoryCards({
                     supplierStockLotsMap={supplierStockLotsMap}
                     incomingMap={incomingMap}
                     onDetail={onDetail}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onIncomingStockClick={onIncomingStockClick}
                     onRefetch={onRefetch}
                 />
             ))}
@@ -80,9 +71,6 @@ type ProductCardProps = {
     supplierStockLotsMap: Map<string, SupplierStockLot[]>;
     incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
     onDetail: (product: Product) => void;
-    onEdit: (product: Product) => void;
-    onDelete: (product: Product) => void;
-    onIncomingStockClick: (product: Product) => void;
     onRefetch: () => void;
 };
 
@@ -95,9 +83,6 @@ function ProductCard({
     supplierStockLotsMap,
     incomingMap,
     onDetail,
-    onEdit,
-    onDelete,
-    onIncomingStockClick,
     onRefetch
 }: ProductCardProps) {
     const [isHovered, setIsHovered] = useState(false);
@@ -115,7 +100,6 @@ function ProductCard({
     const incoming = incomingMap.get(product.id);
 
     const isRoll = product.shape && isRollBag(product.shape);
-    const weight = product.weight || 5;
 
     // 有効在庫
     const availableStock = Math.max(0, currentStock - (isRoll ? allocation.meters : allocation.bags));
@@ -370,17 +354,12 @@ function ProductCard({
                             {/* 入荷予定の表示 */}
                             {incoming && incoming.total > 0 && (
                                 <div
-                                    className="text-[10px] text-emerald-600 font-medium cursor-pointer hover:underline mt-1"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        onIncomingStockClick(product);
-                                    }}
+                                    className="text-[10px] text-emerald-600 font-medium mt-1"
                                 >
                                     入荷予定: {incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}
                                     <div className="flex flex-col gap-0.5 mt-0.5 opacity-80 font-normal">
-                                        {incoming.items.map((item, i) => (
-                                            <div key={i}>
+                                        {incoming.items.map((item, index) => (
+                                            <div key={index}>
                                                 {new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {item.quantity.toLocaleString()}
                                             </div>
                                         ))}

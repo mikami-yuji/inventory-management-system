@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const activeOnly = searchParams.get('active') === 'true';
 
-    let query = (supabase.from('suppliers') as any).select('*').order('name');
+    let query = supabase.from('suppliers').select('*').order('name');
 
     if (activeOnly) {
         query = query.eq('active', true);
@@ -26,8 +26,8 @@ export async function POST(request: Request) {
     const supabase = createServerClient();
     const body = await request.json();
 
-    const { data, error } = await (supabase
-        .from('suppliers') as any)
+    const { data, error } = await supabase
+        .from('suppliers')
         .insert([
             {
                 name: body.name,
@@ -57,8 +57,8 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const { data, error } = await (supabase
-        .from('suppliers') as any)
+    const { data, error } = await supabase
+        .from('suppliers')
         .update({
             name: body.name,
             contact_person: body.contactPerson,
@@ -89,7 +89,7 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const { error } = await (supabase.from('suppliers') as any).delete().eq('id', id);
+    const { error } = await supabase.from('suppliers').delete().eq('id', id);
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });

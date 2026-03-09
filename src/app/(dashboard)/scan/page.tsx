@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { BarcodeScanner } from '@/components/inventory/barcode-scanner';
 import { useProducts } from "@/hooks/use-products";
 import { useInventory, useUpdateInventory } from "@/hooks/use-inventory";
@@ -8,7 +8,6 @@ import { useIncomingStock } from '@/hooks/use-incoming-stock';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, Plus, Minus, Search, ListChecks, Trash2, Send } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -20,7 +19,7 @@ import { useSupplierStockLots } from '@/hooks/use-supplier-stock-lots';
 import { useWorkInProgress } from '@/hooks/use-work-in-progress';
 import { useSaleEvents } from '@/hooks/use-sale-events';
 import { bagsToMeters } from '@/lib/services';
-import type { Product, IncomingStock, WorkInProgress, SupplierStockLot } from "@/types";
+import type { Product, WorkInProgress } from "@/types";
 
 type ScannedItem = {
     id: string; // Product ID
@@ -40,7 +39,7 @@ export default function ScanPage() {
     const { updateStock } = useUpdateInventory();
     const { events: saleEvents } = useSaleEvents();
     const { items: wipItems, refetch: refetchWIP } = useWorkInProgress({ status: 'in_progress' });
-    const { incomingStocks, refetch: refetchIncoming } = useIncomingStock();
+    const { refetch: refetchIncoming } = useIncomingStock();
     const { lotsMap: supplierStockLotsMap, refetch: refetchLots } = useSupplierStockLots();
 
     // Mode: 'single' (Do-do) or 'batch' (Renzoku)
@@ -51,7 +50,7 @@ export default function ScanPage() {
     const [detailDialogOpen, setDetailDialogOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [formDialogOpen, setFormDialogOpen] = useState(false);
-    const [incomingStockProduct, setIncomingStockProduct] = useState<Product | null>(null);
+    const [incomingStockProduct] = useState<Product | null>(null);
     const [incomingDialogOpen, setIncomingDialogOpen] = useState(false);
 
     // Single Mode Scanner State
@@ -143,19 +142,27 @@ export default function ScanPage() {
         const matches = products.filter(p => p.janCode === scannedCode);
 
         if (matches.length > 0) {
-            setMatchingProducts(matches);
-            if (matches.length === 1) {
-                setDetailProduct(matches[0]);
-                setDetailDialogOpen(true);
-                setMessage({ type: 'success', text: '商品が見つかりました' });
-            } else {
-                setMessage({ type: 'success', text: '複数の商品が見つかりました。選択してください。' });
-            }
+            // Defer state update to avoid cascading render warning
+            setTimeout(() => {
+                setMatchingProducts(prev => {
+                    if (JSON.stringify(prev) === JSON.stringify(matches)) return prev;
+                    return matches;
+                });
+                if (matches.length === 1 && scanMode === 'single') {
+                    setDetailProduct(matches[0]);
+                    setDetailDialogOpen(true);
+                    setMessage({ type: 'success', text: '商品が見つかりました' });
+                } else if (matches.length > 1) {
+                    setMessage({ type: 'success', text: '複数の商品が見つかりました。選択してください。' });
+                }
+            }, 0);
         } else {
-            setMatchingProducts([]);
-            setMessage({ type: 'error', text: `未登録のJANコードです: ${scannedCode}` });
+            setTimeout(() => {
+                setMatchingProducts([]);
+                setMessage({ type: 'error', text: `未登録のJANコードです: ${scannedCode}` });
+            }, 0);
         }
-    }, [scannedCode, products, inventoryData, productsLoading, scanMode]);
+    }, [scannedCode, products, scanMode, productsLoading]);
 
     const handleScan = useCallback((decodedText: string) => {
         if (isProcessing) return;
@@ -280,7 +287,7 @@ export default function ScanPage() {
                 );
                 if (success) successCount++;
                 else failCount++;
-            } catch (e) {
+            } catch {
                 failCount++;
             }
         }

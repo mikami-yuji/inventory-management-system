@@ -3,7 +3,7 @@
  * GET /api/products/export → CSVファイルをダウンロード
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -19,7 +19,7 @@ function escapeCSV(value: unknown): string {
     return str;
 }
 
-export async function GET(_request: NextRequest): Promise<Response> {
+export async function GET(): Promise<Response> {
     try {
         const supabase = createClient(supabaseUrl, supabaseKey);
 

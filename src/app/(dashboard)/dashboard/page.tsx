@@ -22,7 +22,6 @@ import { useSupplierStockLots } from "@/hooks/use-supplier-stock-lots";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAppSettings } from "@/hooks/use-masters";
 import {
-    getDefaultMinStockAlert,
     isRollBag,
     calculateStockStatus,
     bagsToMeters
@@ -120,10 +119,10 @@ export default function DashboardPage(): React.ReactElement {
                     note: string | null;
                 }) => ({
                     id: item.id,
-                    productId: item.product_id || item.productId,
+                    productId: item.product_id || item.productId || '',
                     productName: item.products?.name || item.productName || '不明',
                     productWeight: item.products?.weight !== undefined ? item.products?.weight : (item.productWeight || null),
-                    expectedDate: item.expected_date || item.expectedDate,
+                    expectedDate: item.expected_date || item.expectedDate || '',
                     quantity: item.quantity,
                     note: item.note,
                 })));
@@ -146,23 +145,23 @@ export default function DashboardPage(): React.ReactElement {
             if (res.ok) {
                 const result = await res.json();
                 const data = result.data || [];
-                const activeOrUpcoming = data.filter((e: any) => e.status === 'active' || e.status === 'upcoming');
+                const activeOrUpcoming = data.filter((e: { status: string }) => e.status === 'active' || e.status === 'upcoming');
 
                 // 直近の日付順（開始日の昇順）にソートして最大3件
-                const sortedData = activeOrUpcoming.sort((a: any, b: any) => {
+                const sortedData = activeOrUpcoming.sort((a: DashboardEvent, b: DashboardEvent) => {
                     const dateA = a.dates?.[0] || '9999-12-31';
                     const dateB = b.dates?.[0] || '9999-12-31';
                     return dateA.localeCompare(dateB);
                 }).slice(0, 3);
-                setActiveEvents(sortedData.map((event: any) => ({
+                setActiveEvents(sortedData.map((event: DashboardEvent) => ({
                     ...event,
-                    items: event.items?.map((item: any) => ({
-                        productId: item.product_id || item.productId,
-                        productName: item.product_name || item.productName || '不明',
-                        productWeight: item.product_weight || item.productWeight || null,
-                        plannedQuantity: item.planned_quantity || item.plannedQuantity || 0,
-                        allocatedQuantity: item.allocated_quantity || item.allocatedQuantity || 0,
-                        productShape: item.product_shape || item.productShape || null,
+                    items: event.items?.map((item: { productId: string; productName?: string; productWeight?: number | null; plannedQuantity?: number; allocatedQuantity?: number; productShape?: string | null }) => ({
+                        productId: item.productId,
+                        productName: item.productName || '不明',
+                        productWeight: item.productWeight || null,
+                        plannedQuantity: item.plannedQuantity || 0,
+                        allocatedQuantity: item.allocatedQuantity || 0,
+                        productShape: item.productShape || null,
                     }))
                 })));
             }
@@ -223,12 +222,12 @@ export default function DashboardPage(): React.ReactElement {
                 };
             }
             return null;
-        }).filter((i): i is any => i !== null);
+        }).filter((i): i is NonNullable<typeof i> => i !== null);
     }, [inventory, products, allocationMap, settings]);
 
-    const negativeStockItems = urgentItems.filter((i: any) => i.isNegativeStock);
-    const outOfStockItems = urgentItems.filter((i: any) => i.isOutOfStock && !i.isNegativeStock);
-    const lowStockItems = urgentItems.filter((i: any) => i.isLowStock);
+    const negativeStockItems = urgentItems.filter((i) => i.isNegativeStock);
+    const outOfStockItems = urgentItems.filter((i) => i.isOutOfStock && !i.isNegativeStock);
+    const lowStockItems = urgentItems.filter((i) => i.isLowStock);
     const totalProducts = products.length;
 
     // 商品IDから単価を取得するマップを作成
@@ -344,7 +343,7 @@ export default function DashboardPage(): React.ReactElement {
                                     【過剰引当】有効在庫がマイナス（直ちに手配が必要）
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                                    {negativeStockItems.map((item: any) => (
+                                    {negativeStockItems.map((item) => (
                                         <div key={item.product.id} className="bg-white border border-purple-200 rounded p-2 flex justify-between items-center shadow-sm">
                                             <div className="truncate text-sm font-medium mr-2" title={`${item.product.name} (${item.product.weight}kg)`}>
                                                 {item.product.name} ({item.product.weight}kg)

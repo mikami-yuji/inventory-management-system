@@ -59,7 +59,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
         // ベースクエリ
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let query = (supabase as any)
+        let query = (supabase as unknown as Record<string, any>)
             .from('activity_log')
             .select('*', { count: 'exact' })
             .order('created_at', { ascending: false })
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase as any)
+        const { data, error } = await (supabase as unknown as Record<string, any>)
             .from('activity_log')
             .insert(insertData)
             .select()

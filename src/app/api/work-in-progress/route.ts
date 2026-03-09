@@ -20,6 +20,8 @@ type WorkInProgress = {
     createdAt: string
 }
 
+// WIPRecord is removed
+
 // GET: 仕掛中一覧を取得
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<WorkInProgress[]>>> {
     try {
@@ -69,22 +71,27 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             return NextResponse.json({ data: null, error: error.message }, { status: 500 })
         }
 
-        // レスポンス形式に変換
-        const items: WorkInProgress[] = (data || []).map((item: any) => ({
-            id: item.id,
-            productId: item.product_id,
-            productName: item.products?.name || '',
-            productSku: item.products?.sku || '',
-            quantity: item.quantity,
-            startedAt: item.started_at,
-            expectedCompletion: item.expected_completion,
-            completedAt: item.completed_at,
-            note: item.note,
-            status: item.status as WorkInProgress['status'],
-            termType: item.term_type || undefined,
-            confirmationStatus: item.confirmation_status || undefined,
-            createdAt: item.created_at
-        }))
+        const items: WorkInProgress[] = (data || []).map((i: unknown) => {
+            const item = i as Record<string, unknown>;
+            const products = item.products;
+            const product = Array.isArray(products) ? products[0] : products;
+            const productRef = product as Record<string, unknown> | undefined;
+            return {
+                id: item.id as string,
+                productId: item.product_id as string,
+                productName: productRef?.name as string || '',
+                productSku: productRef?.sku as string || '',
+                quantity: item.quantity as number,
+                startedAt: item.started_at as string,
+                expectedCompletion: item.expected_completion as string | null,
+                completedAt: item.completed_at as string | null,
+                note: item.note as string | null,
+                status: item.status as WorkInProgress['status'],
+                termType: (item.term_type as string) || undefined,
+                confirmationStatus: (item.confirmation_status as string) || undefined,
+                createdAt: item.created_at as string
+            };
+        });
 
         return NextResponse.json({ data: items, error: null })
     } catch (error) {
@@ -118,8 +125,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             )
         }
 
-        const { data, error } = await (supabase
-            .from('work_in_progress') as any)
+        const { data, error } = await supabase
+            .from('work_in_progress')
             .insert({
                 product_id: productId,
                 quantity,
@@ -127,7 +134,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 expected_completion: expectedCompletion || null,
                 note: note || null,
                 status: 'in_progress',
-                term_type: (body as any).termType || 'specific'
+                term_type: (body as Record<string, unknown>).termType || 'specific'
             })
             .select()
             .single()
@@ -153,14 +160,13 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         const supabase = createServerClient()
         const body = await request.json()
 
-        const { id, action, data: updateData, confirmedDate, quantity, supplierStock, expectedDate } = body as {
+        const { id, action, data: updateData, confirmedDate, quantity, supplierStock } = body as {
             id: string
             action: 'to_incoming' | 'to_supplier' | 'cancel' | 'update' | 'confirm' | 'arrange_shipping'
             data?: Record<string, unknown>
             confirmedDate?: string
             quantity?: number
             supplierStock?: number
-            expectedDate?: string
         }
 
         if (action === 'to_incoming') {
@@ -175,11 +181,12 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 .from('work_in_progress')
                 .select('product_id, products(name, unit)')
                 .eq('id', id)
-                .single<any>()
+                .single<Record<string, unknown>>()
 
             if (wipItem) {
+                const product = Array.isArray(wipItem.products) ? wipItem.products[0] : wipItem.products;
                 const insertData = schedules.map(s => ({
-                    product_id: wipItem.product_id,
+                    product_id: (wipItem as Record<string, unknown>).product_id,
                     expected_date: s.expectedDate,
                     quantity: s.quantity,
                     note: s.note || '仕掛品からの予定'
@@ -187,7 +194,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
 
                 const { error: insertError } = await supabase
                     .from('incoming_stock')
-                    .insert(insertData as any)
+                    .insert(insertData as Record<string, unknown>[])
 
                 if (insertError) {
                     console.error('入荷予定登録エラー:', insertError)
@@ -205,16 +212,16 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                         .select('email')
                         .eq('receives_order_emails', true);
 
-                    const toAddresses = (admins || []).map((a: any) => a.email).filter(Boolean);
+                    const toAddresses = (admins || []).map((a: Record<string, unknown>) => a.email as string).filter(Boolean);
 
                     if (toAddresses.length > 0) {
                         await sendWIPNotificationEmail({
                             userName,
                             toAddresses,
                             items: schedules.map(s => ({
-                                productName: wipItem.products?.name || '不明な商品',
+                                productName: (product as Record<string, unknown>)?.name as string || '不明な商品',
                                 quantity: s.quantity,
-                                unit: wipItem.products?.unit || '個',
+                                unit: (product as Record<string, unknown>)?.unit as string || '個',
                                 destination: `入荷予定 (${s.expectedDate})`,
                                 note: s.note
                             }))
@@ -233,18 +240,19 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 .from('work_in_progress')
                 .select('product_id, products(name, unit)')
                 .eq('id', id)
-                .single<any>()
+                .single<Record<string, unknown>>()
 
             if (wipItem) {
+                const product = Array.isArray(wipItem.products) ? wipItem.products[0] : wipItem.products;
                 // supplier_stock_lotsテーブルにロットとして追加
                 await supabase
                     .from('supplier_stock_lots')
                     .insert({
-                        product_id: wipItem.product_id,
+                        product_id: (wipItem as Record<string, unknown>).product_id,
                         stock_date: new Date().toISOString().split('T')[0],
                         quantity: quantity,
                         note: '仕掛品からの移動'
-                    } as any)
+                    } as Record<string, unknown>)
 
                 // メール通知用のデータ収集
                 try {
@@ -256,16 +264,16 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                         .select('email')
                         .eq('receives_order_emails', true);
 
-                    const toAddresses = (admins || []).map((a: any) => a.email).filter(Boolean);
+                    const toAddresses = (admins || []).map((a: Record<string, unknown>) => a.email as string).filter(Boolean);
 
                     if (toAddresses.length > 0) {
                         await sendWIPNotificationEmail({
                             userName,
                             toAddresses,
                             items: [{
-                                productName: wipItem.products?.name || '不明な商品',
+                                productName: (product as Record<string, unknown>)?.name as string || '不明な商品',
                                 quantity: quantity,
-                                unit: wipItem.products?.unit || '個',
+                                unit: (product as Record<string, unknown>)?.unit as string || '個',
                                 destination: 'メーカー在庫',
                                 note: '仕掛品からの移動'
                             }]
@@ -284,8 +292,8 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             }
 
             // 1. 仕掛中データの更新
-            const { data: wipItem, error: updateError } = await (supabase
-                .from('work_in_progress') as any)
+            const { data: wipItem, error: updateError } = await supabase
+                .from('work_in_progress')
                 .update({
                     quantity: quantity,
                     expected_completion: confirmedDate, // 具体的な日付で上書き
@@ -295,7 +303,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 })
                 .eq('id', id)
                 .select('product_id')
-                .single()
+                .single<{ product_id: string }>()
 
             if (updateError) throw updateError;
             if (!wipItem) throw new Error("仕掛中データが見つかりません");
@@ -308,13 +316,12 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     expected_date: confirmedDate,
                     quantity: quantity,
                     note: '仕掛中からの自動登録'
-                } as any)
+                } as Record<string, unknown>)
 
             // 3. メーカー在庫の更新 (指定がある場合)
             if (typeof supplierStock === 'number') {
                 await supabase
                     .from('products')
-                    // @ts-ignore
                     .update({
                         supplier_stock: supplierStock,
                         supplier_stock_updated_at: new Date().toISOString()
@@ -323,16 +330,14 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             }
 
         } else if (action === 'cancel') {
-            await (supabase
-                .from('work_in_progress') as any)
-                // @ts-ignore
+            await supabase
+                .from('work_in_progress')
                 .update({ status: 'cancelled' })
                 .eq('id', id)
         } else if (action === 'arrange_shipping') {
             // 出荷手配（完了扱いとして履歴に残す）
-            await (supabase
-                .from('work_in_progress') as any)
-                // @ts-ignore
+            await supabase
+                .from('work_in_progress')
                 .update({
                     status: 'completed',
                     confirmation_status: 'shipping_arranged',
@@ -341,9 +346,8 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 })
                 .eq('id', id)
         } else if (action === 'update' && updateData) {
-            await (supabase
-                .from('work_in_progress') as any)
-                // @ts-ignore
+            await supabase
+                .from('work_in_progress')
                 .update(updateData)
                 .eq('id', id)
         }
@@ -369,8 +373,8 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
             return NextResponse.json({ data: null, error: 'IDが必要です' }, { status: 400 })
         }
 
-        const { error } = await (supabase
-            .from('work_in_progress') as any)
+        const { error } = await supabase
+            .from('work_in_progress')
             .delete()
             .eq('id', id)
 

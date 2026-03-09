@@ -9,10 +9,8 @@ import { CalculableInput } from "@/components/ui/calculable-input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FileSpreadsheet, Loader2, RefreshCw } from "lucide-react";
+import { FileSpreadsheet, Loader2 } from "lucide-react";
 import { Product } from "@/types";
-import { useProducts } from "@/hooks/use-products";
-import { useInventory } from "@/hooks/use-inventory";
 import { useSuppliers } from "@/hooks/use-masters";
 
 import { orderSheetService } from "@/lib/services/order-sheet-service";
@@ -63,8 +61,18 @@ export function OrderSheetDialog({ products, inventoryMap, trigger }: OrderSheet
                     initialQuantities.set(p.id, suggested);
                 }
             });
-            setSelectedProducts(initialSelection);
-            setOrderQuantities(initialQuantities);
+
+            // Check if updates are actually needed before calling setState
+            if (open) {
+                setSelectedProducts(prev => {
+                    const areEqual = prev.size === initialSelection.size && [...prev].every(i => initialSelection.has(i));
+                    return areEqual ? prev : initialSelection;
+                });
+                setOrderQuantities(prev => {
+                    const areEqual = prev.size === initialQuantities.size && [...prev].every(([k, v]) => initialQuantities.get(k) === v);
+                    return areEqual ? prev : initialQuantities;
+                });
+            }
         }
     }, [open, products, inventoryMap]);
 

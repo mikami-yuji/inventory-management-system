@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
-import type { ApiResponse, SaleEvent, SaleEventItem } from '@/types'
+import type { ApiResponse, SaleEvent } from '@/types'
 import { getJSTNow } from '@/lib/utils/date'
 
 // GET: 特売イベント一覧を取得
@@ -30,11 +30,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                 )
             `)
             .in('status', ['upcoming', 'active'])
-            .returns<any[]>();
 
         if (activeEvents && activeEvents.length > 0) {
-            const eventsToComplete = activeEvents.filter((event: any) => {
-                if (!event.dates || event.dates.length === 0) return false;
+            const eventsToComplete = activeEvents.filter((event) => {
+                if (!event.dates || !Array.isArray(event.dates) || event.dates.length === 0) return false;
                 // 全ての開催日が今日より前かチェック
                 return event.dates.every((date: string) => date < todayStr);
             });
@@ -43,12 +42,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                 console.log(`Auto-completing ${eventsToComplete.length} events`);
 
                 for (const event of eventsToComplete) {
-                    const items = event.sale_event_items as Array<{ product_id: string, allocated_quantity: number }>;
-
                     // 1. ステータスを完了に更新
                     await supabase
                         .from('sale_events')
-                        // @ts-ignore
                         .update({ status: 'completed' })
                         .eq('id', event.id);
                 }
@@ -58,9 +54,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             const tenDaysLaterJST = new Date(nowJST.getTime() + 10 * 24 * 60 * 60 * 1000);
             const tenDaysLaterStr = tenDaysLaterJST.toISOString().split('T')[0];
 
-            const eventsToActive = activeEvents.filter((event: any) => {
+            const eventsToActive = activeEvents.filter((event) => {
                 if (event.status !== 'upcoming') return false;
-                if (!event.dates || event.dates.length === 0) return false;
+                if (!event.dates || !Array.isArray(event.dates) || event.dates.length === 0) return false;
 
                 // 最小の日付（開始日）を取得
                 const startDate = [...event.dates].sort()[0];
@@ -73,7 +69,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                 console.log(`Auto-activating ${ids.length} events:`, ids);
                 await supabase
                     .from('sale_events')
-                    // @ts-ignore
                     .update({ status: 'active' })
                     .in('id', ids);
             }
@@ -136,9 +131,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         // 完了後5日経過したイベントを除外するフィルタリング
         const fiveDaysAgoStr = new Date(nowJST.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-        const filteredData = (data || []).filter((event: any) => {
+        const filteredData = (data || []).filter((event) => {
             if (event.status === 'completed') {
-                if (!event.dates || event.dates.length === 0) return true;
+                if (!event.dates || !Array.isArray(event.dates) || event.dates.length === 0) return true;
                 const lastDate = [...event.dates].sort().reverse()[0];
                 if (lastDate < fiveDaysAgoStr) {
                     return false; // 5日以上前の完了イベントは除外
@@ -148,7 +143,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         });
 
         // レスポンス形式に変換
-        const events: SaleEvent[] = filteredData.map((event: any) => ({
+        const events: SaleEvent[] = filteredData.map((event) => ({
             id: event.id,
             clientName: event.client_name,
             scheduleType: event.schedule_type as 'single' | 'monthly',
@@ -156,18 +151,22 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             status: event.status as SaleEvent['status'],
             description: event.description,
             createdAt: event.created_at,
-            items: event.sale_event_items.map((item: any) => ({
-                id: item.id,
-                productId: item.product_id,
-                productName: item.products?.name || '',
-                productSku: item.products?.sku || null,
-                plannedQuantity: item.planned_quantity,
-                allocatedQuantity: item.allocated_quantity,
-                actualQuantity: item.actual_quantity,
-                currentStock: inventoryMap.get(item.product_id) || 0,
-                productShape: item.products?.shape || null,
-                productWeight: item.products?.weight || null
-            }))
+            items: (event.sale_event_items as unknown[]).map((i: unknown) => {
+                const item = i as Record<string, unknown>;
+                const product = item.products as Record<string, unknown> | undefined;
+                return {
+                    id: item.id as string,
+                    productId: item.product_id as string,
+                    productName: product?.name as string || '',
+                    productSku: product?.sku as string || null,
+                    plannedQuantity: item.planned_quantity as number,
+                    allocatedQuantity: item.allocated_quantity as number,
+                    actualQuantity: item.actual_quantity as number,
+                    currentStock: inventoryMap.get(item.product_id as string) || 0,
+                    productShape: product?.shape as string || null,
+                    productWeight: product?.weight as number || null
+                };
+            })
         }))
 
         return NextResponse.json({ data: events, error: null })
@@ -217,9 +216,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 dates,
                 description,
                 status: 'upcoming'
-            } as any)
+            })
             .select()
-            .single<any>()
+            .single()
 
         if (eventError) {
             console.error('イベント作成エラー:', eventError)
@@ -236,7 +235,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
         const { error: itemsError } = await supabase
             .from('sale_event_items')
-            .insert(eventItems as any)
+            .insert(eventItems)
 
         if (itemsError) {
             console.error('イベント商品追加エラー:', itemsError)
@@ -265,16 +264,15 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
 
         const { eventId, action, data: updateData } = body as {
             eventId: string
-            action: 'updateStatus' | 'updateActual' | 'allocateStock' | 'updateAllocation'
-            data: any
+            action: 'updateStatus' | 'updateActual' | 'allocateStock' | 'updateAllocation' | 'updateEvent'
+            data: Record<string, unknown>
         }
 
         if (action === 'updateStatus') {
             // ステータス更新
             const { error } = await supabase
                 .from('sale_events')
-                // @ts-ignore
-                .update({ status: updateData.status })
+                .update({ status: updateData.status as string })
                 .eq('id', eventId)
 
             if (error) {
@@ -285,11 +283,11 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             const items = updateData.items as Array<{ itemId: string; actualQuantity: number }>
 
             // イベント情報を取得（履歴用）
-            const { data: event } = await supabase
+            await supabase
                 .from('sale_events')
                 .select('client_name')
                 .eq('id', eventId)
-                .single<any>()
+                .single()
 
             for (const item of items) {
                 // 現在のアイテム情報を取得
@@ -297,7 +295,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     .from('sale_event_items')
                     .select('product_id, actual_quantity, allocated_quantity')
                     .eq('id', item.itemId)
-                    .single<any>()
+                    .single()
 
                 if (currentItem) {
                     const newActual = item.actualQuantity;
@@ -306,7 +304,6 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     // アイテムの実績を更新し、引当数量はそのままで完了を区別
                     await supabase
                         .from('sale_event_items')
-                        // @ts-ignore
                         .update({
                             actual_quantity: newActual,
                             allocated_quantity: 0
@@ -320,7 +317,6 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 .from('sale_event_items')
                 .select('product_id, planned_quantity, allocated_quantity, actual_quantity')
                 .eq('event_id', eventId)
-                .returns<any[]>()
 
             for (const item of eventItems || []) {
                 if (item.actual_quantity > 0) continue;
@@ -328,7 +324,6 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 // 引当数量（有効在庫引当用）を計画数に更新
                 await supabase
                     .from('sale_event_items')
-                    // @ts-ignore
                     .update({ allocated_quantity: item.planned_quantity })
                     .eq('event_id', eventId)
                     .eq('product_id', item.product_id)
@@ -338,18 +333,18 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             const { itemId, newAllocatedQuantity } = updateData as { itemId: string; newAllocatedQuantity: number }
 
             // イベント情報を取得（履歴用）
-            const { data: event } = await supabase
+            await supabase
                 .from('sale_events')
                 .select('client_name')
                 .eq('id', eventId)
-                .single<any>()
+                .single()
 
             // 現在のアイテム情報を取得
             const { data: currentItem } = await supabase
                 .from('sale_event_items')
                 .select('product_id, allocated_quantity')
                 .eq('id', itemId)
-                .single<any>()
+                .single()
 
             if (!currentItem) {
                 return NextResponse.json({ data: null, error: '対象のアイテムが見つかりません' }, { status: 404 })
@@ -365,7 +360,6 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             // 引当数量を更新
             await supabase
                 .from('sale_event_items')
-                // @ts-ignore
                 .update({ allocated_quantity: newAllocatedQuantity })
                 .eq('id', itemId)
         } else if (action === 'updateEvent') {
@@ -381,7 +375,6 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             // 1. 基本情報の更新
             const { error: updateError } = await supabase
                 .from('sale_events')
-                // @ts-ignore
                 .update({
                     client_name: clientName,
                     schedule_type: scheduleType,
@@ -399,7 +392,6 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 .from('sale_event_items')
                 .select('id, product_id, allocated_quantity')
                 .eq('event_id', eventId)
-                .returns<any[]>();
 
             const existingItemMap = new Map(existingItems?.map(i => [i.product_id, i]));
 
@@ -422,7 +414,6 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     // 更新
                     await supabase
                         .from('sale_event_items')
-                        // @ts-ignore
                         .update({ planned_quantity: item.plannedQuantity })
                         .eq('id', existing.id);
                 } else {
@@ -434,7 +425,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                             product_id: item.productId,
                             planned_quantity: item.plannedQuantity,
                             allocated_quantity: 0
-                        } as any);
+                        })
                 }
             }
         }

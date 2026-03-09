@@ -19,8 +19,8 @@ export function useSupplierStockLots() {
                 throw new Error(result.error);
             }
             setLots(result.data || []);
-        } catch (err: any) {
-            setError(err.message || 'エラーが発生しました');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'エラーが発生しました');
             console.error('Supplier stock lots fetch error:', err);
         } finally {
             setLoading(false);

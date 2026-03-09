@@ -40,7 +40,7 @@ export function useAppSettings() {
     const { data, error, isLoading, mutate } = useSWR('/api/settings', fetcher);
 
     return {
-        settings: (data?.data as Record<string, any>) || {},
+        settings: (data?.data as Record<string, unknown>) || {},
         isLoading,
         isError: error,
         mutate,

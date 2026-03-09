@@ -32,10 +32,10 @@ interface SpeechRecognition extends EventTarget {
     start: () => void;
     stop: () => void;
     abort: () => void;
-    onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-    onend: ((this: SpeechRecognition, ev: Event) => any) | null;
-    onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
-    onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
+    onstart: ((this: SpeechRecognition, ev: Event) => void) | null;
+    onend: ((this: SpeechRecognition, ev: Event) => void) | null;
+    onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
+    onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void) | null;
 }
 
 interface SpeechRecognitionConstructor {
@@ -99,7 +99,12 @@ export function useVoiceInput(options?: {
 
             recognitionRef.current = recognition;
         } else {
-            setError("Browser does not support speech recognition.");
+            // Using a timeout to move the state update out of the synchronous effect body
+            setTimeout(() => {
+                if (recognitionRef.current === null) {
+                    setError("Browser does not support speech recognition.");
+                }
+            }, 0);
         }
 
         return () => {
@@ -107,7 +112,7 @@ export function useVoiceInput(options?: {
                 recognitionRef.current.abort();
             }
         };
-    }, [options]);
+    }, [options?.lang, options?.onResult, options?.onError]);
 
     const startListening = useCallback(() => {
         if (recognitionRef.current && !isListening) {

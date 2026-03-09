@@ -26,7 +26,7 @@ export const isRollBag = (shape: string): boolean => {
 
 // デフォルトの在庫アラート閾値を取得
 // ロールは1500m、単袋・その他は3000枚 (設定で上書き可能)
-export const getDefaultMinStockAlert = (shape?: string | null, settings?: any): number => {
+export const getDefaultMinStockAlert = (shape?: string | null, settings?: Record<string, unknown>): number => {
     const isRoll = isRollBag(shape || "");
     if (isRoll) {
         return settings?.default_min_stock_alert_roll !== undefined ? Number(settings.default_min_stock_alert_roll) : 1500;
@@ -62,7 +62,7 @@ export const calculateStockStatus = (
     product: Product,
     currentStock: number,
     allocation: { bags: number; meters: number },
-    settings?: any
+    settings?: Record<string, unknown>
 ) => {
     const isRoll = product.shape && isRollBag(product.shape);
 

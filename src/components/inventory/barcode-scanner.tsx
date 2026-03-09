@@ -11,7 +11,7 @@ interface BarcodeScannerProps {
     aspectRatio?: number;
     disableFlip?: boolean;
     verbose?: boolean;
-    qrCodeSuccessCallback: (decodedText: string, decodedResult: any) => void;
+    qrCodeSuccessCallback: (decodedText: string, decodedResult: unknown) => void;
     qrCodeErrorCallback?: (errorMessage: string) => void;
 }
 
