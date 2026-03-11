@@ -64,15 +64,9 @@ export function useInventory(options?: {
             const dataArray = Array.isArray(rawData) ? rawData : (Array.isArray((rawData as any).data) ? (rawData as any).data : []);
 
             // APIレスポンスのスネークケースをキャメルケースに変換
-<<<<<<< HEAD
-            const mappedData = (result.data || [])
+            const mappedData = dataArray
                 .filter((item: Record<string, unknown>) => item.product !== undefined)
                 .map((item: Record<string, unknown>) => ({
-=======
-            const mappedData = dataArray
-                .filter((item: Record<string, any>) => item.product !== undefined)
-                .map((item: Record<string, any>) => ({
->>>>>>> 1d41485 (fix(hooks): enforce strict Array.isArray validation on all API responses)
                     productId: (item.product_id as string) || (item.productId as string) || '',
                     quantity: item.quantity as number,
                     updatedAt: (item.updated_at as string) || (item.updatedAt as string) || '',
