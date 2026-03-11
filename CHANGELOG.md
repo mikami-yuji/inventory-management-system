@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-03-11
+### Added
+- **サーバー側エラーログ機能の基盤構築**:
+  - `src/lib/logger.ts` ユーティリティを追加。Supabaseの `error_logs` テーブルへ、ルート・メソッド・スタックトレース等の自動記録が可能に。
+  - 主要API (`/api/inventory`, `/api/orders`, `/api/products`, `/api/sale-events`) の各 `catch` ブロックにロガーを統合。
+- **データベース・パフォーマンス最適化**:
+  - `products.sku`, `orders.status`, `inventory.product_id` 等の頻繁にクエリされるカラムにB-Treeインデックスを追加するマイグレーションスクリプトを作成・適用。
+- **自動化ワークフロー (CI/CD) の構築**:
+  - **GitHub Actions**: `.github/workflows/ci.yml` を作成し、プッシュ/PR時にビルド・Lint・テストをクラウド上で自動実行。
+  - **Husky & lint-staged**: Gitコミット前にローカルで `eslint` と `jest` を強制実行するGitフックを導入し、品質不良の混入を防止。
+
+### Changed
+- **メール送信機能の安定化**: `src/lib/mail.ts` 内の `console.log` 等を削除し、エラーハンドリングを `logError` ユーティリティに集約。
+
+### Removed
+- **デバッグ用コードの削除**: 全コードベースから `console.log` および `console.warn` を一掃し、本番環境向けのクリーンなコード状態へ移行。
+
 ## [Unreleased]
 
 ## [0.7.0] - 2026-03-11
