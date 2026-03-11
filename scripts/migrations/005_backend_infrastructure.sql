@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS error_logs (
 ALTER TABLE error_logs ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Enable read access for all users" ON "public"."error_logs"
-AS PERMISSIVE FOR READ
+AS PERMISSIVE FOR SELECT
 TO public
 USING (true);
 
