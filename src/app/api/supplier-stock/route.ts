@@ -91,8 +91,6 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             }
 
             const { error } = await supabase
-                .from('supplier_stock_lots')
-                // @ts-expect-error - ignore supabase update type
                 .update({
                     quantity,
                     stock_date: stockDate,
