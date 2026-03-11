@@ -5,7 +5,6 @@ import { createServerClient } from '@/lib/supabase';
 export async function GET() {
     const supabase = createServerClient();
 
-    // @ts-expect-error - ignoring type definition for now
     const { data: settings, error } = await supabase.from('app_settings').select('*');
 
     if (error) {
@@ -38,7 +37,6 @@ export async function PUT(request: Request) {
     // const { data: { user } } = await supabase.auth.getUser();
     // if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // @ts-expect-error - ignoring type definition for now
     const { data, error } = await supabase.from('app_settings').upsert({
         key,
         value,
