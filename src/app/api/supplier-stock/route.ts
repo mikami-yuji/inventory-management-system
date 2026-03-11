@@ -91,6 +91,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             }
 
             const { error } = await supabase
+                .from('supplier_stock_lots')
                 .update({
                     quantity,
                     stock_date: stockDate,
