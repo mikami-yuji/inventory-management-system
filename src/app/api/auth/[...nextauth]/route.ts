@@ -26,10 +26,10 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 try {
-                    const supabase = createServerClient()
+                    const supabaseAuth = createServerClient()
 
                     // Supabaseの認証を使用
-                    const { data, error } = await supabase.auth.signInWithPassword({
+                    const { data, error } = await supabaseAuth.auth.signInWithPassword({
                         email: credentials.email,
                         password: credentials.password
                     })
@@ -39,8 +39,10 @@ export const authOptions: NextAuthOptions = {
                         throw new Error(`AUTH_ERROR: ${error?.message || 'No user'}`)
                     }
 
+                    const supabaseDb = createServerClient()
+
                     // ユーザー情報を取得
-                    const { data: userData, error: dbError } = await supabase
+                    const { data: userData, error: dbError } = await supabaseDb
                         .from('users')
                         .select('id, name, email, role')
                         .eq('id', data.user.id)
