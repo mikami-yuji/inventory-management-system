@@ -34,5 +34,3 @@ CREATE INDEX IF NOT EXISTS idx_wip_status ON work_in_progress (status);
 -- inventory table
 CREATE INDEX IF NOT EXISTS idx_inventory_product_id ON inventory (product_id);
 
--- activity_log table
-CREATE INDEX IF NOT EXISTS idx_activity_log_created_at ON activity_log (created_at DESC);
