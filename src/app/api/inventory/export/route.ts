@@ -1,6 +1,6 @@
 /**
- * 在庫チE�EタCSVエクスポ�EチEPI
- * GET /api/inventory/export ↁECSVファイルをダウンローチE
+ * 在庫データCSVエクスポートAPI
+ * GET /api/inventory/export -> CSVファイルをダウンロード
  */
 
 import { NextResponse } from 'next/server';
@@ -9,7 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// CSVエスケーチE
+// CSVエスケープ
 function escapeCSV(value: unknown): string {
     if (value === null || value === undefined) return '';
     const str = String(value);
@@ -23,7 +23,7 @@ export async function GET(): Promise<Response> {
     try {
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        // 在庫チE�Eタと啁E��名を結合取征E
+        // 在庫データと商品名を結合取得
         const { data: inventory, error } = await supabase
             .from('inventory')
             .select(`
@@ -52,11 +52,11 @@ export async function GET(): Promise<Response> {
             'updated_at',
         ];
 
-        // CSVチE�Eタ生�E
+        // CSVデータ生成
         const rows = [headers.join(',')];
 
         for (const item of inventory || []) {
-            // 結合されたproductsチE�Eタを取征E
+            // 結合されたproductsデータを取得
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const product = (item as Record<string, any>).products as Record<string, unknown> | null;
             const row = [
@@ -77,7 +77,7 @@ export async function GET(): Promise<Response> {
         const bom = '\uFEFF';
         const csv = bom + rows.join('\n');
 
-        // ファイル名（日付形式！E
+        // ファイル名（日付形式）
         const now = new Date();
         const dateStr = now.toISOString().slice(0, 10);
         const filename = `inventory_${dateStr}.csv`;
