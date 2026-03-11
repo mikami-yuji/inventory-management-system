@@ -31,7 +31,8 @@ export default function LoginPage(): React.ReactNode {
             })
 
             if (result?.error) {
-                setError('メールアドレスまたはパスワードが正しくありません')
+                console.error("Login result error:", result.error)
+                setError(`ログインに失敗しました: ${result.error}`)
             } else {
                 router.push('/dashboard')
                 router.refresh()
