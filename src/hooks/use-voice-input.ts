@@ -3,29 +3,29 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 
 // Web Speech API interfaces
-interface SpeechRecognitionResult {
+type SpeechRecognitionResult = {
     isFinal: boolean;
     [index: number]: {
         transcript: string;
     };
 }
 
-interface SpeechRecognitionResultList {
+type SpeechRecognitionResultList = {
     [index: number]: SpeechRecognitionResult;
     length: number;
 }
 
-interface SpeechRecognitionEvent extends Event {
+type SpeechRecognitionEvent = Event & {
     resultIndex: number;
     results: SpeechRecognitionResultList;
 }
 
-interface SpeechRecognitionErrorEvent extends Event {
+type SpeechRecognitionErrorEvent = Event & {
     error: string;
     message: string;
 }
 
-interface SpeechRecognition extends EventTarget {
+type SpeechRecognition = EventTarget & {
     continuous: boolean;
     interimResults: boolean;
     lang: string;
@@ -38,11 +38,11 @@ interface SpeechRecognition extends EventTarget {
     onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void) | null;
 }
 
-interface SpeechRecognitionConstructor {
+type SpeechRecognitionConstructor = {
     new(): SpeechRecognition;
 }
 
-interface IWindow extends Window {
+type IWindow = Window & {
     webkitSpeechRecognition?: SpeechRecognitionConstructor;
     SpeechRecognition?: SpeechRecognitionConstructor;
 }

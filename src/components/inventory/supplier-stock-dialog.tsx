@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -21,7 +22,7 @@ import { useWIPActions } from "@/hooks/use-work-in-progress";
 import { Package, ArrowRight, Loader2, Plus, Trash2, Save, X, Edit2 } from "lucide-react";
 import toast from "react-hot-toast";
 
-interface SupplierStockDialogProps {
+type SupplierStockDialogProps = {
     product: Product | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;

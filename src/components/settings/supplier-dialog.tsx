@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 
-interface SupplierDialogProps {
+type SupplierDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     supplier?: Supplier | null;

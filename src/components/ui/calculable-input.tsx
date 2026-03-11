@@ -2,8 +2,7 @@ import * as React from "react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
-export interface CalculableInputProps
-    extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
+export type CalculableInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & {
     value?: number | string | null;
     onChange?: (value: number | string | null) => void;
     // If true, always formats the output as a string (useful for form states expecting string)

@@ -22,7 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 
-interface ProductStatusDialogProps {
+type ProductStatusDialogProps = {
     product: Product | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;

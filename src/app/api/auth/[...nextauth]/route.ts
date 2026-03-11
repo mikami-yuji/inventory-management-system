@@ -66,7 +66,8 @@ export const authOptions: NextAuthOptions = {
                         email: user.email,
                         role: user.role
                     }
-                } catch (error: any) {
+                } catch (err: unknown) {
+                    const error = err as Error;
                     console.error('認証処理エラー:', error)
                     if (error.message && (error.message.startsWith('AUTH_ERROR') || error.message.startsWith('DB_ERROR') || error.message === 'USER_BLOCKED')) {
                         throw error

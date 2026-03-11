@@ -4,7 +4,7 @@ import { Resend } from 'resend';
 // if env variables are not present at build time
 
 
-interface OrderEmailParams {
+type OrderEmailParams = {
     orderId: string;
     clientName: string;
     items: {
@@ -19,7 +19,7 @@ interface OrderEmailParams {
     toAddresses?: string[];
 }
 
-interface WIPEmailParams {
+type WIPEmailParams = {
     userName: string;
     items: {
         productName: string;

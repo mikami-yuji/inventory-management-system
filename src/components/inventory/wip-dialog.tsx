@@ -26,7 +26,7 @@ import { toast } from "react-hot-toast";
 import type { WorkInProgress, DeliveryAddress } from "@/types";
 import { X } from "lucide-react";
 
-interface WIPDialogProps {
+type WIPDialogProps = {
     product: Product | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -192,6 +192,7 @@ export function WIPDialog({
                 expected_completion: expectedCompletion,
                 term_type: termType,
                 note: note || undefined,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
             result = { success };
         } else {

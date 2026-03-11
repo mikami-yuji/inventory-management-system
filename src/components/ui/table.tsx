@@ -4,7 +4,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-interface TableProps extends React.ComponentProps<"table"> {
+type TableProps = React.ComponentProps<"table"> & {
   wrapperClassName?: string;
   children?: React.ReactNode;
 }

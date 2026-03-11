@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 
 const qrcodeRegionId = "html5qr-code-full-region";
 
-interface BarcodeScannerProps {
+type BarcodeScannerProps = {
     fps?: number;
     qrbox?: number;
     aspectRatio?: number;

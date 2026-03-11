@@ -62,8 +62,8 @@ export function useInventory(options?: {
 
             // APIレスポンスのスネークケースをキャメルケースに変換
             const mappedData = (result.data || [])
-                .filter((item: Record<string, any>) => item.product !== undefined)
-                .map((item: Record<string, any>) => ({
+                .filter((item: Record<string, unknown>) => item.product !== undefined)
+                .map((item: Record<string, unknown>) => ({
                     productId: (item.product_id as string) || (item.productId as string) || '',
                     quantity: item.quantity as number,
                     updatedAt: (item.updated_at as string) || (item.updatedAt as string) || '',

@@ -1,4 +1,4 @@
-
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -23,7 +23,7 @@ import { orderSheetService } from "@/lib/services/order-sheet-service";
 // Let's use a simpler heuristic for now: max(0, safe_stock - current_stock)
 // Or just let user input.
 
-interface OrderSheetDialogProps {
+type OrderSheetDialogProps = {
     products: Product[];
     inventoryMap: Map<string, number>;
     trigger?: React.ReactNode;

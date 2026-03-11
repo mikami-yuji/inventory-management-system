@@ -1,0 +1,203 @@
+﻿
+> inventory-system@0.5.0 test
+> jest --coverage
+
+node.exe : PASS src/lib/servic
+es/__tests__/inventory-service
+.test.ts
+発生場所 行:1 文字:1
++ & "C:\Program Files\nodejs/n
+ode.exe" "C:\Program Files\nod
+ejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo            
+  : NotSpecifi    ed: (PASS sr
+c/lib/    se...service.test.  
+  ts:String) [], Rem    oteExc
+eption
+    + FullyQualifiedEr    rorI
+d : NativeComm    andError
+ 
+  getPitch
+    竏・10kg莉･荳翫・570mm繧定ｿ斐☆ (1 m
+s)
+    竏・8kg莉･荳・0kg譛ｪ貅縺ｯ530mm繧定ｿ
+斐☆
+    竏・5kg莉･荳・kg譛ｪ貅縺ｯ470mm繧定ｿ斐
+☆ (1 ms)
+    竏・4kg莉･荳・kg譛ｪ貅縺ｯ450mm繧定ｿ斐
+☆
+    竏・3kg莉･荳・kg譛ｪ貅縺ｯ400mm繧定ｿ斐
+☆
+    竏・2kg莉･荳・kg譛ｪ貅縺ｯ350mm繧定ｿ斐
+☆ (1 ms)
+    竏・2kg譛ｪ貅縺ｯ280mm繧定ｿ斐☆
+  isRollBag
+    竏・RZ繧貞性繧蠖｢迥ｶ縺ｯtrue繧定ｿ斐☆
+    竏・RA繧貞性繧蠖｢迥ｶ縺ｯtrue繧定ｿ斐☆
+    竏・蜈ｨ隗坦・ｺ繧貞性繧蠖｢迥ｶ縺ｯtrue繧定ｿ
+斐☆
+    竏・蜈ｨ隗坦・｡繧貞性繧蠖｢迥ｶ縺ｯtrue繧定ｿ
+斐☆
+    竏・繝ｭ繝ｼ繝ｫ陲九〒縺ｪ縺・ｽ｢迥ｶ縺ｯfalse
+繧定ｿ斐☆
+    竏・undefined繧・ull縺ｮ蝣ｴ蜷医・fal
+se繧定ｿ斐☆
+  getApproxBagCount
+    竏・10kg (繝斐ャ繝・70mm) 繝・ヵ繧ｩ繝ｫ
+繝・00m縺ｮ蝣ｴ蜷育ｴ・01譫壹ｒ霑斐☆ (1 ms)
+    竏・5kg (繝斐ャ繝・70mm) 繝・ヵ繧ｩ繝ｫ繝
+・00m縺ｮ蝣ｴ蜷育ｴ・51譫壹ｒ霑斐☆
+    竏・3kg (繝斐ャ繝・00mm) 繝・ヵ繧ｩ繝ｫ繝
+・00m縺ｮ蝣ｴ蜷・000譫壹ｒ霑斐☆
+    竏・2kg (繝斐ャ繝・50mm) 繝・ヵ繧ｩ繝ｫ繝
+・00m縺ｮ蝣ｴ蜷育ｴ・142譫壹ｒ霑斐☆
+    竏・1kg (繝斐ャ繝・80mm) 繝・ヵ繧ｩ繝ｫ繝
+・00m縺ｮ蝣ｴ蜷育ｴ・428譫壹ｒ霑斐☆
+    竏・10kg (繝斐ャ繝・70mm) 300m謖・ｮ
+壹・蝣ｴ蜷育ｴ・26譫壹ｒ霑斐☆
+    竏・5kg (繝斐ャ繝・70mm) 300m謖・ｮ壹
+・蝣ｴ蜷育ｴ・38譫壹ｒ霑斐☆ (1 ms)
+    竏・3kg (繝斐ャ繝・00mm) 300m謖・ｮ壹
+・蝣ｴ蜷・50譫壹ｒ霑斐☆
+
+--------------------------------|---------|----------|---------|---------|--------------------------
+File                            | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s        
+--------------------------------|---------|----------|---------|---------|--------------------------
+All files                       |    0.78 |     0.54 |    0.42 |    0.57 |                          
+ src                            |       0 |        0 |       0 |       0 |                          
+  middleware.ts                 |       0 |        0 |       0 |       0 | 7-35                     
+ src/app/api/activity-log       |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 6-171                    
+ src/app/api/auth/[...nextauth] |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 1-107                    
+ src/app/api/auth/register      |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 6-93                     
+ src/app/api/delivery-addresses |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 2-181                    
+ src/app/api/incoming-stock     |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 6-235                    
+ src/app/api/inventory          |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 1-165                    
+ src/app/api/inventory/export   |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 6-95                     
+ src/app/api/inventory/history  |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 2-56                     
+ src/app/api/inventory/import   |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 7-121                    
+ src/app/api/orders             |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 1-302                    
+ src/app/api/products           |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 6-262                    
+ src/app/api/products/export    |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 6-110                    
+ src/app/api/products/import    |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 6-146                    
+ src/app/api/sale-events        |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 1-466                    
+ src/app/api/settings           |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 2-52                     
+ src/app/api/stock-history      |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 1-119                    
+ src/app/api/supplier-stock     |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 1-252                    
+ src/app/api/suppliers          |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 2-98                     
+ src/app/api/users              |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 1-70                     
+ src/app/api/work-in-progress   |       0 |        0 |       0 |       0 |                          
+  route.ts                      |       0 |        0 |       0 |       0 | 1-388                    
+ src/components                 |       0 |        0 |       0 |       0 |                          
+  error-boundary.tsx            |       0 |        0 |       0 |       0 | 3-83                     
+ src/components/events          |       0 |        0 |       0 |       0 |                          
+  sale-event-calendar.tsx       |       0 |        0 |       0 |       0 | 3-168                    
+ src/components/inventory       |       0 |        0 |       0 |       0 |                          
+  bags-inventory-cards.tsx      |       0 |        0 |       0 |       0 | 3-362                    
+  bags-inventory-table.tsx      |       0 |        0 |       0 |       0 | 3-538                    
+  barcode-scanner.tsx           |       0 |        0 |       0 |       0 | 3-72                     
+  incoming-stock-dialog.tsx     |       0 |        0 |       0 |       0 | 8-251                    
+  order-sheet-dialog.tsx        |       0 |        0 |       0 |       0 | 4-186                    
+  product-analysis-dialog.tsx   |       0 |        0 |       0 |       0 | 3-177                    
+  product-detail-dialog.tsx     |       0 |        0 |       0 |       0 | 3-342                    
+  product-form-dialog.tsx       |       0 |        0 |       0 |       0 | 8-612                    
+  product-status-dialog.tsx     |       0 |        0 |       0 |       0 | 3-176                    
+  stock-adjustment-dialog.tsx   |       0 |        0 |       0 |       0 | 3-198                    
+  stock-allocation-dialog.tsx   |       0 |        0 |       0 |       0 | 3-183                    
+  stock-check-confirmation.tsx  |       0 |        0 |       0 |       0 | 3-116                    
+  stock-level-bar.tsx           |       0 |        0 |       0 |       0 | 9-44                     
+  supplier-stock-dialog.tsx     |       0 |        0 |       0 |       0 | 3-453                    
+  wip-dialog.tsx                |       0 |        0 |       0 |       0 | 3-708                    
+ src/components/layout          |       0 |        0 |       0 |       0 |                          
+  navbar.tsx                    |       0 |        0 |       0 |       0 | 3-35                     
+  sidebar.tsx                   |       0 |        0 |       0 |       0 | 3-162                    
+ src/components/orders          |       0 |        0 |       0 |       0 |                          
+  delivery-address-dialog.tsx   |       0 |        0 |       0 |       0 | 4-198                    
+ src/components/providers       |       0 |      100 |       0 |       0 |                          
+  auth-provider.tsx             |       0 |      100 |       0 |       0 | 3-10                     
+  theme-provider.tsx            |       0 |      100 |       0 |       0 | 8-11                     
+ src/components/settings        |       0 |        0 |       0 |       0 |                          
+  supplier-dialog.tsx           |       0 |        0 |       0 |       0 | 4-174                    
+  user-role-dialog.tsx          |       0 |        0 |       0 |       0 | 4-91                     
+ src/components/ui              |       0 |        0 |       0 |       0 |                          
+  alert-dialog.tsx              |       0 |      100 |     100 |       0 | 3-140                    
+  alert.tsx                     |       0 |      100 |       0 |       0 | 1-66                     
+  avatar.tsx                    |       0 |      100 |       0 |       0 | 3-53                     
+  badge.tsx                     |       0 |        0 |       0 |       0 | 1-46                     
+  button.tsx                    |       0 |        0 |       0 |       0 | 1-62                     
+  calculable-input.tsx          |       0 |        0 |       0 |       0 | 1-114                    
+  calendar.tsx                  |       0 |        0 |       0 |       0 | 3-220                    
+  card.tsx                      |       0 |      100 |       0 |       0 | 1-91                     
+  checkbox.tsx                  |       0 |      100 |     100 |       0 | 3-30                     
+  dialog.tsx                    |       0 |        0 |       0 |       0 | 3-142                    
+  dropdown-menu.tsx             |       0 |        0 |       0 |       0 | 3-256                    
+  image-upload.tsx              |       0 |        0 |       0 |       0 | 8-223                    
+  input.tsx                     |       0 |      100 |       0 |       0 | 1-21                     
+  label.tsx                     |       0 |      100 |       0 |       0 | 3-24                     
+  popover.tsx                   |       0 |        0 |       0 |       0 | 3-48                     
+  radio-group.tsx               |       0 |      100 |       0 |       0 | 3-44                     
+  select.tsx                    |       0 |        0 |       0 |       0 | 3-189                    
+  separator.tsx                 |       0 |        0 |     100 |       0 | 3-31                     
+  sheet.tsx                     |       0 |        0 |       0 |       0 | 3-138                    
+  slider.tsx                    |       0 |      100 |     100 |       0 | 3-28                     
+  switch.tsx                    |       0 |      100 |     100 |       0 | 3-29                     
+  table.tsx                     |       0 |      100 |       0 |       0 | 3-120                    
+  tabs.tsx                      |       0 |      100 |       0 |       0 | 3-66                     
+  textarea.tsx                  |       0 |      100 |       0 |       0 | 1-18                     
+  tooltip.tsx                   |       0 |        0 |     100 |       0 | 3-30                     
+ src/contexts                   |       0 |        0 |       0 |       0 |                          
+  cart-context.tsx              |       0 |        0 |       0 |       0 | 3-128                    
+  notification-context.tsx      |       0 |        0 |       0 |       0 | 3-110                    
+ src/hooks                      |       0 |        0 |       0 |       0 |                          
+  use-auth-session.ts           |       0 |        0 |       0 |       0 | 8-48                     
+  use-delivery-addresses.ts     |       0 |        0 |       0 |       0 | 3-122                    
+  use-favorites.ts              |       0 |        0 |       0 |       0 | 8-61                     
+  use-incoming-stock.ts         |       0 |        0 |       0 |       0 | 3-152                    
+  use-inventory.ts              |       0 |        0 |       0 |       0 | 3-205                    
+  use-masters.ts                |       0 |        0 |       0 |       0 | 3-42                     
+  use-products.ts               |       0 |        0 |       0 |       0 | 3-43                     
+  use-sale-events.ts            |       0 |        0 |       0 |       0 | 3-250                    
+  use-stock-history-analysis.ts |       0 |        0 |       0 |       0 | 8-161                    
+  use-stock-history.ts          |       0 |        0 |       0 |       0 | 3-66                     
+  use-supplier-stock-lots.ts    |       0 |        0 |       0 |       0 | 1-41                     
+  use-voice-input.ts            |       0 |        0 |       0 |       0 | 3-134                    
+  use-work-in-progress.ts       |       0 |        0 |       0 |       0 | 3-365                    
+ src/lib                        |       0 |        0 |       0 |       0 |                          
+  api-client.ts                 |       0 |        0 |       0 |       0 | 10-99                    
+  mail.ts                       |       0 |        0 |       0 |       0 | 1-222                    
+  supabase.ts                   |       0 |      100 |       0 |       0 | 1-13                     
+  utils.ts                      |       0 |      100 |       0 |       0 | 1-5                      
+ src/lib/services               |    23.3 |    18.18 |      15 |   19.44 |                          
+  inventory-service.ts          |   48.43 |    27.27 |   42.85 |   42.85 | 30-34,50-51,56-57,67-110 
+  order-sheet-service.ts        |       0 |        0 |       0 |       0 | 2-49                     
+  stock-history-service.ts      |       0 |        0 |       0 |       0 | 9-131                    
+ src/lib/utils                  |       0 |        0 |       0 |       0 |                          
+  date.ts                       |       0 |        0 |       0 |       0 | 8-34                     
+--------------------------------|---------|----------|---------|---------|--------------------------
+Test Suites: 1 passed, 1 total
+Tests:       21 passed, 21 tot
+al
+Snapshots:   0 total
+Time:        3.501 s
+Ran all test suites.

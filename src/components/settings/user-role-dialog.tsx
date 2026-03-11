@@ -23,7 +23,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 
-interface UserRoleDialogProps {
+type UserRoleDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     user?: User | null;

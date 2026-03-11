@@ -30,6 +30,7 @@ import { ProductStatusDialog } from "@/components/inventory/product-status-dialo
 import type { SaleEvent } from "@/hooks/use-sale-events";
 import type { SupplierStockLot } from "@/types";
 import { useAppSettings } from "@/hooks/use-masters";
+import Image from "next/image";
 
 
 
@@ -128,9 +129,11 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                     className="cursor-pointer hover:opacity-80 transition-opacity"
                                                     onClick={() => setSelectedImage({ url: product.imageUrl!, alt: product.name, name: product.name })}
                                                 >
-                                                    <img
+                                                    <Image
                                                         src={product.imageUrl}
                                                         alt={product.name}
+                                                        width={48}
+                                                        height={48}
                                                         className="w-12 h-12 object-cover rounded border"
                                                     />
                                                 </div>
@@ -498,10 +501,12 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 <X className="h-6 w-6" />
                             </Button>
 
-                            <img
+                            <Image
                                 src={selectedImage.url}
                                 alt={selectedImage.alt}
-                                className="max-w-full max-h-[75vh] object-contain rounded-md"
+                                width={1200}
+                                height={900}
+                                className="w-auto h-auto max-w-full max-h-[75vh] object-contain rounded-md"
                             />
 
                             <div className="mt-6 flex flex-col items-center gap-4 w-full">

@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { isRollBag } from "@/lib/services";
 import { supabase } from "@/lib/supabase";
 import imageCompression from "browser-image-compression";
+import Image from "next/image";
 
 type BagsInventoryCardsProps = {
     products: Product[];
@@ -194,10 +195,11 @@ function ProductCard({
             {/* 画像エリア - クリックで詳細でもいいが、フォームを開くのが無難 */}
             <div className="relative aspect-[4/3] bg-slate-100 group">
                 {product.imageUrl ? (
-                    <img
+                    <Image
                         src={product.imageUrl}
                         alt={product.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground bg-slate-50">

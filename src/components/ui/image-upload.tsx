@@ -10,6 +10,7 @@ import imageCompression from "browser-image-compression";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, X, ImageIcon } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type ImageUploadProps = {
@@ -160,9 +161,12 @@ export function ImageUpload({
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                 >
-                    <img
+                    <Image
                         src={preview}
                         alt="プレビュー"
+                        width={128}
+                        height={128}
+                        unoptimized
                         className={cn(
                             "w-32 h-32 object-cover rounded-lg border",
                             isDragging && "opacity-50 blur-sm"

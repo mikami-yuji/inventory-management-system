@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import type { Product, IncomingStock } from "@/types";
 import { useIncomingStock } from "@/hooks/use-incoming-stock";
 
-interface IncomingStockDialogProps {
+type IncomingStockDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     product: Product | null;
