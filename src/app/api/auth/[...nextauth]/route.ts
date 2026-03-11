@@ -44,7 +44,8 @@ export const authOptions: NextAuthOptions = {
                         .from('users')
                         .select('id, name, email, role')
                         .eq('id', data.user.id)
-                        .single()
+                        .limit(1)
+                        .maybeSingle()
 
                     if (dbError || !userData) {
                         console.error('DB Fetchエラー:', dbError?.message)
