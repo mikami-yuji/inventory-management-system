@@ -5,6 +5,7 @@ import { sendOrderNotificationEmail } from '@/lib/mail'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { z } from 'zod'
+import { logError } from '@/lib/logger'
 
 // GET: 発注一覧を取得
 export async function GET(): Promise<NextResponse> {
@@ -73,7 +74,11 @@ export async function GET(): Promise<NextResponse> {
         return NextResponse.json(orders)
 
     } catch (error) {
-        console.error('サーバーエラー:', error)
+        await logError({
+            route: '/api/orders',
+            method: 'GET',
+            error,
+        })
         return NextResponse.json({ error: 'サーバーエラーが発生しました' }, { status: 500 })
     }
 }
@@ -196,7 +201,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                         // 現状のstock_historyは type: 'check' | 'incoming' | 'adjustment' | 'order'
                         // outgoingがない。 'order' を使う。
                         // StockHistory type definition: type: 'check' | 'incoming' | 'adjustment' | 'order'
-                        // quantity: その時点の在庫数 (snapshot) なのか、変動数なのか？
+                        // quantity: number; // その時点の在庫数 (snapshot) なのか、変動数なのか？
                         // Definition says: quantity: number; // その時点の在庫数
                         // changeAmount?: number; // 増減数
 
@@ -324,7 +329,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         })
 
     } catch (error) {
-        console.error('サーバーエラー:', error)
+        await logError({
+            route: '/api/orders',
+            method: 'POST',
+            error,
+        })
         return NextResponse.json(
             { data: null, error: 'サーバーエラーが発生しました' },
             { status: 500 }

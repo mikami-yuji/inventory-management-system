@@ -4,6 +4,7 @@ import type { Product, Inventory, ApiResponse } from '@/types'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { z } from 'zod'
+import { logError } from '@/lib/logger'
 
 // 在庫データ（商品情報含む）の型
 type InventoryWithProduct = Inventory & {
@@ -79,7 +80,11 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
         return NextResponse.json({ data: result, error: null })
     } catch (error) {
-        console.error('サーバーエラー:', error)
+        await logError({
+            route: '/api/inventory',
+            method: 'GET',
+            error,
+        })
         return NextResponse.json(
             { data: null, error: 'サーバーエラーが発生しました' },
             { status: 500 }

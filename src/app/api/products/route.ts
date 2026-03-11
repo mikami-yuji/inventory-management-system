@@ -8,6 +8,7 @@ import { createServerClient } from '@/lib/supabase';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { z } from 'zod';
+import { logError } from '@/lib/logger';
 // GET: 商品一覧を取得
 export async function GET(): Promise<NextResponse> {
     try {
@@ -78,10 +79,14 @@ export async function GET(): Promise<NextResponse> {
             });
         }
 
-        return NextResponse.json(products);
-    } catch (err) {
-        console.error('Unexpected error:', err);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({ data: products, error: null });
+    } catch (error) {
+        await logError({
+            route: '/api/products',
+            method: 'GET',
+            error,
+        })
+        return NextResponse.json({ data: null, error: 'サーバーエラーが発生しました' }, { status: 500 });
     }
 }
 
@@ -187,14 +192,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
 
         return NextResponse.json({
-            id: data?.id,
-            name: data?.name,
-            sku: data?.sku,
-            category: data?.category,
+            data: {
+                id: data?.id,
+                name: data?.name,
+                sku: data?.sku,
+                category: data?.category,
+            },
+            error: null
         }, { status: 201 });
-    } catch (err) {
-        console.error('Unexpected error:', err);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    } catch (error) {
+        await logError({
+            route: '/api/products',
+            method: 'POST',
+            error,
+        })
+        return NextResponse.json({ data: null, error: '商品登録でエラーが発生しました。' }, { status: 500 });
     }
 }
 
@@ -281,9 +293,13 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
             name: data.name,
             message: '商品を更新しました',
         });
-    } catch (err) {
-        console.error('Unexpected error:', err);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    } catch (error) {
+        await logError({
+            route: '/api/products',
+            method: 'PUT',
+            error,
+        })
+        return NextResponse.json({ data: null, error: '商品更新でエラーが発生しました。' }, { status: 500 });
     }
 }
 
@@ -318,9 +334,12 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
         }
 
         return NextResponse.json({ message: '商品を削除しました' });
-    } catch (err) {
-        console.error('Unexpected error:', err);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    } catch (error) {
+        await logError({
+            route: '/api/products',
+            method: 'DELETE',
+            error,
+        })
+        return NextResponse.json({ data: null, error: '商品削除でエラーが発生しました。' }, { status: 500 });
     }
 }
-
