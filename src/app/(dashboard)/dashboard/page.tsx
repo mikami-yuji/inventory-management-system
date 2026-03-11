@@ -76,7 +76,8 @@ export default function DashboardPage(): React.ReactElement {
             const res = await fetch('/api/orders');
             if (res.ok) {
                 const data = await res.json();
-                setOrders(data.slice(0, 5));
+                const safeData = Array.isArray(data) ? data : (Array.isArray(data.data) ? data.data : []);
+                setOrders(safeData.slice(0, 5));
             }
         } catch (err) {
             console.error('発注データ取得エラー:', err);
@@ -105,8 +106,10 @@ export default function DashboardPage(): React.ReactElement {
         try {
             const res = await fetch('/api/incoming-stock');
             if (res.ok) {
-                const data = await res.json();
-                setIncomingStock((data || []).slice(0, 5).map((item: {
+                const result = await res.json();
+                const rawData = result.data || result;
+                const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
+                setIncomingStock(safeData.slice(0, 5).map((item: {
                     id: string;
                     product_id?: string;
                     productId?: string;
@@ -144,7 +147,8 @@ export default function DashboardPage(): React.ReactElement {
             const res = await fetch('/api/sale-events');
             if (res.ok) {
                 const result = await res.json();
-                const data = result.data || [];
+                const rawData = result.data || result;
+                const data = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
                 const activeOrUpcoming = data.filter((e: { status: string }) => e.status === 'active' || e.status === 'upcoming');
 
                 // 直近の日付順（開始日の昇順）にソートして最大3件

@@ -50,7 +50,9 @@ export function useStockHistory(options?: {
                 throw new Error(result.error);
             }
 
-            setHistory(result.data || []);
+            const rawData = result.data || result;
+            const safeData = Array.isArray(rawData) ? rawData : (Array.isArray((rawData as any).data) ? (rawData as any).data : []);
+            setHistory(safeData);
             loadedRef.current = true;
         } catch (err) {
             setError(err instanceof Error ? err.message : '在庫履歴の取得に失敗しました');

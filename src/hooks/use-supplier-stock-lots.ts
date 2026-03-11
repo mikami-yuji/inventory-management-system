@@ -18,7 +18,9 @@ export function useSupplierStockLots() {
             if (result.error) {
                 throw new Error(result.error);
             }
-            setLots(result.data || []);
+            const rawData = result.data || result;
+            const safeData = Array.isArray(rawData) ? rawData : (Array.isArray((rawData as any).data) ? (rawData as any).data : []);
+            setLots(safeData);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'エラーが発生しました');
             console.error('Supplier stock lots fetch error:', err);

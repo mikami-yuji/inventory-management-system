@@ -72,7 +72,9 @@ export function useSaleEvents(options?: { status?: string }): {
                 throw new Error(result.error);
             }
 
-            setEvents(result.data || []);
+            const rawData = result.data || result;
+            const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
+            setEvents(safeData);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'データの取得に失敗しました');
         } finally {
