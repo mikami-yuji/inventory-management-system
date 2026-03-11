@@ -85,7 +85,6 @@ export function ImageUpload({
 
             onChange(publicUrlData.publicUrl);
         } catch (err) {
-            console.error("アップロードエラー:", err);
             setError(err instanceof Error ? err.message : "アップロードに失敗しました");
             setPreview(value || null);
         } finally {

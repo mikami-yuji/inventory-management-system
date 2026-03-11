@@ -76,7 +76,6 @@ export function ProductStatusDialog({
 
             console.log("Response status:", response.status);
             const result = await response.json();
-            console.log("Response data:", result);
 
             if (!response.ok) {
                 throw new Error(result.error || "保存に失敗しました");

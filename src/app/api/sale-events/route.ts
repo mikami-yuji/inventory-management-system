@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import type { ApiResponse, SaleEvent } from '@/types'
 import { getJSTNow } from '@/lib/utils/date'
+import { logError } from '@/lib/logger'
 
 // GET: 特売イベント一覧を取得
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<SaleEvent[]>>> {
@@ -39,8 +40,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             });
 
             if (eventsToComplete.length > 0) {
-                console.log(`Auto-completing ${eventsToComplete.length} events`);
-
                 for (const event of eventsToComplete) {
                     // 1. ステータスを完了に更新
                     await supabase
@@ -66,7 +65,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
             if (eventsToActive.length > 0) {
                 const ids = eventsToActive.map(e => e.id);
-                console.log(`Auto-activating ${ids.length} events:`, ids);
                 await supabase
                     .from('sale_events')
                     .update({ status: 'active' })
@@ -111,10 +109,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         if (error) {
             // テーブルが存在しない場合は空配列を返す
             if (error.code === '42P01' || error.message.includes('does not exist')) {
-                console.log('sale_eventsテーブルが存在しません。空配列を返します。')
                 return NextResponse.json({ data: [], error: null })
             }
-            console.error('特売イベント取得エラー:', error)
+            await logError({ route: '/api/sale-events', method: 'GET', error });
             return NextResponse.json({ data: null, error: error.message }, { status: 500 })
         }
 
@@ -171,7 +168,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
         return NextResponse.json({ data: events, error: null })
     } catch (error) {
-        console.error('サーバーエラー:', error)
+        await logError({ route: '/api/sale-events', method: 'GET', error });
         return NextResponse.json(
             { data: null, error: 'サーバーエラーが発生しました' },
             { status: 500 }

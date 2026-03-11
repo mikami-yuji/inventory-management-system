@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { logError } from './logger';
 
 // resend instance is initialized on demand to prevent build errors
 // if env variables are not present at build time
@@ -53,11 +54,8 @@ export async function sendOrderNotificationEmail(params: OrderEmailParams) {
     }
 
     if (toAddresses.length === 0) {
-        console.error('Email sending failed: No valid recipient addresses (MAIL_ADMIN_ADDRESS or users with receives_order_emails=true)');
         return { success: false, error: 'No recipients found' };
     }
-
-    console.log(`Attempting to send order notification email to: ${toAddresses.join(', ')} from: ${fromAddress}`);
 
     try {
         const itemsListHtml = params.items.map(item => `
@@ -128,20 +126,19 @@ export async function sendOrderNotificationEmail(params: OrderEmailParams) {
         });
 
         if (error) {
-            console.error('Error sending email via Resend:', error);
+            await logError({ route: 'mail/sendOrderNotificationEmail', method: 'INTERNAL', error });
             return { success: false, error };
         }
 
         return { success: true, data };
     } catch (error) {
-        console.error('Unexpected error sending email:', error);
+        await logError({ route: 'mail/sendOrderNotificationEmail', method: 'INTERNAL', error });
         return { success: false, error };
     }
 }
 
 export async function sendWIPNotificationEmail(params: WIPEmailParams) {
     if (!process.env.RESEND_API_KEY) {
-        console.warn('RESEND_API_KEY is not set. Skipping WIP notification email.');
         return;
     }
 
@@ -159,7 +156,6 @@ export async function sendWIPNotificationEmail(params: WIPEmailParams) {
     }
 
     if (toAddresses.length === 0) {
-        console.error('Email sending failed: No valid recipient addresses for WIP notification');
         return { success: false, error: 'No recipients found' };
     }
 
@@ -212,13 +208,13 @@ export async function sendWIPNotificationEmail(params: WIPEmailParams) {
         });
 
         if (error) {
-            console.error('Error sending WIP email via Resend:', error);
+            await logError({ route: 'mail/sendWIPNotificationEmail', method: 'INTERNAL', error });
             return { success: false, error };
         }
 
         return { success: true, data };
     } catch (error) {
-        console.error('Unexpected error sending WIP email:', error);
+        await logError({ route: 'mail/sendWIPNotificationEmail', method: 'INTERNAL', error });
         return { success: false, error };
     }
 }
