@@ -36,23 +36,24 @@ export const authOptions: NextAuthOptions = {
 
                     if (error || !data.user) {
                         console.error('認証エラー:', error?.message)
-                        return null
+                        throw new Error(`AUTH_ERROR: ${error?.message || 'No user'}`)
                     }
 
                     // ユーザー情報を取得
-                    const { data: userData } = await supabase
+                    const { data: userData, error: dbError } = await supabase
                         .from('users')
                         .select('id, name, email, role')
                         .eq('id', data.user.id)
                         .single()
 
-                    if (!userData) {
-                        return null
+                    if (dbError || !userData) {
+                        console.error('DB Fetchエラー:', dbError?.message)
+                        throw new Error(`DB_ERROR: ${dbError?.message || 'No profile in public.users'}`)
                     }
 
                     if (userData.role === 'blocked') {
                         console.error('ブロックされたユーザーのログイン試行:', userData.email)
-                        return null
+                        throw new Error('USER_BLOCKED')
                     }
 
                     const user = userData as UserData
@@ -62,9 +63,12 @@ export const authOptions: NextAuthOptions = {
                         email: user.email,
                         role: user.role
                     }
-                } catch (error) {
+                } catch (error: any) {
                     console.error('認証処理エラー:', error)
-                    return null
+                    if (error.message && (error.message.startsWith('AUTH_ERROR') || error.message.startsWith('DB_ERROR') || error.message === 'USER_BLOCKED')) {
+                        throw error
+                    }
+                    throw new Error(`SYSTEM_ERROR: ${error.message}`)
                 }
             }
         })
