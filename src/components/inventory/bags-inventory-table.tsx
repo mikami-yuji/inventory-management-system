@@ -425,10 +425,10 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 >
                                                     {isInCart ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
                                                 </Button>
-                                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onAnalyze?.(product); }} title="在庫分析">
+                                                <Button size="sm" variant="ghost" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onAnalyze?.(product); }} title="在庫分析">
                                                     <LineChart className="h-3 w-3 text-blue-600" />
                                                 </Button>
-                                                <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); onEdit(product); }} title="編集">
+                                                <Button size="sm" variant="outline" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(product); }} title="編集">
                                                     <Pencil className="h-4 w-4 mr-2" />
                                                     編集
                                                 </Button>

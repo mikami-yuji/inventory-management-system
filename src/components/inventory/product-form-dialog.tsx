@@ -148,7 +148,7 @@ export function ProductFormDialog({
     }, [product, open]);
 
     const handleChange = (field: keyof ProductFormData, value: string): void => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData((prev: ProductFormData) => ({ ...prev, [field]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -294,7 +294,7 @@ export function ProductFormDialog({
                         <Label htmlFor="supplierId">仕入先</Label>
                         <Select
                             value={formData.supplierId}
-                            onValueChange={(val) => handleChange("supplierId", val)}
+                            onValueChange={(val: string) => handleChange("supplierId", val)}
                         >
                             <SelectTrigger>
                                 <SelectValue placeholder="仕入先を選択" />
@@ -315,7 +315,7 @@ export function ProductFormDialog({
                         <Label htmlFor="category">カテゴリ *</Label>
                         <Select
                             value={formData.category}
-                            onValueChange={(val) => handleChange("category", val)}
+                            onValueChange={(val: string) => handleChange("category", val)}
                         >
                             <SelectTrigger>
                                 <SelectValue placeholder="カテゴリを選択" />
@@ -400,16 +400,6 @@ export function ProductFormDialog({
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="metersPerRoll">1巻あたりのm数 (ロール品用)</Label>
-                            <CalculableInput
-                                id="metersPerRoll"
-                                value={formData.metersPerRoll === "0" ? "" : formData.metersPerRoll}
-                                onChange={(value) => handleChange("metersPerRoll", value === null ? "" : String(value))}
-                                placeholder="例: 1000"
-                                stringifyOnComplete
-                            />
-                        </div>
                     </div>
 
                     {/* 1巻あたりメートル数 */}
@@ -417,7 +407,7 @@ export function ProductFormDialog({
                         <Label htmlFor="metersPerRoll">1巻あたりメートル数</Label>
                         <Select
                             value={formData.metersPerRoll}
-                            onValueChange={(val) => handleChange("metersPerRoll", val)}
+                            onValueChange={(val: string) => handleChange("metersPerRoll", val)}
                         >
                             <SelectTrigger>
                                 <SelectValue placeholder="400m" />

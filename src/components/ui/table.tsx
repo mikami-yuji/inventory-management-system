@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 
 interface TableProps extends React.ComponentProps<"table"> {
   wrapperClassName?: string;
+  children?: React.ReactNode;
 }
 
 function Table({ className, wrapperClassName, ...props }: TableProps) {
