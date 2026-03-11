@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-03-11
+
+### Security
+- **API認証基盤の強化**: `getServerSession` を各APIルート (`/api/inventory`, `/api/orders`, `/api/products`, `/api/suppliers`, `/api/work-in-progress`) に導入し、未認証アクセスを遮断。
+- **入力バリデーションの導入**: `Zod` スキーマを全主要APIのPOST/PUT/PATCHエンドポイントに適用し、不正なペイロードによるデータ更新を防止。
+- **依存関係の脆弱性対応**: `npm audit fix` によりパッケージの既知の脆弱性を自動修正。
+- **ビルド・型チェックの厳密化**: `any` 型キャストを排除し、厳格な型推論による安全なAPI実装に変更。
 ## [0.6.0] - 2026-02-22
 
 ### Added

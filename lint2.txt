@@ -6,25 +6,12 @@
 C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\coverage\lcov-report\block-navigation.js
   1:1  warning  Unused eslint-disable directive (no problems were reported)
 
-C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\inventory\route.ts
-   18:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  102:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  111:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
 C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\orders\route.ts
-  102:54   error    Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
-  111:33   error    Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
   116:81   warning  'deliveryName' is assigned a value but never used     @typescript-eslint/no-unused-vars
   116:95   warning  'deliveryAddress' is assigned a value but never used  @typescript-eslint/no-unused-vars
   116:112  warning  'deliveryPhone' is assigned a value but never used    @typescript-eslint/no-unused-vars
 
 C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\app\api\work-in-progress\route.ts
-   33:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  128:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  137:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  192:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  200:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  209:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   402:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   410:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
@@ -84,6 +71,6 @@ C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・�
 C:\Users\隕倶ｸ翫逾仙昇\.gemini\antigravity\蝨ｨ蠎ｫ邂｡逅・す繧ｹ繝・Β\src\hooks\use-voice-input.ts
   115:8  warning  React Hook useEffect has a missing dependency: 'options'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
 
-笨・49 problems (13 errors, 36 warnings)
+笨・38 problems (2 errors, 36 warnings)
   0 errors and 2 warnings potentially fixable with the `--fix` option.
 

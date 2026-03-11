@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import { sendWIPNotificationEmail } from '@/lib/mail'
 import type { ApiResponse } from '@/types'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { z } from 'zod'
 
 // 仕掛中アイテムの型
 type WorkInProgress = {
@@ -25,6 +28,11 @@ type WorkInProgress = {
 // GET: 仕掛中一覧を取得
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<WorkInProgress[]>>> {
     try {
+        const session = await getServerSession(authOptions)
+        if (!session?.user) {
+            return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
+        }
+
         const supabase = createServerClient()
         const { searchParams } = new URL(request.url)
         const status = searchParams.get('status') || 'in_progress'
@@ -103,38 +111,46 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     }
 }
 
+const createWipSchema = z.object({
+    productId: z.string().min(1),
+    quantity: z.number().positive(),
+    startedAt: z.string().min(1),
+    expectedCompletion: z.string().optional().nullable(),
+    note: z.string().optional().nullable(),
+    termType: z.string().optional()
+})
+
 // POST: 仕掛中を登録
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<WorkInProgress>>> {
     try {
+        const session = await getServerSession(authOptions)
+        if (!session?.user) {
+            return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
+        }
+
         const supabase = createServerClient()
         const body = await request.json()
 
-        const { productId, quantity, startedAt, expectedCompletion, note } = body as {
-            productId: string
-            quantity: number
-            startedAt: string
-            expectedCompletion?: string
-            note?: string
-        }
-
-        // バリデーション
-        if (!productId || !quantity || !startedAt) {
+        const validated = createWipSchema.safeParse(body)
+        if (!validated.success) {
             return NextResponse.json(
-                { data: null, error: '必須項目が不足しています' },
+                { data: null, error: '入力内容が不正です。' },
                 { status: 400 }
             )
         }
+        
+        const validData = validated.data;
 
         const { data, error } = await supabase
             .from('work_in_progress')
             .insert({
-                product_id: productId,
-                quantity,
-                started_at: startedAt,
-                expected_completion: expectedCompletion || null,
-                note: note || null,
+                product_id: validData.productId,
+                quantity: validData.quantity,
+                started_at: validData.startedAt,
+                expected_completion: validData.expectedCompletion || null,
+                note: validData.note || null,
                 status: 'in_progress',
-                term_type: (body as Record<string, unknown>).termType || 'specific'
+                term_type: validData.termType || 'specific'
             })
             .select()
             .single()
@@ -154,25 +170,41 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 }
 
+const patchWipSchema = z.object({
+    id: z.string().min(1),
+    action: z.enum(['to_incoming', 'to_supplier', 'cancel', 'update', 'confirm', 'arrange_shipping']),
+    data: z.record(z.string(), z.unknown()).optional(),
+    confirmedDate: z.string().optional(),
+    quantity: z.number().optional(),
+    supplierStock: z.number().optional(),
+    schedules: z.array(z.object({
+        expectedDate: z.string(),
+        quantity: z.number(),
+        note: z.string().optional()
+    })).optional()
+})
+
 // PATCH: 仕掛中を更新（完了など）
 export async function PATCH(request: NextRequest): Promise<NextResponse<ApiResponse<{ success: boolean }>>> {
     try {
+        const session = await getServerSession(authOptions)
+        if (!session?.user) {
+            return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
+        }
+
         const supabase = createServerClient()
         const body = await request.json()
 
-        const { id, action, data: updateData, confirmedDate, quantity, supplierStock } = body as {
-            id: string
-            action: 'to_incoming' | 'to_supplier' | 'cancel' | 'update' | 'confirm' | 'arrange_shipping'
-            data?: Record<string, unknown>
-            confirmedDate?: string
-            quantity?: number
-            supplierStock?: number
+        const validated = patchWipSchema.safeParse(body)
+        if (!validated.success) {
+            return NextResponse.json({ data: null, error: '入力内容が不正です。' }, { status: 400 })
         }
+        
+        const validData = validated.data;
+        const { id, action, data: updateData, confirmedDate, quantity, supplierStock, schedules } = validData;
 
         if (action === 'to_incoming') {
             // 仕掛品を入荷予定へ移動（複数スケジュール・部分移動対応）
-            const { schedules } = body as { schedules: { expectedDate: string, quantity: number, note?: string }[] }
-
             if (!schedules || !Array.isArray(schedules) || schedules.length === 0) {
                 return NextResponse.json({ data: null, error: '入荷予定のスケジュールが必要です' }, { status: 400 })
             }
@@ -365,6 +397,11 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
 // DELETE: 仕掛中を削除
 export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResponse<{ success: boolean }>>> {
     try {
+        const session = await getServerSession(authOptions)
+        if (!session?.user) {
+            return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
+        }
+
         const supabase = createServerClient()
         const { searchParams } = new URL(request.url)
         const id = searchParams.get('id')

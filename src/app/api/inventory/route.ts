@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import type { Product, Inventory, ApiResponse } from '@/types'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { z } from 'zod'
 
 // 在庫データ（商品情報含む）の型
 type InventoryWithProduct = Inventory & {
@@ -10,6 +13,11 @@ type InventoryWithProduct = Inventory & {
 // GET: 在庫一覧を取得
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<InventoryWithProduct[]>>> {
     try {
+        const session = await getServerSession(authOptions)
+        if (!session?.user) {
+            return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
+        }
+
         const supabase = createServerClient()
         const { searchParams } = new URL(request.url)
 
@@ -79,26 +87,33 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     }
 }
 
+const updateInventorySchema = z.object({
+    productId: z.string().min(1, 'Product ID is required'),
+    quantity: z.number(),
+    type: z.enum(['incoming', 'outgoing', 'adjustment']),
+    note: z.string().optional()
+})
+
 // PATCH: 在庫を更新（入出庫処理）
 export async function PATCH(request: NextRequest): Promise<NextResponse<ApiResponse<Inventory>>> {
     try {
+        const session = await getServerSession(authOptions)
+        if (!session?.user) {
+            return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
+        }
+
         const supabase = createServerClient()
         const body = await request.json()
 
-        const { productId, quantity, type, note } = body as {
-            productId: string
-            quantity: number
-            type: 'incoming' | 'outgoing' | 'adjustment'
-            note?: string
-        }
-
-        // バリデーション
-        if (!productId || quantity === undefined || !type) {
+        const validated = updateInventorySchema.safeParse(body);
+        if (!validated.success) {
             return NextResponse.json(
-                { data: null, error: '必須パラメータが不足しています' },
+                { data: null, error: '入力値が不正です。' },
                 { status: 400 }
             )
         }
+
+        const { productId, quantity, type, note } = validated.data;
 
         // 現在の在庫を取得
         const { data: currentInventoryData, error: fetchError } = await supabase

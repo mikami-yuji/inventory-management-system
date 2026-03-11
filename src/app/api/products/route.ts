@@ -5,9 +5,17 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { z } from 'zod';
 // GET: 商品一覧を取得
 export async function GET(): Promise<NextResponse> {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const supabaseClient = createServerClient();
         const { data, error } = await supabaseClient
             .from('products')
@@ -77,51 +85,86 @@ export async function GET(): Promise<NextResponse> {
     }
 }
 
+const createProductSchema = z.object({
+    name: z.string().min(1, '商品名は必須です'),
+    category: z.string().min(1, 'カテゴリは必須です'),
+    sku: z.string().optional().nullable(),
+    productCode: z.string().optional().nullable(),
+    janCode: z.string().optional().nullable(),
+    weight: z.number().optional().nullable(),
+    shape: z.string().optional().nullable(),
+    material: z.string().optional().nullable(),
+    unitPrice: z.number().optional(),
+    printingCost: z.number().optional(),
+    imageUrl: z.string().optional().nullable(),
+    description: z.string().optional().nullable(),
+    minStockAlert: z.string().or(z.number()).optional().nullable(),
+    prefix: z.string().optional().nullable(),
+    origin: z.string().optional().nullable(),
+    variety: z.string().optional().nullable(),
+    suffix: z.string().optional().nullable(),
+    productType: z.string().optional().nullable(),
+    statusOverride: z.string().optional().nullable(),
+    discontinuedDate: z.string().optional().nullable(),
+    frontColorCount: z.number().or(z.string()).optional().nullable(),
+    backColorCount: z.number().or(z.string()).optional().nullable(),
+    totalColorCount: z.number().or(z.string()).optional().nullable(),
+    supplierId: z.string().optional().nullable(),
+    metersPerRoll: z.number().or(z.string()).optional().nullable()
+});
+
 // POST: 商品を新規作成
 export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const supabaseClient = createServerClient();
         const body = await request.json();
 
-        // バリデーション
-        if (!body.name || !body.category) {
+        const validated = createProductSchema.safeParse(body);
+        if (!validated.success) {
             return NextResponse.json(
-                { error: '商品名とカテゴリは必須です' },
+                { error: '入力値が不正です。', details: validated.error.flatten() },
                 { status: 400 }
             );
         }
 
+        const validData = validated.data;
+
         // Supabase用のフォーマットに変換
         const productData = {
-            name: body.name,
-            sku: body.sku || null, // 受注№
-            product_code: body.productCode || null, // 商品コード
-            jan_code: body.janCode || null,
-            weight: body.weight || null,
-            shape: body.shape || null,
-            material: body.material || null,
-            unit_price: body.unitPrice || 0,
-            printing_cost: body.printingCost || 0,
-            category: body.category,
-            image_url: body.imageUrl || null,
-            description: body.description || null,
+            name: validData.name,
+            sku: validData.sku || null, // 受注№
+            product_code: validData.productCode || null, // 商品コード
+            jan_code: validData.janCode || null,
+            weight: validData.weight || null,
+            shape: validData.shape || null,
+            material: validData.material || null,
+            unit_price: validData.unitPrice || 0,
+            printing_cost: validData.printingCost || 0,
+            category: validData.category,
+            image_url: validData.imageUrl || null,
+            description: validData.description || null,
             status: 'active',
-            min_stock_alert: body.minStockAlert === null || body.minStockAlert === ''
+            min_stock_alert: validData.minStockAlert === null || validData.minStockAlert === ''
                 ? null
-                : Number(body.minStockAlert),
+                : Number(validData.minStockAlert),
             // 商品名構造化フィールド
-            prefix: body.prefix || null,
-            origin: body.origin || null,
-            variety: body.variety || null,
-            suffix: body.suffix || null,
-            product_type: body.productType || null,
-            status_override: body.statusOverride || 'normal',
-            discontinued_date: body.discontinuedDate || null,
-            front_color_count: body.frontColorCount !== undefined && body.frontColorCount !== null ? Number(body.frontColorCount) : null,
-            back_color_count: body.backColorCount !== undefined && body.backColorCount !== null ? Number(body.backColorCount) : null,
-            total_color_count: body.totalColorCount !== undefined && body.totalColorCount !== null ? Number(body.totalColorCount) : null,
-            supplier_id: body.supplierId === 'none' || !body.supplierId ? null : body.supplierId,
-            meters_per_roll: body.metersPerRoll !== undefined && body.metersPerRoll !== null ? Number(body.metersPerRoll) : 400,
+            prefix: validData.prefix || null,
+            origin: validData.origin || null,
+            variety: validData.variety || null,
+            suffix: validData.suffix || null,
+            product_type: validData.productType || null,
+            status_override: validData.statusOverride || 'normal',
+            discontinued_date: validData.discontinuedDate || null,
+            front_color_count: validData.frontColorCount !== undefined && validData.frontColorCount !== null && validData.frontColorCount !== '' ? Number(validData.frontColorCount) : null,
+            back_color_count: validData.backColorCount !== undefined && validData.backColorCount !== null && validData.backColorCount !== '' ? Number(validData.backColorCount) : null,
+            total_color_count: validData.totalColorCount !== undefined && validData.totalColorCount !== null && validData.totalColorCount !== '' ? Number(validData.totalColorCount) : null,
+            supplier_id: validData.supplierId === 'none' || !validData.supplierId ? null : validData.supplierId,
+            meters_per_roll: validData.metersPerRoll !== undefined && validData.metersPerRoll !== null && validData.metersPerRoll !== '' ? Number(validData.metersPerRoll) : 400,
         };
 
         const { data, error } = await supabaseClient
@@ -155,52 +198,65 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 }
 
+const updateProductSchema = createProductSchema.partial().extend({
+    id: z.string().min(1, '商品IDは必須です'),
+    status: z.string().optional()
+});
+
 // PUT: 商品を更新
 export async function PUT(request: NextRequest): Promise<NextResponse> {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const supabaseClient = createServerClient();
         const body = await request.json();
 
-        if (!body.id) {
+        const validated = updateProductSchema.safeParse(body);
+        if (!validated.success) {
             return NextResponse.json(
-                { error: '商品IDは必須です' },
+                { error: '入力値が不正です。', details: validated.error.flatten() },
                 { status: 400 }
             );
         }
 
+        const validData = validated.data;
+
         // 更新データを準備
         const updateData: Record<string, unknown> = {};
-        if (body.name !== undefined) updateData.name = body.name;
-        if (body.sku !== undefined) updateData.sku = body.sku;
-        if (body.productCode !== undefined) updateData.product_code = body.productCode;
-        if (body.janCode !== undefined) updateData.jan_code = body.janCode;
-        if (body.weight !== undefined) updateData.weight = body.weight;
-        if (body.shape !== undefined) updateData.shape = body.shape;
-        if (body.material !== undefined) updateData.material = body.material;
-        if (body.unitPrice !== undefined) updateData.unit_price = body.unitPrice;
-        if (body.printingCost !== undefined) updateData.printing_cost = body.printingCost;
-        if (body.category !== undefined) updateData.category = body.category;
-        if (body.imageUrl !== undefined) updateData.image_url = body.imageUrl;
-        if (body.description !== undefined) updateData.description = body.description;
-        if (body.minStockAlert !== undefined) {
-            updateData.min_stock_alert = body.minStockAlert === null || body.minStockAlert === ''
+        if (validData.name !== undefined) updateData.name = validData.name;
+        if (validData.sku !== undefined) updateData.sku = validData.sku;
+        if (validData.productCode !== undefined) updateData.product_code = validData.productCode;
+        if (validData.janCode !== undefined) updateData.jan_code = validData.janCode;
+        if (validData.weight !== undefined) updateData.weight = validData.weight;
+        if (validData.shape !== undefined) updateData.shape = validData.shape;
+        if (validData.material !== undefined) updateData.material = validData.material;
+        if (validData.unitPrice !== undefined) updateData.unit_price = validData.unitPrice;
+        if (validData.printingCost !== undefined) updateData.printing_cost = validData.printingCost;
+        if (validData.category !== undefined) updateData.category = validData.category;
+        if (validData.imageUrl !== undefined) updateData.image_url = validData.imageUrl;
+        if (validData.description !== undefined) updateData.description = validData.description;
+        if (validData.minStockAlert !== undefined) {
+            updateData.min_stock_alert = validData.minStockAlert === null || validData.minStockAlert === ''
                 ? null
-                : Number(body.minStockAlert);
+                : Number(validData.minStockAlert);
         }
         // 商品名構造化フィールド
-        if (body.prefix !== undefined) updateData.prefix = body.prefix;
-        if (body.origin !== undefined) updateData.origin = body.origin;
-        if (body.variety !== undefined) updateData.variety = body.variety;
-        if (body.suffix !== undefined) updateData.suffix = body.suffix;
-        if (body.productType !== undefined) updateData.product_type = body.productType;
-        if (body.statusOverride !== undefined) updateData.status_override = body.statusOverride;
-        if (body.status !== undefined) updateData.status = body.status;
-        if (body.discontinuedDate !== undefined) updateData.discontinued_date = body.discontinuedDate;
-        if (body.frontColorCount !== undefined) updateData.front_color_count = body.frontColorCount !== null ? Number(body.frontColorCount) : null;
-        if (body.backColorCount !== undefined) updateData.back_color_count = body.backColorCount !== null ? Number(body.backColorCount) : null;
-        if (body.totalColorCount !== undefined) updateData.total_color_count = body.totalColorCount !== null ? Number(body.totalColorCount) : null;
-        if (body.supplierId !== undefined) updateData.supplier_id = body.supplierId === 'none' || !body.supplierId ? null : body.supplierId;
-        if (body.metersPerRoll !== undefined) updateData.meters_per_roll = body.metersPerRoll !== null ? Number(body.metersPerRoll) : 400;
+        if (validData.prefix !== undefined) updateData.prefix = validData.prefix;
+        if (validData.origin !== undefined) updateData.origin = validData.origin;
+        if (validData.variety !== undefined) updateData.variety = validData.variety;
+        if (validData.suffix !== undefined) updateData.suffix = validData.suffix;
+        if (validData.productType !== undefined) updateData.product_type = validData.productType;
+        if (validData.statusOverride !== undefined) updateData.status_override = validData.statusOverride;
+        if (validData.status !== undefined) updateData.status = validData.status;
+        if (validData.discontinuedDate !== undefined) updateData.discontinued_date = validData.discontinuedDate;
+        if (validData.frontColorCount !== undefined) updateData.front_color_count = validData.frontColorCount !== null && validData.frontColorCount !== '' ? Number(validData.frontColorCount) : null;
+        if (validData.backColorCount !== undefined) updateData.back_color_count = validData.backColorCount !== null && validData.backColorCount !== '' ? Number(validData.backColorCount) : null;
+        if (validData.totalColorCount !== undefined) updateData.total_color_count = validData.totalColorCount !== null && validData.totalColorCount !== '' ? Number(validData.totalColorCount) : null;
+        if (validData.supplierId !== undefined) updateData.supplier_id = validData.supplierId === 'none' || !validData.supplierId ? null : validData.supplierId;
+        if (validData.metersPerRoll !== undefined) updateData.meters_per_roll = validData.metersPerRoll !== null && validData.metersPerRoll !== '' ? Number(validData.metersPerRoll) : 400;
 
         const { data: updateResults, error } = await supabaseClient
             .from('products')
@@ -234,6 +290,11 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
 // DELETE: 商品を削除（論理削除）
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const supabaseClient = createServerClient();
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');

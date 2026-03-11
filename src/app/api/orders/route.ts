@@ -2,10 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import type { ApiResponse, Order } from '@/types'
 import { sendOrderNotificationEmail } from '@/lib/mail'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { z } from 'zod'
 
 // GET: 発注一覧を取得
 export async function GET(): Promise<NextResponse> {
     try {
+        const session = await getServerSession(authOptions)
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
         const supabase = createServerClient()
 
         // 発注データを取得（新しい順）
@@ -71,23 +79,41 @@ export async function GET(): Promise<NextResponse> {
 }
 
 
+const createOrderSchema = z.object({
+    items: z.array(z.object({
+        productId: z.string().min(1),
+        quantity: z.number().positive()
+    })).min(1, 'At least one item is required'),
+    clientId: z.string().min(1),
+    type: z.enum(['standard', 'special_event']),
+    eventId: z.string().optional().nullable(),
+    shipmentSource: z.enum(['inventory', 'supplier', 'wip']),
+    preferredShape: z.string().optional(),
+    deliveryName: z.string().optional(),
+    deliveryAddress: z.string().optional(),
+    deliveryPhone: z.string().optional()
+})
+
 // POST: 新規発注作成
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<Order>>> {
     try {
+        const session = await getServerSession(authOptions)
+        if (!session?.user) {
+            return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
+        }
+
         const supabase = createServerClient()
         const body = await request.json()
 
-        const { items, clientId, type, eventId, shipmentSource, preferredShape } = body as {
-            items: { productId: string, quantity: number }[]
-            clientId: string
-            type: 'standard' | 'special_event'
-            eventId?: string
-            shipmentSource: 'inventory' | 'supplier' | 'wip'
-            preferredShape?: string
-            deliveryName?: string
-            deliveryAddress?: string
-            deliveryPhone?: string
+        const validated = createOrderSchema.safeParse(body);
+        if (!validated.success) {
+            return NextResponse.json(
+                { data: null, error: '入力値が不正です。' },
+                { status: 400 }
+            )
         }
+
+        const { items, clientId, type, eventId, shipmentSource, preferredShape, deliveryName, deliveryAddress, deliveryPhone } = validated.data;
 
         // 1. 発注レコード作成
         const { data: orderData, error: orderError } = await supabase
