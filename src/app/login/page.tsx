@@ -95,11 +95,18 @@ export default function LoginPage(): React.ReactNode {
                             {isLoading ? 'ログイン中...' : 'ログイン'}
                         </Button>
 
-                        <div className="text-center text-sm text-muted-foreground">
-                            アカウントをお持ちでない方は{' '}
-                            <Link href="/register" className="text-primary hover:underline">
-                                新規登録
-                            </Link>
+                        <div className="flex flex-col space-y-2 text-center text-sm text-muted-foreground mt-4 pt-4 border-t">
+                            <div>
+                                <Link href="/forgot-password" className="text-primary hover:underline font-medium">
+                                    パスワードを忘れた方はこちら
+                                </Link>
+                            </div>
+                            <div>
+                                アカウントをお持ちでない方は{' '}
+                                <Link href="/register" className="text-primary hover:underline">
+                                    新規登録
+                                </Link>
+                            </div>
                         </div>
                     </form>
                 </CardContent>
