@@ -47,8 +47,10 @@ export default function OrdersPage(): React.ReactElement {
                 throw new Error('発注データの取得に失敗しました');
             }
 
-            const data = await response.json();
-            setOrders(data);
+            const result = await response.json();
+            const rawData = result.data || result;
+            const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
+            setOrders(safeData);
         } catch (err) {
             console.error('発注データ取得エラー:', err);
             setError(err instanceof Error ? err.message : '予期しないエラーが発生しました');
@@ -68,13 +70,17 @@ export default function OrdersPage(): React.ReactElement {
         try {
             const productsRes = await fetch('/api/products');
             if (productsRes.ok) {
-                const products = await productsRes.json();
-                order.items.forEach(item => {
-                    const product = products.find((p: { id: string }) => p.id === item.productId);
-                    if (product) {
-                        addToCart(product, item.quantity);
-                    }
-                });
+                const result = await productsRes.json();
+                const products = Array.isArray(result) ? result : (Array.isArray(result.data) ? result.data : []);
+                
+                if (Array.isArray(products)) {
+                    order.items.forEach(item => {
+                        const product = products.find((p: { id: string }) => p.id === item.productId);
+                        if (product) {
+                            addToCart(product, item.quantity);
+                        }
+                    });
+                }
             }
         } catch (err) {
             console.error('再発注エラー:', err);

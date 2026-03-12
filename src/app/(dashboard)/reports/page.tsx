@@ -68,8 +68,10 @@ export default function ReportsPage(): React.ReactElement {
         try {
             const res = await fetch('/api/orders');
             if (res.ok) {
-                const data = await res.json();
-                setOrders(data || []);
+                const result = await res.json();
+                const rawData = result.data || result;
+                const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
+                setOrders(safeData);
             }
         } catch (err) {
             console.error('発注データ取得エラー:', err);

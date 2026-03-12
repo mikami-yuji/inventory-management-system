@@ -12,7 +12,7 @@ export function useSuppliers(activeOnly: boolean = true) {
     const { data, error, isLoading, mutate } = useSWR(`/api/suppliers?active=${activeOnly}`, fetcher);
 
     return {
-        suppliers: (data?.data as Supplier[]) || [],
+        suppliers: Array.isArray(data?.data) ? data.data : [],
         isLoading,
         isError: error,
         mutate,
@@ -26,7 +26,7 @@ export function useUsers() {
     const { data, error, isLoading, mutate } = useSWR('/api/users', fetcher);
 
     return {
-        users: (data?.data as User[]) || [],
+        users: Array.isArray(data?.data) ? data.data : [],
         isLoading,
         isError: error,
         mutate,
