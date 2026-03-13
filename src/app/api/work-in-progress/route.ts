@@ -316,6 +316,23 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 }
 
                 // WIPレコードは削除しない（フロントエンドで残数管理）
+
+                // productsテーブルの合計在庫(supplier_stock)を同期
+                const productId = (wipItem as Record<string, unknown>).product_id as string;
+                const { data: lotSum } = await supabase
+                    .from('supplier_stock_lots')
+                    .select('quantity')
+                    .eq('product_id', productId);
+                
+                const total = (lotSum || []).reduce((sum, lot) => sum + (lot.quantity || 0), 0);
+
+                await supabase
+                    .from('products')
+                    .update({ 
+                        supplier_stock: total,
+                        supplier_stock_updated_at: new Date().toISOString()
+                    })
+                    .eq('id', productId);
             }
         } else if (action === 'confirm') {
             // 納期確定処理
