@@ -48,7 +48,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
           image_url,
           description,
           status,
-          min_stock_alert
+          min_stock_alert,
+          supplier_stock,
+          supplier_stock_updated_at
         )
       `)
 

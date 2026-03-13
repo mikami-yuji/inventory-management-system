@@ -277,7 +277,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             if (wipItem) {
                 const product = Array.isArray(wipItem.products) ? wipItem.products[0] : wipItem.products;
                 // supplier_stock_lotsテーブルにロットとして追加
-                await supabase
+                const { error: lotInsertError } = await supabase
                     .from('supplier_stock_lots')
                     .insert({
                         product_id: (wipItem as Record<string, unknown>).product_id,
@@ -285,6 +285,38 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                         quantity: quantity,
                         note: '仕掛品からの移動'
                     } as Record<string, unknown>)
+
+                if (lotInsertError) {
+                    console.error('ロット登録エラー:', lotInsertError)
+                    return NextResponse.json({ data: null, error: 'ロット情報の登録に失敗しました' }, { status: 500 })
+                }
+
+                // productsテーブルの合計在庫(supplier_stock)を同期
+                const productId = (wipItem as Record<string, unknown>).product_id as string;
+                const { data: lotSum, error: sumError } = await supabase
+                    .from('supplier_stock_lots')
+                    .select('quantity')
+                    .eq('product_id', productId);
+                
+                if (sumError) {
+                    console.error('在庫集計エラー:', sumError)
+                    return NextResponse.json({ data: null, error: '在庫の再計算に失敗しました' }, { status: 500 })
+                }
+
+                const total = (lotSum || []).reduce((sum, lot) => sum + (lot.quantity || 0), 0);
+
+                const { error: productUpdateError } = await supabase
+                    .from('products')
+                    .update({ 
+                        supplier_stock: total,
+                        supplier_stock_updated_at: new Date().toISOString()
+                    })
+                    .eq('id', productId);
+
+                if (productUpdateError) {
+                    console.error('商品在庫更新エラー:', productUpdateError)
+                    return NextResponse.json({ data: null, error: '商品情報の更新に失敗しました' }, { status: 500 })
+                }
 
                 // メール通知用のデータ収集
                 try {
@@ -316,23 +348,8 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 }
 
                 // WIPレコードは削除しない（フロントエンドで残数管理）
-
-                // productsテーブルの合計在庫(supplier_stock)を同期
-                const productId = (wipItem as Record<string, unknown>).product_id as string;
-                const { data: lotSum } = await supabase
-                    .from('supplier_stock_lots')
-                    .select('quantity')
-                    .eq('product_id', productId);
-                
-                const total = (lotSum || []).reduce((sum, lot) => sum + (lot.quantity || 0), 0);
-
-                await supabase
-                    .from('products')
-                    .update({ 
-                        supplier_stock: total,
-                        supplier_stock_updated_at: new Date().toISOString()
-                    })
-                    .eq('id', productId);
+            } else {
+                return NextResponse.json({ data: null, error: '対象の仕掛品データが見つかりません' }, { status: 404 })
             }
         } else if (action === 'confirm') {
             // 納期確定処理
