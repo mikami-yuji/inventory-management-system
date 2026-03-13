@@ -9,7 +9,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
  * 仕入先データを取得するフック
  */
 export function useSuppliers(activeOnly: boolean = true) {
-    const { data, error, isLoading, mutate } = useSWR(`/api/suppliers?active=${activeOnly}`, fetcher);
+    const { data, error, isLoading, mutate } = useSWR<{ data: Supplier[] }>(`/api/suppliers?active=${activeOnly}`, fetcher);
 
     return {
         suppliers: Array.isArray(data?.data) ? data.data : [],
@@ -23,7 +23,7 @@ export function useSuppliers(activeOnly: boolean = true) {
  * ユーザー一覧を取得するフック
  */
 export function useUsers() {
-    const { data, error, isLoading, mutate } = useSWR('/api/users', fetcher);
+    const { data, error, isLoading, mutate } = useSWR<{ data: User[] }>('/api/users', fetcher);
 
     return {
         users: Array.isArray(data?.data) ? data.data : [],
