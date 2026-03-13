@@ -211,57 +211,59 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
 
             const { data: wipItem } = await supabase
                 .from('work_in_progress')
-                .select('product_id, products(name, unit)')
+                .select('product_id, products(name)')
                 .eq('id', id)
                 .single<Record<string, unknown>>()
 
-            if (wipItem) {
-                const product = Array.isArray(wipItem.products) ? wipItem.products[0] : wipItem.products;
-                const insertData = schedules.map(s => ({
-                    product_id: (wipItem as Record<string, unknown>).product_id,
-                    expected_date: s.expectedDate,
-                    quantity: s.quantity,
-                    note: s.note || '仕掛品からの予定'
-                }))
+            if (!wipItem) {
+                return NextResponse.json({ data: null, error: '対象の仕掛品データが見つかりません' }, { status: 404 })
+            }
 
-                const { error: insertError } = await supabase
-                    .from('incoming_stock')
-                    .insert(insertData as Record<string, unknown>[])
+            const product = Array.isArray(wipItem.products) ? wipItem.products[0] : wipItem.products;
+            const insertData = schedules.map(s => ({
+                product_id: (wipItem as Record<string, unknown>).product_id,
+                expected_date: s.expectedDate,
+                quantity: s.quantity,
+                note: s.note || '仕掛品からの予定'
+            }))
 
-                if (insertError) {
-                    console.error('入荷予定登録エラー:', insertError)
-                    return NextResponse.json({ data: null, error: insertError.message }, { status: 500 })
+            const { error: insertError } = await supabase
+                .from('incoming_stock')
+                .insert(insertData as Record<string, unknown>[])
+
+            if (insertError) {
+                console.error('入荷予定登録エラー:', insertError)
+                return NextResponse.json({ data: null, error: insertError.message }, { status: 500 })
+            }
+
+            // メール通知用のデータ収集
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                const userName = user?.user_metadata?.name || user?.email || 'システム利用ユーザー';
+
+                // 管理者（通知ON）の取得
+                const { data: admins } = await supabase
+                    .from('users')
+                    .select('email')
+                    .eq('receives_order_emails', true);
+
+                const toAddresses = (admins || []).map((a: Record<string, unknown>) => a.email as string).filter(Boolean);
+
+                if (toAddresses.length > 0) {
+                    await sendWIPNotificationEmail({
+                        userName,
+                        toAddresses,
+                        items: schedules.map(s => ({
+                            productName: (product as Record<string, unknown>)?.name as string || '不明な商品',
+                            quantity: s.quantity,
+                            unit: '個', // 製品マスタにunitがないため一旦固定
+                            destination: `入荷予定 (${s.expectedDate})`,
+                            note: s.note
+                        }))
+                    });
                 }
-
-                // メール通知用のデータ収集
-                try {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    const userName = user?.user_metadata?.name || user?.email || 'システム利用ユーザー';
-
-                    // 管理者（通知ON）の取得
-                    const { data: admins } = await supabase
-                        .from('users')
-                        .select('email')
-                        .eq('receives_order_emails', true);
-
-                    const toAddresses = (admins || []).map((a: Record<string, unknown>) => a.email as string).filter(Boolean);
-
-                    if (toAddresses.length > 0) {
-                        await sendWIPNotificationEmail({
-                            userName,
-                            toAddresses,
-                            items: schedules.map(s => ({
-                                productName: (product as Record<string, unknown>)?.name as string || '不明な商品',
-                                quantity: s.quantity,
-                                unit: (product as Record<string, unknown>)?.unit as string || '個',
-                                destination: `入荷予定 (${s.expectedDate})`,
-                                note: s.note
-                            }))
-                        });
-                    }
-                } catch (emailError) {
-                    console.error('WIP通知メール送信失敗:', emailError);
-                }
+            } catch (emailError) {
+                console.error('WIP通知メール送信失敗:', emailError);
             }
         } else if (action === 'to_supplier') {
             // 仕掛品をメーカー在庫へ移動（部分移動対応・WIPレコードは削除しない）
@@ -270,87 +272,88 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             }
             const { data: wipItem } = await supabase
                 .from('work_in_progress')
-                .select('product_id, products(name, unit)')
+                .select('product_id, products(name)')
                 .eq('id', id)
                 .single<Record<string, unknown>>()
 
-            if (wipItem) {
-                const product = Array.isArray(wipItem.products) ? wipItem.products[0] : wipItem.products;
-                // supplier_stock_lotsテーブルにロットとして追加
-                const { error: lotInsertError } = await supabase
-                    .from('supplier_stock_lots')
-                    .insert({
-                        product_id: (wipItem as Record<string, unknown>).product_id,
-                        stock_date: new Date().toISOString().split('T')[0],
-                        quantity: quantity,
-                        note: '仕掛品からの移動'
-                    } as Record<string, unknown>)
-
-                if (lotInsertError) {
-                    console.error('ロット登録エラー:', lotInsertError)
-                    return NextResponse.json({ data: null, error: 'ロット情報の登録に失敗しました' }, { status: 500 })
-                }
-
-                // productsテーブルの合計在庫(supplier_stock)を同期
-                const productId = (wipItem as Record<string, unknown>).product_id as string;
-                const { data: lotSum, error: sumError } = await supabase
-                    .from('supplier_stock_lots')
-                    .select('quantity')
-                    .eq('product_id', productId);
-                
-                if (sumError) {
-                    console.error('在庫集計エラー:', sumError)
-                    return NextResponse.json({ data: null, error: '在庫の再計算に失敗しました' }, { status: 500 })
-                }
-
-                const total = (lotSum || []).reduce((sum, lot) => sum + (lot.quantity || 0), 0);
-
-                const { error: productUpdateError } = await supabase
-                    .from('products')
-                    .update({ 
-                        supplier_stock: total,
-                        supplier_stock_updated_at: new Date().toISOString()
-                    })
-                    .eq('id', productId);
-
-                if (productUpdateError) {
-                    console.error('商品在庫更新エラー:', productUpdateError)
-                    return NextResponse.json({ data: null, error: '商品情報の更新に失敗しました' }, { status: 500 })
-                }
-
-                // メール通知用のデータ収集
-                try {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    const userName = user?.user_metadata?.name || user?.email || 'システム利用ユーザー';
-
-                    const { data: admins } = await supabase
-                        .from('users')
-                        .select('email')
-                        .eq('receives_order_emails', true);
-
-                    const toAddresses = (admins || []).map((a: Record<string, unknown>) => a.email as string).filter(Boolean);
-
-                    if (toAddresses.length > 0) {
-                        await sendWIPNotificationEmail({
-                            userName,
-                            toAddresses,
-                            items: [{
-                                productName: (product as Record<string, unknown>)?.name as string || '不明な商品',
-                                quantity: quantity,
-                                unit: (product as Record<string, unknown>)?.unit as string || '個',
-                                destination: 'メーカー在庫',
-                                note: '仕掛品からの移動'
-                            }]
-                        });
-                    }
-                } catch (emailError) {
-                    console.error('WIP通知メール送信失敗:', emailError);
-                }
-
-                // WIPレコードは削除しない（フロントエンドで残数管理）
-            } else {
+            if (!wipItem) {
                 return NextResponse.json({ data: null, error: '対象の仕掛品データが見つかりません' }, { status: 404 })
             }
+
+            const product = Array.isArray(wipItem.products) ? wipItem.products[0] : wipItem.products;
+            
+            // supplier_stock_lotsテーブルにロットとして追加
+            const { error: lotInsertError } = await supabase
+                .from('supplier_stock_lots')
+                .insert({
+                    product_id: (wipItem as Record<string, unknown>).product_id,
+                    stock_date: new Date().toISOString().split('T')[0],
+                    quantity: quantity,
+                    note: '仕掛品からの移動'
+                } as Record<string, unknown>)
+
+            if (lotInsertError) {
+                console.error('ロット登録エラー:', lotInsertError)
+                return NextResponse.json({ data: null, error: 'ロット情報の登録に失敗しました' }, { status: 500 })
+            }
+
+            // productsテーブルの合計在庫(supplier_stock)を同期
+            const productId = (wipItem as Record<string, unknown>).product_id as string;
+            const { data: lotSum, error: sumError } = await supabase
+                .from('supplier_stock_lots')
+                .select('quantity')
+                .eq('product_id', productId);
+            
+            if (sumError) {
+                console.error('在庫集計エラー:', sumError)
+                return NextResponse.json({ data: null, error: '在庫の再計算に失敗しました' }, { status: 500 })
+            }
+
+            const total = (lotSum || []).reduce((sum, lot) => sum + (lot.quantity || 0), 0);
+
+            const { error: productUpdateError } = await supabase
+                .from('products')
+                .update({ 
+                    supplier_stock: total,
+                    supplier_stock_updated_at: new Date().toISOString()
+                })
+                .eq('id', productId);
+
+            if (productUpdateError) {
+                console.error('商品在庫更新エラー:', productUpdateError)
+                return NextResponse.json({ data: null, error: '商品情報の更新に失敗しました' }, { status: 500 })
+            }
+
+            // メール通知用のデータ収集
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                const userName = user?.user_metadata?.name || user?.email || 'システム利用ユーザー';
+
+                const { data: admins } = await supabase
+                    .from('users')
+                    .select('email')
+                    .eq('receives_order_emails', true);
+
+                const toAddresses = (admins || []).map((a: Record<string, unknown>) => a.email as string).filter(Boolean);
+
+                if (toAddresses.length > 0) {
+                    await sendWIPNotificationEmail({
+                        userName,
+                        toAddresses,
+                        items: [{
+                            productName: (product as Record<string, unknown>)?.name as string || '不明な商品',
+                            quantity: quantity,
+                            unit: '個', // 製品マスタにunitがないため一旦固定
+                            destination: 'メーカー在庫',
+                            note: '仕掛品からの移動'
+                        }]
+                    });
+                }
+            } catch (emailError) {
+                console.error('WIP通知メール送信失敗:', emailError);
+            }
+
+            // WIPレコードは削除しない（フロントエンドで残数管理）
         } else if (action === 'confirm') {
             // 納期確定処理
             if (!confirmedDate || !quantity) {
