@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUpdateSaleEvent, type SaleEvent } from "@/hooks/use-sale-events";
 import { cn } from "@/lib/utils";
+import { bagsToMeters } from "@/lib/services/inventory-service"; // 追加
 import type { Product } from "@/types";
 import { toast } from "react-hot-toast";
 
@@ -74,6 +75,13 @@ export function StockAllocationDialog({
     const totalAllocated = allocations.reduce((sum, item) => sum + item.quantity, 0);
     const effectiveStock = currentInventory - totalAllocated; // 有効在庫を計算
 
+    // 巻数の計算ヘルパー（枚数 -> メートル -> 巻数）
+    const calculateRolls = (quantity: number) => {
+        if (!product.metersPerRoll || !product.weight) return null;
+        const meters = bagsToMeters(quantity, product.weight);
+        return (meters / product.metersPerRoll).toFixed(1);
+    };
+
     const handleSave = async (alloc: typeof allocations[0]) => {
         const quantity = parseInt(editQuantity, 10);
         if (isNaN(quantity) || quantity < 0) {
@@ -119,7 +127,7 @@ export function StockAllocationDialog({
                                 {totalAllocated.toLocaleString()} {product.category === 'bag' || product.category === 'new_rice' ? '枚' : '個'}
                                 {product.metersPerRoll && (
                                     <span className="text-xs font-normal text-muted-foreground ml-1">
-                                        / 約{(totalAllocated / product.metersPerRoll).toFixed(1)}巻
+                                        / 約{calculateRolls(totalAllocated)}巻
                                     </span>
                                 )}
                             </span>
@@ -133,7 +141,7 @@ export function StockAllocationDialog({
                                 {effectiveStock.toLocaleString()} {product.category === 'bag' || product.category === 'new_rice' ? '枚' : '個'}
                                 {product.metersPerRoll && (
                                     <span className="text-xs font-normal text-muted-foreground ml-1">
-                                        / 約{(effectiveStock / product.metersPerRoll).toFixed(1)}巻
+                                        / 約{calculateRolls(effectiveStock)}巻
                                     </span>
                                 )}
                             </span>
@@ -204,7 +212,7 @@ export function StockAllocationDialog({
                                                         <div className="flex flex-col items-end">
                                                             <span>{alloc.quantity.toLocaleString()}</span>
                                                             {product.metersPerRoll && (
-                                                                <span className="text-[10px] text-muted-foreground">約{(alloc.quantity / product.metersPerRoll).toFixed(1)}巻</span>
+                                                                <span className="text-[10px] text-muted-foreground">約{calculateRolls(alloc.quantity)}巻</span>
                                                             )}
                                                         </div>
                                                         <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity" />
@@ -219,7 +227,7 @@ export function StockAllocationDialog({
                                                     {effectiveStock.toLocaleString()}
                                                 </div>
                                                 {product.metersPerRoll && (
-                                                    <div className="text-[10px] text-muted-foreground">約{(effectiveStock / product.metersPerRoll).toFixed(1)}巻</div>
+                                                    <div className="text-[10px] text-muted-foreground">約{calculateRolls(effectiveStock)}巻</div>
                                                 )}
                                             </TableCell>
                                         </TableRow>
