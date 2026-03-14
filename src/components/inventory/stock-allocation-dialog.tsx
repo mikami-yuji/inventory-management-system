@@ -126,9 +126,9 @@ export function StockAllocationDialog({
                             引当中のイベントはありません
                         </div>
                     ) : (
-                        <div className="border rounded-md">
+                        <div className="border rounded-md max-h-[60vh] overflow-y-auto">
                             <Table>
-                                <TableHeader>
+                                <TableHeader className="sticky top-0 bg-background z-10">
                                     <TableRow>
                                         <TableHead>イベント / 納品先</TableHead>
                                         <TableHead>日程</TableHead>
