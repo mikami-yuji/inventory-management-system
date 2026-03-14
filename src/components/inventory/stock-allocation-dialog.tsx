@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUpdateSaleEvent, type SaleEvent } from "@/hooks/use-sale-events";
 import { cn } from "@/lib/utils";
-import { bagsToMeters } from "@/lib/services/inventory-service"; // 追加
+import { bagsToMeters, isRollBag, metersToBags } from "@/lib/services/inventory-service"; // 修正
 import type { Product } from "@/types";
 import { toast } from "react-hot-toast";
 
@@ -72,10 +72,16 @@ export function StockAllocationDialog({
         return dateA.localeCompare(dateB);
     });
 
+    // 現在庫（枚数ベース）を準備
+    const isRoll = product.shape ? isRollBag(product.shape) : false;
+    const currentInventoryPieces = isRoll && product.weight 
+        ? metersToBags(currentInventory, product.weight) 
+        : currentInventory;
+
     const totalAllocated = allocations
         .filter(a => a.status !== 'completed')
         .reduce((sum, item) => sum + item.quantity, 0);
-    const effectiveStock = currentInventory - totalAllocated; // 有効在庫を計算（完了分は除外）
+    const effectiveStock = currentInventoryPieces - totalAllocated; // 有効在庫を枚数で計算（完了分は除外）
     const effectiveStockMeters = product.weight ? bagsToMeters(effectiveStock, product.weight) : 0;
 
     // 巻数の計算ヘルパー（枚数 -> メートル -> 巻数）
@@ -175,7 +181,7 @@ export function StockAllocationDialog({
                                             if (!isCompleted) {
                                                 cumulativeAllocated += alloc.quantity;
                                             }
-                                            const currentEffectiveStockPieces = currentInventory - cumulativeAllocated;
+                                            const currentEffectiveStockPieces = currentInventoryPieces - cumulativeAllocated;
                                             const currentEffectiveStockMeters = product.weight ? bagsToMeters(currentEffectiveStockPieces, product.weight) : 0;
 
                                             return (
