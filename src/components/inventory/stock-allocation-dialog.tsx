@@ -23,8 +23,8 @@ import { ja } from "date-fns/locale";
 import { Pencil, Check, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import type { SaleEvent } from "@/hooks/use-sale-events";
-import { useUpdateSaleEvent } from "@/hooks/use-sale-events";
+import { useUpdateSaleEvent, type SaleEvent } from "@/hooks/use-sale-events";
+import { cn } from "@/lib/utils";
 import type { Product } from "@/types";
 import { toast } from "react-hot-toast";
 
@@ -33,6 +33,7 @@ type StockAllocationDialogProps = {
     onClose: () => void;
     product: Product | null;
     saleEvents: SaleEvent[];
+    currentInventory?: number; // 追加
     onUpdate?: () => void;
 };
 
@@ -41,6 +42,7 @@ export function StockAllocationDialog({
     onClose,
     product,
     saleEvents,
+    currentInventory = 0, // 追加
     onUpdate,
 }: StockAllocationDialogProps): React.ReactElement {
     const { updateAllocation, loading } = useUpdateSaleEvent();
@@ -70,6 +72,7 @@ export function StockAllocationDialog({
     });
 
     const totalAllocated = allocations.reduce((sum, item) => sum + item.quantity, 0);
+    const effectiveStock = currentInventory - totalAllocated; // 有効在庫を計算
 
     const handleSave = async (alloc: typeof allocations[0]) => {
         const quantity = parseInt(editQuantity, 10);
@@ -100,7 +103,7 @@ export function StockAllocationDialog({
                 onClose();
             }
         }}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-xl">
                 <DialogHeader>
                     <DialogTitle>特売引当詳細</DialogTitle>
                     <DialogDescription>
@@ -109,16 +112,32 @@ export function StockAllocationDialog({
                 </DialogHeader>
 
                 <div className="space-y-4">
-                    <div className="flex justify-between items-center bg-muted p-2 rounded">
-                        <span className="font-medium">引当合計</span>
-                        <span className="text-lg font-bold text-blue-600">
-                            {totalAllocated.toLocaleString()} {product.category === 'bag' || product.category === 'new_rice' ? '枚' : '個'}
-                            {product.metersPerRoll && (
-                                <span className="text-sm font-normal text-muted-foreground ml-2">
-                                    / 約{(totalAllocated / product.metersPerRoll).toFixed(1)}巻
-                                </span>
-                            )}
-                        </span>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="flex justify-between items-center bg-muted p-2 rounded">
+                            <span className="font-medium text-sm">引当合計</span>
+                            <span className="text-base font-bold text-blue-600">
+                                {totalAllocated.toLocaleString()} {product.category === 'bag' || product.category === 'new_rice' ? '枚' : '個'}
+                                {product.metersPerRoll && (
+                                    <span className="text-xs font-normal text-muted-foreground ml-1">
+                                        / 約{(totalAllocated / product.metersPerRoll).toFixed(1)}巻
+                                    </span>
+                                )}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center bg-blue-50 p-2 rounded border border-blue-100">
+                            <span className="font-medium text-sm">有効在庫</span>
+                            <span className={cn(
+                                "text-base font-bold",
+                                effectiveStock <= 0 ? "text-red-600" : "text-emerald-600"
+                            )}>
+                                {effectiveStock.toLocaleString()} {product.category === 'bag' || product.category === 'new_rice' ? '枚' : '個'}
+                                {product.metersPerRoll && (
+                                    <span className="text-xs font-normal text-muted-foreground ml-1">
+                                        / 約{(effectiveStock / product.metersPerRoll).toFixed(1)}巻
+                                    </span>
+                                )}
+                            </span>
+                        </div>
                     </div>
 
                     {allocations.length === 0 ? (
@@ -133,6 +152,7 @@ export function StockAllocationDialog({
                                         <TableHead>イベント / 納品先</TableHead>
                                         <TableHead>日程</TableHead>
                                         <TableHead className="text-right">数量</TableHead>
+                                        <TableHead className="text-right">有効在庫</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -189,6 +209,17 @@ export function StockAllocationDialog({
                                                         </div>
                                                         <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity" />
                                                     </div>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-right whitespace-nowrap">
+                                                <div className={cn(
+                                                    "font-medium",
+                                                    effectiveStock <= 0 ? "text-red-600" : "text-emerald-600"
+                                                )}>
+                                                    {effectiveStock.toLocaleString()}
+                                                </div>
+                                                {product.metersPerRoll && (
+                                                    <div className="text-[10px] text-muted-foreground">約{(effectiveStock / product.metersPerRoll).toFixed(1)}巻</div>
                                                 )}
                                             </TableCell>
                                         </TableRow>
