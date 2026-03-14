@@ -35,8 +35,9 @@ export function useIncomingStock(productId?: string): {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            const data = await response.json();
-            setIncomingStocks(data);
+            const rawData = await response.json();
+            const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
+            setIncomingStocks(safeData);
             loadedRef.current = true;
         } catch (err) {
             setError(err instanceof Error ? err.message : '入荷予定の取得に失敗しました');

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-03-12
+### Fixed
+- **本番環境での実行時エラー (TypeError) の徹底的な解消**: APIレスポンスが非配列（エラーオブジェクトやnull等）である場合に発生していた `.map()` や `.filter()` の呼び出しを、`Array.isArray()` チェックにより保護。ダッシュボード、在庫管理、レポート、注文、スキャン、アクティビティログ等の全主要コンポーネントで修正を適用。
+- **Git マージコンフリクトの解消**: 他PCでのセキュリティ強化に伴うマージコンフリクトを解消し、ソースコードを最新状態に同期。
+- **共有フックの堅牢化**: `useInventory`, `useSaleEvents`, `useWorkInProgress` 等のデータ取得フックにバリデーションを追加し、システム全体の耐障害性を向上。
+
+
 ## [0.8.0] - 2026-03-11
 ### Added
 - **サーバー側エラーログ機能の基盤構築**:

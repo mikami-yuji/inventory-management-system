@@ -43,7 +43,9 @@ export function useWorkInProgress(options?: { status?: string; productId?: strin
                 throw new Error(result.error);
             }
 
-            setItems(result.data || []);
+            const rawData = result.data || result;
+            const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
+            setItems(safeData);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'データの取得に失敗しました');
         } finally {

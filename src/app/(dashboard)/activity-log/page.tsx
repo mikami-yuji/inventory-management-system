@@ -87,8 +87,10 @@ export default function ActivityLogPage(): React.ReactElement {
             const res = await fetch(`/api/activity-log?${params.toString()}`);
             if (res.ok) {
                 const result = await res.json();
-                setLogs(result.data || []);
-                setTotal(result.total || 0);
+                const rawData = result.data || result;
+                const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
+                setLogs(safeData);
+                setTotal(result.total || (Array.isArray(rawData) ? rawData.length : 0));
             }
         } catch (err) {
             console.error("操作ログ取得エラー:", err);

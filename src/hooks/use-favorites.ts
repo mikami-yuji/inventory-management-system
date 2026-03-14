@@ -22,8 +22,10 @@ export function useFavorites(): {
         try {
             const stored = localStorage.getItem(FAVORITES_KEY);
             if (stored) {
-                const parsed = JSON.parse(stored) as string[];
-                setFavorites(new Set(parsed));
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed)) {
+                    setFavorites(new Set(parsed));
+                }
             }
         } catch {
             // 無効なデータの場合は無視

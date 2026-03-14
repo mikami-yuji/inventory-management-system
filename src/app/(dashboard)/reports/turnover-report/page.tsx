@@ -143,7 +143,9 @@ function TurnoverReportContent(): React.ReactElement {
             const response = await fetch('/api/stock-history?days=90&limit=5000');
             if (response.ok) {
                 const result = await response.json();
-                setStockHistory(result.data || []);
+                const rawData = result.data || result;
+                const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
+                setStockHistory(safeData);
             }
         } catch (err) {
             console.error('在庫履歴取得エラー:', err);

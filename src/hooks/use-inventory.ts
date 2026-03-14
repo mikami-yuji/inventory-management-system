@@ -60,8 +60,11 @@ export function useInventory(options?: {
                 throw new Error(result.error);
             }
 
+            const rawData = result.data || result;
+            const dataArray = Array.isArray(rawData) ? rawData : (Array.isArray((rawData as any).data) ? (rawData as any).data : []);
+
             // APIレスポンスのスネークケースをキャメルケースに変換
-            const mappedData = (result.data || [])
+            const mappedData = dataArray
                 .filter((item: Record<string, unknown>) => item.product !== undefined)
                 .map((item: Record<string, unknown>) => ({
                     productId: (item.product_id as string) || (item.productId as string) || '',

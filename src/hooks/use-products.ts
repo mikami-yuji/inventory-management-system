@@ -27,7 +27,14 @@ export function useProducts(): {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
-            setProducts(data);
+            if (Array.isArray(data)) {
+                setProducts(data);
+            } else if (data && Array.isArray(data.data)) {
+                setProducts(data.data);
+            } else {
+                console.error('API did not return an array for products:', data);
+                setProducts([]);
+            }
             loadedRef.current = true;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'データの取得に失敗しました');

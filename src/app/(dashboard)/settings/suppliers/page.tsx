@@ -18,7 +18,13 @@ import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { SupplierDialog } from "@/components/settings/supplier-dialog";
 import { Badge } from "@/components/ui/badge";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json()).then((d) => d.data);
+const fetcher = (url: string) => 
+    fetch(url)
+        .then((res) => res.json())
+        .then((d) => {
+            const data = d.data || d;
+            return Array.isArray(data) ? data : (Array.isArray(data.data) ? data.data : []);
+        });
 
 export default function SuppliersPage() {
     const { data: suppliers, error, isLoading, mutate } = useSWR<Supplier[]>("/api/suppliers", fetcher);

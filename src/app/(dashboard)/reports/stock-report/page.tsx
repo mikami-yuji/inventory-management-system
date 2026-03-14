@@ -98,7 +98,9 @@ function StockReportContent(): React.ReactElement {
             const res = await fetch('/api/stock-history?days=90&limit=1000');
             if (res.ok) {
                 const result = await res.json();
-                setStockHistory(result.data || []);
+                const rawData = result.data || result;
+                const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
+                setStockHistory(safeData);
             }
         } catch (err) {
             console.error('在庫履歴取得エラー:', err);
