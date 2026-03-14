@@ -164,74 +164,84 @@ export function StockAllocationDialog({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {allocations.map((alloc, i) => (
-                                        <TableRow key={i}>
-                                            <TableCell>
-                                                <div className="font-medium">{alloc.eventName}</div>
-                                                <Badge variant="outline" className="mt-1 text-xs">
-                                                    {alloc.status === 'active' ? '開催中' : alloc.status === 'completed' ? '終了' : '予定'}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-sm">
-                                                {alloc.dates.length > 0 ? (
-                                                    <div className="flex flex-col">
-                                                        <span>{format(new Date(alloc.dates[0]), "MM/dd", { locale: ja })}</span>
-                                                        {alloc.dates.length > 1 && (
-                                                            <span className="text-muted-foreground text-xs">他{alloc.dates.length - 1}日</span>
+                                    {(() => {
+                                        let cumulativeAllocated = 0;
+                                        return allocations.map((alloc, i) => {
+                                            cumulativeAllocated += alloc.quantity;
+                                            const currentEffectiveStockPieces = currentInventory - cumulativeAllocated;
+                                            const currentEffectiveStockMeters = product.weight ? bagsToMeters(currentEffectiveStockPieces, product.weight) : 0;
+
+                                            return (
+                                                <TableRow key={i}>
+                                                    <TableCell>
+                                                        <div className="font-medium">{alloc.eventName}</div>
+                                                        <Badge variant="outline" className="mt-1 text-xs">
+                                                            {alloc.status === 'active' ? '開催中' : alloc.status === 'completed' ? '終了' : '予定'}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-sm">
+                                                        {alloc.dates.length > 0 ? (
+                                                            <div className="flex flex-col">
+                                                                <span>{format(new Date(alloc.dates[0]), "MM/dd", { locale: ja })}</span>
+                                                                {alloc.dates.length > 1 && (
+                                                                    <span className="text-muted-foreground text-xs">他{alloc.dates.length - 1}日</span>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            "-"
                                                         )}
-                                                    </div>
-                                                ) : (
-                                                    "-"
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-right whitespace-nowrap">
-                                                {editingId === alloc.itemId ? (
-                                                    <div className="flex items-center justify-end gap-1">
-                                                        <Input
-                                                            type="number"
-                                                            value={editQuantity === "0" ? "" : editQuantity}
-                                                            onChange={(e) => setEditQuantity(e.target.value)}
-                                                            className="w-20 h-7 text-right text-sm"
-                                                            autoFocus
-                                                            min={0}
-                                                            placeholder="数量"
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') handleSave(alloc);
-                                                                if (e.key === 'Escape') setEditingId(null);
-                                                            }}
-                                                        />
-                                                        <Button size="icon" variant="ghost" className="h-6 w-6 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => handleSave(alloc)} disabled={loading}>
-                                                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                                                        </Button>
-                                                        <Button size="icon" variant="ghost" className="h-6 w-6 text-gray-500 hover:bg-gray-100" onClick={() => setEditingId(null)} disabled={loading}>
-                                                            <X className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="font-medium flex items-center justify-end gap-2 group/edit cursor-pointer" onClick={() => handleEdit(alloc)}>
-                                                        <div className="flex flex-col items-end">
-                                                            <span>{alloc.quantity.toLocaleString()}</span>
-                                                            {product.metersPerRoll && (
-                                                                <span className="text-[10px] text-muted-foreground">約{calculateRolls(alloc.quantity)}巻</span>
-                                                            )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right whitespace-nowrap">
+                                                        {editingId === alloc.itemId ? (
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                <Input
+                                                                    type="number"
+                                                                    value={editQuantity === "0" ? "" : editQuantity}
+                                                                    onChange={(e) => setEditQuantity(e.target.value)}
+                                                                    className="w-20 h-7 text-right text-sm"
+                                                                    autoFocus
+                                                                    min={0}
+                                                                    placeholder="数量"
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') handleSave(alloc);
+                                                                        if (e.key === 'Escape') setEditingId(null);
+                                                                    }}
+                                                                />
+                                                                <Button size="icon" variant="ghost" className="h-6 w-6 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => handleSave(alloc)} disabled={loading}>
+                                                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                                                                </Button>
+                                                                <Button size="icon" variant="ghost" className="h-6 w-6 text-gray-500 hover:bg-gray-100" onClick={() => setEditingId(null)} disabled={loading}>
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="font-medium flex items-center justify-end gap-2 group/edit cursor-pointer" onClick={() => handleEdit(alloc)}>
+                                                                <div className="flex flex-col items-end">
+                                                                    <span>{alloc.quantity.toLocaleString()}</span>
+                                                                    {product.metersPerRoll && (
+                                                                        <span className="text-[10px] text-muted-foreground">約{calculateRolls(alloc.quantity)}巻</span>
+                                                                    )}
+                                                                </div>
+                                                                <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity" />
+                                                            </div>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right whitespace-nowrap">
+                                                        <div className={cn(
+                                                            "font-medium",
+                                                            currentEffectiveStockPieces <= 0 ? "text-red-600" : "text-emerald-600"
+                                                        )}>
+                                                            {currentEffectiveStockMeters.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                                                            <span className="text-xs ml-0.5">m</span>
                                                         </div>
-                                                        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity" />
-                                                    </div>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-right whitespace-nowrap">
-                                                <div className={cn(
-                                                    "font-medium",
-                                                    effectiveStock <= 0 ? "text-red-600" : "text-emerald-600"
-                                                )}>
-                                                    {effectiveStock.toLocaleString()}
-                                                </div>
-                                                {product.metersPerRoll && (
-                                                    <div className="text-[10px] text-muted-foreground">約{calculateRolls(effectiveStock)}巻</div>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                                        {product.metersPerRoll && (
+                                                            <div className="text-[10px] text-muted-foreground">約{calculateRolls(currentEffectiveStockPieces)}巻</div>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        });
+                                    })()}
                                 </TableBody>
                             </Table>
                         </div>
