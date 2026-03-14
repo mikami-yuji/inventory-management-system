@@ -72,8 +72,11 @@ export function StockAllocationDialog({
         return dateA.localeCompare(dateB);
     });
 
-    const totalAllocated = allocations.reduce((sum, item) => sum + item.quantity, 0);
-    const effectiveStock = currentInventory - totalAllocated; // 有効在庫を計算
+    const totalAllocated = allocations
+        .filter(a => a.status !== 'completed')
+        .reduce((sum, item) => sum + item.quantity, 0);
+    const effectiveStock = currentInventory - totalAllocated; // 有効在庫を計算（完了分は除外）
+    const effectiveStockMeters = product.weight ? bagsToMeters(effectiveStock, product.weight) : 0;
 
     // 巻数の計算ヘルパー（枚数 -> メートル -> 巻数）
     const calculateRolls = (quantity: number) => {
@@ -94,8 +97,6 @@ export function StockAllocationDialog({
             toast.success("引当数を更新しました");
             setEditingId(null);
             if (onUpdate) onUpdate();
-        } else {
-            toast.error("更新に失敗しました");
         }
     };
 
@@ -103,6 +104,8 @@ export function StockAllocationDialog({
         setEditingId(alloc.itemId);
         setEditQuantity(alloc.quantity.toString());
     };
+
+    const unit = product.category === 'bag' || product.category === 'new_rice' ? '枚' : '個';
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => {
@@ -124,7 +127,7 @@ export function StockAllocationDialog({
                         <div className="flex justify-between items-center bg-muted p-2 rounded">
                             <span className="font-medium text-sm">引当合計</span>
                             <span className="text-base font-bold text-blue-600">
-                                {totalAllocated.toLocaleString()} {product.category === 'bag' || product.category === 'new_rice' ? '枚' : '個'}
+                                {totalAllocated.toLocaleString()} {unit}
                                 {product.metersPerRoll && (
                                     <span className="text-xs font-normal text-muted-foreground ml-1">
                                         / 約{calculateRolls(totalAllocated)}巻
@@ -138,7 +141,8 @@ export function StockAllocationDialog({
                                 "text-base font-bold",
                                 effectiveStock <= 0 ? "text-red-600" : "text-emerald-600"
                             )}>
-                                {effectiveStock.toLocaleString()} {product.category === 'bag' || product.category === 'new_rice' ? '枚' : '個'}
+                                {effectiveStockMeters.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                                <span className="text-xs ml-0.5">m</span>
                                 {product.metersPerRoll && (
                                     <span className="text-xs font-normal text-muted-foreground ml-1">
                                         / 約{calculateRolls(effectiveStock)}巻
@@ -167,7 +171,10 @@ export function StockAllocationDialog({
                                     {(() => {
                                         let cumulativeAllocated = 0;
                                         return allocations.map((alloc, i) => {
-                                            cumulativeAllocated += alloc.quantity;
+                                            const isCompleted = alloc.status === 'completed';
+                                            if (!isCompleted) {
+                                                cumulativeAllocated += alloc.quantity;
+                                            }
                                             const currentEffectiveStockPieces = currentInventory - cumulativeAllocated;
                                             const currentEffectiveStockMeters = product.weight ? bagsToMeters(currentEffectiveStockPieces, product.weight) : 0;
 
@@ -176,7 +183,7 @@ export function StockAllocationDialog({
                                                     <TableCell>
                                                         <div className="font-medium">{alloc.eventName}</div>
                                                         <Badge variant="outline" className="mt-1 text-xs">
-                                                            {alloc.status === 'active' ? '開催中' : alloc.status === 'completed' ? '終了' : '予定'}
+                                                            {alloc.status === 'active' ? '開催中' : isCompleted ? '終了' : '予定'}
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell className="text-sm">
@@ -217,7 +224,7 @@ export function StockAllocationDialog({
                                                         ) : (
                                                             <div className="font-medium flex items-center justify-end gap-2 group/edit cursor-pointer" onClick={() => handleEdit(alloc)}>
                                                                 <div className="flex flex-col items-end">
-                                                                    <span>{alloc.quantity.toLocaleString()}</span>
+                                                                    <span>{alloc.quantity.toLocaleString()} {unit}</span>
                                                                     {product.metersPerRoll && (
                                                                         <span className="text-[10px] text-muted-foreground">約{calculateRolls(alloc.quantity)}巻</span>
                                                                     )}
@@ -227,15 +234,21 @@ export function StockAllocationDialog({
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="text-right whitespace-nowrap">
-                                                        <div className={cn(
-                                                            "font-medium",
-                                                            currentEffectiveStockPieces <= 0 ? "text-red-600" : "text-emerald-600"
-                                                        )}>
-                                                            {currentEffectiveStockMeters.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-                                                            <span className="text-xs ml-0.5">m</span>
-                                                        </div>
-                                                        {product.metersPerRoll && (
-                                                            <div className="text-[10px] text-muted-foreground">約{calculateRolls(currentEffectiveStockPieces)}巻</div>
+                                                        {!isCompleted ? (
+                                                            <>
+                                                                <div className={cn(
+                                                                    "font-medium",
+                                                                    currentEffectiveStockPieces <= 0 ? "text-red-600" : "text-emerald-600"
+                                                                )}>
+                                                                    {currentEffectiveStockMeters.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                                                                    <span className="text-xs ml-0.5">m</span>
+                                                                </div>
+                                                                {product.metersPerRoll && (
+                                                                    <div className="text-[10px] text-muted-foreground">約{calculateRolls(currentEffectiveStockPieces)}巻</div>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <div className="text-muted-foreground text-sm">-</div>
                                                         )}
                                                     </TableCell>
                                                 </TableRow>
