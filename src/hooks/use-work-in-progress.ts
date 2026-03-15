@@ -86,7 +86,7 @@ export function useWIPActions(): {
 } {
     const [loading, setLoading] = useState(false);
 
-    const createWIP = async (input: WIPInput): Promise<{ success: boolean; error?: string }> => {
+    const createWIP = useCallback(async (input: WIPInput): Promise<{ success: boolean; error?: string }> => {
         setLoading(true);
         try {
             const response = await fetch('/api/work-in-progress', {
@@ -105,9 +105,9 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setLoading]);
 
-    const transferToIncoming = async (id: string, schedules: { expectedDate: string, quantity: number, note?: string }[]): Promise<boolean> => {
+    const transferToIncoming = useCallback(async (id: string, schedules: { expectedDate: string, quantity: number, note?: string }[]): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/work-in-progress', {
@@ -122,9 +122,9 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setLoading]);
 
-    const transferToSupplier = async (id: string, quantity: number): Promise<boolean> => {
+    const transferToSupplier = useCallback(async (id: string, quantity: number): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/work-in-progress', {
@@ -139,9 +139,9 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setLoading]);
 
-    const cancelWIP = async (id: string): Promise<boolean> => {
+    const cancelWIP = useCallback(async (id: string): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/work-in-progress', {
@@ -156,9 +156,9 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setLoading]);
 
-    const updateWIP = async (id: string, updateData: Partial<WIPInput>): Promise<boolean> => {
+    const updateWIP = useCallback(async (id: string, updateData: Partial<WIPInput>): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/work-in-progress', {
@@ -173,9 +173,9 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setLoading]);
 
-    const arrangeShipping = async (id: string): Promise<boolean> => {
+    const arrangeShipping = useCallback(async (id: string): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/work-in-progress', {
@@ -190,9 +190,9 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setLoading]);
 
-    const deleteWIP = async (id: string): Promise<boolean> => {
+    const deleteWIP = useCallback(async (id: string): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch(`/api/work-in-progress?id=${id}`, {
@@ -205,9 +205,9 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setLoading]);
 
-    const updateSupplierStock = async (productId: string, stock: number): Promise<boolean> => {
+    const updateSupplierStock = useCallback(async (productId: string, stock: number): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/supplier-stock', {
@@ -222,9 +222,9 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setLoading]);
 
-    const moveSupplierStockToIncoming = async (productId: string, schedules: { expectedDate: string, quantity: number, note?: string }[]): Promise<boolean> => {
+    const moveSupplierStockToIncoming = useCallback(async (productId: string, schedules: { expectedDate: string, quantity: number, note?: string }[]): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/supplier-stock', {
@@ -243,10 +243,10 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setLoading]);
 
     // ---------- ロット管理メソッド ----------
-    const getSupplierStockLots = async (productId: string): Promise<import('@/types').SupplierStockLot[]> => {
+    const getSupplierStockLots = useCallback(async (productId: string): Promise<import('@/types').SupplierStockLot[]> => {
         try {
             const response = await fetch(`/api/supplier-stock?productId=${productId}`);
             const result = await response.json();
@@ -254,9 +254,9 @@ export function useWIPActions(): {
         } catch {
             return [];
         }
-    };
+    }, [setLoading]);
 
-    const addSupplierStockLot = async (productId: string, quantity: number, stockDate: string, note?: string): Promise<boolean> => {
+    const addSupplierStockLot = useCallback(async (productId: string, quantity: number, stockDate: string, note?: string): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/supplier-stock', {
@@ -271,9 +271,9 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setLoading]);
 
-    const updateSupplierStockLot = async (lotId: string, quantity: number, stockDate: string, note?: string): Promise<boolean> => {
+    const updateSupplierStockLot = useCallback(async (lotId: string, quantity: number, stockDate: string, note?: string): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/supplier-stock', {
@@ -288,9 +288,9 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setLoading]);
 
-    const deleteSupplierStockLot = async (lotId: string): Promise<boolean> => {
+    const deleteSupplierStockLot = useCallback(async (lotId: string): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch(`/api/supplier-stock?lotId=${lotId}`, {
@@ -303,9 +303,9 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setLoading]);
 
-    const syncSupplierStock = async (): Promise<boolean> => {
+    const syncSupplierStock = useCallback(async (): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/supplier-stock', {
@@ -320,7 +320,8 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
 
     return {
         createWIP,
