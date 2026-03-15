@@ -17,7 +17,7 @@ import { CalendarIcon, Loader2, Trash2 } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { ja } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type { Product, IncomingStock } from "@/types";
+import type { Product } from "@/types";
 import { useIncomingStock } from "@/hooks/use-incoming-stock";
 
 type IncomingStockDialogProps = {

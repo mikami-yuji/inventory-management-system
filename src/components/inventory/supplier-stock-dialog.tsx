@@ -1,13 +1,12 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useState, useEffect } from "react";
-import { Product, SupplierStockLot, DeliveryAddress } from "@/types";
+import { useState, useEffect, useCallback } from "react";
+import type { Product, SupplierStockLot, DeliveryAddress } from "@/types";
 import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
@@ -79,13 +78,11 @@ export function SupplierStockDialog({
     };
 
     useEffect(() => {
-        let isMounted = true;
         if (open) {
             fetchDeliveryAddresses().then(() => {
                 // If we need to do something after fetch
             });
         }
-        return () => { isMounted = false; };
     }, [open]);
 
     const {
@@ -111,13 +108,13 @@ export function SupplierStockDialog({
         }
     };
 
-    const fetchLots = async () => {
+    const fetchLots = useCallback(async () => {
         if (!product) return;
         setIsLoadingLots(true);
         const data = await getSupplierStockLots(product.id);
         setLots(data);
         setIsLoadingLots(false);
-    };
+    }, [product, getSupplierStockLots]);
 
     // ダイアログが開くたびに初期値をセット
     useEffect(() => {
@@ -135,7 +132,7 @@ export function SupplierStockDialog({
 
             fetchLots();
         }
-    }, [open, product]);
+    }, [open, product, fetchLots]);
 
     const totalStock = lots.reduce((sum, lot) => sum + lot.quantity, 0);
     const displayStock = lots.length > 0 ? totalStock : currentStock;

@@ -20,7 +20,7 @@ export class ApiError extends Error {
 /**
  * APIレスポンスの共通型
  */
-type ApiResponse<T> = {
+export type ApiResponse<T> = {
     data: T | null;
     error: string | null;
 };

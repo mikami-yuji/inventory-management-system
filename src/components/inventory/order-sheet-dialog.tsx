@@ -4,12 +4,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { CalculableInput } from "@/components/ui/calculable-input";
-import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FileSpreadsheet, Loader2 } from "lucide-react";
+import { FileSpreadsheet } from "lucide-react";
 import { Product } from "@/types";
 import { useSuppliers } from "@/hooks/use-masters";
 

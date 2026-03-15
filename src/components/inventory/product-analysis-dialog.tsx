@@ -9,28 +9,22 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
     Card,
     CardContent,
-    CardDescription,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
 import {
-    LineChart,
-    BarChart3,
     TrendingUp,
     TrendingDown,
     Minus,
     Calendar,
-    AlertTriangle,
-    Info,
     Layers
 } from "lucide-react";
 import { useStockHistoryAnalysis } from "@/hooks/use-stock-history-analysis";
-import { isRollBag, getApproxBagCount } from "@/lib/services";
+import { isRollBag } from "@/lib/services";
 import { cn } from "@/lib/utils";
 
 import { Product } from "@/types";
@@ -80,7 +74,6 @@ export function ProductAnalysisDialog({
         if (!history || history.length === 0) return null;
 
         // Sort by date ASC
-        const sorted = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         // Calculate Stock Level over time (Backwards Replay)
         // Strategy: Start from current stock and subtract/add changes backwards
@@ -127,7 +120,7 @@ export function ProductAnalysisDialog({
                 }
             ]
         };
-    }, [history]);
+    }, [history, currentStock]);
 
     const chartOptions = {
         responsive: true,

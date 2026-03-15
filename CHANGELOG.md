@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.8.2] - 2026-03-15
+### Fixed
+- **コード品質の監査と包括的なヘルスチェックの実施**:
+  - `npm run lint` および `npx tsc --noEmit` での 0 エラーを達成。
+  - `use-inventory.ts` 等の重要フックから `any` 型を排除し、厳密な型定義を導入。
+  - `useEffect`, `useMemo` の依存関係不足を完全に修正し、コンポーネントの安定性を向上。
+  - 全コンポーネントおよびAPIルートから未使用の変数、インポート、アイコンを削除しコードをクリーン化。
+  - パフォーマンス最適化のため、再レンダリング頻度の高い関数に `useCallback` を適用。
+
 ## [0.8.1] - 2026-03-12
 ### Fixed
 - **本番環境での実行時エラー (TypeError) の徹底的な解消**: APIレスポンスが非配列（エラーオブジェクトやnull等）である場合に発生していた `.map()` や `.filter()` の呼び出しを、`Array.isArray()` チェックにより保護。ダッシュボード、在庫管理、レポート、注文、スキャン、アクティビティログ等の全主要コンポーネントで修正を適用。

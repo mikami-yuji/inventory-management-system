@@ -5,14 +5,13 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CalculableInput } from "@/components/ui/calculable-input";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateInventory } from "@/hooks/use-inventory";
 import { useVoiceInput } from "@/hooks/use-voice-input";
-import { Loader2, Mic, MicOff, Package, Clock, CalendarDays, ArrowRight } from "lucide-react";
+import { Loader2, Mic, MicOff, Package, Clock, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Product, WorkInProgress, SaleEvent } from "@/types";
+import type { Product, WorkInProgress } from "@/types";
 
 type StockAdjustmentDialogProps = {
     open: boolean;
@@ -39,7 +38,7 @@ export function StockAdjustmentDialog({
     const [note, setNote] = useState<string>("");
     const { updateStock, loading, error } = useUpdateInventory();
 
-    const { isListening, startListening, stopListening, hasSupport, transcript } = useVoiceInput({
+    const { isListening, startListening, stopListening, hasSupport } = useVoiceInput({
         onResult: (text) => {
             // Case 1: Quantity (e.g. "50")
             const normalized = text.replace(/[０-９]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));

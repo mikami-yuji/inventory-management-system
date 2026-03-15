@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Product, Inventory, ApiResponse } from '@/types';
 import { useAppSettings } from './use-masters';
+import { apiFetch } from '@/lib/api-client';
 
 // 商品情報付き在庫データの型
 export type InventoryWithProduct = {
@@ -48,30 +49,33 @@ export function useInventory(options?: {
             }
 
             const url = `/api/inventory${params.toString() ? `?${params.toString()}` : ''}`;
-            const response = await fetch(url);
+            const result = await apiFetch<ApiResponse<InventoryWithProduct[]> | InventoryWithProduct[]>(url);
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            const dataArray = Array.isArray(result) 
+                ? result 
+                : (result.data && Array.isArray(result.data) ? result.data : []);
 
-            const result: ApiResponse<InventoryWithProduct[]> = await response.json();
-
-            if (result.error) {
-                throw new Error(result.error);
-            }
-
-            const rawData = result.data || result;
-            const dataArray = Array.isArray(rawData) ? rawData : (Array.isArray((rawData as any).data) ? (rawData as any).data : []);
+            type RawInventoryItem = {
+                product_id?: string;
+                productId?: string;
+                quantity: number;
+                updated_at?: string;
+                updatedAt?: string;
+                product: Product;
+            };
 
             // APIレスポンスのスネークケースをキャメルケースに変換
             const mappedData = dataArray
-                .filter((item: Record<string, unknown>) => item.product !== undefined)
-                .map((item: Record<string, unknown>) => ({
-                    productId: (item.product_id as string) || (item.productId as string) || '',
-                    quantity: item.quantity as number,
-                    updatedAt: (item.updated_at as string) || (item.updatedAt as string) || '',
-                    product: item.product as Product
-                }));
+                .filter((item: unknown) => (item as RawInventoryItem).product !== undefined)
+                .map((item: unknown) => {
+                    const i = item as RawInventoryItem;
+                    return {
+                        productId: i.product_id || i.productId || '',
+                        quantity: i.quantity,
+                        updatedAt: i.updated_at || i.updatedAt || '',
+                        product: i.product
+                    };
+                });
             setInventory(mappedData);
             loadedRef.current = true;
         } catch (err) {

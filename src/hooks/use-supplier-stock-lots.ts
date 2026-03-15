@@ -1,25 +1,29 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { SupplierStockLot } from '@/types';
+import { apiFetch, type ApiResponse } from '@/lib/api-client';
 
-export function useSupplierStockLots() {
+export type SupplierStockHook = {
+    lots: SupplierStockLot[];
+    lotsMap: Map<string, SupplierStockLot[]>;
+    loading: boolean;
+    error: string | null;
+    refetch: () => Promise<void>;
+};
+
+export function useSupplierStockLots(): SupplierStockHook {
     const [lots, setLots] = useState<SupplierStockLot[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchLots = useCallback(async () => {
+    const fetchLots = useCallback(async (): Promise<void> => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('/api/supplier-stock');
-            if (!response.ok) {
-                throw new Error('Failed to fetch supplier stock lots');
-            }
-            const result = await response.json();
-            if (result.error) {
-                throw new Error(result.error);
-            }
-            const rawData = result.data || result;
-            const safeData = Array.isArray(rawData) ? rawData : (Array.isArray((rawData as any).data) ? (rawData as any).data : []);
+            const result = await apiFetch<ApiResponse<SupplierStockLot[]> | SupplierStockLot[]>('/api/supplier-stock');
+            
+            const safeData = Array.isArray(result)
+                ? result
+                : (result.data && Array.isArray(result.data) ? result.data : []);
             setLots(safeData);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'エラーが発生しました');

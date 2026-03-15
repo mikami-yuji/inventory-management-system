@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useWIPActions, useWorkInProgress } from "@/hooks/use-work-in-progress";
 import { format, endOfMonth, setDate } from "date-fns";
-import { Plus, Check, Loader2, Trash2, CalendarClock, PackageCheck } from "lucide-react";
+import { Plus, Loader2, Trash2, CalendarClock, PackageCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -115,11 +115,9 @@ export function WIPDialog({
     };
 
     useEffect(() => {
-        let isMounted = true;
         if (open) {
             fetchDeliveryAddresses();
         }
-        return () => { isMounted = false; };
     }, [open]);
 
     // ダイアログが開いたときに再取得（refetchを依存配列から除外して無限ループ防止）
@@ -384,7 +382,7 @@ export function WIPDialog({
                                 </div>
 
                                 <div className="space-y-4 pt-2">
-                                    {arrivalSchedules.map((schedule, index) => (
+                                    {arrivalSchedules.map((schedule) => (
                                         <div key={schedule.id} className="relative bg-muted/20 p-3 rounded-md border space-y-3">
                                             {arrivalSchedules.length > 1 && (
                                                 <Button

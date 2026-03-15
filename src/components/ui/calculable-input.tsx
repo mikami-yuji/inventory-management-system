@@ -42,7 +42,7 @@ export const CalculableInput = React.forwardRef<HTMLInputElement, CalculableInpu
                     // Round to avoid floating point weirdness (e.g., 0.1 + 0.2)
                     return Math.round(result * 10000000) / 10000000;
                 }
-            } catch (e) {
+            } catch {
                 console.warn("Invalid expression", expression);
             }
             return expression; // Fallback to raw string if calculation fails

@@ -297,14 +297,14 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                         {supplierStock.toLocaleString()}{isRoll ? 'm' : '枚'}
                                                     </div>
                                                     <div className="flex flex-col gap-0.5 mt-0.5">
-                                                        {supplierStockLots.map((lot, i) => {
+                                                        {supplierStockLots.map((lot) => {
                                                             const now = new Date();
                                                             const arrival = new Date(lot.stockDate);
                                                             const monthsElapsed = (now.getFullYear() - arrival.getFullYear()) * 12 + now.getMonth() - arrival.getMonth();
                                                             const isLongTerm = monthsElapsed >= 5;
 
                                                             return (
-                                                                <div key={i} className="flex justify-end items-center gap-1">
+                                                                <div key={lot.id} className="flex justify-end items-center gap-1">
                                                                     {isLongTerm && (
                                                                         <Badge variant="destructive" className="h-4 px-1 text-[8px] whitespace-nowrap">長期在庫</Badge>
                                                                     )}
@@ -338,7 +338,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                         <span className="text-xs ml-0.5">{isRoll ? 'm' : '枚'}</span>
                                                     </div>
                                                     <div className="flex flex-col gap-0.5 mt-0.5">
-                                                        {wipList.map((item, i) => (
+                                                        {wipList.map((item) => (
                                                             <div key={item.id} className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
                                                                 {item.expectedCompletion ?
                                                                     (() => {

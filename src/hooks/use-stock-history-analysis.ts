@@ -7,12 +7,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { StockHistory } from '@/types';
-
-// APIレスポンス型
-type ApiResponse<T> = {
-    data: T | null;
-    error: string | null;
-};
+import { apiFetch, type ApiResponse } from '@/lib/api-client';
 
 // 使用量分析結果型
 export type UsageAnalysis = {
@@ -83,20 +78,12 @@ export function useStockHistoryAnalysis(productId?: string, currentStock?: numbe
                 days: '90', // 3ヶ月分取得
             });
 
-            const response = await fetch(`/api/stock-history?${params.toString()}`);
+            const url = `/api/stock-history?${params.toString()}`;
+            const result = await apiFetch<ApiResponse<StockHistory[]> | StockHistory[]>(url);
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result: ApiResponse<StockHistory[]> = await response.json();
-
-            if (result.error) {
-                throw new Error(result.error);
-            }
-
-            const rawData = result.data || result;
-            const safeData = Array.isArray(rawData) ? rawData : (Array.isArray((rawData as any).data) ? (rawData as any).data : []);
+            const safeData = Array.isArray(result)
+                ? result
+                : (result.data && Array.isArray(result.data) ? result.data : []);
             setHistory(safeData);
         } catch (err) {
             setError(err instanceof Error ? err.message : '在庫履歴の取得に失敗しました');

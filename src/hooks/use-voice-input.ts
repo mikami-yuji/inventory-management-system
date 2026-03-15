@@ -112,7 +112,7 @@ export function useVoiceInput(options?: {
                 recognitionRef.current.abort();
             }
         };
-    }, [options?.lang, options?.onResult, options?.onError]);
+    }, [options]);
 
     const startListening = useCallback(() => {
         if (recognitionRef.current && !isListening) {

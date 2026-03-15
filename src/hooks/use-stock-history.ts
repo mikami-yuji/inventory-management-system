@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { StockHistory, ApiResponse } from '@/types';
+import type { StockHistory } from '@/types';
+import { apiFetch, type ApiResponse } from '@/lib/api-client';
 
 /**
  * 在庫履歴データを取得するフック
@@ -38,20 +39,11 @@ export function useStockHistory(options?: {
             }
 
             const url = `/api/stock-history${params.toString() ? `?${params.toString()}` : ''}`;
-            const response = await fetch(url);
+            const result = await apiFetch<ApiResponse<StockHistory[]> | StockHistory[]>(url);
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result: ApiResponse<StockHistory[]> = await response.json();
-
-            if (result.error) {
-                throw new Error(result.error);
-            }
-
-            const rawData = result.data || result;
-            const safeData = Array.isArray(rawData) ? rawData : (Array.isArray((rawData as any).data) ? (rawData as any).data : []);
+            const safeData = Array.isArray(result)
+                ? result
+                : (result.data && Array.isArray(result.data) ? result.data : []);
             setHistory(safeData);
             loadedRef.current = true;
         } catch (err) {

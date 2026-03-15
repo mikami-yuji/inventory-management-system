@@ -292,7 +292,7 @@ function ProductCard({
                                 <div className="text-purple-600 font-medium">
                                     仕掛中: {wipQuantity.toLocaleString()}{isRoll ? 'm' : '枚'}
                                     <div className="flex flex-col gap-0.5 mt-0.5 opacity-80 font-normal">
-                                        {wipList.map((item, i) => (
+                                        {wipList.map((item) => (
                                             <div key={item.id}>
                                                 {item.expectedCompletion ?
                                                     (() => {
@@ -316,14 +316,14 @@ function ProductCard({
                                 <div className="text-orange-600 mt-2 text-[10px] text-right">
                                     メーカー: {supplier.toLocaleString()}{isRoll ? 'm' : '枚'}
                                     <div className="flex flex-col gap-0.5 mt-0.5 opacity-80 font-normal">
-                                        {supplierLots.map((lot, i) => {
+                                        {supplierLots.map((lot) => {
                                             const now = new Date();
                                             const arrival = new Date(lot.stockDate);
                                             const monthsElapsed = (now.getFullYear() - arrival.getFullYear()) * 12 + now.getMonth() - arrival.getMonth();
                                             const isLongTerm = monthsElapsed >= 5;
 
                                             return (
-                                                <div key={i} className="flex justify-end items-center gap-1">
+                                                <div key={lot.id} className="flex justify-end items-center gap-1">
                                                     {isLongTerm && (
                                                         <Badge variant="destructive" className="h-4 px-1 text-[8px] whitespace-nowrap">長期在庫</Badge>
                                                     )}
