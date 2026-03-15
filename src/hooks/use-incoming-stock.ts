@@ -22,6 +22,7 @@ export function useIncomingStock(productId?: string): {
     const loadedRef = useRef(false);
 
     const fetchIncomingStock = useCallback(async (): Promise<void> => {
+        console.log('[DEBUG] fetchIncomingStock start', { productId });
         if (!loadedRef.current) setLoading(true);
         setError(null);
 
@@ -39,7 +40,9 @@ export function useIncomingStock(productId?: string): {
             const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
             setIncomingStocks(safeData);
             loadedRef.current = true;
+            console.log('[DEBUG] fetchIncomingStock success', { count: safeData.length });
         } catch (err) {
+            console.error('[DEBUG] fetchIncomingStock error', err);
             setError(err instanceof Error ? err.message : '入荷予定の取得に失敗しました');
         } finally {
             setLoading(false);

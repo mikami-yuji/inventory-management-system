@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -199,13 +199,13 @@ export default function BagsInventoryPage(): React.ReactElement {
         return map;
     }, [incomingStocks]);
 
-    const refetch = (): void => {
+    const refetch = useCallback((): void => {
         refetchProducts();
         refetchInventory();
         refetchWIP();
         refetchIncoming();
         refetchLots();
-    };
+    }, [refetchProducts, refetchInventory, refetchWIP, refetchIncoming, refetchLots]);
 
     // 商品フォームダイアログの状態
     const [formDialogOpen, setFormDialogOpen] = useState(false);
