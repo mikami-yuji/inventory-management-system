@@ -38,5 +38,6 @@
     ],
     "editor.renderControlCharacters": false,
     "editor.renderWhitespace": "selection",
-    "editor.minimap.enabled": false
+    "editor.minimap.enabled": false,
+    "css.lint.unknownAtRules": "ignore"
 }
