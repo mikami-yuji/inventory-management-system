@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useWIPActions } from "@/hooks/use-work-in-progress";
 import { Package, ArrowRight, Loader2, Plus, Trash2, Save, X, Edit2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { isRollBag } from "@/lib/services/inventory-service";
 
 type SupplierStockDialogProps = {
     product: Product | null;
@@ -230,6 +231,9 @@ export function SupplierStockDialog({
 
     if (!product) return null;
 
+    const isRoll = isRollBag(product.shape || "");
+    const unit = isRoll ? "m" : "枚";
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -247,7 +251,7 @@ export function SupplierStockDialog({
                             <Package className="h-8 w-8 text-blue-500" />
                             <div>
                                 <p className="text-sm font-medium text-blue-600">現在のメーカー在庫合算</p>
-                                <p className="text-3xl font-bold">{displayStock.toLocaleString()}</p>
+                                <p className="text-3xl font-bold">{displayStock.toLocaleString()}<span className="text-lg ml-1 font-normal">{unit}</span></p>
                             </div>
                         </div>
                         <Button
@@ -294,7 +298,7 @@ export function SupplierStockDialog({
                                         <Input type="date" size={1} className="h-8" value={newLotDate} onChange={e => setNewLotDate(e.target.value)} />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label className="text-xs">数量</Label>
+                                        <Label className="text-xs">数量 ({unit})</Label>
                                         <CalculableInput className="h-8" value={newLotQuantity === 0 ? "" : newLotQuantity} onChange={value => setNewLotQuantity(Number(value) || 0)} placeholder="数量" />
                                     </div>
                                     <div className="col-span-2 space-y-1">
@@ -337,7 +341,7 @@ export function SupplierStockDialog({
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-semibold text-lg">{lot.quantity.toLocaleString()}</span>
+                                                        <span className="font-semibold text-lg">{lot.quantity.toLocaleString()}<span className="text-sm ml-0.5 font-normal">{unit}</span></span>
                                                         <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded border">{lot.stockDate}</span>
                                                     </div>
                                                     {lot.note && <div className="text-xs text-gray-500 mt-0.5">{lot.note}</div>}
@@ -407,7 +411,7 @@ export function SupplierStockDialog({
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <Label className="text-xs text-orange-800">移動数量</Label>
+                                            <Label className="text-xs text-orange-800">移動数量 ({unit})</Label>
                                             <CalculableInput
                                                 value={schedule.quantity === 0 ? "" : schedule.quantity}
                                                 onChange={(value) => updateArrivalRow(schedule.id, { quantity: Number(value) || 0 })}
@@ -442,7 +446,7 @@ export function SupplierStockDialog({
                         <div className="flex justify-between items-center mt-4 pt-4 border-t border-orange-200">
                             <div className="text-sm">
                                 <span className="text-orange-900">移動合計: </span>
-                                <span className="font-bold text-orange-700 text-lg">{arrivalSchedules.reduce((sum, s) => sum + s.quantity, 0).toLocaleString()}</span>
+                                <span className="font-bold text-orange-700 text-lg">{arrivalSchedules.reduce((sum, s) => sum + s.quantity, 0).toLocaleString()}{unit}</span>
                             </div>
                             <Button
                                 variant="default"

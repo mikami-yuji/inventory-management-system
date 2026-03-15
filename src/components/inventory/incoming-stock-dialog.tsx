@@ -21,6 +21,7 @@ import type { Product, DeliveryAddress, IncomingStock } from "@/types";
 import { useIncomingStock } from "@/hooks/use-incoming-stock";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "react-hot-toast";
+import { isRollBag } from "@/lib/services/inventory-service";
 
 type IncomingStockDialogProps = {
     open: boolean;
@@ -138,6 +139,9 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
 
     if (!product) return null;
 
+    const isRoll = isRollBag(product.shape || "");
+    const unit = isRoll ? "m" : "枚";
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md">
@@ -196,7 +200,7 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
                                         stringifyOnComplete
                                     />
                                     <span className="text-sm text-muted-foreground whitespace-nowrap">
-                                        {product.shape?.includes('RZ') || product.shape?.includes('RA') ? 'm' : '枚'}
+                                        {unit}
                                     </span>
                                 </div>
                             </div>
@@ -261,7 +265,7 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
                                             </div>
                                             <div className="text-sm text-muted-foreground">
                                                 {stock.quantity.toLocaleString()}
-                                                {product.shape?.includes('RZ') || product.shape?.includes('RA') ? 'm' : '枚'}
+                                                {unit}
                                                 {stock.note && ` · ${stock.note}`}
                                             </div>
                                         </div>
