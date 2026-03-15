@@ -19,11 +19,12 @@ export function useIncomingStock(productId?: string): {
     const [incomingStocks, setIncomingStocks] = useState<IncomingStock[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const loadedRef = useRef(false);
+    const isFetchingRef = useRef(false);
 
     const fetchIncomingStock = useCallback(async (): Promise<void> => {
-        console.log('[DEBUG] fetchIncomingStock start', { productId });
-        if (!loadedRef.current) setLoading(true);
+        if (isFetchingRef.current) return;
+        isFetchingRef.current = true;
+        setLoading(true);
         setError(null);
 
         try {
@@ -39,22 +40,20 @@ export function useIncomingStock(productId?: string): {
             const rawData = await response.json();
             const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
             setIncomingStocks(safeData);
-            loadedRef.current = true;
-            console.log('[DEBUG] fetchIncomingStock success', { count: safeData.length });
         } catch (err) {
-            console.error('[DEBUG] fetchIncomingStock error', err);
             setError(err instanceof Error ? err.message : '入荷予定の取得に失敗しました');
         } finally {
             setLoading(false);
+            isFetchingRef.current = false;
         }
-    }, [productId]);
+    }, [productId, setLoading]);
 
     useEffect(() => {
         fetchIncomingStock();
     }, [fetchIncomingStock]);
 
     // 入荷予定を追加
-    const addIncomingStock = async (incomingStock: Omit<IncomingStock, 'id'>): Promise<boolean> => {
+    const addIncomingStock = useCallback(async (incomingStock: Omit<IncomingStock, 'id'>): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/incoming-stock', {
@@ -76,10 +75,10 @@ export function useIncomingStock(productId?: string): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [fetchIncomingStock, setLoading]);
 
     // 入荷予定を更新
-    const updateIncomingStock = async (id: string, incomingStock: Partial<IncomingStock>): Promise<boolean> => {
+    const updateIncomingStock = useCallback(async (id: string, incomingStock: Partial<IncomingStock>): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch('/api/incoming-stock', {
@@ -101,10 +100,10 @@ export function useIncomingStock(productId?: string): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [fetchIncomingStock, setLoading]);
 
     // 入荷予定を削除
-    const deleteIncomingStock = async (id: string): Promise<boolean> => {
+    const deleteIncomingStock = useCallback(async (id: string): Promise<boolean> => {
         if (!confirm('本当に削除しますか？')) return false;
 
         setLoading(true);
@@ -126,10 +125,10 @@ export function useIncomingStock(productId?: string): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [fetchIncomingStock, setLoading]);
 
     // 入荷処理（本在庫へ反映）
-    const receiveIncomingStock = async (id: string): Promise<boolean> => {
+    const receiveIncomingStock = useCallback(async (id: string): Promise<boolean> => {
         setLoading(true);
         try {
             const response = await fetch(`/api/incoming-stock`, {
@@ -151,7 +150,7 @@ export function useIncomingStock(productId?: string): {
         } finally {
             setLoading(false);
         }
-    };
+    }, [fetchIncomingStock, setLoading]);
 
     return {
         incomingStocks,

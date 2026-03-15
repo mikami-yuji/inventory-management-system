@@ -13,7 +13,7 @@ import { CalculableInput } from "@/components/ui/calculable-input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Loader2, Trash2, Edit2 } from "lucide-react";
+import { CalendarIcon, Loader2, Trash2, Edit2, X } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -39,17 +39,11 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
     const [editingId, setEditingId] = useState<string | null>(null);
     const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
     const [loadingAddresses, setLoadingAddresses] = useState(false);
-    const lastOpenRef = useRef(false);
-    const renderCountRef = useRef(0);
-    renderCountRef.current++;
-
-    console.log(`[DEBUG] IncomingStockDialog render #${renderCountRef.current}`, { open, productId: product?.id });
 
     // 商品ごとの入荷予定データ
     const { incomingStocks, loading: loadingStocks, addIncomingStock, updateIncomingStock, deleteIncomingStock, receiveIncomingStock, refetch } = useIncomingStock(product?.id);
 
     const fetchAddresses = useCallback(async () => {
-        console.log('[DEBUG] fetchAddresses start');
         setLoadingAddresses(true);
         try {
             const res = await fetch('/api/delivery-addresses');
@@ -59,9 +53,8 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
             } else if (data?.data && Array.isArray(data.data)) {
                 setAddresses(data.data);
             }
-            console.log('[DEBUG] fetchAddresses success', { count: data.length });
         } catch (e) {
-            console.error("[DEBUG] fetchAddresses error", e);
+            console.error("fetchAddresses error", e);
         } finally {
             setLoadingAddresses(false);
         }
@@ -69,7 +62,7 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
 
     // ダイアログが開いたときに初期化
     useEffect(() => {
-        if (open && !lastOpenRef.current) {
+        if (open) {
             setDate(new Date());
             setQuantity("");
             setNote("");
@@ -77,8 +70,7 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
             refetch();
             fetchAddresses();
         }
-        lastOpenRef.current = open;
-    }, [open, product?.id, refetch, fetchAddresses]);
+    }, [open, refetch, fetchAddresses]);
 
     // 送信ハンドラ
     const handleSubmit = async (e: React.FormEvent) => {
