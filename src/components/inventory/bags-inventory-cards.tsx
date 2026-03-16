@@ -320,7 +320,7 @@ function ProductCard({
                                             const now = new Date();
                                             const arrival = new Date(lot.stockDate);
                                             const monthsElapsed = (now.getFullYear() - arrival.getFullYear()) * 12 + now.getMonth() - arrival.getMonth();
-                                            const isLongTerm = monthsElapsed >= 5;
+                                            const isLongTerm = monthsElapsed >= 5 && lot.quantity > 0;
 
                                             return (
                                                 <div key={lot.id} className="flex justify-end items-center gap-1">

@@ -245,6 +245,7 @@ export default function DashboardPage(): React.ReactElement {
 
     // 長期在庫（入荷月から6ヶ月目以降）の抽出
     const longTermLots = lots.filter(lot => {
+        if (lot.quantity <= 0) return false;
         const arrival = new Date(lot.stockDate);
         const now = new Date();
         const monthsElapsed = (now.getFullYear() - arrival.getFullYear()) * 12 + now.getMonth() - arrival.getMonth();
