@@ -34,7 +34,8 @@ export async function GET(): Promise<NextResponse> {
                         shape,
                         unit_price,
                         printing_cost,
-                        category
+                        category,
+                        meters_per_roll
                     )
                 )
             `)
@@ -45,34 +46,44 @@ export async function GET(): Promise<NextResponse> {
             return NextResponse.json({ error: ordersError.message }, { status: 500 })
         }
 
-        // TypeScript型に変換
-        const orders = (ordersData || []).map((order: Record<string, any>) => ({
-            id: order.id,
-            clientId: order.client_id,
-            status: order.status,
-            type: order.type,
-            eventId: order.event_id,
-            shipmentSource: order.shipment_source,
-            deliveryName: order.delivery_name,
-            deliveryPostalCode: order.delivery_postal_code || null, // 安全なアクセス
-            deliveryAddress: order.delivery_address,
-            deliveryPhone: order.delivery_phone,
-            preferredShape: order.preferred_shape,
-            createdAt: order.created_at,
-            items: ((order.order_items as Record<string, unknown>[]) || []).map((item: Record<string, unknown>) => ({
-                productId: item.product_id,
-                quantity: item.quantity,
-                productName: (item.products as Record<string, unknown>)?.name || '不明な商品',
-                sku: (item.products as Record<string, unknown>)?.sku || '-',
-                weight: (item.products as Record<string, unknown>)?.weight || null,
-                shape: (item.products as Record<string, unknown>)?.shape || '-',
-                unitPrice: (item.products as Record<string, unknown>)?.unit_price || 0,
-                printingCost: (item.products as Record<string, unknown>)?.printing_cost || 0,
-                category: (item.products as Record<string, unknown>)?.category || 'other',
-            })),
-        }))
+        // データ整形
+        const orders = (ordersData || []).map((order: any) => {
+            // 住所から郵便番号を抽出する（ワークアラウンド用）
+            const address = order.delivery_address || '';
+            const postalMatch = address.match(/^〒(\d{3}-\d{4})\s/);
+            const extractedPostal = postalMatch ? postalMatch[1] : null;
+            const cleanAddress = postalMatch ? address.replace(/^〒\d{3}-\d{4}\s/, '') : address;
 
-        return NextResponse.json(orders)
+            return {
+                id: order.id,
+                orderId: order.order_id,
+                createdAt: order.created_at,
+                clientId: order.client_id,
+                status: order.status,
+                type: order.type,
+                eventId: order.event_id,
+                shipmentSource: order.shipment_source,
+                deliveryName: order.delivery_name,
+                deliveryPostalCode: order.delivery_postal_code || extractedPostal,
+                deliveryAddress: cleanAddress,
+                deliveryPhone: order.delivery_phone,
+                preferredShape: order.preferred_shape,
+                items: ((order.order_items as Record<string, unknown>[]) || []).map((item: Record<string, unknown>) => ({
+                    productId: item.product_id,
+                    quantity: item.quantity,
+                    productName: (item.products as Record<string, unknown>)?.name || '不明な商品',
+                    sku: (item.products as Record<string, unknown>)?.sku || '-',
+                    weight: (item.products as Record<string, unknown>)?.weight || null,
+                    shape: (item.products as Record<string, unknown>)?.shape || '-',
+                    unitPrice: (item.products as Record<string, unknown>)?.unit_price || 0,
+                    printingCost: (item.products as Record<string, unknown>)?.printing_cost || 0,
+                    category: (item.products as Record<string, unknown>)?.category || 'other',
+                    metersPerRoll: (item.products as Record<string, unknown>)?.meters_per_roll || null,
+                })),
+            };
+        });
+
+        return NextResponse.json(orders);
 
     } catch (error) {
         await logError({
@@ -132,8 +143,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 event_id: eventId || null,
                 shipment_source: shipmentSource || 'supplier',
                 delivery_name: body.deliveryName,
-                delivery_postal_code: body.deliveryPostalCode,
-                delivery_address: body.deliveryAddress,
+                // 配送先住所に郵便番号を連結して保存（カラム追加が失敗している場合のワークアラウンド）
+                delivery_address: body.deliveryPostalCode ? `〒${body.deliveryPostalCode} ${body.deliveryAddress}` : body.deliveryAddress,
                 delivery_phone: body.deliveryPhone,
                 preferred_shape: preferredShape
             })

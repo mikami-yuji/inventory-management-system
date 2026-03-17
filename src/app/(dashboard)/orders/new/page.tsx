@@ -113,7 +113,7 @@ export default function NewOrderPage(): React.ReactElement {
                     items: validItems.map(i => ({
                         productName: i.product.name,
                         quantity: i.quantity,
-                        unit: isRollBag(i.product.shape || "", i.product.category) ? "m" : "枚"
+                        unit: isRollBag(i.product.shape || "", i.product.category, i.product.metersPerRoll) ? "m" : "枚"
                     })),
                     shipmentSource,
                     deliveryName: selectedAddressId === 'manufacturer-storage' ? 'メーカー預かり' : selectedAddress?.name,
@@ -251,7 +251,7 @@ export default function NewOrderPage(): React.ReactElement {
                                                     <div className="font-medium">{item.product.name}</div>
                                                     <div className="text-xs text-muted-foreground flex items-center gap-2">
                                                         <span>{item.product.weight}kg / {item.product.shape || '-'}</span>
-                                                        {isRollBag(item.product.shape || "") && (
+                                                        {isRollBag(item.product.shape || "", item.product.category, item.product.metersPerRoll) && (
                                                             <Badge variant="outline" className="text-[10px] h-4 px-1 font-normal border-blue-200 text-blue-700 bg-blue-50">
                                                                 1巻: {item.product.metersPerRoll || 400}m
                                                             </Badge>
@@ -268,7 +268,7 @@ export default function NewOrderPage(): React.ReactElement {
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     {(() => {
-                                                        const isRoll = isRollBag(item.product.shape || "");
+                                                        const isRoll = isRollBag(item.product.shape || "", item.product.category, item.product.metersPerRoll);
                                                         const weight = item.product.weight || 5;
 
                                                         if (shipmentSource === 'supplier') {
@@ -354,7 +354,7 @@ export default function NewOrderPage(): React.ReactElement {
                                                 </TableCell>
                                                 <TableCell>
                                                     {(() => {
-                                                        const isRoll = isRollBag(item.product.shape || "");
+                                                        const isRoll = isRollBag(item.product.shape || "", item.product.category, item.product.metersPerRoll);
                                                         return (
                                                             <>
                                                                 <div className="flex items-center justify-center gap-2">

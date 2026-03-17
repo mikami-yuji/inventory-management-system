@@ -81,7 +81,7 @@ export function PurchaseOrderView({ order, senderInfo }: PurchaseOrderViewProps)
                     <div className="col-span-full">
                         <p className="text-slate-500 mb-1">お届け先住所</p>
                         <p className="font-bold">
-                            {order.deliveryPostalCode ? `〒${order.deliveryPostalCode} ` : ''}
+                            {order.deliveryPostalCode && !order.deliveryAddress?.startsWith('〒') ? `〒${order.deliveryPostalCode} ` : ''}
                             {order.deliveryAddress || '（未指定）'}
                         </p>
                     </div>
@@ -114,7 +114,7 @@ export function PurchaseOrderView({ order, senderInfo }: PurchaseOrderViewProps)
                                     <p className="font-bold">
                                         {item.quantity.toLocaleString()}
                                         <span className="text-xs font-normal text-slate-500 ml-1">
-                                            {isRollBag(item.shape, item.category) ? 'm' : '枚'}
+                                            {isRollBag(item.shape, item.category, item.metersPerRoll) || (item.metersPerRoll && item.metersPerRoll > 0) ? 'm' : '枚'}
                                         </span>
                                     </p>
                                 </td>

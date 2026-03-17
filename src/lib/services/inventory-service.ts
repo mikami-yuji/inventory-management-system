@@ -19,18 +19,22 @@ export const getPitch = (weight: number): number => {
 };
 
 // ロール袋（原反/フィルム巻）かどうか判定
-export const isRollBag = (shape: string, category?: string): boolean => {
-    if (!shape) return false;
-    
-    // 米袋や通常の袋カテゴリの場合は、形状に関わらず「枚」単位（ロールではない）
-    if (category === 'new_rice' || category === 'bag') return false;
+export function isRollBag(shape: string, category?: string, metersPerRoll?: number | null): boolean {
+  // 1巻あたりのメートル数が設定されている、または数値がある場合はロールとして扱う
+  if (metersPerRoll && metersPerRoll > 0) {
+    return true;
+  }
 
+  // カテゴリが明示的に「袋」や「新米」の場合は、たとえ形状が RZ/RA でも枚数管理（枚）とする
+  if (category === 'bag' || category === 'new_rice') {
+    return false;
+  }
     // 形状に「巻」や「ロール」が含まれる場合はロール
     if (shape.includes('巻') || shape.includes('ロール')) return true;
 
     // 特定の形状コード (RZ/RA) を持つものは、上記カテゴリ以外であればロールとして扱う
     return shape.includes('RZ') || shape.includes('RA') || shape.includes('RＺ') || shape.includes('RＡ');
-};
+}
 
 // デフォルトの在庫アラート閾値を取得
 // ロールは1500m、単袋・その他は3000枚 (設定で上書き可能)

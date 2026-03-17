@@ -9,6 +9,7 @@ import { Plus, RotateCcw, FileText, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "@/contexts/cart-context";
 import { useRouter } from "next/navigation";
+import { isRollBag } from "@/lib/services/inventory-service";
 
 // APIから取得する発注データの型
 type OrderFromAPI = {
@@ -26,6 +27,8 @@ type OrderFromAPI = {
         sku: string;
         weight: number | null;
         shape: string;
+        category?: string;
+        metersPerRoll?: number | null;
     }[];
 };
 
@@ -182,7 +185,7 @@ export default function OrdersPage(): React.ReactElement {
                                                             </div>
                                                         </div>
                                                         <div className="font-medium whitespace-nowrap pl-2 text-right">
-                                                            × {item.quantity.toLocaleString()} {item.shape?.includes('巻') || item.shape?.includes('ロール') ? 'm' : '枚'}
+                                                            × {item.quantity.toLocaleString()} {isRollBag(item.shape, item.category, item.metersPerRoll) || (item.metersPerRoll && item.metersPerRoll > 0) ? 'm' : '枚'}
                                                         </div>
                                                     </div>
                                                 ))}
