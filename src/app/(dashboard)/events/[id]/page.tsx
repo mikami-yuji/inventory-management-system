@@ -368,6 +368,7 @@ export default function EventDetailPage(): React.ReactElement {
                                 })}
                             </TableBody>
                         </Table>
+                        </div>
                     </CardContent>
                 </Card>
 
