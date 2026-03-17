@@ -156,7 +156,7 @@ export function ProductAnalysisDialog({
         );
     }
 
-    const isRoll = isRollBag(product.shape || "");
+    const isRoll = isRollBag(product.shape || "", product.category);
     const unit = isRoll ? "m" : "枚";
     const subUnit = isRoll ? "巻" : null;
 

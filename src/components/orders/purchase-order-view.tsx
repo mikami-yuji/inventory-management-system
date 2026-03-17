@@ -3,6 +3,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { Order } from "@/types";
+import { isRollBag } from "@/lib/services/inventory-service";
 
 type PurchaseOrderViewProps = {
     order: any; // 実際には API から取得する詳細データ
@@ -113,14 +114,7 @@ export function PurchaseOrderView({ order, senderInfo }: PurchaseOrderViewProps)
                                     <p className="font-bold">
                                         {item.quantity.toLocaleString()}
                                         <span className="text-xs font-normal text-slate-500 ml-1">
-                                            {item.shape && (
-                                                item.shape === 'RZ' ||
-                                                item.shape === 'RA' ||
-                                                item.shape === 'RＺ' ||
-                                                item.shape === 'RＡ' ||
-                                                item.shape.includes('巻') ||
-                                                item.shape.includes('ロール')
-                                            ) ? 'm' : '枚'}
+                                            {isRollBag(item.shape, item.category) ? 'm' : '枚'}
                                         </span>
                                     </p>
                                 </td>

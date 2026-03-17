@@ -231,7 +231,7 @@ export function SupplierStockDialog({
 
     if (!product) return null;
 
-    const isRoll = isRollBag(product.shape || "");
+    const isRoll = isRollBag(product.shape || "", product.category);
     const unit = isRoll ? "m" : "枚";
 
     return (

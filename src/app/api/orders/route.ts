@@ -33,7 +33,8 @@ export async function GET(): Promise<NextResponse> {
                         weight,
                         shape,
                         unit_price,
-                        printing_cost
+                        printing_cost,
+                        category
                     )
                 )
             `)
@@ -67,6 +68,7 @@ export async function GET(): Promise<NextResponse> {
                 shape: (item.products as Record<string, unknown>)?.shape || '-',
                 unitPrice: (item.products as Record<string, unknown>)?.unit_price || 0,
                 printingCost: (item.products as Record<string, unknown>)?.printing_cost || 0,
+                category: (item.products as Record<string, unknown>)?.category || 'other',
             })),
         }))
 

@@ -12,6 +12,7 @@ type OrderTemplateProps = {
     items: OrderItem[];
     shipmentSource: string;
     deliveryName?: string;
+    deliveryPostalCode?: string;
     deliveryAddress?: string;
     deliveryPhone?: string;
 };
@@ -23,11 +24,12 @@ export function generateOrderNotificationText({
     items,
     shipmentSource,
     deliveryName,
+    deliveryPostalCode,
     deliveryAddress,
     deliveryPhone,
 }: OrderTemplateProps): string {
     const sourceText = 
-        shipmentSource === 'supplier' ? 'メーカー在庫' :
+        shipmentSource === 'supplier' ? 'メーカー直送' :
         shipmentSource === 'wip' ? '仕掛仕上がり分' :
         shipmentSource === 'wip-request' ? '新規手配依頼' : '不明';
 
@@ -36,6 +38,8 @@ export function generateOrderNotificationText({
         .join('\n');
 
     const dateStr = format(new Date(), "yyyy年MM月dd日");
+
+    const postalText = deliveryPostalCode ? `〒${deliveryPostalCode} ` : "";
 
     return `
 朝日パピルス株式会社 担当者様
@@ -54,7 +58,7 @@ ${itemsText}
 
 ■納品先情報:
 お名前: ${deliveryName || '-'} 様
-ご住所: ${deliveryAddress || '-'}
+ご住所: ${postalText}${deliveryAddress || '-'}
 お電話: ${deliveryPhone || '-'}
 
 以上、よろしくお願いいたします。

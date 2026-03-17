@@ -113,10 +113,11 @@ export default function NewOrderPage(): React.ReactElement {
                     items: validItems.map(i => ({
                         productName: i.product.name,
                         quantity: i.quantity,
-                        unit: isRollBag(i.product.shape || "") ? "m" : "枚"
+                        unit: isRollBag(i.product.shape || "", i.product.category) ? "m" : "枚"
                     })),
                     shipmentSource,
                     deliveryName: selectedAddressId === 'manufacturer-storage' ? 'メーカー預かり' : selectedAddress?.name,
+                    deliveryPostalCode: selectedAddressId === 'manufacturer-storage' ? '' : selectedAddress?.postalCode,
                     deliveryAddress: selectedAddressId === 'manufacturer-storage' ? '-' : selectedAddress?.address,
                     deliveryPhone: selectedAddressId === 'manufacturer-storage' ? '-' : selectedAddress?.phone,
                 });

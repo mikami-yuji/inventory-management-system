@@ -54,7 +54,7 @@ export function ProductDetailDialog({
     const [analysisOpen, setAnalysisOpen] = useState(false);
     const { updateStock, loading, error } = useUpdateInventory();
 
-    const isRoll = product?.shape && isRollBag(product.shape);
+    const isRoll = product?.shape && isRollBag(product.shape, product.category);
     const unit = isRoll ? "m" : "枚";
 
     const { isListening, startListening, stopListening, hasSupport } = useVoiceInput({

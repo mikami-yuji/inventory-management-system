@@ -18,9 +18,17 @@ export const getPitch = (weight: number): number => {
     return 280; // 1kg
 };
 
-// ロール袋かどうか判定
-export const isRollBag = (shape: string): boolean => {
+// ロール袋（原反/フィルム巻）かどうか判定
+export const isRollBag = (shape: string, category?: string): boolean => {
     if (!shape) return false;
+    
+    // 米袋や通常の袋カテゴリの場合は、形状に関わらず「枚」単位（ロールではない）
+    if (category === 'new_rice' || category === 'bag') return false;
+
+    // 形状に「巻」や「ロール」が含まれる場合はロール
+    if (shape.includes('巻') || shape.includes('ロール')) return true;
+
+    // 特定の形状コード (RZ/RA) を持つものは、上記カテゴリ以外であればロールとして扱う
     return shape.includes('RZ') || shape.includes('RA') || shape.includes('RＺ') || shape.includes('RＡ');
 };
 
