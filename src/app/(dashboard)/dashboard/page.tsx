@@ -478,7 +478,7 @@ export default function DashboardPage(): React.ReactElement {
                             <Link href="/orders">すべて見る</Link>
                         </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
                         {/* Desktop Table */}
                         <div className="hidden md:block">
                             <Table>
