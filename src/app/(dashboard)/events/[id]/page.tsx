@@ -187,12 +187,12 @@ export default function EventDetailPage(): React.ReactElement {
             {/* 印刷用コンテンツ */}
             <div ref={printRef} className="print:p-4">
                 {/* イベント情報 */}
-                <Card className="mb-6">
-                    <CardHeader className="p-4 sm:p-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <Card className="mb-4 shadow-none border-slate-200">
+                    <CardHeader className="p-3 sm:p-5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="min-w-0">
-                                <CardTitle className="text-lg sm:text-xl truncate">{event.clientName}</CardTitle>
-                                <CardDescription className="flex items-center gap-2 mt-1.5 text-xs sm:text-sm">
+                                <CardTitle className="text-base sm:text-xl truncate">{event.clientName}</CardTitle>
+                                <CardDescription className="flex items-center gap-1.5 mt-1 text-[11px] sm:text-sm">
                                     {event.scheduleType === "single" ? (
                                         <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                     ) : (
@@ -211,9 +211,9 @@ export default function EventDetailPage(): React.ReactElement {
                                     </span>
                                 </CardDescription>
                             </div>
-                            <div className="print:hidden shrink-0">
+                            <div className="print:hidden shrink-0 mt-1 sm:mt-0">
                                 <Select value={event.status} onValueChange={handleStatusChange} disabled={updating}>
-                                    <SelectTrigger className="w-full sm:w-[140px] h-9 text-sm">
+                                    <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs sm:text-sm">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -226,7 +226,7 @@ export default function EventDetailPage(): React.ReactElement {
                             </div>
                         </div>
                         {event.description && (
-                            <p className="text-xs sm:text-sm text-muted-foreground mt-3 bg-gray-50 rounded px-2.5 py-2">
+                            <p className="text-[11px] sm:text-sm text-muted-foreground mt-2 bg-slate-50 rounded px-2 py-1.5">
                                 {event.description}
                             </p>
                         )}
