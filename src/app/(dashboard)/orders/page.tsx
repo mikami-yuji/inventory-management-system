@@ -90,63 +90,7 @@ export default function OrdersPage(): React.ReactElement {
 
     // PDF出力（印刷）
     const handlePrintOrder = (order: OrderFromAPI): void => {
-        const printContent = `
-            <html>
-            <head>
-                <title>発注書 - ${order.id.slice(0, 8)}</title>
-                <style>
-                    body { font-family: sans-serif; padding: 40px; }
-                    h1 { font-size: 24px; margin-bottom: 20px; }
-                    .info { margin-bottom: 20px; }
-                    .info p { margin: 5px 0; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                    th, td { border: 1px solid #333; padding: 10px; text-align: left; }
-                    th { background: #f0f0f0; }
-                    .footer { margin-top: 40px; text-align: right; }
-                </style>
-            </head>
-            <body>
-                <h1>出荷依頼書</h1>
-                <div class="info">
-                    <p><strong>発注番号:</strong> ${order.id.slice(0, 8)}</p>
-                    <p><strong>依頼日:</strong> ${new Date(order.createdAt).toLocaleDateString('ja-JP')}</p>
-                    <p><strong>タイプ:</strong> ${order.type === 'special_event' ? '特売発注' : '通常発注'}</p>
-                    <p><strong>ステータス:</strong> ${order.status === 'shipped' ? '出荷済み' : '受付中'}</p>
-                    ${order.shipmentSource ? `<p><strong>出荷元:</strong> ${order.shipmentSource === 'supplier' ? 'メーカー直送' : '自社在庫'}</p>` : ''}
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>受注No</th>
-                            <th>商品名</th>
-                            <th>量目</th>
-                            <th>数量</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${order.items.map(item => `
-                            <tr>
-                                <td>${item.sku}</td>
-                                <td>${item.productName}</td>
-                                <td>${item.weight ? `${item.weight}kg` : ''} ${item.shape || ''}</td>
-                                <td>${item.quantity} ${item.shape?.includes('巻') || item.shape?.includes('ロール') ? 'm' : '枚'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-                <div class="footer">
-                    <p>印刷日時: ${new Date().toLocaleString('ja-JP')}</p>
-                </div>
-            </body>
-            </html>
-        `;
-
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-            printWindow.document.write(printContent);
-            printWindow.document.close();
-            printWindow.print();
-        }
+        window.open(`/orders/${order.id}/purchase-order`, '_blank');
     };
 
     // ステータス表示ラベル

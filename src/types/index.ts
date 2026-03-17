@@ -149,6 +149,7 @@ export type Order = {
   eventId?: string; // 特売発注の場合のイベントID
   shipmentSource?: 'inventory' | 'supplier'; // 出荷元 (在庫 or メーカー直送)
   deliveryName?: string;
+  deliveryPostalCode?: string;
   deliveryAddress?: string;
   deliveryPhone?: string;
 };

@@ -1,194 +1,133 @@
-"use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Product } from "@/types";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
+import React, { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogHeader, 
+    DialogTitle, 
+    DialogFooter 
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { CalculableInput } from "@/components/ui/calculable-input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useWIPActions, useWorkInProgress } from "@/hooks/use-work-in-progress";
-import { format, endOfMonth, setDate } from "date-fns";
-import { Plus, Loader2, Trash2, CalendarClock, PackageCheck } from "lucide-react";
+import { 
+    Table, 
+    TableBody, 
+    TableCell, 
+    TableHead, 
+    TableHeader, 
+    TableRow 
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useWIPActions } from "@/hooks/use-work-in-progress";
+import { Product } from "@/types";
+import { Plus, Trash2, Calendar as CalendarIcon, Save } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "react-hot-toast";
 import type { WorkInProgress, DeliveryAddress } from "@/types";
-import { X } from "lucide-react";
+import { X, ClipboardCopy } from "lucide-react";
+import { CopyNotificationDialog } from "@/components/notifications/copy-notification-dialog";
+import { generateWIPMoveNotificationText } from "@/lib/email-templates";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 type WIPDialogProps = {
     product: Product | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess: () => void;
-}
+};
 
-export function WIPDialog({
-    product,
-    open,
-    onOpenChange,
-    onSuccess,
-}: WIPDialogProps) {
-    const [activeTab, setActiveTab] = useState("list");
+type ArrivalSchedule = {
+    id: string;
+    expectedDate: string;
+    quantity: number;
+    note: string;
+};
 
-    // itemsの取得 (in_progress)
-    const { items: inProgressItems, loading: loadingInProgress, refetch: refetchInProgress } = useWorkInProgress({
-        productId: product?.id,
-        status: 'in_progress'
-    });
+export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogProps) {
+    const [activeTab, setActiveTab] = useState<string>("list");
+    const [wipList, setWipList] = useState<WorkInProgress[]>([]);
+    const [loading, setLoading] = useState(false);
 
-    // itemsの取得 (completed)
-    const { items: completedItems, loading: loadingCompleted, refetch: refetchCompleted } = useWorkInProgress({
-        productId: product?.id,
-        status: 'completed'
-    });
+    // フォーム用
+    const [quantity, setQuantity] = useState<number>(0);
+    const [startedAt, setStartedAt] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+    const [expectedCompletion, setExpectedCompletion] = useState<string>("");
+    const [termType, setTermType] = useState<string>("specific");
+    const [note, setNote] = useState<string>("");
 
-    // refetchをuseCallbackで安定化して無限ループを防止
-    const refetch = useCallback(() => {
-        refetchInProgress();
-        refetchCompleted();
-    }, [refetchInProgress, refetchCompleted]);
-
-    useEffect(() => {
-        if (activeTab === 'history') {
-            refetchCompleted();
-        }
-    }, [activeTab, refetchCompleted]);
+    // 移動用
+    const [confirmingId, setConfirmingId] = useState<string | null>(null);
+    const [confirmingItem, setConfirmingItem] = useState<WorkInProgress | null>(null);
+    const [supplierQuantity, setSupplierQuantity] = useState<number>(0);
+    const [arrivalSchedules, setArrivalSchedules] = useState<ArrivalSchedule[]>([]);
+    const [lossQuantity, setLossQuantity] = useState<number>(0);
 
     // アクション
     const { createWIP, updateWIP, arrangeShipping, transferToIncoming, transferToSupplier, deleteWIP, loading: actionLoading } = useWIPActions();
+    const { user } = useAuthSession();
+
+    // 通知コピー用
+    const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+    const [copyContent, setCopyContent] = useState("");
 
     // フォーム状態
     const [editingWIPId, setEditingWIPId] = useState<string | null>(null);
-    const [quantity, setQuantity] = useState(0);
-    const [startedAt, setStartedAt] = useState(format(new Date(), 'yyyy-MM-dd'));
-    const [dateType, setDateType] = useState<'specific' | 'vague'>('specific');
-    const [specificDate, setSpecificDate] = useState("");
 
-    // 旬管理用ステート
-    const [vagueMonth, setVagueMonth] = useState(format(new Date(), 'yyyy-MM'));
-    const [vagueTerm, setVagueTerm] = useState<'early' | 'mid' | 'late'>('early');
-
-    const [note, setNote] = useState("");
-
-    // 確定処理用ステート（分割移動対応）
-    const [confirmingId, setConfirmingId] = useState<string | null>(null);
-    const [confirmingItem, setConfirmingItem] = useState<WorkInProgress | null>(null);
-    const [supplierQuantity, setSupplierQuantity] = useState(0); // メーカー在庫への数量
-
-    // 入荷予定の複数スケジュール管理
-    type ArrivalSchedule = {
-        id: string;
-        expectedDate: string;
-        quantity: number;
-        note: string;
-    };
-    const [arrivalSchedules, setArrivalSchedules] = useState<ArrivalSchedule[]>([]);
-
-    const [lossQuantity, setLossQuantity] = useState(0); // ロス数量
-
-    // 納品先リスト
-    const [deliveryAddresses, setDeliveryAddresses] = useState<DeliveryAddress[]>([]);
-
-    const fetchDeliveryAddresses = async () => {
+    const refetch = async () => {
+        if (!product?.id) return;
+        setLoading(true);
         try {
-            const res = await fetch('/api/delivery-addresses');
-            const result = await res.json();
-            if (Array.isArray(result)) {
-                setDeliveryAddresses(result);
-            } else if (result && result.data && Array.isArray(result.data)) {
-                setDeliveryAddresses(result.data);
-            }
+            const res = await fetch(`/api/work-in-progress?productId=${product.id}&status=in_progress`);
+            const json = await res.json();
+            if (json.data) setWipList(json.data);
         } catch (e) {
-            console.error("納品先取得エラー", e);
+            console.error(e);
+        } finally {
+            setLoading(false);
         }
     };
 
-    useEffect(() => {
-        if (open) {
-            fetchDeliveryAddresses();
-        }
-    }, [open]);
-
-    // ダイアログが開いたときに再取得（refetchを依存配列から除外して無限ループ防止）
     useEffect(() => {
         if (open && product) {
-            refetchInProgress();
-            setArrivalSchedules([]);
-            setConfirmingId(null);
-            setConfirmingItem(null);
+            refetch();
+            resetForm();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, product?.id]);
+    }, [open, product]);
 
     const resetForm = () => {
-        setEditingWIPId(null);
         setQuantity(0);
-        setNote("");
         setStartedAt(format(new Date(), 'yyyy-MM-dd'));
-        setDateType('specific');
-        setSpecificDate("");
+        setExpectedCompletion("");
+        setTermType("specific");
+        setNote("");
+        setEditingWIPId(null);
     };
 
-    const handleEditClick = (item: WorkInProgress) => {
+    const handleEdit = (item: WorkInProgress) => {
         setEditingWIPId(item.id);
         setQuantity(item.quantity);
-        setStartedAt(format(new Date(item.startedAt), 'yyyy-MM-dd'));
+        setStartedAt(item.startedAt ? item.startedAt.split('T')[0] : format(new Date(), 'yyyy-MM-dd'));
+        setExpectedCompletion(item.expectedCompletion ? item.expectedCompletion.split('T')[0] : "");
+        setTermType(item.termType || "specific");
         setNote(item.note || "");
-        if (item.termType === 'specific' || !item.termType) {
-            setDateType('specific');
-            setSpecificDate(item.expectedCompletion ? format(new Date(item.expectedCompletion), 'yyyy-MM-dd') : "");
-        } else {
-            setDateType('vague');
-            setVagueTerm(item.termType as 'early' | 'mid' | 'late');
-            if (item.expectedCompletion) {
-                setVagueMonth(format(new Date(item.expectedCompletion), 'yyyy-MM'));
-            }
-        }
-        setActiveTab("add");
+        setActiveTab("form");
     };
 
-    const handleCreateOrUpdate = async () => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
         if (!product) return;
-        if (quantity <= 0) return;
-
-        let expectedCompletion: string | undefined = undefined;
-        let termType: 'specific' | 'early' | 'mid' | 'late' = 'specific';
-
-        if (dateType === 'specific') {
-            expectedCompletion = specificDate || undefined;
-        } else {
-            termType = vagueTerm;
-            // ソート用に仮の日付を設定
-            const [year, month] = vagueMonth.split('-').map(Number);
-            const baseDate = new Date(year, month - 1, 1);
-
-            if (vagueTerm === 'early') {
-                expectedCompletion = format(setDate(baseDate, 10), 'yyyy-MM-dd');
-            } else if (vagueTerm === 'mid') {
-                expectedCompletion = format(setDate(baseDate, 20), 'yyyy-MM-dd');
-            } else {
-                expectedCompletion = format(endOfMonth(baseDate), 'yyyy-MM-dd');
-            }
-        }
 
         let result;
         if (editingWIPId) {
-            const success = await updateWIP(editingWIPId, {
+            const { success } = await updateWIP(editingWIPId, {
                 quantity,
-                started_at: startedAt,
-                expected_completion: expectedCompletion,
-                term_type: termType,
+                startedAt,
+                expectedCompletion: expectedCompletion || undefined,
+                termType,
                 note: note || undefined,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
@@ -285,19 +224,49 @@ export function WIPDialog({
             // 全量消化の場合はWIPを削除
             if (remainingQuantity <= 0) {
                 await deleteWIP(confirmingId);
-                const parts = [];
-                if (totalTransferQuantity > 0) parts.push(`${totalTransferQuantity.toLocaleString()}を移動`);
-                if (lossQuantity > 0) parts.push(`ロス ${lossQuantity.toLocaleString()}`);
-                toast.success(parts.join('、'));
             } else {
                 // 残数がある場合はWIPの数量を残数に更新
                 await updateWIP(confirmingId, { quantity: remainingQuantity });
-                const parts = [];
-                if (totalTransferQuantity > 0) parts.push(`${totalTransferQuantity.toLocaleString()}を移動`);
-                if (lossQuantity > 0) parts.push(`ロス ${lossQuantity.toLocaleString()}`);
-                parts.push(`${remainingQuantity.toLocaleString()}を仕掛中に残しました`);
-                toast.success(parts.join('、'));
             }
+
+            const parts = [];
+            if (totalTransferQuantity > 0) parts.push(`${totalTransferQuantity.toLocaleString()}を移動`);
+            if (lossQuantity > 0) parts.push(`ロス ${lossQuantity.toLocaleString()}`);
+            if (remainingQuantity > 0) parts.push(`${remainingQuantity.toLocaleString()}を仕掛中に残しました`);
+            toast.success(parts.join('、'));
+
+            if (product) {
+                // メール文面生成
+                const wipMoveItems = [];
+                if (supplierQuantity > 0) {
+                    wipMoveItems.push({
+                        productName: product.name,
+                        quantity: supplierQuantity,
+                        unit: product.shape?.includes('枚') ? '枚' : 'm',
+                        destination: 'メーカー在庫',
+                        note: '仕掛品からの移動'
+                    });
+                }
+                activeSchedules.forEach(s => {
+                    wipMoveItems.push({
+                        productName: product.name,
+                        quantity: s.quantity,
+                        unit: product.shape?.includes('枚') ? '枚' : 'm',
+                        destination: `入荷予定 (${s.expectedDate})`,
+                        note: s.note
+                    });
+                });
+
+                if (wipMoveItems.length > 0) {
+                    const text = generateWIPMoveNotificationText({
+                        userName: user?.name || 'システム利用者',
+                        items: wipMoveItems
+                    });
+                    setCopyContent(text);
+                    setCopyDialogOpen(true);
+                }
+            }
+
             onSuccess();
             refetch();
             setConfirmingId(null);
@@ -306,8 +275,6 @@ export function WIPDialog({
             toast.error('移動処理に失敗しました');
         }
     };
-
-
 
     const handleDelete = async (id: string) => {
         if (!confirm("本当に削除しますか？")) return;
@@ -324,423 +291,295 @@ export function WIPDialog({
         if (termType === 'specific' || !termType) return format(new Date(dateStr), 'yyyy/MM/dd');
 
         const date = new Date(dateStr);
-        const month = format(date, 'M月');
+        const y = date.getFullYear();
+        const m = date.getMonth() + 1;
+        const d = date.getDate();
 
-        switch (termType) {
-            case 'early': return `${month}上旬`;
-            case 'mid': return `${month}中旬`;
-            case 'late': return `${month}下旬`;
-            default: return format(date, 'yyyy/MM/dd');
-        }
+        if (termType === 'early') return `${y}/${m} 上旬`;
+        if (termType === 'mid') return `${y}/${m} 中旬`;
+        if (termType === 'late') return `${y}/${m} 下旬`;
+        return format(date, 'yyyy/MM/dd');
     };
-
-    if (!product) return null;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>仕掛中（加工中）管理</DialogTitle>
-                    <DialogDescription>
-                        {product.name} の仕掛品・仕掛状況管理
-                    </DialogDescription>
+                    <div className="flex justify-between items-center pr-6">
+                        <DialogTitle>仕掛管理: {product?.name}</DialogTitle>
+                    </div>
                 </DialogHeader>
 
-                {confirmingId && confirmingItem ? (
-                    // 仕上がり移動画面（分割対応）
-                    <div className="space-y-4 py-2">
-                        <div className="bg-blue-50 p-3 rounded-md border border-blue-200 text-sm mb-4">
-                            仕掛中の商品（{confirmingItem.quantity.toLocaleString()}）を移動先に振り分けてください。
-                            一部のみ移動し、残りを仕掛中に残すことも可能です。
+                {confirmingId ? (
+                    <div className="space-y-6 pt-4">
+                        <div className="bg-muted/50 p-4 rounded-lg">
+                            <h3 className="text-sm font-medium mb-2">移動元の仕掛</h3>
+                            <div className="text-sm flex justify-between">
+                                <span>数量: {confirmingItem?.quantity.toLocaleString()} {product?.shape?.includes('枚') ? '枚' : 'm'}</span>
+                                <Badge variant="outline">{confirmingItem?.termType ? displayDate(confirmingItem.expectedCompletion, confirmingItem.termType) : '未設定'}</Badge>
+                            </div>
                         </div>
 
-                        <div className="grid gap-4">
-                            {/* メーカー在庫への移動 */}
-                            <div className="border rounded-lg p-4 space-y-3">
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-medium border-b pb-2">移動先・数量の指定</h3>
+                            
+                            <div className="space-y-2">
+                                <Label className="text-xs">メーカー在庫へ移動</Label>
                                 <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">メーカー在庫</Badge>
-                                    <span className="text-sm text-muted-foreground">に移動する数量</span>
+                                    <Input 
+                                        type="number" 
+                                        value={supplierQuantity || ""} 
+                                        onChange={e => setSupplierQuantity(Number(e.target.value))}
+                                        className="h-9"
+                                    />
+                                    <span className="text-sm text-muted-foreground w-12 text-center">
+                                        {product?.shape?.includes('枚') ? '枚' : 'm'}
+                                    </span>
                                 </div>
-                                <CalculableInput
-                                    value={supplierQuantity === 0 ? "" : supplierQuantity}
-                                    onChange={(value) => setSupplierQuantity(Number(value) || 0)}
-                                    placeholder="0 (移動しない場合は空欄)"
-                                />
                             </div>
 
-                            {/* 入荷予定への移動 */}
-                            <div className="border rounded-lg p-4 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">入荷予定</Badge>
-                                        <span className="text-sm text-muted-foreground">に移動する数量（複数回答可）</span>
-                                    </div>
-                                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addArrivalRow}>
-                                        <Plus className="h-3 w-3 mr-1" />
-                                        予定追加
-                                    </Button>
-                                </div>
-
-                                <div className="space-y-4 pt-2">
-                                    {arrivalSchedules.map((schedule) => (
-                                        <div key={schedule.id} className="relative bg-muted/20 p-3 rounded-md border space-y-3">
-                                            {arrivalSchedules.length > 1 && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-red-500"
-                                                    onClick={() => removeArrivalRow(schedule.id)}
-                                                >
-                                                    <X className="h-4 w-4" />
-                                                </Button>
-                                            )}
-
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="space-y-1">
-                                                    <Label className="text-xs">着日（入荷予定日）</Label>
-                                                    <Input
-                                                        type="date"
-                                                        value={schedule.expectedDate}
-                                                        onChange={(e) => updateArrivalRow(schedule.id, { expectedDate: e.target.value })}
-                                                        size={1}
-                                                        className="h-8"
-                                                    />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <Label className="text-xs">数量</Label>
-                                                    <CalculableInput
-                                                        value={schedule.quantity === 0 ? "" : schedule.quantity}
-                                                        onChange={(value) => updateArrivalRow(schedule.id, { quantity: Number(value) || 0 })}
-                                                        placeholder="数量"
-                                                        className="h-8"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-1">
-                                                <Label className="text-xs">出荷先（納品先マスターから選択）</Label>
-                                                <Select
-                                                    value={schedule.note}
-                                                    onValueChange={(val) => updateArrivalRow(schedule.id, { note: val })}
-                                                >
-                                                    <SelectTrigger className="h-8">
-                                                        <SelectValue placeholder="出荷先を選択（任意）" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {deliveryAddresses.map(addr => (
-                                                            <SelectItem key={addr.id} value={addr.name}>
-                                                                {addr.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
+                            <div className="space-y-3">
+                                <Label className="text-xs">入荷予定へ移動</Label>
+                                {arrivalSchedules.map((schedule) => (
+                                    <div key={schedule.id} className="grid grid-cols-12 gap-2 items-start bg-muted/20 p-2 rounded">
+                                        <div className="col-span-4">
+                                            <Input 
+                                                type="date" 
+                                                value={schedule.expectedDate}
+                                                onChange={e => updateArrivalRow(schedule.id, { expectedDate: e.target.value })}
+                                                className="h-8 text-xs"
+                                            />
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* ロス */}
-                            <div className="border rounded-lg p-4 space-y-3 border-dashed border-red-200">
-                                <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50">ロス</Badge>
-                                    <span className="text-sm text-muted-foreground">加工ロス・廃棄分</span>
-                                </div>
-                                <CalculableInput
-                                    value={lossQuantity === 0 ? "" : lossQuantity}
-                                    onChange={(value) => setLossQuantity(Number(value) || 0)}
-                                    placeholder="0 (ロスなしの場合は空欄)"
-                                />
-                            </div>
-
-                            {/* 残数サマリー */}
-                            <div className={`p-3 rounded-md text-sm ${totalConsumedQuantity > (confirmingItem?.quantity || 0) ? 'bg-red-50 border border-red-200 text-red-700' : remainingQuantity > 0 ? 'bg-amber-50 border border-amber-200 text-amber-700' : 'bg-green-50 border border-green-200 text-green-700'}`}>
-                                <div className="flex justify-between items-center">
-                                    <span>仕掛中の数量:</span>
-                                    <span className="font-medium">{confirmingItem.quantity.toLocaleString()}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span>移動合計:</span>
-                                    <span className="font-medium">{totalTransferQuantity.toLocaleString()}</span>
-                                </div>
-                                {lossQuantity > 0 && (
-                                    <div className="flex justify-between items-center text-red-600">
-                                        <span>ロス:</span>
-                                        <span className="font-medium">-{lossQuantity.toLocaleString()}</span>
+                                        <div className="col-span-3">
+                                            <Input 
+                                                type="number" 
+                                                value={schedule.quantity || ""}
+                                                onChange={e => updateArrivalRow(schedule.id, { quantity: Number(e.target.value) })}
+                                                className="h-8 text-xs"
+                                                placeholder="数量"
+                                            />
+                                        </div>
+                                        <div className="col-span-4">
+                                            <Input 
+                                                value={schedule.note}
+                                                onChange={e => updateArrivalRow(schedule.id, { note: e.target.value })}
+                                                className="h-8 text-xs"
+                                                placeholder="備考"
+                                            />
+                                        </div>
+                                        <div className="col-span-1 flex justify-end">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="h-8 w-8 text-destructive"
+                                                onClick={() => removeArrivalRow(schedule.id)}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
-                                )}
-                                <hr className="my-1 border-current opacity-30" />
-                                <div className="flex justify-between items-center font-bold">
-                                    <span>{remainingQuantity > 0 ? '仕掛中に残る数量:' : '状態:'}</span>
-                                    <span>{remainingQuantity > 0 ? remainingQuantity.toLocaleString() : totalConsumedQuantity > (confirmingItem?.quantity || 0) ? '超過しています' : '全量消化'}</span>
+                                ))}
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="w-full h-8 text-xs border-dashed"
+                                    onClick={addArrivalRow}
+                                >
+                                    <Plus className="h-3 w-3 mr-1" /> 行を追加
+                                </Button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-2 border-t mt-4">
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-destructive">不調分・ロスとして処理</Label>
+                                    <Input 
+                                        type="number" 
+                                        value={lossQuantity || ""} 
+                                        onChange={e => setLossQuantity(Number(e.target.value))}
+                                        className="h-9 border-destructive/30"
+                                    />
+                                </div>
+                                <div className="space-y-2 text-right">
+                                    <Label className="text-xs text-muted-foreground">移動後の仕掛残</Label>
+                                    <div className={`text-xl font-bold ${remainingQuantity < 0 ? 'text-destructive' : ''}`}>
+                                        {remainingQuantity.toLocaleString()}
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <DialogFooter className="mt-6">
-                            <Button variant="outline" onClick={() => {
-                                setConfirmingId(null);
-                                setConfirmingItem(null);
-                            }}>キャンセル</Button>
-                            <Button onClick={handleSubmitConfirm} disabled={actionLoading || !isTransferValid}>
-                                {actionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                確定して移動
+                        <DialogFooter className="flex gap-2 sm:justify-end">
+                            <Button variant="outline" onClick={() => setConfirmingId(null)}>キャンセル</Button>
+                            <Button 
+                                onClick={handleSubmitConfirm} 
+                                disabled={!isTransferValid || actionLoading}
+                            >
+                                {actionLoading ? '処理中...' : '移動を確定'}
                             </Button>
                         </DialogFooter>
                     </div>
                 ) : (
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="list" onClick={resetForm}>一覧 ({inProgressItems.length})</TabsTrigger>
-                            <TabsTrigger value="add" onClick={resetForm}>{editingWIPId ? '編集' : '新規登録'}</TabsTrigger>
-                            <TabsTrigger value="history" onClick={resetForm}>履歴 ({completedItems.length})</TabsTrigger>
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="list">仕掛一覧</TabsTrigger>
+                            <TabsTrigger value="form">{editingWIPId ? "編集" : "新規登録"}</TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="list" className="mt-4 space-y-4">
-                            {loadingInProgress ? (
-                                <div className="flex justify-center py-8">
-                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                                </div>
-                            ) : inProgressItems.length === 0 ? (
-                                <div className="text-center py-8 text-muted-foreground">
-                                    仕掛中のアイテムはありません。
-                                </div>
+                        <TabsContent value="list" className="py-4">
+                            {loading ? (
+                                <div className="text-center py-8 text-muted-foreground">読み込み中...</div>
+                            ) : wipList.length === 0 ? (
+                                <div className="text-center py-8 text-muted-foreground">仕掛中のアイテムはありません</div>
                             ) : (
-                                <div className="space-y-3">
-                                    {inProgressItems.map((item) => (
-                                        <div key={item.id} className="flex flex-col p-4 border rounded-lg gap-3">
-                                            <div className="flex items-center justify-between">
-                                                <div className="font-medium flex items-center gap-2">
-                                                    <span className="text-lg">{item.quantity.toLocaleString()}</span>
-                                                    {item.confirmationStatus === 'confirmed' ? (
-                                                        <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
-                                                            仕掛確定済
-                                                        </Badge>
-                                                    ) : item.confirmationStatus === 'scheduled' ? (
-                                                        <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">
-                                                            入荷予定済
-                                                        </Badge>
-                                                    ) : (
-                                                        <Badge variant="outline" className="text-purple-600 border-purple-200 bg-purple-50">
-                                                            加工中
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex gap-1 flex-wrap justify-end">
-                                                        <Button
-                                                            size="sm"
-                                                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 h-8 flex items-center gap-1"
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>開始日</TableHead>
+                                            <TableHead>数量</TableHead>
+                                            <TableHead>納期</TableHead>
+                                            <TableHead className="text-right">アクション</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {wipList.map((item) => (
+                                            <TableRow key={item.id}>
+                                                <TableCell className="text-xs">
+                                                    {item.startedAt ? format(new Date(item.startedAt), 'yyyy/MM/dd') : '-'}
+                                                </TableCell>
+                                                <TableCell className="font-medium">
+                                                    {item.quantity.toLocaleString()}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant={item.confirmationStatus === 'confirmed' ? "default" : "outline"}>
+                                                        {displayDate(item.expectedCompletion, item.termType || 'specific')}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex justify-end gap-1">
+                                                        <Button 
+                                                            variant="outline" 
+                                                            size="sm" 
+                                                            className="h-7 px-2 text-xs"
                                                             onClick={() => handleStartTransfer(item)}
                                                         >
-                                                            <PackageCheck className="h-3 w-3" />
                                                             仕上がり移動
                                                         </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-indigo-600 hover:bg-indigo-50 border-indigo-200 text-xs px-2 h-8"
-                                                            onClick={() => handleArrangeShipping(item.id)}
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="h-7 w-7"
+                                                            onClick={() => handleEdit(item)}
                                                         >
-                                                            出荷手配
+                                                            <CalendarIcon className="h-3 w-3" />
+                                                        </Button>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="h-7 w-7 text-destructive"
+                                                            onClick={() => handleDelete(item.id)}
+                                                        >
+                                                            <Trash2 className="h-3 w-3" />
                                                         </Button>
                                                     </div>
-
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="text-slate-500 hover:text-slate-800 h-8 w-8 p-0"
-                                                        onClick={() => handleEditClick(item)}
-                                                    >
-                                                        編集
-                                                    </Button>
-
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="text-red-500 hover:text-red-600 h-8 w-8 p-0"
-                                                        onClick={() => handleDelete(item.id)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-4 text-sm text-muted-foreground bg-muted/30 p-2 rounded">
-                                                <div className="flex items-center gap-1">
-                                                    <CalendarClock className="h-3 w-3" />
-                                                    開始: {format(new Date(item.startedAt), 'yyyy/MM/dd')}
-                                                </div>
-                                                <div className="flex items-center gap-1 font-medium text-foreground">
-                                                    → 予定: {displayDate(item.expectedCompletion, item.termType)}
-                                                </div>
-                                            </div>
-
-                                            {item.note && (
-                                                <div className="text-xs text-muted-foreground">
-                                                    メモ: {item.note}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
                             )}
                         </TabsContent>
 
-                        <TabsContent value="add" className="mt-4 space-y-4">
-                            <div className="grid gap-4 py-4">
-                                {/* 数量 */}
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="quantity" className="text-right">数量</Label>
-                                    <CalculableInput
-                                        id="quantity"
-                                        value={quantity === 0 ? "" : quantity}
-                                        onChange={(value) => setQuantity(Number(value) || 0)}
-                                        className="col-span-3"
-                                        placeholder="数量を入力"
-                                    />
-                                </div>
-
-                                {/* 開始日 */}
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="startedAt" className="text-right">開始日</Label>
-                                    <Input
-                                        id="startedAt"
-                                        type="date"
-                                        value={startedAt}
-                                        onChange={(e) => setStartedAt(e.target.value)}
-                                        className="col-span-3"
-                                    />
-                                </div>
-
-                                {/* 完了予定日タイプ選択 */}
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right">予定日タイプ</Label>
-                                    <RadioGroup
-                                        defaultValue="specific"
-                                        value={dateType}
-                                        onValueChange={(val: 'specific' | 'vague') => setDateType(val)}
-                                        className="col-span-3 flex gap-4"
-                                    >
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="specific" id="r1" />
-                                            <Label htmlFor="r1">日付指定</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="vague" id="r2" />
-                                            <Label htmlFor="r2">上/中/下旬</Label>
-                                        </div>
-                                    </RadioGroup>
-                                </div>
-
-                                {/* 完了予定日入力エリア */}
-                                {dateType === 'specific' ? (
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="expected" className="text-right">仕掛完了予定日</Label>
+                        <TabsContent value="form">
+                            <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="startedAt">開始日</Label>
                                         <Input
-                                            id="expected"
+                                            id="startedAt"
                                             type="date"
-                                            value={specificDate}
-                                            onChange={(e) => setSpecificDate(e.target.value)}
-                                            className="col-span-3"
+                                            value={startedAt}
+                                            onChange={(e) => setStartedAt(e.target.value)}
+                                            required
                                         />
                                     </div>
-                                ) : (
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label className="text-right">予定時期</Label>
-                                        <div className="col-span-3 flex gap-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="quantity">数量</Label>
+                                        <div className="flex items-center gap-2">
                                             <Input
-                                                type="month"
-                                                value={vagueMonth}
-                                                onChange={(e) => setVagueMonth(e.target.value)}
-                                                className="w-40"
+                                                id="quantity"
+                                                type="number"
+                                                value={quantity || ""}
+                                                onChange={(e) => setQuantity(Number(e.target.value))}
+                                                required
                                             />
-                                            <Select value={vagueTerm} onValueChange={(val: 'early' | 'mid' | 'late') => setVagueTerm(val)}>
-                                                <SelectTrigger className="w-32">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="early">上旬</SelectItem>
-                                                    <SelectItem value="mid">中旬</SelectItem>
-                                                    <SelectItem value="late">下旬</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            <span className="text-sm text-muted-foreground">
+                                                {product?.shape?.includes('枚') ? '枚' : 'm'}
+                                            </span>
                                         </div>
                                     </div>
-                                )}
+                                </div>
 
-                                {/* メモ */}
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="note" className="text-right">メモ</Label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>納期区分</Label>
+                                        <Select value={termType} onValueChange={setTermType}>
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="specific">特定の日付</SelectItem>
+                                                <SelectItem value="early">上旬</SelectItem>
+                                                <SelectItem value="mid">中旬</SelectItem>
+                                                <SelectItem value="late">下旬</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="expectedCompletion">
+                                            {termType === 'specific' ? "完了予定日" : "対象月(の日付)"}
+                                        </Label>
+                                        <Input
+                                            id="expectedCompletion"
+                                            type="date"
+                                            value={expectedCompletion}
+                                            onChange={(e) => setExpectedCompletion(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="note">備考</Label>
                                     <Textarea
                                         id="note"
                                         value={note}
                                         onChange={(e) => setNote(e.target.value)}
-                                        className="col-span-3"
-                                        placeholder="備考があれば入力"
+                                        placeholder="メモ事項があれば入力してください"
+                                        rows={3}
                                     />
                                 </div>
-                            </div>
-                            <div className="flex justify-end gap-2">
-                                <Button variant="outline" onClick={() => { setActiveTab("list"); resetForm(); }}>
-                                    キャンセル
-                                </Button>
-                                <Button onClick={handleCreateOrUpdate} disabled={actionLoading || quantity <= 0}>
-                                    {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
-                                    {editingWIPId ? '更新' : '登録'}
-                                </Button>
-                            </div>
-                        </TabsContent>
 
-                        <TabsContent value="history" className="mt-4 space-y-4">
-                            {loadingCompleted ? (
-                                <div className="flex justify-center py-8">
-                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                <div className="flex justify-end gap-2 pt-2">
+                                    {editingWIPId && (
+                                        <Button type="button" variant="ghost" onClick={resetForm}>キャンセル</Button>
+                                    )}
+                                    <Button type="submit" disabled={actionLoading} className="gap-2">
+                                        <Save className="h-4 w-4" />
+                                        {editingWIPId ? "更新する" : "登録する"}
+                                    </Button>
                                 </div>
-                            ) : completedItems.length === 0 ? (
-                                <div className="text-center py-8 text-muted-foreground">
-                                    完了履歴はありません。
-                                </div>
-                            ) : (
-                                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                                    {completedItems.map((item) => (
-                                        <div key={item.id} className="flex flex-col p-4 border rounded-lg gap-2 bg-slate-50 opacity-80">
-                                            <div className="flex items-center justify-between">
-                                                <div className="font-medium flex items-center gap-2">
-                                                    <span className="text-lg">{item.quantity.toLocaleString()}</span>
-                                                    {item.confirmationStatus === 'shipping_arranged' ? (
-                                                        <Badge variant="outline" className="text-indigo-600 border-indigo-200 bg-indigo-50">
-                                                            出荷手配済
-                                                        </Badge>
-                                                    ) : item.confirmationStatus === 'scheduled' ? (
-                                                        <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">
-                                                            入荷予定済
-                                                        </Badge>
-                                                    ) : (
-                                                        <Badge variant="outline" className="text-slate-600 border-slate-200 bg-slate-100">
-                                                            完了
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                                {item.completedAt && (
-                                                    <div className="text-sm text-muted-foreground">
-                                                        完了: {format(new Date(item.completedAt), 'yyyy/MM/dd')}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {item.note && (
-                                                <div className="text-xs text-muted-foreground">
-                                                    メモ: {item.note}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            </form>
                         </TabsContent>
                     </Tabs>
                 )}
             </DialogContent>
+
+            <CopyNotificationDialog 
+                open={copyDialogOpen}
+                onOpenChange={setCopyDialogOpen}
+                title="仕上がり移動完了"
+                description="以下の移動内容をコピーして、担当者へ通知してください。"
+                content={copyContent}
+            />
         </Dialog>
     );
 }

@@ -20,6 +20,9 @@ import { useSupplierStockLots } from "@/hooks/use-supplier-stock-lots";
 import { DeliveryAddressDialog } from "@/components/orders/delivery-address-dialog";
 import { isRollBag, metersToBags } from "@/lib/services/inventory-service";
 import type { WorkInProgress } from "@/types";
+import { CopyNotificationDialog } from "@/components/notifications/copy-notification-dialog";
+import { generateOrderNotificationText } from "@/lib/email-templates";
+import { toast } from "react-hot-toast";
 
 
 export default function NewOrderPage(): React.ReactElement {
@@ -37,6 +40,11 @@ export default function NewOrderPage(): React.ReactElement {
     const [selectedAddressId, setSelectedAddressId] = useState<string>("");
     // 住所追加ダイアログの状態
     const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+    
+    // コピータスク用ステート
+    const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+    const [copyContent, setCopyContent] = useState("");
+    const [orderId, setOrderId] = useState<string | null>(null);
 
     // 初期ロード時にデフォルト住所を選択
     React.useEffect(() => {
@@ -83,21 +91,42 @@ export default function NewOrderPage(): React.ReactElement {
                     type: 'standard', // デフォルト
                     shipmentSource,
                     deliveryName: selectedAddressId === 'manufacturer-storage' ? 'メーカー預かり' : selectedAddress?.name,
+                    deliveryPostalCode: selectedAddressId === 'manufacturer-storage' ? '' : selectedAddress?.postalCode,
                     deliveryAddress: selectedAddressId === 'manufacturer-storage' ? '-' : selectedAddress?.address,
                     deliveryPhone: selectedAddressId === 'manufacturer-storage' ? '-' : selectedAddress?.phone,
                     preferredShape: selectedAddressId === 'manufacturer-storage' ? null : selectedAddress?.preferredShape
                 })
             });
 
+            const result = await response.json();
             if (!response.ok) {
-                const error = await response.json();
-                alert(`エラーが発生しました: ${error.error}`);
+                alert(`エラーが発生しました: ${result.error}`);
                 return;
             }
 
+            const order = result.data;
+            if (order) {
+                setOrderId(order.id);
+                const text = generateOrderNotificationText({
+                    orderId: order.id,
+                    clientName: user.name || "ユーザー",
+                    items: validItems.map(i => ({
+                        productName: i.product.name,
+                        quantity: i.quantity,
+                        unit: isRollBag(i.product.shape || "") ? "m" : "枚"
+                    })),
+                    shipmentSource,
+                    deliveryName: selectedAddressId === 'manufacturer-storage' ? 'メーカー預かり' : selectedAddress?.name,
+                    deliveryAddress: selectedAddressId === 'manufacturer-storage' ? '-' : selectedAddress?.address,
+                    deliveryPhone: selectedAddressId === 'manufacturer-storage' ? '-' : selectedAddress?.phone,
+                });
+                setCopyContent(text);
+                setCopyDialogOpen(true);
+            }
+
             clearCart();
-            alert("出荷依頼を完了しました");
-            router.push('/orders');
+            toast.success("出荷依頼を完了しました");
+            // router.push('/orders'); // ダイアログを閉じた後に遷移させるように変更
         } catch (error) {
             console.error(error);
             alert("通信エラーが発生しました");
@@ -496,6 +525,21 @@ export default function NewOrderPage(): React.ReactElement {
                 open={isAddressDialogOpen}
                 onOpenChange={setIsAddressDialogOpen}
                 onSuccess={() => refetchAddresses()}
+            />
+
+            <CopyNotificationDialog
+                open={copyDialogOpen}
+                onOpenChange={(open) => {
+                    setCopyDialogOpen(open);
+                    if (!open) {
+                        setOrderId(null);
+                        router.push('/orders');
+                    }
+                }}
+                title="出荷依頼完了"
+                description="以下の内容をコピーして、メール等で通知してください。"
+                content={copyContent}
+                orderId={orderId}
             />
         </div>
     );

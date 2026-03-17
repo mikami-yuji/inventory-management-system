@@ -236,35 +236,13 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 return NextResponse.json({ data: null, error: insertError.message }, { status: 500 })
             }
 
-            // メール通知用のデータ収集
+            /* 自動メール送信を一時停止（手動コピー方式へ移行）
             try {
-                const { data: { user } } = await supabase.auth.getUser();
-                const userName = user?.user_metadata?.name || user?.email || 'システム利用ユーザー';
-
-                // 管理者（通知ON）の取得
-                const { data: admins } = await supabase
-                    .from('users')
-                    .select('email')
-                    .eq('receives_order_emails', true);
-
-                const toAddresses = (admins || []).map((a: Record<string, unknown>) => a.email as string).filter(Boolean);
-
-                if (toAddresses.length > 0) {
-                    await sendWIPNotificationEmail({
-                        userName,
-                        toAddresses,
-                        items: schedules.map(s => ({
-                            productName: (product as Record<string, unknown>)?.name as string || '不明な商品',
-                            quantity: s.quantity,
-                            unit: '個', // 製品マスタにunitがないため一旦固定
-                            destination: `入荷予定 (${s.expectedDate})`,
-                            note: s.note
-                        }))
-                    });
-                }
+                // ... (既存のメール送信ロジック)
             } catch (emailError) {
                 console.error('WIP通知メール送信失敗:', emailError);
             }
+            */
         } else if (action === 'to_supplier') {
             // 仕掛品をメーカー在庫へ移動（部分移動対応・WIPレコードは削除しない）
             if (!quantity) {
@@ -324,34 +302,13 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 return NextResponse.json({ data: null, error: '商品情報の更新に失敗しました' }, { status: 500 })
             }
 
-            // メール通知用のデータ収集
+            /* 自動メール送信を一時停止（手動コピー方式へ移行）
             try {
-                const { data: { user } } = await supabase.auth.getUser();
-                const userName = user?.user_metadata?.name || user?.email || 'システム利用ユーザー';
-
-                const { data: admins } = await supabase
-                    .from('users')
-                    .select('email')
-                    .eq('receives_order_emails', true);
-
-                const toAddresses = (admins || []).map((a: Record<string, unknown>) => a.email as string).filter(Boolean);
-
-                if (toAddresses.length > 0) {
-                    await sendWIPNotificationEmail({
-                        userName,
-                        toAddresses,
-                        items: [{
-                            productName: (product as Record<string, unknown>)?.name as string || '不明な商品',
-                            quantity: quantity,
-                            unit: '個', // 製品マスタにunitがないため一旦固定
-                            destination: 'メーカー在庫',
-                            note: '仕掛品からの移動'
-                        }]
-                    });
-                }
+                // ... (既存のメール送信ロジック)
             } catch (emailError) {
                 console.error('WIP通知メール送信失敗:', emailError);
             }
+            */
 
             // WIPレコードは削除しない（フロントエンドで残数管理）
         } else if (action === 'confirm') {

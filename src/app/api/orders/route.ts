@@ -21,13 +21,7 @@ export async function GET(): Promise<NextResponse> {
         const { data: ordersData, error: ordersError } = await supabase
             .from('orders')
             .select(`
-                id,
-                client_id,
-                status,
-                type,
-                event_id,
-                shipment_source,
-                created_at,
+                *,
                 order_items (
                     id,
                     product_id,
@@ -51,13 +45,18 @@ export async function GET(): Promise<NextResponse> {
         }
 
         // TypeScript型に変換
-        const orders = (ordersData || []).map((order: Record<string, unknown>) => ({
+        const orders = (ordersData || []).map((order: Record<string, any>) => ({
             id: order.id,
             clientId: order.client_id,
             status: order.status,
             type: order.type,
             eventId: order.event_id,
             shipmentSource: order.shipment_source,
+            deliveryName: order.delivery_name,
+            deliveryPostalCode: order.delivery_postal_code || null, // 安全なアクセス
+            deliveryAddress: order.delivery_address,
+            deliveryPhone: order.delivery_phone,
+            preferredShape: order.preferred_shape,
             createdAt: order.created_at,
             items: ((order.order_items as Record<string, unknown>[]) || []).map((item: Record<string, unknown>) => ({
                 productId: item.product_id,
@@ -95,6 +94,7 @@ const createOrderSchema = z.object({
     shipmentSource: z.enum(['inventory', 'supplier', 'wip']),
     preferredShape: z.string().optional(),
     deliveryName: z.string().optional(),
+    deliveryPostalCode: z.string().optional(),
     deliveryAddress: z.string().optional(),
     deliveryPhone: z.string().optional()
 })
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             )
         }
 
-        const { items, clientId, type, eventId, shipmentSource, preferredShape, deliveryName, deliveryAddress, deliveryPhone } = validated.data;
+        const { items, clientId, type, eventId, shipmentSource, preferredShape, deliveryName, deliveryPostalCode, deliveryAddress, deliveryPhone } = validated.data;
 
         // 1. 発注レコード作成
         const { data: orderData, error: orderError } = await supabase
@@ -130,6 +130,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 event_id: eventId || null,
                 shipment_source: shipmentSource || 'supplier',
                 delivery_name: body.deliveryName,
+                delivery_postal_code: body.deliveryPostalCode,
                 delivery_address: body.deliveryAddress,
                 delivery_phone: body.deliveryPhone,
                 preferred_shape: preferredShape
@@ -196,20 +197,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                     // 履歴記録（メーカー直送）
                     await supabase.from('stock_history').insert({
                         product_id: item.productId,
-                        type: 'outgoing', // 出庫
-                        quantity: -item.quantity, // 減るので負の値？ stock_historyの定義によるが、outgoingなら正の値で記録して消費とみなすのが一般的だが、ここは実装に合わせて確認必要。
-                        // 現状のstock_historyは type: 'check' | 'incoming' | 'adjustment' | 'order'
-                        // outgoingがない。 'order' を使う。
-                        // StockHistory type definition: type: 'check' | 'incoming' | 'adjustment' | 'order'
-                        // quantity: number; // その時点の在庫数 (snapshot) なのか、変動数なのか？
-                        // Definition says: quantity: number; // その時点の在庫数
-                        // changeAmount?: number; // 増減数
-
-                        // ここではstock_historyは「自社在庫の履歴」と思われる。
-                        // メーカー在庫の変動履歴を残すべきか？ stock_historyは product_id に紐づくので、
-                        // type='order' note='メーカー直送' として残してもよいが、在庫数(quantity)は自社在庫を入れるべきか？
-                        // 混乱を招くので、メーカー直送の場合は note に記載する程度にするか、あるいは専用のログか。
-                        // 今回は note に記載する。
+                        type: 'order',
                         note: `メーカー直送 (残: ${newStock})`
                     })
                 }
@@ -265,8 +253,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             .eq('id', orderId)
 
         // -------------------------
-        // メール送信処理
+        // メール送信処理 (自動通知から手動コピー方式へ移行)
         // -------------------------
+        /*
         try {
             // 送信者情報（ユーザー名）の取得
             const { data: userProfile } = await supabase
@@ -315,6 +304,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             console.error('Failed to send order notification email:', emailError);
             // メール送信失敗でも発注処理自体は成功として扱う
         }
+        */
 
         return NextResponse.json({
             data: {
@@ -324,7 +314,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 status: 'shipped',
                 type,
                 items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
-                shipmentSource
+                shipmentSource,
+                deliveryName,
+                deliveryPostalCode,
+                deliveryAddress,
+                deliveryPhone,
+                preferredShape
             } as Order, error: null
         })
 
