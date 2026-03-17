@@ -338,28 +338,28 @@ function TurnoverReportContent(): React.ReactElement {
             {/* ヘッダー */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
                 <div>
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 text-xs md:text-sm">
                         <Link href="/reports">
-                            <Button variant="ghost" size="sm" className="gap-1">
-                                <ArrowLeft className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" className="gap-1 h-8">
+                                <ArrowLeft className="h-3 w-3 md:h-4 md:w-4" />
                                 レポート一覧
                             </Button>
                         </Link>
                     </div>
                     <div className="flex items-center gap-3">
-                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">在庫回転率レポート</h2>
-                        {loading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
+                        <h2 className="text-xl md:text-3xl font-bold tracking-tight">在庫回転率レポート</h2>
+                        {loading && <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin text-muted-foreground" />}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-xs md:text-sm text-muted-foreground mt-1">
                         商品ごとの回転率を分析し、仕入れ量の最適化に活用します
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={fetchHistory} className="gap-2">
+                <div className="flex items-center gap-2 md:gap-4 overflow-x-auto pb-1">
+                    <Button variant="outline" size="sm" onClick={fetchHistory} className="gap-2 shrink-0">
                         <RefreshCw className="h-4 w-4" />
                         更新
                     </Button>
-                    <Button variant="outline" onClick={handlePrint} className="gap-2">
+                    <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2 shrink-0">
                         <Printer className="h-4 w-4" />
                         印刷
                     </Button>
@@ -367,45 +367,45 @@ function TurnoverReportContent(): React.ReactElement {
             </div>
 
             {/* サマリーカード */}
-            <div className="grid gap-4 md:grid-cols-4 print:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">平均回転率</CardTitle>
-                        <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <div className="grid gap-2 grid-cols-2 md:grid-cols-4 md:gap-4 print:grid-cols-4">
+                <Card className="shadow-none sm:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium">平均回転率</CardTitle>
+                        <BarChart3 className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{summary.averageTurnover}</div>
-                        <p className="text-xs text-muted-foreground">動きのある商品の平均</p>
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold">{summary.averageTurnover}</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">動きのある商品の平均</p>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-green-600">高回転商品</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-green-500" />
+                <Card className="shadow-none sm:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium text-green-600">高回転商品</CardTitle>
+                        <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-green-500" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-green-600">{summary.rankA}</div>
-                        <p className="text-xs text-muted-foreground">回転率 2.0以上</p>
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold text-green-600">{summary.rankA}</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">回転率 2.0以上</p>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-amber-600">低回転商品</CardTitle>
-                        <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <Card className="shadow-none sm:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium text-amber-600">低回転商品</CardTitle>
+                        <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 text-amber-500" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-amber-600">{summary.rankC}</div>
-                        <p className="text-xs text-muted-foreground">回転率 0.1〜0.5</p>
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold text-amber-600">{summary.rankC}</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">回転率 0.1〜0.5</p>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-red-600">死に筋（在庫あり）</CardTitle>
-                        <PackageX className="h-4 w-4 text-red-500" />
+                <Card className="shadow-none sm:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium text-red-600">死に筋</CardTitle>
+                        <PackageX className="h-3 w-3 md:h-4 md:w-4 text-red-500" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-red-600">{summary.deadStock}</div>
-                        <p className="text-xs text-muted-foreground">在庫があるが動かない商品</p>
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold text-red-600">{summary.deadStock}</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">在庫あり・動かない商品</p>
                     </CardContent>
                 </Card>
             </div>
@@ -413,19 +413,20 @@ function TurnoverReportContent(): React.ReactElement {
             {/* グラフ＋フィルター */}
             <div className="grid gap-4 md:grid-cols-3">
                 {/* 回転率分布グラフ */}
-                <Card className="md:col-span-1">
-                    <CardHeader>
-                        <CardTitle className="text-base">ランク別分布</CardTitle>
-                        <CardDescription>商品数の分布</CardDescription>
+                <Card className="md:col-span-1 shadow-none sm:shadow-sm">
+                    <CardHeader className="p-3 md:p-6">
+                        <CardTitle className="text-sm md:text-base">ランク別分布</CardTitle>
+                        <CardDescription className="text-xs">商品数の分布</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div className="h-[200px]">
+                    <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
+                        <div className="h-[150px] md:h-[200px]">
                             <Bar data={rankChartData} options={{
                                 responsive: true,
                                 maintainAspectRatio: false,
                                 plugins: { legend: { display: false } },
                                 scales: {
-                                    y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                                    y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } },
+                                    x: { ticks: { font: { size: 10 } } }
                                 },
                             }} />
                         </div>
@@ -433,40 +434,40 @@ function TurnoverReportContent(): React.ReactElement {
                 </Card>
 
                 {/* 回転率の見方 */}
-                <Card className="md:col-span-2">
-                    <CardHeader>
-                        <CardTitle className="text-base">回転率ランクの見方</CardTitle>
-                        <CardDescription>回転率 = 月間出庫数 ÷ 平均在庫数</CardDescription>
+                <Card className="md:col-span-2 shadow-none sm:shadow-sm">
+                    <CardHeader className="p-3 md:p-6">
+                        <CardTitle className="text-sm md:text-base">回転率ランクの見方</CardTitle>
+                        <CardDescription className="text-xs">回転率 = 月間出庫数 ÷ 平均在庫数</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+                    <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
+                            <div className="p-2 md:p-3 rounded-lg bg-green-50 border border-green-200">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <Badge variant="default" className="bg-green-600">A</Badge>
-                                    <span className="font-medium text-sm">高回転（2.0以上）</span>
+                                    <Badge variant="default" className="bg-green-600 text-[10px] md:text-xs">A</Badge>
+                                    <span className="font-medium text-[11px] md:text-sm">高回転（2.0以上）</span>
                                 </div>
-                                <p className="text-xs text-muted-foreground">よく動く商品。在庫切れに注意して適宜補充</p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground leading-tight">よく動く商品。在庫切れに注意して適宜補充</p>
                             </div>
-                            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+                            <div className="p-2 md:p-3 rounded-lg bg-blue-50 border border-blue-200">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <Badge variant="secondary">B</Badge>
-                                    <span className="font-medium text-sm">中回転（0.5〜2.0）</span>
+                                    <Badge variant="secondary" className="text-[10px] md:text-xs">B</Badge>
+                                    <span className="font-medium text-[11px] md:text-sm">中回転（0.5〜2.0）</span>
                                 </div>
-                                <p className="text-xs text-muted-foreground">適正水準。現状の仕入れ量を維持</p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground leading-tight">適正水準。現状の仕入れ量を維持</p>
                             </div>
-                            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                            <div className="p-2 md:p-3 rounded-lg bg-amber-50 border border-amber-200">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <Badge variant="outline" className="border-amber-500 text-amber-700">C</Badge>
-                                    <span className="font-medium text-sm">低回転（0.1〜0.5）</span>
+                                    <Badge variant="outline" className="border-amber-500 text-amber-700 text-[10px] md:text-xs">C</Badge>
+                                    <span className="font-medium text-[11px] md:text-sm">低回転（0.1〜0.5）</span>
                                 </div>
-                                <p className="text-xs text-muted-foreground">滞留気味。仕入れ量を減らすことを検討</p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground leading-tight">滞留気味。仕入れ量を減らすことを検討</p>
                             </div>
-                            <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+                            <div className="p-2 md:p-3 rounded-lg bg-red-50 border border-red-200">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <Badge variant="destructive">D</Badge>
-                                    <span className="font-medium text-sm">死に筋（0.1未満）</span>
+                                    <Badge variant="destructive" className="text-[10px] md:text-xs">D</Badge>
+                                    <span className="font-medium text-[11px] md:text-sm">死に筋（0.1未満）</span>
                                 </div>
-                                <p className="text-xs text-muted-foreground">ほぼ動かない。落版・処分を検討</p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground leading-tight">ほぼ動かない。落版・処分を検討</p>
                             </div>
                         </div>
                     </CardContent>
@@ -511,17 +512,17 @@ function TurnoverReportContent(): React.ReactElement {
             </Card>
 
             {/* 回転率テーブル */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+            <Card className="shadow-none sm:shadow-sm">
+                <CardHeader className="p-3 md:p-6">
+                    <CardTitle className="flex items-center gap-2 text-base md:text-lg">
                         <BarChart3 className="h-5 w-5" />
                         回転率ランキング
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-xs md:text-sm">
                         過去30日間の出庫データに基づく在庫回転率
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
                     {loading ? (
                         <div className="flex items-center justify-center py-12">
                             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -532,7 +533,7 @@ function TurnoverReportContent(): React.ReactElement {
                             該当する商品がありません
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
                             <Table>
                                 <TableHeader>
                                     <TableRow>

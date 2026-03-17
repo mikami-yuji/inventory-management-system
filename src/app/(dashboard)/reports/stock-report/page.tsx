@@ -196,29 +196,29 @@ function StockReportContent(): React.ReactElement {
     return (
         <div className="space-y-6">
             {/* ヘッダー（印刷時は非表示） */}
-            <div className="flex items-center justify-between print:hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
                 <div>
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 text-xs md:text-sm">
                         <Link href="/reports">
-                            <Button variant="ghost" size="sm" className="gap-1">
-                                <ArrowLeft className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" className="gap-1 h-8">
+                                <ArrowLeft className="h-3 w-3 md:h-4 md:w-4" />
                                 レポート一覧
                             </Button>
                         </Link>
                     </div>
                     <div className="flex items-center gap-3">
-                        <h2 className="text-3xl font-bold tracking-tight">在庫報告書</h2>
+                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">在庫報告書</h2>
                         {loading && (
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <Loader2 className="h-4 w-4 animate-spin" />
                             </div>
                         )}
                     </div>
-                    <p className="text-muted-foreground">お客様向け在庫状況レポート</p>
+                    <p className="text-sm text-muted-foreground mt-1">お客様向け在庫状況レポート</p>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-4">
                     <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-full sm:w-[180px]">
                             <SelectValue placeholder="カテゴリ選択" />
                         </SelectTrigger>
                         <SelectContent>
@@ -229,7 +229,7 @@ function StockReportContent(): React.ReactElement {
                             <SelectItem value="other">その他</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Button onClick={handlePrint} className="gap-2">
+                    <Button onClick={handlePrint} className="gap-2 shrink-0">
                         <Printer className="h-4 w-4" />
                         印刷
                     </Button>
@@ -247,20 +247,20 @@ function StockReportContent(): React.ReactElement {
             {/* レポート本体 */}
             <div ref={reportRef} className="print:p-0">
                 {/* レポートヘッダー */}
-                <Card className="mb-6 print:border-0 print:shadow-none">
-                    <CardHeader className="print:pb-2">
-                        <div className="flex items-center justify-between">
+                <Card className="mb-6 shadow-none sm:shadow-sm print:border-0 print:shadow-none">
+                    <CardHeader className="p-3 md:p-6 print:pb-2">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div>
-                                <CardTitle className="text-2xl flex items-center gap-2">
-                                    <FileText className="h-6 w-6" />
+                                <CardTitle className="text-xl md:text-2xl flex items-center gap-2">
+                                    <FileText className="h-5 w-5 md:h-6 md:w-6" />
                                     在庫状況報告書
                                 </CardTitle>
-                                <CardDescription className="flex items-center gap-2 mt-2">
-                                    <Calendar className="h-4 w-4" />
+                                <CardDescription className="flex items-center gap-2 mt-2 text-xs md:text-sm">
+                                    <Calendar className="h-3 w-3 md:h-4 md:w-4" />
                                     報告日: {reportDate}
                                 </CardDescription>
                             </div>
-                            <div className="text-right">
+                            <div className="sm:text-right w-full sm:w-auto">
                                 <div className="text-sm text-muted-foreground">幸南食糧株式会社</div>
                                 <div className="text-xs text-muted-foreground">在庫管理システム</div>
                             </div>
@@ -269,69 +269,70 @@ function StockReportContent(): React.ReactElement {
                 </Card>
 
                 {/* サマリーカード */}
-                <div className="grid gap-4 md:grid-cols-4 mb-6 print:grid-cols-4">
-                    <Card className="print:border print:shadow-none">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <Package className="h-4 w-4" />
+                <div className="grid gap-2 grid-cols-2 md:grid-cols-4 mb-6 md:gap-4 print:grid-cols-4">
+                    <Card className="shadow-none sm:shadow-sm print:border print:shadow-none">
+                        <CardHeader className="p-3 pb-1 md:p-4 md:pb-2">
+                            <CardTitle className="text-xs md:text-sm font-medium flex items-center gap-2">
+                                <Package className="h-3 w-3 md:h-4 md:w-4" />
                                 管理商品数
                             </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{summary.totalProducts}</div>
+                        <CardContent className="p-3 pt-0 md:p-4 md:pt-0">
+                            <div className="text-xl md:text-2xl font-bold">{summary.totalProducts}</div>
                         </CardContent>
                     </Card>
-                    <Card className="print:border print:shadow-none">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-amber-600 flex items-center gap-2">
-                                <AlertTriangle className="h-4 w-4" />
+                    <Card className="shadow-none sm:shadow-sm print:border print:shadow-none">
+                        <CardHeader className="p-3 pb-1 md:p-4 md:pb-2">
+                            <CardTitle className="text-xs md:text-sm font-medium text-amber-600 flex items-center gap-2">
+                                <AlertTriangle className="h-3 w-3 md:h-4 md:w-4" />
                                 要注意商品
                             </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-amber-600">{summary.lowStockItems}</div>
-                            <p className="text-xs text-muted-foreground">2週間以内に在庫切れ予測</p>
+                        <CardContent className="p-3 pt-0 md:p-4 md:pt-0">
+                            <div className="text-xl md:text-2xl font-bold text-amber-600">{summary.lowStockItems}</div>
+                            <p className="text-[10px] md:text-xs text-muted-foreground">2週間以内に在庫切れ予測</p>
                         </CardContent>
                     </Card>
-                    <Card className="print:border print:shadow-none">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-red-600 flex items-center gap-2">
-                                <TrendingDown className="h-4 w-4" />
+                    <Card className="shadow-none sm:shadow-sm print:border print:shadow-none">
+                        <CardHeader className="p-3 pb-1 md:p-4 md:pb-2">
+                            <CardTitle className="text-xs md:text-sm font-medium text-red-600 flex items-center gap-2">
+                                <TrendingDown className="h-3 w-3 md:h-4 md:w-4" />
                                 欠品商品
                             </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-red-600">{summary.outOfStockItems}</div>
+                        <CardContent className="p-3 pt-0 md:p-4 md:pt-0">
+                            <div className="text-xl md:text-2xl font-bold text-red-600">{summary.outOfStockItems}</div>
                         </CardContent>
                     </Card>
-                    <Card className="print:border print:shadow-none">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium">月間使用数合計</CardTitle>
+                    <Card className="shadow-none sm:shadow-sm print:border print:shadow-none">
+                        <CardHeader className="p-3 pb-1 md:p-4 md:pb-2">
+                            <CardTitle className="text-xs md:text-sm font-medium">月間使用数合計</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{summary.totalMonthlyUsage.toLocaleString()}</div>
+                        <CardContent className="p-3 pt-0 md:p-4 md:pt-0">
+                            <div className="text-xl md:text-2xl font-bold">{summary.totalMonthlyUsage.toLocaleString()}</div>
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* 在庫一覧テーブル */}
-                <Card className="print:border-0 print:shadow-none">
-                    <CardHeader>
-                        <CardTitle>在庫明細</CardTitle>
-                        <CardDescription>
+                <Card className="shadow-none sm:shadow-sm print:border-0 print:shadow-none">
+                    <CardHeader className="p-3 md:p-6">
+                        <CardTitle className="text-base md:text-lg">在庫明細</CardTitle>
+                        <CardDescription className="text-xs md:text-sm">
                             {categoryFilter === "all" ? "全カテゴリ" :
                                 categoryFilter === "bag" ? "米袋" :
                                     categoryFilter === "new_rice" ? "新米" :
                                         categoryFilter === "sticker" ? "シール" : "その他"} の在庫状況
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
                         {reportData.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
                                 該当するデータがありません
                             </div>
                         ) : (
-                            <Table>
+                            <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
+                                <Table>
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>商品名</TableHead>
@@ -394,6 +395,7 @@ function StockReportContent(): React.ReactElement {
                                     })}
                                 </TableBody>
                             </Table>
+                        </div>
                         )}
                     </CardContent>
                 </Card>

@@ -212,56 +212,56 @@ export default function ReportsPage(): React.ReactElement {
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-3xl font-bold tracking-tight">レポート</h2>
-                <p className="text-muted-foreground">在庫・発注データの分析レポートを表示します</p>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">レポート</h2>
+                <p className="text-sm text-muted-foreground">在庫・発注データの分析レポートを表示します</p>
             </div>
 
             {/* サマリーカード */}
-            <div className="grid gap-4 md:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">総商品数</CardTitle>
-                        <Package className="h-4 w-4 text-muted-foreground" />
+            <div className="grid gap-2 grid-cols-2 md:grid-cols-4 md:gap-4">
+                <Card className="shadow-none sm:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium">総商品数</CardTitle>
+                        <Package className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{products.length}</div>
-                        <p className="text-xs text-muted-foreground">登録商品数</p>
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold">{products.length}</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">登録商品数</p>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">総発注件数</CardTitle>
-                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                <Card className="shadow-none sm:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium">総発注件数</CardTitle>
+                        <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{orders.length}</div>
-                        <p className="text-xs text-muted-foreground">累計発注数</p>
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold">{orders.length}</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">累計発注数</p>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">欠品商品</CardTitle>
-                        <TrendingDown className="h-4 w-4 text-red-500" />
+                <Card className="shadow-none sm:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium">欠品商品</CardTitle>
+                        <TrendingDown className="h-3 w-3 md:h-4 md:w-4 text-red-500" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-red-600">{stockStats.outOfStock}</div>
-                        <p className="text-xs text-muted-foreground">要発注</p>
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold text-red-600">{stockStats.outOfStock}</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">要発注</p>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">月平均発注金額</CardTitle>
-                        <DollarSign className="h-4 w-4 text-emerald-500" />
+                <Card className="shadow-none sm:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium">月平均発注金額</CardTitle>
+                        <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-emerald-500" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-emerald-600">
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold text-emerald-600">
                             ¥{useMemo(() => {
                                 const total = monthlyData.orderAmounts.reduce((sum, val) => sum + val, 0);
                                 const monthsWithData = monthlyData.orderAmounts.filter(val => val > 0).length || 1;
                                 return Math.round(total / monthsWithData).toLocaleString();
                             }, [monthlyData])}万
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] md:text-xs text-muted-foreground">
                             今年の実績から算出
                         </p>
                     </CardContent>
@@ -279,29 +279,29 @@ export default function ReportsPage(): React.ReactElement {
                 {/* 発注推移タブ */}
                 <TabsContent value="orders" className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
+                        <Card className="shadow-none sm:shadow-sm">
+                            <CardHeader className="p-3 md:p-6">
+                                <CardTitle className="flex items-center gap-2 text-base md:text-lg">
                                     <BarChart3 className="h-5 w-5" />
                                     月別発注件数
                                 </CardTitle>
-                                <CardDescription>過去12ヶ月の発注件数推移</CardDescription>
+                                <CardDescription className="text-xs md:text-sm">過去12ヶ月の発注件数推移</CardDescription>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
                                 <div className="h-[300px]">
                                     <Bar data={orderCountChartData} options={chartOptions} />
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
+                        <Card className="shadow-none sm:shadow-sm">
+                            <CardHeader className="p-3 md:p-6">
+                                <CardTitle className="flex items-center gap-2 text-base md:text-lg">
                                     <TrendingUp className="h-5 w-5" />
                                     月別発注金額
                                 </CardTitle>
-                                <CardDescription>過去12ヶ月の発注金額推移</CardDescription>
+                                <CardDescription className="text-xs md:text-sm">過去12ヶ月の発注金額推移</CardDescription>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
                                 <div className="h-[300px]">
                                     <Line data={orderAmountChartData} options={chartOptions} />
                                 </div>
@@ -313,13 +313,13 @@ export default function ReportsPage(): React.ReactElement {
                 {/* 在庫分析タブ */}
                 <TabsContent value="inventory" className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2">
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
+                        <Card className="shadow-none sm:shadow-sm">
+                            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 md:p-6 gap-3">
                                 <div>
-                                    <CardTitle>カテゴリ別商品数</CardTitle>
-                                    <CardDescription>商品カテゴリの分布</CardDescription>
+                                    <CardTitle className="text-base md:text-lg text-left">カテゴリ別商品数</CardTitle>
+                                    <CardDescription className="text-xs md:text-sm text-left">商品カテゴリの分布</CardDescription>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                                     <Link href="/reports/turnover-report">
                                         <Button variant="outline" size="sm" className="gap-2">
                                             <RefreshCw className="h-4 w-4" />
@@ -334,7 +334,7 @@ export default function ReportsPage(): React.ReactElement {
                                     </Link>
                                 </div>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
                                 <div className="h-[300px] flex items-center justify-center">
                                     <Doughnut data={categoryChartData} options={{
                                         ...chartOptions,
@@ -343,12 +343,12 @@ export default function ReportsPage(): React.ReactElement {
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>在庫状態</CardTitle>
-                                <CardDescription>現在の在庫状況の内訳</CardDescription>
+                        <Card className="shadow-none sm:shadow-sm">
+                            <CardHeader className="p-3 md:p-6">
+                                <CardTitle className="text-base md:text-lg">在庫状態</CardTitle>
+                                <CardDescription className="text-xs md:text-sm">現在の在庫状況の内訳</CardDescription>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
                                 <div className="h-[300px] flex items-center justify-center">
                                     <Doughnut data={stockStatusChartData} options={{
                                         ...chartOptions,
@@ -362,16 +362,17 @@ export default function ReportsPage(): React.ReactElement {
 
                 {/* 月別サマリータブ */}
                 <TabsContent value="monthly" className="space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
+                    <Card className="shadow-none sm:shadow-sm">
+                        <CardHeader className="p-3 md:p-6">
+                            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
                                 <Calendar className="h-5 w-5" />
                                 月別発注サマリー
                             </CardTitle>
-                            <CardDescription>過去12ヶ月の発注データ一覧</CardDescription>
+                            <CardDescription className="text-xs md:text-sm">過去12ヶ月の発注データ一覧</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <Table>
+                        <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
+                            <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
+                                <Table>
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>月</TableHead>
@@ -415,6 +416,7 @@ export default function ReportsPage(): React.ReactElement {
                                     })}
                                 </TableBody>
                             </Table>
+                        </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
