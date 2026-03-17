@@ -287,8 +287,8 @@ export default function DashboardPage(): React.ReactElement {
                 if (wipCheckItems.length === 0) return null;
 
                 return (
-                    <Card className="bg-indigo-50 border-indigo-200">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <Card className="bg-indigo-50 border-indigo-200 shadow-none sm:shadow-sm">
+                        <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-2 md:pb-2">
                             <div>
                                 <CardTitle className="text-indigo-700 flex items-center gap-2">
                                     <AlertTriangle className="h-5 w-5" />
@@ -328,7 +328,7 @@ export default function DashboardPage(): React.ReactElement {
 
             {/* 在庫アラート */}
             {(urgentItems.length > 0) && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 md:p-4">
                     <div className="flex items-start justify-between gap-4 mb-4">
                         <div className="flex items-center gap-2">
                             <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -465,8 +465,8 @@ export default function DashboardPage(): React.ReactElement {
             <div className="grid gap-4 lg:grid-cols-2">
 
                 {/* 最近の発注 */}
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                <Card className="shadow-none sm:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6">
                         <div>
                             <CardTitle className="flex items-center gap-2">
                                 <ShoppingCart className="h-5 w-5" />
@@ -548,8 +548,8 @@ export default function DashboardPage(): React.ReactElement {
                 </Card>
 
                 {/* 入荷予定 */}
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                <Card className="shadow-none sm:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6">
                         <div>
                             <CardTitle className="flex items-center gap-2">
                                 <CalendarDays className="h-5 w-5" />
@@ -558,7 +558,7 @@ export default function DashboardPage(): React.ReactElement {
                             <CardDescription>直近の入荷スケジュール</CardDescription>
                         </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
                         <div className="space-y-4">
                             {incomingStock.map((stock) => (
                                 <div key={stock.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
@@ -589,8 +589,8 @@ export default function DashboardPage(): React.ReactElement {
 
             {/* 開催中イベント */}
             {activeEvents.length > 0 && (
-                <Card className="bg-gradient-to-br from-pink-50 to-white border-pink-100">
-                    <CardHeader className="flex flex-row items-center justify-between">
+                <Card className="bg-gradient-to-br from-pink-50 to-white border-pink-100 shadow-none sm:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6">
                         <div>
                             <CardTitle className="text-pink-700 flex items-center gap-2">
                                 <TicketPercent className="h-5 w-5" />
@@ -602,10 +602,10 @@ export default function DashboardPage(): React.ReactElement {
                             <Link href="/events">すべて見る</Link>
                         </Button>
                     </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
+                        <div className="grid gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {activeEvents.map(event => (
-                                <div key={event.id} className="p-4 bg-white rounded-lg shadow-sm border border-pink-100">
+                                <div key={event.id} className="p-3 md:p-4 bg-white rounded-lg shadow-sm border border-pink-100">
                                     <h4 className="font-semibold text-pink-900">{event.clientName}</h4>
                                     <p className="text-sm text-gray-500 mt-1">
                                         {event.dates?.[0]} {event.dates?.length > 1 ? `〜 ${event.dates[event.dates.length - 1]}` : ''}
@@ -639,9 +639,9 @@ export default function DashboardPage(): React.ReactElement {
 
             {/* 長期在庫 */}
             {longTermLots.length > 0 && (
-                <Card className="bg-red-50 border-red-200">
+                <Card className="bg-red-50 border-red-200 shadow-none sm:shadow-sm">
                     {/* ... (existing card content) ... */}
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-2 md:pb-2">
                         <div>
                             <CardTitle className="text-red-700 flex items-center gap-2">
                                 <AlertTriangle className="h-5 w-5" />
@@ -699,8 +699,8 @@ export default function DashboardPage(): React.ReactElement {
                 if (scheduledItems.length === 0) return null;
 
                 return (
-                    <Card className="bg-slate-50 border-slate-200">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <Card className="bg-slate-50 border-slate-200 shadow-none sm:shadow-sm">
+                        <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-2 md:pb-2">
                             <div>
                                 <CardTitle className="text-slate-700 flex items-center gap-2">
                                     <CalendarDays className="h-5 w-5" />
