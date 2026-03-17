@@ -655,7 +655,7 @@ export default function DashboardPage(): React.ReactElement {
                             <Link href="/inventory">在庫管理へ</Link>
                         </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
                         <div className="space-y-3">
                             {longTermLots.map((lot) => (
                                 <div key={lot.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white rounded border border-red-100 shadow-sm gap-2">
