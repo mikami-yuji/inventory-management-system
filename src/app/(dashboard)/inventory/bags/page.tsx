@@ -436,7 +436,7 @@ export default function BagsInventoryPage(): React.ReactElement {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold">米袋在庫管理</h1>
-                    <p className="text-sm text-muted-foreground">米袋・新米関連商品の在庫を確認・管理します</p>
+                    <p className="text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">米袋・新米関連商品の在庫を確認・管理します</p>
                 </div>
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
                     <div className="bg-slate-100 p-1 rounded-lg border flex items-center shrink-0">
@@ -459,7 +459,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                             カード
                         </Button>
                     </div>
-                    <Button onClick={handleAddProduct} className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-4 text-xs sm:text-sm shrink-0">
+                    <Button onClick={handleAddProduct} className="gap-1 sm:gap-2 h-8 px-2 sm:px-4 text-xs sm:text-sm shrink-0">
                         <Plus className="h-3.5 w-3.5" />
                         商品追加
                     </Button>
