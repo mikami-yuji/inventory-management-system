@@ -99,6 +99,7 @@ export default function DashboardPage(): React.ReactElement {
         expectedDate: string;
         quantity: number;
         note: string | null;
+        productShape?: string | null;
     };
     const [incomingStock, setIncomingStock] = useState<IncomingStockItem[]>([]);
 
@@ -567,7 +568,7 @@ export default function DashboardPage(): React.ReactElement {
                                             {stock.productName.slice(0, 30)}{stock.productName.length > 30 ? '...' : ''} {stock.productWeight ? `${stock.productWeight}kg` : ''}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                            {stock.expectedDate} / {stock.quantity.toLocaleString()}個
+                                            {stock.expectedDate} / {stock.quantity.toLocaleString()}{isRollBag(stock.productShape) ? 'm' : '枚'}
                                         </p>
                                     </div>
                                     {stock.note && (

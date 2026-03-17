@@ -14,7 +14,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
         let query = supabaseClient
             .from('incoming_stock')
-            .select('*, products(name, weight)')
+            .select('*, products(name, weight, shape)')
             .order('expected_date', { ascending: true });
 
         // 商品IDでフィルタリング
@@ -30,11 +30,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         }
 
         // キャメルケースに変換して返却（商品名を含む）
-        const formattedData = (data as (typeof data[number] & { products: { name: string, weight: number | null } | null })[]).map(item => ({
+        const formattedData = (data as (typeof data[number] & { products: { name: string, weight: number | null, shape: string | null } | null })[]).map(item => ({
             id: item.id,
             productId: item.product_id,
             productName: item.products?.name || '不明',
             productWeight: item.products?.weight || null,
+            productShape: item.products?.shape || null,
             expectedDate: item.expected_date,
             quantity: item.quantity,
             note: item.note,
