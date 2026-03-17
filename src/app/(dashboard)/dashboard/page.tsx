@@ -288,7 +288,7 @@ export default function DashboardPage(): React.ReactElement {
 
                 return (
                     <Card className="bg-indigo-50 border-indigo-200 shadow-none sm:shadow-sm">
-                        <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-2 md:pb-2">
+                        <CardHeader className="flex flex-row items-center justify-between p-3 pb-1 md:p-6 md:pb-2">
                             <div>
                                 <CardTitle className="text-indigo-700 flex items-center gap-2">
                                     <AlertTriangle className="h-5 w-5" />
@@ -302,7 +302,7 @@ export default function DashboardPage(): React.ReactElement {
                                 <Link href="/inventory">在庫管理へ</Link>
                             </Button>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
                             <div className="space-y-3">
                                 {wipCheckItems.map((product) => (
                                     <div key={product.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white rounded border border-indigo-100 shadow-sm gap-2">
@@ -714,7 +714,7 @@ export default function DashboardPage(): React.ReactElement {
                                 <Link href="/inventory">在庫管理へ</Link>
                             </Button>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
                             <div className="space-y-3">
                                 {scheduledItems.map((product) => (
                                     <div key={product.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white rounded border border-slate-100 shadow-sm gap-2">
