@@ -431,7 +431,7 @@ export default function BagsInventoryPage(): React.ReactElement {
     }
 
     return (
-        <div className="space-y-6 p-6">
+        <div className="space-y-6">
             {/* ヘッダー */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -515,8 +515,8 @@ export default function BagsInventoryPage(): React.ReactElement {
             </div>
 
             {/* 検索・フィルターエリア */}
-            <Card>
-                <CardContent className="p-3 md:p-4 md:pt-4">
+            <Card className="shadow-none sm:shadow-sm">
+                <CardContent className="p-2 sm:p-4 sm:pt-4">
                     <div className="flex flex-col gap-2 md:flex-row md:items-end md:gap-3">
                         <div className="flex-1">
                             <label className="text-xs font-medium mb-1 block text-muted-foreground">商品検索</label>
