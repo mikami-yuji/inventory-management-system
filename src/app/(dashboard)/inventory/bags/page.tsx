@@ -438,78 +438,78 @@ export default function BagsInventoryPage(): React.ReactElement {
                     <h1 className="text-2xl md:text-3xl font-bold">米袋在庫管理</h1>
                     <p className="text-sm text-muted-foreground">米袋・新米関連商品の在庫を確認・管理します</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="bg-slate-100 p-1 rounded-lg border flex items-center">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
+                    <div className="bg-slate-100 p-1 rounded-lg border flex items-center shrink-0">
                         <Button
                             variant={viewMode === "table" ? "secondary" : "ghost"}
                             size="sm"
-                            className={cn("px-3 h-8", viewMode === "table" && "bg-white shadow-sm")}
+                            className={cn("px-2 sm:px-3 h-8 text-xs sm:text-sm", viewMode === "table" && "bg-white shadow-sm")}
                             onClick={() => setViewMode("table")}
                         >
-                            <List className="h-4 w-4 mr-2" />
+                            <List className="h-4 w-4 mr-1 sm:mr-2" />
                             リスト
                         </Button>
                         <Button
                             variant={viewMode === "grid" ? "secondary" : "ghost"}
                             size="sm"
-                            className={cn("px-3 h-8", viewMode === "grid" && "bg-white shadow-sm")}
+                            className={cn("px-2 sm:px-3 h-8 text-xs sm:text-sm", viewMode === "grid" && "bg-white shadow-sm")}
                             onClick={() => setViewMode("grid")}
                         >
-                            <LayoutGrid className="h-4 w-4 mr-2" />
+                            <LayoutGrid className="h-4 w-4 mr-1 sm:mr-2" />
                             カード
                         </Button>
                     </div>
-                    <Button onClick={handleAddProduct} className="gap-2 ml-2">
-                        <Plus className="h-4 w-4" />
+                    <Button onClick={handleAddProduct} className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-4 text-xs sm:text-sm shrink-0">
+                        <Plus className="h-3.5 w-3.5" />
                         商品追加
                     </Button>
                 </div>
             </div>
 
             {/* サマリーカード */}
-            <div className="grid grid-cols-2 gap-2 md:gap-4 md:grid-cols-4">
-                <Card>
-                    <CardHeader className="p-2 md:p-3 md:pb-0">
-                        <CardTitle className="text-[10px] md:text-sm font-medium flex items-center gap-1">
-                            <Package className="h-3 w-3" />
-                            総商品数
+            <div className="grid grid-cols-4 gap-1.5 md:gap-4">
+                <Card className="shadow-none sm:shadow-sm">
+                    <CardHeader className="p-1.5 sm:p-3 pb-0 sm:pb-0">
+                        <CardTitle className="text-[9px] sm:text-xs md:text-sm font-medium flex items-center gap-1 text-muted-foreground">
+                            <Package className="h-3 w-3 hidden sm:inline" />
+                            総数
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-2 pt-1 md:p-3 md:pt-1">
-                        <div className="text-lg md:text-xl font-bold">{summary.total}</div>
+                    <CardContent className="p-1.5 pt-0.5 sm:p-3 sm:pt-1">
+                        <div className="text-sm sm:text-lg md:text-xl font-bold">{summary.total}</div>
                     </CardContent>
                 </Card>
-                <Card className="border-red-200">
-                    <CardHeader className="p-2 md:p-3 md:pb-0">
-                        <CardTitle className="text-[10px] md:text-sm font-medium text-red-600 flex items-center gap-1">
-                            <TrendingDown className="h-3 w-3" />
+                <Card className="border-red-100 shadow-none sm:shadow-sm">
+                    <CardHeader className="p-1.5 sm:p-3 pb-0 sm:pb-0">
+                        <CardTitle className="text-[9px] sm:text-xs md:text-sm font-medium text-red-600 flex items-center gap-1">
+                            <TrendingDown className="h-3 w-3 hidden sm:inline" />
                             欠品
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-2 pt-1 md:p-3 md:pt-1">
-                        <div className="text-lg md:text-xl font-bold text-red-600">{summary.outOfStock}</div>
+                    <CardContent className="p-1.5 pt-0.5 sm:p-3 sm:pt-1">
+                        <div className="text-sm sm:text-lg md:text-xl font-bold text-red-600">{summary.outOfStock}</div>
                     </CardContent>
                 </Card>
-                <Card className="border-amber-200">
-                    <CardHeader className="p-2 md:p-3 md:pb-0">
-                        <CardTitle className="text-[10px] md:text-sm font-medium text-amber-600 flex items-center gap-1">
-                            <AlertTriangle className="h-3 w-3" />
+                <Card className="border-amber-100 shadow-none sm:shadow-sm">
+                    <CardHeader className="p-1.5 sm:p-3 pb-0 sm:pb-0">
+                        <CardTitle className="text-[9px] sm:text-xs md:text-sm font-medium text-amber-600 flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3 hidden sm:inline" />
                             低在庫
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-2 pt-1 md:p-3 md:pt-1">
-                        <div className="text-lg md:text-xl font-bold text-amber-600">{summary.lowStock}</div>
+                    <CardContent className="p-1.5 pt-0.5 sm:p-3 sm:pt-1">
+                        <div className="text-sm sm:text-lg md:text-xl font-bold text-amber-600">{summary.lowStock}</div>
                     </CardContent>
                 </Card>
-                <Card className="border-blue-200">
-                    <CardHeader className="p-2 md:p-3 md:pb-0">
-                        <CardTitle className="text-[10px] md:text-sm font-medium text-blue-600 flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            特売引当中
+                <Card className="border-blue-100 shadow-none sm:shadow-sm">
+                    <CardHeader className="p-1.5 sm:p-3 pb-0 sm:pb-0">
+                        <CardTitle className="text-[9px] sm:text-xs md:text-sm font-medium text-blue-600 flex items-center gap-1">
+                            <Calendar className="h-3 w-3 hidden sm:inline" />
+                            引当
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-2 pt-1 md:p-3 md:pt-1">
-                        <div className="text-lg md:text-xl font-bold text-blue-600">{summary.hasReservation}</div>
+                    <CardContent className="p-1.5 pt-0.5 sm:p-3 sm:pt-1">
+                        <div className="text-sm sm:text-lg md:text-xl font-bold text-blue-600">{summary.hasReservation}</div>
                     </CardContent>
                 </Card>
             </div>
