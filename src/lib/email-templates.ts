@@ -4,6 +4,9 @@ type OrderItem = {
     productName: string;
     quantity: number;
     unit: string;
+    weight?: string | number;
+    shape?: string;
+    sku?: string;
 };
 
 type OrderTemplateProps = {
@@ -15,6 +18,8 @@ type OrderTemplateProps = {
     deliveryPostalCode?: string;
     deliveryAddress?: string;
     deliveryPhone?: string;
+    preferredShape?: string;
+    supplierName?: string;
 };
 
 /**
@@ -27,14 +32,25 @@ export function generateOrderNotificationText({
     deliveryPostalCode,
     deliveryAddress,
     deliveryPhone,
+    preferredShape,
+    supplierName,
 }: OrderTemplateProps): string {
     const sourceText = 
         shipmentSource === 'supplier' ? 'メーカー直送' :
         shipmentSource === 'wip' ? '仕掛仕上がり分' :
-        shipmentSource === 'wip-request' ? '新規手配依頼' : '不明';
+        shipmentSource === 'wip-request' ? '仕掛依頼' : '不明';
 
     const itemsText = items
-        .map(item => `・${item.productName}: ${item.quantity.toLocaleString()}${item.unit}`)
+        .map(item => {
+            const specs = [
+                item.weight ? `${item.weight}kg` : '',
+                item.shape || ''
+            ].filter(Boolean).join(' / ');
+            
+            const specText = specs ? ` (${specs})` : '';
+            const skuText = item.sku ? `${item.sku} ` : '';
+            return `・${skuText}${item.productName}${specText}: ${item.quantity.toLocaleString()}${item.unit}`;
+        })
         .join('\n');
 
     const dateStr = format(new Date(), "yyyy年MM月dd日");
@@ -42,8 +58,7 @@ export function generateOrderNotificationText({
     const postalText = deliveryPostalCode ? `〒${deliveryPostalCode} ` : "";
 
     return `
-朝日パピルス株式会社 担当者様
-（または社内担当者 様）
+${supplierName || '朝日パピルス株式会社'} 御中
 
 いつもお世話になっております。
 
@@ -60,6 +75,7 @@ ${itemsText}
 お名前: ${deliveryName || '-'} 様
 ご住所: ${postalText}${deliveryAddress || '-'}
 お電話: ${deliveryPhone || '-'}
+希望形状: ${preferredShape || '-'}
 
 以上、よろしくお願いいたします。
 `.trim();

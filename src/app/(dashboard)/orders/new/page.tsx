@@ -113,13 +113,18 @@ export default function NewOrderPage(): React.ReactElement {
                     items: validItems.map(i => ({
                         productName: i.product.name,
                         quantity: i.quantity,
-                        unit: isRollBag(i.product.shape || "", i.product.category, i.product.metersPerRoll) ? "m" : "枚"
+                        unit: isRollBag(i.product.shape || "", i.product.category, i.product.metersPerRoll) ? "m" : "枚",
+                        weight: i.product.weight,
+                        shape: i.product.shape,
+                        sku: i.product.sku
                     })),
                     shipmentSource,
                     deliveryName: selectedAddressId === 'manufacturer-storage' ? 'メーカー預かり' : selectedAddress?.name,
                     deliveryPostalCode: selectedAddressId === 'manufacturer-storage' ? '' : selectedAddress?.postalCode,
                     deliveryAddress: selectedAddressId === 'manufacturer-storage' ? '-' : selectedAddress?.address,
                     deliveryPhone: selectedAddressId === 'manufacturer-storage' ? '-' : selectedAddress?.phone,
+                    preferredShape: selectedAddressId === 'manufacturer-storage' ? undefined : selectedAddress?.preferredShape,
+                    supplierName: validItems[0]?.product.supplierName
                 });
                 setCopyContent(text);
                 setCopyDialogOpen(true);

@@ -104,12 +104,12 @@ const createOrderSchema = z.object({
     clientId: z.string().min(1),
     type: z.enum(['standard', 'special_event']),
     eventId: z.string().optional().nullable(),
-    shipmentSource: z.enum(['inventory', 'supplier', 'wip']),
-    preferredShape: z.string().optional(),
-    deliveryName: z.string().optional(),
-    deliveryPostalCode: z.string().optional(),
-    deliveryAddress: z.string().optional(),
-    deliveryPhone: z.string().optional()
+    shipmentSource: z.enum(['inventory', 'supplier', 'wip', 'wip-request']),
+    preferredShape: z.string().optional().nullable(),
+    deliveryName: z.string().optional().nullable(),
+    deliveryPostalCode: z.string().optional().nullable(),
+    deliveryAddress: z.string().optional().nullable(),
+    deliveryPhone: z.string().optional().nullable()
 })
 
 // POST: 新規発注作成
@@ -122,11 +122,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
         const supabase = createServerClient()
         const body = await request.json()
+        console.log('Order Request Body:', JSON.stringify(body, null, 2));
 
         const validated = createOrderSchema.safeParse(body);
         if (!validated.success) {
+            console.error('Order Validation Error:', JSON.stringify(validated.error.format(), null, 2));
             return NextResponse.json(
-                { data: null, error: '入力値が不正です。' },
+                { data: null, error: '入力値が不正です。', details: validated.error.format() },
                 { status: 400 }
             )
         }
@@ -142,10 +144,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 type,
                 event_id: eventId || null,
                 shipment_source: shipmentSource || 'supplier',
-                delivery_name: body.deliveryName,
+                delivery_name: deliveryName,
                 // 配送先住所に郵便番号を連結して保存（カラム追加が失敗している場合のワークアラウンド）
-                delivery_address: body.deliveryPostalCode ? `〒${body.deliveryPostalCode} ${body.deliveryAddress}` : body.deliveryAddress,
-                delivery_phone: body.deliveryPhone,
+                delivery_address: deliveryPostalCode ? `〒${deliveryPostalCode} ${deliveryAddress}` : deliveryAddress,
+                delivery_phone: deliveryPhone,
                 preferred_shape: preferredShape
             })
             .select()

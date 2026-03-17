@@ -20,7 +20,7 @@ export async function GET(): Promise<NextResponse> {
         const supabaseClient = createServerClient();
         const { data, error } = await supabaseClient
             .from('products')
-            .select('*')
+            .select('*, suppliers(name)')
             .neq('status', 'inactive') // inactive以外をすべて取得
             .order('name');
 
@@ -54,6 +54,8 @@ export async function GET(): Promise<NextResponse> {
             productType: item.product_type, // Excel Column Type
             supplierStock: item.supplier_stock && !isNaN(Number(item.supplier_stock)) ? Number(item.supplier_stock) : 0,
             statusOverride: item.status_override,
+            supplierId: item.supplier_id,
+            supplierName: (item.suppliers as { name: string | null })?.name || "朝日パピルス株式会社",
             discontinuedDate: item.discontinued_date,
             metersPerRoll: item.meters_per_roll !== null && item.meters_per_roll !== undefined ? Number(item.meters_per_roll) : 400,
         }));
