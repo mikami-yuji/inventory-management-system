@@ -568,7 +568,7 @@ export default function DashboardPage(): React.ReactElement {
                                             {stock.productName.slice(0, 30)}{stock.productName.length > 30 ? '...' : ''} {stock.productWeight ? `${stock.productWeight}kg` : ''}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                            {stock.expectedDate} / {stock.quantity.toLocaleString()}{isRollBag(stock.productShape) ? 'm' : '枚'}
+                                            {stock.expectedDate} / {stock.quantity.toLocaleString()}{isRollBag(stock.productShape || '') ? 'm' : '枚'}
                                         </p>
                                     </div>
                                     {stock.note && (
