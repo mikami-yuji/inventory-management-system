@@ -77,7 +77,7 @@ export default function EventsPage(): React.ReactElement {
                     <h2 className="text-2xl md:text-3xl font-bold tracking-tight">特売イベント管理</h2>
                     <p className="text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">特売先ごとの在庫管理と出荷予定を確認</p>
                 </div>
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
+                <div className="flex items-center gap-2 shrink-0">
                     <div className="flex items-center rounded-md border bg-muted p-1 shrink-0">
                         <Button
                             variant={viewMode === "list" ? "secondary" : "ghost"}
@@ -86,7 +86,7 @@ export default function EventsPage(): React.ReactElement {
                             className="h-7 px-2 sm:px-3 gap-1.5 sm:gap-2 text-xs sm:text-sm shrink-0"
                         >
                             <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                            リスト
+                            <span className="hidden xs:inline sm:inline">リスト</span>
                         </Button>
                         <Button
                             variant={viewMode === "calendar" ? "secondary" : "ghost"}
@@ -95,17 +95,17 @@ export default function EventsPage(): React.ReactElement {
                             className="h-7 px-2 sm:px-3 gap-1.5 sm:gap-2 text-xs sm:text-sm shrink-0"
                         >
                             <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                            カレンダー
+                            <span className="hidden xs:inline sm:inline">カレンダー</span>
                         </Button>
                     </div>
                     <Button variant="outline" size="sm" onClick={refetch} disabled={loading} className="h-9 sm:h-9 gap-1 text-xs sm:text-sm px-2 sm:px-3 shrink-0">
                         <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-                        更新
+                        <span className="hidden xs:inline sm:inline">更新</span>
                     </Button>
-                    <Button size="sm" asChild className="h-9 sm:h-9 gap-1 text-xs sm:text-sm px-2 sm:px-4 shrink-0">
+                    <Button size="sm" asChild className="h-9 sm:h-9 gap-1 text-xs sm:text-sm px-2 sm:px-4 shrink-0 px-2.5">
                         <Link href="/events/new">
-                            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                            <span className="whitespace-nowrap">新規作成</span>
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden xs:inline sm:inline">新規作成</span>
                         </Link>
                     </Button>
                 </div>

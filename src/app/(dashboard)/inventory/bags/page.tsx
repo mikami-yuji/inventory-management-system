@@ -459,7 +459,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                             カード
                         </Button>
                     </div>
-                    <Button onClick={handleAddProduct} className="gap-1 sm:gap-2 h-8 px-2 sm:px-4 text-xs sm:text-sm shrink-0">
+                    <Button onClick={handleAddProduct} className="gap-1 sm:gap-2 h-10 px-2 sm:px-4 text-xs sm:text-sm shrink-0">
                         <Plus className="h-3.5 w-3.5" />
                         商品追加
                     </Button>
