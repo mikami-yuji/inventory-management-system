@@ -73,11 +73,11 @@ export default function EventsPage(): React.ReactElement {
         <div className="space-y-6">
             {/* ヘッダー */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">特売イベント管理</h2>
+                <div className="min-w-0">
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight truncate">特売イベント管理</h2>
                     <p className="text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">特売先ごとの在庫管理と出荷予定を確認</p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar shrink-0">
                     <div className="flex items-center rounded-md border bg-muted p-1 shrink-0">
                         <Button
                             variant={viewMode === "list" ? "secondary" : "ghost"}
@@ -98,11 +98,11 @@ export default function EventsPage(): React.ReactElement {
                             <span className="hidden xs:inline sm:inline">カレンダー</span>
                         </Button>
                     </div>
-                    <Button variant="outline" size="sm" onClick={refetch} disabled={loading} className="h-9 sm:h-9 gap-1 text-xs sm:text-sm px-2 sm:px-3 shrink-0">
+                    <Button variant="outline" size="sm" onClick={refetch} disabled={loading} className="h-9 gap-1 text-xs sm:text-sm px-2 sm:px-3 shrink-0">
                         <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
                         <span className="hidden xs:inline sm:inline">更新</span>
                     </Button>
-                    <Button size="sm" asChild className="h-9 sm:h-9 gap-1 text-xs sm:text-sm px-2 sm:px-4 shrink-0 px-2.5">
+                    <Button size="sm" asChild className="h-9 gap-1 text-xs sm:text-sm px-2.5 sm:px-4 shrink-0">
                         <Link href="/events/new">
                             <Plus className="h-4 w-4" />
                             <span className="hidden xs:inline sm:inline">新規作成</span>
@@ -251,12 +251,12 @@ function EventCard({ event }: { event: SaleEvent }): React.ReactElement {
                 </div>
 
                 {/* 商品・引当状況 */}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1 shrink-0">
                         <Package className="h-4 w-4" />
                         <span>{event.items.length}商品</span>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
                         <PackageCheck className={`h-4 w-4 ${allAllocated ? 'text-green-500' : 'text-amber-500'}`} />
                         <span className={allAllocated ? 'text-green-600' : 'text-amber-600'}>
                             {totalAllocated}/{totalPlanned} 引当
