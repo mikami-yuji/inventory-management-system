@@ -193,7 +193,7 @@ export default function NewOrderPage(): React.ReactElement {
                                         htmlFor="source-supplier"
                                         className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
                                     >
-                                        <div className="font-bold">メーカー在庫</div>
+                                        <div className="font-bold">メーカー在庫出荷</div>
                                         <div className="text-xs text-muted-foreground mt-1 text-center">メーカー分を直送指示</div>
                                     </Label>
                                 </div>
@@ -203,7 +203,7 @@ export default function NewOrderPage(): React.ReactElement {
                                         htmlFor="source-wip"
                                         className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
                                     >
-                                        <div className="font-bold">仕掛中</div>
+                                        <div className="font-bold">仕掛仕上がり後出荷</div>
                                         <div className="text-xs text-muted-foreground mt-1 text-center">現在の製造分（納期確定済）</div>
                                     </Label>
                                 </div>

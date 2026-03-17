@@ -61,7 +61,12 @@ export function PurchaseOrderView({ order, senderInfo }: PurchaseOrderViewProps)
                     </div>
                     <div className="flex justify-between border-b pb-1">
                         <span className="text-slate-500">出荷元</span>
-                        <span>{order.shipmentSource === 'supplier' ? 'メーカー直送' : '自社在庫'}</span>
+                        <span>
+                            {order.shipmentSource === 'supplier' ? 'メーカー在庫出荷' : 
+                             order.shipmentSource === 'inventory' ? '自社在庫出荷' : 
+                             order.shipmentSource === 'wip' ? '仕掛仕上がり後出荷' : 
+                             order.shipmentSource === 'wip-request' ? '仕掛依頼' : '自社在庫出荷'}
+                        </span>
                     </div>
                 </div>
             </div>

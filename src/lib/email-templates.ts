@@ -36,8 +36,8 @@ export function generateOrderNotificationText({
     supplierName,
 }: OrderTemplateProps): string {
     const sourceText = 
-        shipmentSource === 'supplier' ? 'メーカー直送' :
-        shipmentSource === 'wip' ? '仕掛仕上がり分' :
+        shipmentSource === 'supplier' ? 'メーカー在庫出荷' :
+        shipmentSource === 'wip' ? '仕掛仕上がり後出荷' :
         shipmentSource === 'wip-request' ? '仕掛依頼' : '不明';
 
     const itemsText = items

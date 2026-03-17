@@ -213,7 +213,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                     await supabase.from('stock_history').insert({
                         product_id: item.productId,
                         type: 'order',
-                        note: `メーカー直送 (残: ${newStock})`
+                        note: `メーカー在庫出荷 (残: ${newStock})`
                     })
                 }
             } else if (shipmentSource === 'inventory') {
@@ -253,7 +253,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                     type: 'order',
                     quantity: 0, // WIPなので現在庫には影響させない
                     change_amount: -item.quantity,
-                    note: '仕掛仕上がり分からの出荷依頼'
+                    note: '仕掛仕上がり後出荷'
                 })
             }
         }

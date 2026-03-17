@@ -161,9 +161,15 @@ export default function OrdersPage(): React.ReactElement {
                                         </TableCell>
                                         <TableCell>
                                             {order.shipmentSource === 'supplier' ? (
-                                                <Badge variant="secondary">メーカー直送</Badge>
+                                                <Badge variant="secondary">メーカー在庫出荷</Badge>
+                                            ) : order.shipmentSource === 'inventory' ? (
+                                                <Badge variant="outline">自社在庫出荷</Badge>
+                                            ) : order.shipmentSource === 'wip' ? (
+                                                <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200">仕掛仕上がり後出荷</Badge>
+                                            ) : order.shipmentSource === 'wip-request' ? (
+                                                <Badge variant="secondary" className="bg-purple-100 text-purple-800 hover:bg-purple-100 border-purple-200">仕掛依頼</Badge>
                                             ) : (
-                                                <Badge variant="outline">自社在庫</Badge>
+                                                <Badge variant="outline">{order.shipmentSource || '自社在庫出荷'}</Badge>
                                             )}
                                         </TableCell>
                                         <TableCell>
