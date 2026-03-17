@@ -75,37 +75,37 @@ export default function EventsPage(): React.ReactElement {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl md:text-3xl font-bold tracking-tight">特売イベント管理</h2>
-                    <p className="text-sm text-muted-foreground">特売先ごとの在庫管理と出荷予定を確認</p>
+                    <p className="text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">特売先ごとの在庫管理と出荷予定を確認</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center rounded-md border bg-muted p-1 mr-2">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
+                    <div className="flex items-center rounded-md border bg-muted p-1 shrink-0">
                         <Button
                             variant={viewMode === "list" ? "secondary" : "ghost"}
                             size="sm"
                             onClick={() => setViewMode("list")}
-                            className="gap-2"
+                            className="h-7 px-2 sm:px-3 gap-1.5 sm:gap-2 text-xs sm:text-sm shrink-0"
                         >
-                            <Store className="h-4 w-4" />
+                            <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             リスト
                         </Button>
                         <Button
                             variant={viewMode === "calendar" ? "secondary" : "ghost"}
                             size="sm"
                             onClick={() => setViewMode("calendar")}
-                            className="gap-2"
+                            className="h-7 px-2 sm:px-3 gap-1.5 sm:gap-2 text-xs sm:text-sm shrink-0"
                         >
-                            <Calendar className="h-4 w-4" />
+                            <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             カレンダー
                         </Button>
                     </div>
-                    <Button variant="outline" onClick={refetch} disabled={loading} className="gap-1">
-                        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                    <Button variant="outline" size="sm" onClick={refetch} disabled={loading} className="h-9 sm:h-9 gap-1 text-xs sm:text-sm px-2 sm:px-3 shrink-0">
+                        <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
                         更新
                     </Button>
-                    <Button asChild>
+                    <Button size="sm" asChild className="h-9 sm:h-9 gap-1 text-xs sm:text-sm px-2 sm:px-4 shrink-0">
                         <Link href="/events/new">
-                            <Plus className="mr-2 h-4 w-4" />
-                            新規イベント作成
+                            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            <span className="whitespace-nowrap">新規作成</span>
                         </Link>
                     </Button>
                 </div>
@@ -138,7 +138,7 @@ export default function EventsPage(): React.ReactElement {
                                 placeholder="特売先名・商品名で検索..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10"
+                                className="pl-10 h-9 text-sm"
                             />
                         </div>
                         {loading && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -146,17 +146,17 @@ export default function EventsPage(): React.ReactElement {
 
                     {/* タブ */}
                     <Tabs defaultValue="all" value={currentTab} onValueChange={setCurrentTab}>
-                        <TabsList>
-                            <TabsTrigger value="all">
+                        <TabsList className="w-full justify-start overflow-x-auto hide-scrollbar h-auto p-1 bg-muted/50">
+                            <TabsTrigger value="all" className="text-xs sm:text-sm py-1.5 px-3">
                                 すべて ({statusCounts.all})
                             </TabsTrigger>
-                            <TabsTrigger value="upcoming">
+                            <TabsTrigger value="upcoming" className="text-xs sm:text-sm py-1.5 px-3">
                                 予定 ({statusCounts.upcoming})
                             </TabsTrigger>
-                            <TabsTrigger value="active">
+                            <TabsTrigger value="active" className="text-xs sm:text-sm py-1.5 px-3">
                                 進行中 ({statusCounts.active})
                             </TabsTrigger>
-                            <TabsTrigger value="completed">
+                            <TabsTrigger value="completed" className="text-xs sm:text-sm py-1.5 px-3">
                                 完了 ({statusCounts.completed})
                             </TabsTrigger>
                         </TabsList>
@@ -225,16 +225,18 @@ function EventCard({ event }: { event: SaleEvent }): React.ReactElement {
 
     return (
         <Card className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                        <Store className="h-4 w-4 text-muted-foreground" />
-                        <CardTitle className="text-lg font-bold">{event.clientName}</CardTitle>
+            <CardHeader className="p-3 sm:p-4 pb-2">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                        <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                        <CardTitle className="text-base sm:text-lg font-bold truncate">{event.clientName}</CardTitle>
                     </div>
-                    <Badge variant={status.variant}>{status.label}</Badge>
+                    <Badge variant={status.variant} className="shrink-0 text-[10px] sm:text-xs px-1.5 py-0">
+                        {status.label}
+                    </Badge>
                 </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="p-3 sm:p-4 pt-0 space-y-3">
                 {/* 日程 */}
                 <div className="flex items-center gap-2 text-sm">
                     {event.scheduleType === "single" ? (
@@ -282,7 +284,7 @@ function EventCard({ event }: { event: SaleEvent }): React.ReactElement {
                 )}
 
                 {/* 詳細ボタン */}
-                <Button variant="outline" className="w-full mt-2" asChild>
+                <Button variant="outline" size="sm" className="w-full mt-2 h-9 text-sm" asChild>
                     <Link href={`/events/${event.id}`}>詳細・在庫管理</Link>
                 </Button>
             </CardContent>
