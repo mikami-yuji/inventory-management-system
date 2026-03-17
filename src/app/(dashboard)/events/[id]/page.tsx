@@ -234,33 +234,33 @@ export default function EventDetailPage(): React.ReactElement {
                 </Card>
 
                 {/* サマリーカード */}
-                <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 mb-6 print:grid-cols-3">
-                    <Card>
-                        <CardHeader className="p-3 sm:p-4 pb-2 sm:pb-2">
-                            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-2">
-                                <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                                商品数
+                <div className="grid gap-2 grid-cols-3 mb-6 print:grid-cols-3">
+                    <Card className="shadow-none border-slate-200">
+                        <CardHeader className="p-2 pb-0">
+                            <CardTitle className="text-[10px] sm:text-sm font-medium flex items-center gap-1">
+                                <Package className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="truncate">商品数</span>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
-                            <div className="text-xl sm:text-2xl font-bold">{event.items.length}</div>
+                        <CardContent className="p-2 pt-1">
+                            <div className="text-sm sm:text-2xl font-bold">{event.items.length}</div>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader className="p-3 sm:p-4 pb-2 sm:pb-2">
-                            <CardTitle className="text-xs sm:text-sm font-medium">計画数量</CardTitle>
+                    <Card className="shadow-none border-slate-200">
+                        <CardHeader className="p-2 pb-0">
+                            <CardTitle className="text-[10px] sm:text-sm font-medium truncate">計画数量</CardTitle>
                         </CardHeader>
-                        <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
-                            <div className="text-xl sm:text-2xl font-bold">{totalPlanned.toLocaleString()}</div>
+                        <CardContent className="p-2 pt-1">
+                            <div className="text-sm sm:text-2xl font-bold">{totalPlanned.toLocaleString()}</div>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="p-3 sm:p-4 pb-2 sm:pb-2">
-                            <CardTitle className="text-xs sm:text-sm font-medium">実績数量</CardTitle>
+                    <Card className="shadow-none border-slate-200">
+                        <CardHeader className="p-2 pb-0">
+                            <CardTitle className="text-[10px] sm:text-sm font-medium truncate">実績数量</CardTitle>
                         </CardHeader>
-                        <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
-                            <div className="text-xl sm:text-2xl font-bold">
+                        <CardContent className="p-2 pt-1">
+                            <div className="text-sm sm:text-2xl font-bold">
                                 {totalActual > 0 ? totalActual.toLocaleString() : '-'}
                             </div>
                         </CardContent>
