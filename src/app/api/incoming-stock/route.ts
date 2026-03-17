@@ -36,7 +36,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             productName: item.products?.name || '不明',
             productWeight: item.products?.weight || null,
             expectedDate: item.expected_date,
-            shippedDate: item.shipped_date,
             quantity: item.quantity,
             note: item.note,
         }));
@@ -67,7 +66,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             .insert({
                 product_id: body.productId,
                 expected_date: body.expectedDate,
-                shipped_date: body.shippedDate || null,
                 quantity: body.quantity,
                 note: body.note
             })
@@ -108,7 +106,6 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
 
         const updateData: Record<string, string | number | null> = {};
         if (body.expectedDate) updateData.expected_date = body.expectedDate;
-        if (body.shippedDate !== undefined) updateData.shipped_date = body.shippedDate;
         if (body.quantity !== undefined) updateData.quantity = body.quantity;
         if (body.note !== undefined) updateData.note = body.note;
 
@@ -187,37 +184,76 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
                 return NextResponse.json({ error: '入荷予定が見つかりません' }, { status: 404 });
             }
 
-            // 2. 現在の在庫数を取得
-            const { data: inventory } = await supabaseClient
-                .from('inventory')
-                .select('quantity')
-                .eq('product_id', incomingStock.product_id)
-                .maybeSingle();
+            // 出荷先がデフォルト以外かチェック
+            let shouldUpdateInventory = true;
+            let historyNote = '入荷予定から反映';
 
-            // レコードがない場合は0とする
-            const currentQty = (inventory as { quantity: number } | null)?.quantity || 0;
-            const newQty = currentQty + incomingStock.quantity;
+            if (incomingStock.note) {
+                // 納品先マスタから検索
+                const { data: address } = await supabaseClient
+                    .from('delivery_addresses')
+                    .select('is_default')
+                    .eq('name', incomingStock.note)
+                    .maybeSingle();
 
-            // 3. 在庫数を更新 (upsert)
-            const { error: upsertError } = await supabaseClient
-                .from('inventory')
-                .upsert({
-                    product_id: incomingStock.product_id,
-                    quantity: newQty,
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'product_id' });
-
-            if (upsertError) {
-                throw upsertError;
+                if (address && !address.is_default) {
+                    shouldUpdateInventory = false;
+                    historyNote = `直送入荷 (出荷先: ${incomingStock.note})`;
+                }
             }
 
-            // 4. 履歴を記録
-            await supabaseClient.from('stock_history').insert({
-                product_id: incomingStock.product_id,
-                type: 'incoming',
-                quantity: incomingStock.quantity,
-                note: '入荷予定から反映'
-            });
+            if (shouldUpdateInventory) {
+                // 2. 現在の在庫数を取得
+                const { data: inventory } = await supabaseClient
+                    .from('inventory')
+                    .select('quantity')
+                    .eq('product_id', incomingStock.product_id)
+                    .maybeSingle();
+
+                // レコードがない場合は0とする
+                const currentQty = (inventory as { quantity: number } | null)?.quantity || 0;
+                const newQty = currentQty + incomingStock.quantity;
+
+                // 3. 在庫数を更新 (upsert)
+                const { error: upsertError } = await supabaseClient
+                    .from('inventory')
+                    .upsert({
+                        product_id: incomingStock.product_id,
+                        quantity: newQty,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'product_id' });
+
+                if (upsertError) {
+                    throw upsertError;
+                }
+
+                // 4. 履歴を記録
+                await supabaseClient.from('stock_history').insert({
+                    product_id: incomingStock.product_id,
+                    type: 'incoming',
+                    quantity: newQty,
+                    change_amount: incomingStock.quantity,
+                    note: historyNote
+                });
+            } else {
+                // 在庫更新はしないが履歴には残す（直送扱い）
+                // 現在の在庫数を取得（履歴のスナップショット用）
+                const { data: inventory } = await supabaseClient
+                    .from('inventory')
+                    .select('quantity')
+                    .eq('product_id', incomingStock.product_id)
+                    .maybeSingle();
+                
+                const currentQty = (inventory as { quantity: number } | null)?.quantity || 0;
+
+                await supabaseClient.from('stock_history').insert({
+                    product_id: incomingStock.product_id,
+                    type: 'order', // 直送は受注に関連するので 'order' または 'outgoing'
+                    quantity: currentQty, // 在庫は変わらない
+                    change_amount: -incomingStock.quantity, // 出荷分としてマイナス
+                    note: historyNote
+                });
+            }
 
             // 5. 入荷予定を削除
             await supabaseClient
@@ -225,7 +261,10 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
                 .delete()
                 .eq('id', body.id);
 
-            return NextResponse.json({ success: true, message: '在庫に反映しました' });
+            return NextResponse.json({ 
+                success: true, 
+                message: shouldUpdateInventory ? '在庫に反映しました' : '直送として処理しました（在庫は変動しません）' 
+            });
         }
 
         return NextResponse.json({ error: '不正なアクションです' }, { status: 400 });

@@ -128,9 +128,9 @@ export function StockAllocationDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="flex justify-between items-center bg-muted p-2 rounded">
+                <div className="space-y-4 px-1 sm:px-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex justify-between items-center bg-muted/50 p-2.5 rounded-lg border border-border/50">
                             <span className="font-medium text-sm">引当合計</span>
                             <span className="text-base font-bold text-blue-600">
                                 {totalAllocated.toLocaleString()} {unit}
@@ -141,7 +141,7 @@ export function StockAllocationDialog({
                                 )}
                             </span>
                         </div>
-                        <div className="flex justify-between items-center bg-blue-50 p-2 rounded border border-blue-100">
+                        <div className="flex justify-between items-center bg-blue-50/50 p-2.5 rounded-lg border border-blue-100">
                             <span className="font-medium text-sm">有効在庫</span>
                             <span className={cn(
                                 "text-base font-bold",
@@ -166,11 +166,11 @@ export function StockAllocationDialog({
                         <div className="border rounded-md max-h-[60vh] overflow-y-auto">
                             <Table>
                                 <TableHeader className="sticky top-0 bg-background z-10">
-                                    <TableRow>
-                                        <TableHead>イベント / 納品先</TableHead>
-                                        <TableHead>日程</TableHead>
-                                        <TableHead className="text-right">数量</TableHead>
-                                        <TableHead className="text-right">有効在庫</TableHead>
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableHead className="h-10 px-2 sm:px-4 text-xs sm:text-sm">イベント / 納品先</TableHead>
+                                        <TableHead className="h-10 px-1 sm:px-4 text-xs sm:text-sm">日程</TableHead>
+                                        <TableHead className="h-10 px-1 sm:px-4 text-right text-xs sm:text-sm">数量</TableHead>
+                                        <TableHead className="h-10 px-2 sm:px-4 text-right text-xs sm:text-sm">有効在庫</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -185,33 +185,33 @@ export function StockAllocationDialog({
                                             const currentEffectiveStockMeters = product.weight ? bagsToMeters(currentEffectiveStockPieces, product.weight) : 0;
 
                                             return (
-                                                <TableRow key={i}>
-                                                    <TableCell>
-                                                        <div className="font-medium">{alloc.eventName}</div>
-                                                        <Badge variant="outline" className="mt-1 text-xs">
+                                                <TableRow key={i} className="hover:bg-muted/30">
+                                                    <TableCell className="px-2 py-3 sm:px-4">
+                                                        <div className="font-medium text-xs sm:text-sm leading-tight">{alloc.eventName}</div>
+                                                        <Badge variant="outline" className="mt-1.5 px-1.5 py-0 h-4 text-[10px] font-normal">
                                                             {alloc.status === 'active' ? '開催中' : isCompleted ? '終了' : '予定'}
                                                         </Badge>
                                                     </TableCell>
-                                                    <TableCell className="text-sm">
+                                                    <TableCell className="px-1 py-3 sm:px-4 text-xs sm:text-sm">
                                                         {alloc.dates.length > 0 ? (
-                                                            <div className="flex flex-col">
-                                                                <span>{format(new Date(alloc.dates[0]), "MM/dd", { locale: ja })}</span>
+                                                            <div className="flex flex-col gap-0.5">
+                                                                <span className="whitespace-nowrap">{format(new Date(alloc.dates[0]), "MM/dd", { locale: ja })}</span>
                                                                 {alloc.dates.length > 1 && (
-                                                                    <span className="text-muted-foreground text-xs">他{alloc.dates.length - 1}日</span>
+                                                                    <span className="text-muted-foreground text-[10px]">他{alloc.dates.length - 1}日</span>
                                                                 )}
                                                             </div>
                                                         ) : (
                                                             "-"
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="text-right whitespace-nowrap">
+                                                    <TableCell className="px-1 py-3 sm:px-4 text-right whitespace-nowrap">
                                                         {editingId === alloc.itemId ? (
                                                             <div className="flex items-center justify-end gap-1">
                                                                 <Input
                                                                     type="number"
                                                                     value={editQuantity === "0" ? "" : editQuantity}
                                                                     onChange={(e) => setEditQuantity(e.target.value)}
-                                                                    className="w-20 h-7 text-right text-sm"
+                                                                    className="w-16 sm:w-20 h-7 px-1 text-right text-xs sm:text-sm"
                                                                     autoFocus
                                                                     min={0}
                                                                     placeholder="数量"
@@ -223,38 +223,38 @@ export function StockAllocationDialog({
                                                                 <Button size="icon" variant="ghost" className="h-6 w-6 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => handleSave(alloc)} disabled={loading}>
                                                                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                                                                 </Button>
-                                                                <Button size="icon" variant="ghost" className="h-6 w-6 text-gray-500 hover:bg-gray-100" onClick={() => setEditingId(null)} disabled={loading}>
+                                                                <Button size="icon" variant="ghost" className="h-6 w-6 text-gray-400 hover:bg-gray-100" onClick={() => setEditingId(null)} disabled={loading}>
                                                                     <X className="h-4 w-4" />
                                                                 </Button>
                                                             </div>
                                                         ) : (
-                                                            <div className="font-medium flex items-center justify-end gap-2 group/edit cursor-pointer" onClick={() => handleEdit(alloc)}>
-                                                                <div className="flex flex-col items-end">
-                                                                    <span>{alloc.quantity.toLocaleString()} {unit}</span>
+                                                            <div className="font-medium flex items-center justify-end gap-1 sm:gap-2 group/edit cursor-pointer" onClick={() => handleEdit(alloc)}>
+                                                                <div className="flex flex-col items-end leading-tight">
+                                                                    <span className="text-xs sm:text-sm">{alloc.quantity.toLocaleString()} <span className="text-[10px] sm:text-xs font-normal opacity-70">{unit}</span></span>
                                                                     {product.metersPerRoll && (
-                                                                        <span className="text-[10px] text-muted-foreground">約{calculateRolls(alloc.quantity)}巻</span>
+                                                                        <span className="text-[9px] sm:text-[10px] text-muted-foreground">約{calculateRolls(alloc.quantity)}巻</span>
                                                                     )}
                                                                 </div>
-                                                                <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity" />
+                                                                <Pencil className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground opacity-30 sm:opacity-0 sm:group-hover/edit:opacity-100 transition-opacity" />
                                                             </div>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="text-right whitespace-nowrap">
+                                                    <TableCell className="px-2 py-3 sm:px-4 text-right whitespace-nowrap">
                                                         {!isCompleted ? (
-                                                            <>
+                                                            <div className="flex flex-col items-end leading-tight">
                                                                 <div className={cn(
-                                                                    "font-medium",
+                                                                    "font-semibold text-xs sm:text-sm",
                                                                     currentEffectiveStockPieces <= 0 ? "text-red-600" : "text-emerald-600"
                                                                 )}>
                                                                     {currentEffectiveStockMeters.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-                                                                    <span className="text-xs ml-0.5">m</span>
+                                                                    <span className="text-[10px] ml-0.5 font-normal">m</span>
                                                                 </div>
                                                                 {product.metersPerRoll && (
-                                                                    <div className="text-[10px] text-muted-foreground">約{calculateRolls(currentEffectiveStockPieces)}巻</div>
+                                                                    <div className="text-[9px] sm:text-[10px] text-muted-foreground">約{calculateRolls(currentEffectiveStockPieces)}巻</div>
                                                                 )}
-                                                            </>
+                                                            </div>
                                                         ) : (
-                                                            <div className="text-muted-foreground text-sm">-</div>
+                                                            <div className="text-muted-foreground text-[10px] sm:text-xs">-</div>
                                                         )}
                                                     </TableCell>
                                                 </TableRow>
