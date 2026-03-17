@@ -144,43 +144,43 @@ export default function EventDetailPage(): React.ReactElement {
     return (
         <div className="space-y-6">
             {/* ヘッダー（印刷時非表示） */}
-            <div className="flex items-center justify-between print:hidden">
-                <div>
-                    <div className="flex items-center gap-2 mb-2">
-                        <Link href="/events">
-                            <Button variant="ghost" size="sm" className="gap-1">
-                                <ArrowLeft className="h-4 w-4" />
-                                イベント一覧
-                            </Button>
-                        </Link>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Store className="h-6 w-6 text-muted-foreground" />
-                        <h2 className="text-3xl font-bold tracking-tight">{event.clientName}</h2>
-                        <Badge variant={statusConfig[event.status].variant}>
+            <div className="flex flex-col gap-4 print:hidden">
+                <div className="flex items-center gap-2">
+                    <Link href="/events">
+                        <Button variant="ghost" size="sm" className="h-8 gap-1 px-2">
+                            <ArrowLeft className="h-4 w-4" />
+                            <span className="text-xs sm:text-sm">一覧へ</span>
+                        </Button>
+                    </Link>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <Store className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground shrink-0" />
+                        <h2 className="text-xl sm:text-3xl font-bold tracking-tight truncate">{event.clientName}</h2>
+                        <Badge variant={statusConfig[event.status].variant} className="shrink-0 text-[10px] sm:text-xs">
                             {statusConfig[event.status].label}
                         </Badge>
                     </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" asChild className="gap-1">
-                        <Link href={`/events/${eventId}/edit`}>
-                            <Pencil className="h-4 w-4" />
-                            編集
-                        </Link>
-                    </Button>
-                    <Button variant="outline" onClick={handleCopy} className="gap-1">
-                        <Copy className="h-4 w-4" />
-                        コピー
-                    </Button>
-                    <Button variant="outline" onClick={handlePrint} className="gap-1">
-                        <Printer className="h-4 w-4" />
-                        印刷
-                    </Button>
-                    <Button variant="outline" onClick={handleExportPDF} className="gap-1">
-                        <FileText className="h-4 w-4" />
-                        PDF
-                    </Button>
+                    <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar shrink-0">
+                        <Button variant="outline" size="sm" asChild className="h-8 sm:h-9 gap-1 px-2 sm:px-3 text-xs sm:text-sm shrink-0">
+                            <Link href={`/events/${eventId}/edit`}>
+                                <Pencil className="h-3.5 w-3.5" />
+                                <span className="hidden xs:inline">編集</span>
+                            </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleCopy} className="h-8 sm:h-9 gap-1 px-2 sm:px-3 text-xs sm:text-sm shrink-0">
+                            <Copy className="h-3.5 w-3.5" />
+                            <span className="hidden xs:inline">コピー</span>
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handlePrint} className="h-8 sm:h-9 gap-1 px-2 sm:px-3 text-xs sm:text-sm shrink-0">
+                            <Printer className="h-3.5 w-3.5" />
+                            <span className="hidden xs:inline">印刷</span>
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-8 sm:h-9 gap-1 px-2 sm:px-3 text-xs sm:text-sm shrink-0">
+                            <FileText className="h-3.5 w-3.5" />
+                            <span className="hidden xs:inline">PDF</span>
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -188,30 +188,32 @@ export default function EventDetailPage(): React.ReactElement {
             <div ref={printRef} className="print:p-4">
                 {/* イベント情報 */}
                 <Card className="mb-6">
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="text-xl">{event.clientName}</CardTitle>
-                                <CardDescription className="flex items-center gap-2 mt-1">
+                    <CardHeader className="p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="min-w-0">
+                                <CardTitle className="text-lg sm:text-xl truncate">{event.clientName}</CardTitle>
+                                <CardDescription className="flex items-center gap-2 mt-1.5 text-xs sm:text-sm">
                                     {event.scheduleType === "single" ? (
-                                        <CalendarDays className="h-4 w-4" />
+                                        <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                     ) : (
-                                        <CalendarRange className="h-4 w-4" />
+                                        <CalendarRange className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                     )}
-                                    {event.scheduleType === "single"
-                                        ? format(new Date(event.dates[0]), "yyyy年M月d日 (E)", { locale: ja })
-                                        : `${event.dates.length}日間`
-                                    }
-                                    {event.scheduleType === "monthly" && (
-                                        <span className="text-xs">
-                                            ({event.dates.map(d => format(new Date(d), "M/d", { locale: ja })).join(", ")})
-                                        </span>
-                                    )}
+                                    <span className="truncate">
+                                        {event.scheduleType === "single"
+                                            ? format(new Date(event.dates[0]), "yyyy年M月d日 (E)", { locale: ja })
+                                            : `${event.dates.length}日間`
+                                        }
+                                        {event.scheduleType === "monthly" && (
+                                            <span className="text-[10px] sm:text-xs ml-1">
+                                                ({event.dates.map(d => format(new Date(d), "M/d", { locale: ja })).join(", ")})
+                                            </span>
+                                        )}
+                                    </span>
                                 </CardDescription>
                             </div>
-                            <div className="print:hidden">
+                            <div className="print:hidden shrink-0">
                                 <Select value={event.status} onValueChange={handleStatusChange} disabled={updating}>
-                                    <SelectTrigger className="w-[140px]">
+                                    <SelectTrigger className="w-full sm:w-[140px] h-9 text-sm">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -224,7 +226,7 @@ export default function EventDetailPage(): React.ReactElement {
                             </div>
                         </div>
                         {event.description && (
-                            <p className="text-sm text-muted-foreground mt-2 bg-gray-50 rounded px-3 py-2">
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-3 bg-gray-50 rounded px-2.5 py-2">
                                 {event.description}
                             </p>
                         )}
@@ -232,33 +234,33 @@ export default function EventDetailPage(): React.ReactElement {
                 </Card>
 
                 {/* サマリーカード */}
-                <div className="grid gap-4 md:grid-cols-3 mb-6 print:grid-cols-3">
+                <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 mb-6 print:grid-cols-3">
                     <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <Package className="h-4 w-4" />
+                        <CardHeader className="p-3 sm:p-4 pb-2 sm:pb-2">
+                            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-2">
+                                <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                 商品数
                             </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{event.items.length}</div>
+                        <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
+                            <div className="text-xl sm:text-2xl font-bold">{event.items.length}</div>
                         </CardContent>
                     </Card>
                     <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium">計画数量</CardTitle>
+                        <CardHeader className="p-3 sm:p-4 pb-2 sm:pb-2">
+                            <CardTitle className="text-xs sm:text-sm font-medium">計画数量</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{totalPlanned.toLocaleString()}</div>
+                        <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
+                            <div className="text-xl sm:text-2xl font-bold">{totalPlanned.toLocaleString()}</div>
                         </CardContent>
                     </Card>
 
                     <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium">実績数量</CardTitle>
+                        <CardHeader className="p-3 sm:p-4 pb-2 sm:pb-2">
+                            <CardTitle className="text-xs sm:text-sm font-medium">実績数量</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
+                        <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
+                            <div className="text-xl sm:text-2xl font-bold">
                                 {totalActual > 0 ? totalActual.toLocaleString() : '-'}
                             </div>
                         </CardContent>
@@ -266,25 +268,25 @@ export default function EventDetailPage(): React.ReactElement {
                 </div>
 
                 {/* アクションボタン（印刷時非表示） */}
-                <div className="flex items-center gap-2 mb-4 print:hidden">
+                <div className="flex items-center gap-2 mb-4 print:hidden px-1 sm:px-0">
 
                     {!editMode ? (
-                        <Button variant="outline" onClick={() => setEditMode(true)}>
+                        <Button variant="outline" size="sm" className="h-9 text-sm" onClick={() => setEditMode(true)}>
                             実績入力
                         </Button>
                     ) : (
                         <>
-                            <Button onClick={handleSaveActual} disabled={updating} className="gap-1">
+                            <Button size="sm" className="h-9 gap-1 text-sm" onClick={handleSaveActual} disabled={updating}>
                                 <Save className="h-4 w-4" />
                                 実績保存
                             </Button>
-                            <Button variant="ghost" onClick={() => setEditMode(false)}>
-                                キャンセル
+                            <Button variant="ghost" size="sm" className="h-9 text-sm" onClick={() => setEditMode(false)}>
+                                中止
                             </Button>
                         </>
                     )}
                     <div className="flex-1" />
-                    <Button variant="ghost" className="text-red-500" onClick={handleDelete}>
+                    <Button variant="ghost" size="sm" className="h-9 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 px-2" onClick={handleDelete}>
                         削除
                     </Button>
                 </div>
@@ -294,17 +296,17 @@ export default function EventDetailPage(): React.ReactElement {
                     <CardHeader>
                         <CardTitle>商品明細</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>商品名</TableHead>
-                                    <TableHead className="text-right">現在庫</TableHead>
-                                    <TableHead className="text-right">計画数</TableHead>
-                                    <TableHead className="text-right">実績数</TableHead>
-                                    <TableHead className="text-center">状態</TableHead>
-                                </TableRow>
-                            </TableHeader>
+                    <CardContent className="p-0 sm:p-6 sm:pt-0">
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50/50">
+                                        <TableHead className="px-3 sm:px-4 text-xs sm:text-sm">商品名</TableHead>
+                                        <TableHead className="px-3 sm:px-4 text-right text-xs sm:text-sm">現在庫</TableHead>
+                                        <TableHead className="px-3 sm:px-4 text-right text-xs sm:text-sm">計画/実績</TableHead>
+                                        <TableHead className="px-3 sm:px-4 text-center text-xs sm:text-sm whitespace-nowrap">状態</TableHead>
+                                    </TableRow>
+                                </TableHeader>
                             <TableBody>
                                 {event.items.map(item => {
                                     const stockShort = item.currentStock < item.plannedQuantity;
@@ -315,49 +317,50 @@ export default function EventDetailPage(): React.ReactElement {
 
                                     return (
                                         <TableRow key={item.id}>
-                                            <TableCell>
-                                                <div className="font-medium">
+                                            <TableCell className="px-3 sm:px-4 py-2 sm:py-3 min-w-[140px]">
+                                                <div className="font-medium text-xs sm:text-sm line-clamp-2">
                                                     {item.productName} {item.productWeight ? `${item.productWeight}kg` : ''}
                                                 </div>
-                                                <div className="text-xs text-muted-foreground">{item.productSku}</div>
+                                                <div className="text-[10px] sm:text-xs text-muted-foreground">{item.productSku}</div>
                                             </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className={cn(stockShort && "text-red-600 font-medium")}>
-                                                    {item.currentStock.toLocaleString()} <span className="text-xs text-muted-foreground">{unit}</span>
+                                            <TableCell className="px-3 sm:px-4 py-2 sm:py-3 text-right">
+                                                <div className={cn("text-xs sm:text-sm", stockShort && "text-red-600 font-medium")}>
+                                                    {item.currentStock.toLocaleString()}<span className="ml-0.5 text-[10px] text-muted-foreground">{unit}</span>
                                                 </div>
                                                 {isRoll && (
-                                                    <div className="text-xs text-muted-foreground mt-0.5">
-                                                        (約 {bagEquiv.toLocaleString()} 枚)
+                                                    <div className="text-[9px] sm:text-xs text-muted-foreground mt-0.5 whitespace-nowrap">
+                                                        (約{bagEquiv.toLocaleString()}枚)
                                                     </div>
                                                 )}
                                             </TableCell>
-                                            <TableCell className="text-right font-medium">
-                                                {item.plannedQuantity.toLocaleString()} <span className="text-xs text-muted-foreground">枚</span>
+                                            <TableCell className="px-3 sm:px-4 py-2 sm:py-3 text-right">
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <div className="text-xs sm:text-sm font-medium">
+                                                        {item.plannedQuantity.toLocaleString()}<span className="ml-0.5 text-[10px] text-muted-foreground">枚(画)</span>
+                                                    </div>
+                                                    {editMode ? (
+                                                        <Input
+                                                            type="number"
+                                                            min={0}
+                                                            value={actualInputs[item.id] ?? item.actualQuantity ?? ''}
+                                                            onChange={(e) => setActualInputs(prev => ({
+                                                                ...prev,
+                                                                [item.id]: parseInt(e.target.value) || 0
+                                                            }))}
+                                                            className="w-16 sm:w-20 h-7 text-right text-xs"
+                                                        />
+                                                    ) : (
+                                                        <div className="text-xs sm:text-sm text-blue-600 font-bold">
+                                                            {item.actualQuantity != null ? item.actualQuantity.toLocaleString() : '-'}<span className="ml-0.5 text-[10px] text-muted-foreground font-normal">枚(実)</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </TableCell>
-
-                                            <TableCell className="text-right">
-                                                {editMode ? (
-                                                    <Input
-                                                        type="number"
-                                                        min={0}
-                                                        value={actualInputs[item.id] ?? item.actualQuantity ?? ''}
-                                                        onChange={(e) => setActualInputs(prev => ({
-                                                            ...prev,
-                                                            [item.id]: parseInt(e.target.value) || 0
-                                                        }))}
-                                                        className="w-24 text-right"
-                                                    />
-                                                ) : (
-                                                    <span className="font-medium">
-                                                        {item.actualQuantity != null ? item.actualQuantity.toLocaleString() : '-'}
-                                                    </span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-center">
+                                            <TableCell className="px-3 sm:px-4 py-2 sm:py-3 text-center">
                                                 {stockShort ? (
-                                                    <AlertTriangle className="h-5 w-5 text-amber-500 mx-auto" />
+                                                    <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 mx-auto" />
                                                 ) : (
-                                                    <CheckCircle className="h-5 w-5 text-green-500 mx-auto" />
+                                                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mx-auto" />
                                                 )}
                                             </TableCell>
                                         </TableRow>
