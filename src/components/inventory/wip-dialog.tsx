@@ -56,7 +56,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
     const [quantity, setQuantity] = useState<number>(0);
     const [startedAt, setStartedAt] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
     const [expectedCompletion, setExpectedCompletion] = useState<string>("");
-    const [termType, setTermType] = useState<string>("specific");
+    const [termType, setTermType] = useState<"specific" | "early" | "mid" | "late">("specific");
     const [note, setNote] = useState<string>("");
 
     // 移動用
@@ -123,7 +123,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
 
         let result;
         if (editingWIPId) {
-            const { success } = await updateWIP(editingWIPId, {
+            const success = await updateWIP(editingWIPId, {
                 quantity,
                 startedAt,
                 expectedCompletion: expectedCompletion || undefined,
@@ -522,7 +522,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label>納期区分</Label>
-                                        <Select value={termType} onValueChange={setTermType}>
+                                        <Select value={termType} onValueChange={(val) => setTermType(val as any)}>
                                             <SelectTrigger>
                                                 <SelectValue />
                                             </SelectTrigger>
