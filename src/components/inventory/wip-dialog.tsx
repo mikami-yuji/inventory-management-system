@@ -126,9 +126,9 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
             const success = await updateWIP(editingWIPId, {
                 quantity,
                 startedAt,
-                expectedCompletion: expectedCompletion || undefined,
+                expectedCompletion: expectedCompletion || null,
                 termType,
-                note: note || undefined,
+                note: note || null,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
             result = { success };
@@ -137,7 +137,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
                 productId: product.id,
                 quantity,
                 startedAt,
-                expectedCompletion,
+                expectedCompletion: expectedCompletion || undefined,
                 termType,
                 note: note || undefined,
             });

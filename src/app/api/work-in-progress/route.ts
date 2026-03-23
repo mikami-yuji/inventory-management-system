@@ -356,13 +356,16 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             }
 
         } else if (action === 'cancel') {
-            await supabase
+            const { error: cancelError } = await supabase
                 .from('work_in_progress')
                 .update({ status: 'cancelled' })
                 .eq('id', id)
+            if (cancelError) {
+                return NextResponse.json({ data: null, error: cancelError.message }, { status: 500 })
+            }
         } else if (action === 'arrange_shipping') {
             // 出荷手配（完了扱いとして履歴に残す）
-            await supabase
+            const { error: arrangeError } = await supabase
                 .from('work_in_progress')
                 .update({
                     status: 'completed',
@@ -371,11 +374,27 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', id)
+            if (arrangeError) {
+                return NextResponse.json({ data: null, error: arrangeError.message }, { status: 500 })
+            }
         } else if (action === 'update' && updateData) {
-            await supabase
+            const dbUpdateData: Record<string, unknown> = {};
+            if (updateData.quantity !== undefined) dbUpdateData.quantity = updateData.quantity;
+            if (updateData.startedAt !== undefined) dbUpdateData.started_at = updateData.startedAt;
+            if (updateData.expectedCompletion !== undefined) dbUpdateData.expected_completion = updateData.expectedCompletion;
+            // nullにする場合を考慮
+            if (updateData.expectedCompletion === null) dbUpdateData.expected_completion = null;
+            if (updateData.termType !== undefined) dbUpdateData.term_type = updateData.termType;
+            if (updateData.note !== undefined) dbUpdateData.note = updateData.note;
+            if (updateData.note === null) dbUpdateData.note = null;
+
+            const { error: updateError } = await supabase
                 .from('work_in_progress')
-                .update(updateData)
+                .update(dbUpdateData)
                 .eq('id', id)
+            if (updateError) {
+                return NextResponse.json({ data: null, error: updateError.message }, { status: 500 })
+            }
         }
 
         return NextResponse.json({ data: { success: true }, error: null })
