@@ -28,10 +28,7 @@ import { Plus, Trash2, Calendar as CalendarIcon, Save } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "react-hot-toast";
 import type { WorkInProgress, DeliveryAddress } from "@/types";
-import { X, ClipboardCopy } from "lucide-react";
-import { CopyNotificationDialog } from "@/components/notifications/copy-notification-dialog";
-import { generateWIPMoveNotificationText } from "@/lib/email-templates";
-import { useAuthSession } from "@/hooks/use-auth-session";
+import { X } from "lucide-react";
 
 type WIPDialogProps = {
     product: Product | null;
@@ -68,11 +65,6 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
 
     // アクション
     const { createWIP, updateWIP, arrangeShipping, transferToIncoming, transferToSupplier, deleteWIP, loading: actionLoading } = useWIPActions();
-    const { user } = useAuthSession();
-
-    // 通知コピー用
-    const [copyDialogOpen, setCopyDialogOpen] = useState(false);
-    const [copyContent, setCopyContent] = useState("");
 
     // フォーム状態
     const [editingWIPId, setEditingWIPId] = useState<string | null>(null);
@@ -234,38 +226,6 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
             if (lossQuantity > 0) parts.push(`ロス ${lossQuantity.toLocaleString()}`);
             if (remainingQuantity > 0) parts.push(`${remainingQuantity.toLocaleString()}を仕掛中に残しました`);
             toast.success(parts.join('、'));
-
-            if (product) {
-                // メール文面生成
-                const wipMoveItems = [];
-                if (supplierQuantity > 0) {
-                    wipMoveItems.push({
-                        productName: product.name,
-                        quantity: supplierQuantity,
-                        unit: product.shape?.includes('枚') ? '枚' : 'm',
-                        destination: 'メーカー在庫',
-                        note: '仕掛品からの移動'
-                    });
-                }
-                activeSchedules.forEach(s => {
-                    wipMoveItems.push({
-                        productName: product.name,
-                        quantity: s.quantity,
-                        unit: product.shape?.includes('枚') ? '枚' : 'm',
-                        destination: `入荷予定 (${s.expectedDate})`,
-                        note: s.note
-                    });
-                });
-
-                if (wipMoveItems.length > 0) {
-                    const text = generateWIPMoveNotificationText({
-                        userName: user?.name || 'システム利用者',
-                        items: wipMoveItems
-                    });
-                    setCopyContent(text);
-                    setCopyDialogOpen(true);
-                }
-            }
 
             onSuccess();
             refetch();
@@ -572,14 +532,6 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
                     </Tabs>
                 )}
             </DialogContent>
-
-            <CopyNotificationDialog 
-                open={copyDialogOpen}
-                onOpenChange={setCopyDialogOpen}
-                title="仕上がり移動完了"
-                description="以下の移動内容をコピーして、担当者へ通知してください。"
-                content={copyContent}
-            />
         </Dialog>
     );
 }
