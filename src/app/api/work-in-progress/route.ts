@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
-import { sendWIPNotificationEmail } from '@/lib/mail'
 import type { ApiResponse } from '@/types'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
@@ -258,8 +257,6 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 return NextResponse.json({ data: null, error: '対象の仕掛品データが見つかりません' }, { status: 404 })
             }
 
-            const product = Array.isArray(wipItem.products) ? wipItem.products[0] : wipItem.products;
-            
             // supplier_stock_lotsテーブルにロットとして追加
             const { error: lotInsertError } = await supabase
                 .from('supplier_stock_lots')

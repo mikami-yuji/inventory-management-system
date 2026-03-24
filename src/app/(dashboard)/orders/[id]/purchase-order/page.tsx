@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { PurchaseOrderView } from "@/components/orders/purchase-order-view";
+import type { Order } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Printer, ChevronLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -11,8 +12,8 @@ export default function PurchaseOrderPage() {
     const params = useParams();
     const router = useRouter();
     const id = params?.id as string;
-    const [order, setOrder] = useState<any>(null);
-    const [senderInfo, setSenderInfo] = useState<any>(null);
+    const [order, setOrder] = useState<Order | null>(null);
+    const [senderInfo, setSenderInfo] = useState<{ name: string; postalCode?: string; address: string; phone: string } | undefined>(undefined);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -29,9 +30,9 @@ export default function PurchaseOrderPage() {
 
                 if (!orderRes.ok) throw new Error("発注データの取得に失敗しました");
                 
-                const orders = await orderRes.json();
+                const orders = await orderRes.json() as Order[];
                 console.log('Orders from API:', orders.slice(0, 1)); // Debug if needed
-                const foundOrder = orders.find((o: any) => o.id === id);
+                const foundOrder = orders.find((o) => o.id === id);
                 
                 if (!foundOrder) {
                     throw new Error("指定された発注が見つかりませんでした");
@@ -42,7 +43,7 @@ export default function PurchaseOrderPage() {
                 // デフォルトの納品先情報を取得して、送信元として使用
                 if (addressRes.ok) {
                     const addresses = await addressRes.json();
-                    const defaultAddr = addresses.find((addr: any) => addr.isDefault);
+                    const defaultAddr = addresses.find((addr: { isDefault: boolean, name: string, postalCode: string, address: string, phone: string }) => addr.isDefault);
                     if (defaultAddr) {
                         setSenderInfo({
                             name: defaultAddr.name,

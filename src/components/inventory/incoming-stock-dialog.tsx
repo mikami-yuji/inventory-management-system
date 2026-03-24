@@ -5,7 +5,7 @@
  * 商品の入荷予定を登録・編集します。
  */
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { CalculableInput } from "@/components/ui/calculable-input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Loader2, Trash2, Edit2, X } from "lucide-react";
+import { CalendarIcon, Trash2, Edit2, Plus, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { cn } from "@/lib/utils";

@@ -9,7 +9,37 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { z } from 'zod';
 import { logError } from '@/lib/logger';
+
 // GET: 商品一覧を取得
+type RawProductData = {
+    id: string;
+    name: string;
+    sku: string | null;
+    product_code: string | null;
+    jan_code: string | null;
+    weight: string | number | null;
+    shape: string | null;
+    material: string | null;
+    unit_price: string | number;
+    printing_cost: string | number;
+    category: string;
+    image_url: string | null;
+    description: string | null;
+    status: string;
+    min_stock_alert: number | null;
+    prefix: string | null;
+    origin: string | null;
+    variety: string | null;
+    suffix: string | null;
+    product_type: string | null;
+    supplier_stock: string | number | null;
+    status_override: string | null;
+    supplier_id: string | null;
+    discontinued_date: string | null;
+    meters_per_roll: number | null;
+    suppliers: { name: string | null } | { name: string | null }[] | null;
+};
+
 export async function GET(): Promise<NextResponse> {
     try {
         const session = await getServerSession(authOptions);
@@ -30,35 +60,41 @@ export async function GET(): Promise<NextResponse> {
         }
 
         // TypeScript型に変換
-        const products = data.map((item: Record<string, unknown>) => ({
-            id: item.id,
-            name: item.name,
-            sku: item.sku, // 受注№ (Col A)
-            productCode: item.product_code, // 商品コード (Col D)
-            janCode: item.jan_code,
-            weight: item.weight ? Number(item.weight) : undefined,
-            shape: item.shape,
-            material: item.material,
-            unitPrice: Number(item.unit_price),
-            printingCost: Number(item.printing_cost),
-            category: item.category,
-            imageUrl: item.image_url,
-            description: item.description,
-            status: item.status,
-            minStockAlert: item.min_stock_alert,
-            // 商品名構造化フィールド
-            prefix: item.prefix,
-            origin: item.origin,
-            variety: item.variety,
-            suffix: item.suffix,
-            productType: item.product_type, // Excel Column Type
-            supplierStock: item.supplier_stock && !isNaN(Number(item.supplier_stock)) ? Number(item.supplier_stock) : 0,
-            statusOverride: item.status_override,
-            supplierId: item.supplier_id,
-            supplierName: (item.suppliers as { name: string | null })?.name || "朝日パピルス株式会社",
-            discontinuedDate: item.discontinued_date,
-            metersPerRoll: item.meters_per_roll !== null && item.meters_per_roll !== undefined ? Number(item.meters_per_roll) : 400,
-        }));
+        const products = (data as unknown as RawProductData[]).map((item) => {
+            // suppliersが配列で返ってくるケースやnullのケースに対応
+            const supplierData = Array.isArray(item.suppliers) ? item.suppliers[0] : item.suppliers;
+            const supplierName = (supplierData as { name: string | null })?.name || "朝日パピルス株式会社";
+
+            return {
+                id: item.id,
+                name: item.name,
+                sku: item.sku, // 受注№ (Col A)
+                productCode: item.product_code, // 商品コード (Col D)
+                janCode: item.jan_code,
+                weight: item.weight ? Number(item.weight) : undefined,
+                shape: item.shape,
+                material: item.material,
+                unitPrice: Number(item.unit_price) || 0,
+                printingCost: Number(item.printing_cost) || 0,
+                category: item.category,
+                imageUrl: item.image_url,
+                description: item.description,
+                status: item.status,
+                minStockAlert: item.min_stock_alert,
+                // 商品名構造化フィールド
+                prefix: item.prefix,
+                origin: item.origin,
+                variety: item.variety,
+                suffix: item.suffix,
+                productType: item.product_type, // Excel Column Type
+                supplierStock: item.supplier_stock && !isNaN(Number(item.supplier_stock)) ? Number(item.supplier_stock) : 0,
+                statusOverride: item.status_override,
+                supplierId: item.supplier_id,
+                supplierName: supplierName,
+                discontinuedDate: item.discontinued_date,
+                metersPerRoll: item.meters_per_roll !== null && item.meters_per_roll !== undefined ? Number(item.meters_per_roll) : 400,
+            };
+        });
 
         // 「落版予定」から「落版」への自動遷移ロジック
         const today = new Date().toISOString().split('T')[0];

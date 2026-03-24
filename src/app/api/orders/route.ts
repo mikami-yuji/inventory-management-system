@@ -8,6 +8,38 @@ import { z } from 'zod'
 import { logError } from '@/lib/logger'
 
 // GET: 発注一覧を取得
+type RawOrderData = {
+    id: string;
+    order_id: string;
+    created_at: string;
+    client_id: string;
+    status: string;
+    type: string;
+    event_id: string | null;
+    shipment_source: string;
+    delivery_name: string | null;
+    delivery_postal_code?: string | null;
+    delivery_address: string | null;
+    delivery_phone: string | null;
+    preferred_shape: string | null;
+    order_items: Array<{
+        id: string;
+        product_id: string;
+        quantity: number;
+        products: {
+            id: string;
+            name: string;
+            sku: string | null;
+            weight: number | null;
+            shape: string | null;
+            unit_price: number;
+            printing_cost: number;
+            category: string;
+            meters_per_roll: number | null;
+        } | null;
+    }>;
+};
+
 export async function GET(): Promise<NextResponse> {
     try {
         const session = await getServerSession(authOptions)
@@ -47,7 +79,7 @@ export async function GET(): Promise<NextResponse> {
         }
 
         // データ整形
-        const orders = (ordersData || []).map((order: any) => {
+        const orders = ((ordersData as unknown as RawOrderData[]) || []).map((order) => {
             // 住所から郵便番号を抽出する（ワークアラウンド用）
             const address = order.delivery_address || '';
             const postalMatch = address.match(/^〒(\d{3}-\d{4})\s/);

@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-    Check,
     Plus,
     Pencil,
     Download,
     X,
     LineChart,
     Package,
+    Check,
 } from "lucide-react";
 import {
     getPitch,
@@ -107,9 +107,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 const supplierStock = supplierStockFromLots;
 
                                 const {
-                                    availableStock,
                                     currentBags,
                                     availableBags,
+                                    availableStock,
                                     isOutOfStock,
                                     isLowStock,
                                     isRoll,

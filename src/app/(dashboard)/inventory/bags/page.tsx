@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,16 +10,19 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
     Search,
-    X,
     Filter,
     Loader2,
     Plus,
     Package,
     TrendingDown,
-    Calendar,
-    AlertTriangle,
+    Smartphone,
     LayoutGrid,
-    List
+    List,
+    Monitor,
+    X,
+    AlertTriangle,
+    Calendar,
+    Printer,
 } from "lucide-react";
 import {
     bagsToMeters,
@@ -40,6 +43,7 @@ import { BagsInventoryCards } from "@/components/inventory/bags-inventory-cards"
 import { ProductDetailDialog } from "@/components/inventory/product-detail-dialog";
 import { ProductAnalysisDialog } from "@/components/inventory/product-analysis-dialog";
 import { cn } from "@/lib/utils";
+import { InventoryPrintView } from "@/components/inventory/inventory-print-view";
 
 import {
     AlertDialog,
@@ -95,6 +99,24 @@ const getProductGroup = (p: Product): number => {
 export default function BagsInventoryPage(): React.ReactElement {
     // 表示モード (grid | table)
     const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+    // フィルターの表示・非表示 (スマホ・風景モード用)
+    const [showFilters, setShowFilters] = useState(true);
+    const [isSmallHeight, setIsSmallHeight] = useState(false);
+
+    // 画面の高さが低い場合（横向きなど）は初期状態でフィルターを閉じる
+    useEffect(() => {
+        const checkHeight = () => {
+            const smallHeight = window.innerHeight < 768 || window.innerWidth > window.innerHeight;
+            setIsSmallHeight(smallHeight);
+            if (smallHeight) {
+                setShowFilters(false);
+            }
+        };
+
+        checkHeight();
+        window.addEventListener('resize', checkHeight);
+        return () => window.removeEventListener('resize', checkHeight);
+    }, []);
 
     const [searchQuery, setSearchQuery] = useState("");
     const [weightFilter, setWeightFilter] = useState("all");
@@ -107,7 +129,7 @@ export default function BagsInventoryPage(): React.ReactElement {
     // Supabase APIから商品と在庫を取得
     const { products: allProducts, loading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
     const { inventory: inventoryData, loading: inventoryLoading, refetch: refetchInventory } = useInventory();
-    const { events: saleEvents, loading: eventsLoading } = useSaleEvents();
+    const { events: saleEvents, loading: eventsLoading, refetch: refetchEvents } = useSaleEvents();
     const { items: wipItems, loading: wipLoading, refetch: refetchWIP } = useWorkInProgress({ status: 'in_progress' });
     const { incomingStocks, loading: incomingLoading, refetch: refetchIncoming } = useIncomingStock();
     const { lotsMap: supplierStockLotsMap, loading: lotsLoading, refetch: refetchLots } = useSupplierStockLots();
@@ -205,7 +227,8 @@ export default function BagsInventoryPage(): React.ReactElement {
         refetchWIP();
         refetchIncoming();
         refetchLots();
-    }, [refetchProducts, refetchInventory, refetchWIP, refetchIncoming, refetchLots]);
+        refetchEvents();
+    }, [refetchProducts, refetchInventory, refetchWIP, refetchIncoming, refetchLots, refetchEvents]);
 
     // 商品フォームダイアログの状態
     const [formDialogOpen, setFormDialogOpen] = useState(false);
@@ -226,6 +249,10 @@ export default function BagsInventoryPage(): React.ReactElement {
     // 商品分析ダイアログの状態
     const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
     const [analysisProduct, setAnalysisProduct] = useState<Product | null>(null);
+
+    const handlePrint = useCallback(() => {
+        window.print();
+    }, []);
 
     const handleAddProduct = (): void => {
         setEditingProduct(null);
@@ -431,43 +458,58 @@ export default function BagsInventoryPage(): React.ReactElement {
     }
 
     return (
-        <div className="space-y-6">
-            {/* ヘッダー */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">米袋在庫管理</h1>
-                    <p className="text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">米袋・新米関連商品の在庫を確認・管理します</p>
+        <div className={cn("space-y-2 sm:space-y-4 md:space-y-6", isSmallHeight && "space-y-0.5")}>
+            {/* ヘッダー・アクション */}
+            <div className={cn("flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden", isSmallHeight && "flex-row items-center gap-2 mb-1")}>
+                <div className={cn("transition-all", isSmallHeight ? "flex items-center gap-2" : "block")}>
+                    <h1 className={cn("text-xl md:text-3xl font-bold", isSmallHeight && "text-sm whitespace-nowrap")}>
+                        {isSmallHeight ? `在庫状況 (${filteredProducts.length})` : "米袋在庫管理"}
+                    </h1>
+                    {!isSmallHeight && <p className="text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">米袋・新米関連商品の在庫を確認・管理します</p>}
                 </div>
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
-                    <div className="bg-slate-100 p-1 rounded-lg border flex items-center shrink-0">
-                        <Button
-                            variant={viewMode === "table" ? "secondary" : "ghost"}
-                            size="sm"
-                            className={cn("px-2 sm:px-3 h-8 text-xs sm:text-sm", viewMode === "table" && "bg-white shadow-sm")}
-                            onClick={() => setViewMode("table")}
-                        >
-                            <List className="h-4 w-4 mr-1 sm:mr-2" />
-                            リスト
-                        </Button>
-                        <Button
-                            variant={viewMode === "grid" ? "secondary" : "ghost"}
-                            size="sm"
-                            className={cn("px-2 sm:px-3 h-8 text-xs sm:text-sm", viewMode === "grid" && "bg-white shadow-sm")}
-                            onClick={() => setViewMode("grid")}
-                        >
-                            <LayoutGrid className="h-4 w-4 mr-1 sm:mr-2" />
-                            カード
-                        </Button>
-                    </div>
-                    <Button onClick={handleAddProduct} className="gap-1 sm:gap-2 h-10 px-2 sm:px-4 text-xs sm:text-sm shrink-0">
-                        <Plus className="h-3.5 w-3.5" />
-                        商品追加
+                <div className={cn("flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar", isSmallHeight && "pb-0 ml-auto")}>
+                    {!isSmallHeight && (
+                        <div className="bg-slate-100 p-1 rounded-lg border flex items-center shrink-0">
+                            <Button
+                                variant={viewMode === "table" ? "secondary" : "ghost"}
+                                size="sm"
+                                className={cn("px-2 sm:px-3 h-8 text-xs sm:text-sm", viewMode === "table" && "bg-white shadow-sm")}
+                                onClick={() => setViewMode("table")}
+                            >
+                                <List className="h-4 w-4 mr-1 sm:mr-2" />
+                                リスト
+                            </Button>
+                            <Button
+                                variant={viewMode === "grid" ? "secondary" : "ghost"}
+                                size="sm"
+                                className={cn("px-2 sm:px-3 h-8 text-xs sm:text-sm", viewMode === "grid" && "bg-white shadow-sm")}
+                                onClick={() => setViewMode("grid")}
+                            >
+                                <LayoutGrid className="h-4 w-4 mr-1 sm:mr-2" />
+                                カード
+                            </Button>
+                        </div>
+                    )}
+                    <Button 
+                        variant="outline" 
+                        onClick={handlePrint} 
+                        className={cn("gap-1.5 h-10 px-2 sm:px-4 text-xs sm:text-sm shrink-0 border-slate-300", isSmallHeight && "h-7 px-2")}
+                    >
+                        <Printer className="h-3.5 w-3.5" />
+                        {isSmallHeight ? 'PDF' : 'PDF出力'}
+                    </Button>
+                    <Button onClick={handleAddProduct} className={cn("gap-1.5 h-10 px-2 sm:px-4 text-xs sm:text-sm shrink-0", isSmallHeight && "h-7 px-2")}>
+                        <Plus className="h-3 w-3" />
+                        {isSmallHeight ? '追加' : '商品追加'}
                     </Button>
                 </div>
             </div>
 
-            {/* サマリーカード */}
-            <div className="grid grid-cols-4 gap-1.5 md:gap-4">
+            {/* サマリーカード (縦幅が狭い場合、またはフィルター表示時はスマホで非表示) */}
+            <div className={cn(
+                "grid grid-cols-4 gap-1.5 md:gap-4 transition-all print:hidden",
+                (isSmallHeight || !showFilters) ? "hidden" : "hidden md:grid"
+            )}>
                 <Card className="shadow-none sm:shadow-sm">
                     <CardHeader className="p-1.5 sm:p-3 pb-0 sm:pb-0">
                         <CardTitle className="text-[9px] sm:text-xs md:text-sm font-medium flex items-center gap-1 text-muted-foreground">
@@ -515,12 +557,11 @@ export default function BagsInventoryPage(): React.ReactElement {
             </div>
 
             {/* 検索・フィルターエリア */}
-            <Card className="shadow-none sm:shadow-sm">
-                <CardContent className="p-2 sm:p-4 sm:pt-4">
-                    <div className="flex flex-col gap-2 md:flex-row md:items-end md:gap-3">
-                        <div className="flex-1">
-                            <label className="text-xs font-medium mb-1 block text-muted-foreground">商品検索</label>
-                            <div className="relative">
+            <Card className={cn("shadow-none sm:shadow-sm overflow-hidden border-none sm:border print:hidden", isSmallHeight && "mb-0")}>
+                <CardContent className={cn("p-1 sm:p-4", isSmallHeight && "p-1 pb-0")}>
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                                 <Input
                                     placeholder="商品名、JAN、商品ID..."
@@ -658,7 +699,8 @@ export default function BagsInventoryPage(): React.ReactElement {
             </Card>
 
             {/* 在庫表示 (テーブル or カード) */}
-            {viewMode === "table" ? (
+            <div className="print:hidden">
+                {viewMode === "table" ? (
                 <BagsInventoryTable
                     products={filteredProducts}
                     inventoryMap={inventoryMap}
@@ -692,6 +734,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                     onRefetch={refetch}
                 />
             )}
+            </div>
 
             {/* 商品詳細ダイアログ */}
             <ProductDetailDialog
@@ -754,6 +797,18 @@ export default function BagsInventoryPage(): React.ReactElement {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* 印刷用ビュー（画面には表示されず、印刷時のみ使用） */}
+            <InventoryPrintView 
+                products={filteredProducts}
+                inventoryMap={inventoryMap}
+                saleAllocationMap={saleAllocationMap}
+                wipMap={wipMap}
+                incomingMap={incomingMap}
+                supplierStockMap={supplierStockMap}
+                supplierStockLotsMap={supplierStockLotsMap}
+                settings={settings}
+            />
         </div>
     );
 }

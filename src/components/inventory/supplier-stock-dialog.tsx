@@ -79,6 +79,7 @@ export function SupplierStockDialog({
 
     useEffect(() => {
         if (open) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             fetchDeliveryAddresses().then(() => {
                 // If we need to do something after fetch
             });
@@ -119,6 +120,7 @@ export function SupplierStockDialog({
     // ダイアログが開くたびに初期値をセット
     useEffect(() => {
         if (open && product) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setArrivalSchedules([
                 { id: crypto.randomUUID(), expectedDate: new Date().toISOString().split('T')[0], quantity: 0, note: '' }
             ]);
