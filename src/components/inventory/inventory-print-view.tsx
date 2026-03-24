@@ -74,6 +74,7 @@ export function InventoryPrintView({
                         const {
                             currentBags,
                             availableBags,
+                            availableStock,
                             isOutOfStock,
                             isLowStock,
                             isRoll,
@@ -115,8 +116,8 @@ export function InventoryPrintView({
                                     <div className="text-[9px] text-slate-600 border-b border-slate-200 pb-[1px] mb-[1px]">
                                         現: <span className="font-bold text-slate-800">{currentStock.toLocaleString()}{isRoll ? 'm' : ''}</span>
                                     </div>
-                                    <div className={cn("text-[9px]", availableBags < 0 ? "text-red-700 font-bold" : "text-emerald-800")}>
-                                        有: <span className="font-bold">{availableBags.toLocaleString()}{isRoll ? 'm' : ''}</span>
+                                    <div className={cn("text-[9px]", availableStock < 0 ? "text-red-700 font-bold" : "text-emerald-800")}>
+                                        有: <span className="font-bold">{availableStock.toLocaleString()}{isRoll ? 'm' : ''}</span>
                                     </div>
                                 </td>
                                 <td className="py-1 px-1 text-right align-top tabular-nums text-slate-500 text-[9px] pt-1">
