@@ -11,6 +11,7 @@ type InventoryPrintViewProps = {
     products: Product[];
     inventoryMap: Map<string, { quantity: number; updatedAt?: string }>;
     saleAllocationMap: Map<string, { bags: number; meters: number }>;
+    detailedSaleAllocationMap?: Map<string, Array<{ eventId: string; clientName: string; quantity: number; dates: string[] }>>;
     wipMap: Map<string, WorkInProgress[]>;
     supplierStockMap: Map<string, number>;
     supplierStockLotsMap: Map<string, SupplierStockLot[]>;
@@ -22,6 +23,7 @@ export function InventoryPrintView({
     products,
     inventoryMap,
     saleAllocationMap,
+    detailedSaleAllocationMap,
     wipMap,
     supplierStockMap,
     supplierStockLotsMap,
@@ -45,18 +47,18 @@ export function InventoryPrintView({
             </div>
 
             {/* テーブル */}
-            <table className="w-full border-collapse text-[9px]">
+            <table className="w-full border-collapse table-fixed text-[9px]">
                 <thead>
                     <tr className="bg-slate-100 border-y border-slate-900">
-                        <th className="py-1 px-1 text-left w-8 font-bold">画像</th>
-                        <th className="py-1 px-1 text-left font-bold">商品情報</th>
-                        <th className="py-1 px-1 text-center w-14 font-bold">量目</th>
-                        <th className="py-1 px-1 text-right w-20 font-bold">在庫 (現在/有効)</th>
-                        <th className="py-1 px-1 text-right w-10 font-bold">引当</th>
-                        <th className="py-1 px-1 text-right w-16 font-bold">入荷予定</th>
-                        <th className="py-1 px-1 text-right w-12 font-bold">メーカー</th>
-                        <th className="py-1 px-1 text-right w-20 font-bold">仕掛</th>
-                        <th className="py-1 px-1 text-center w-14 font-bold">状況</th>
+                        <th className="py-1 px-1 text-left font-bold" style={{ width: '4%' }}>画像</th>
+                        <th className="py-1 px-1 text-left font-bold" style={{ width: '22%' }}>商品情報</th>
+                        <th className="py-1 px-1 text-center font-bold" style={{ width: '10%' }}>量目</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '10%' }}>在庫(現在/有効)</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '14%' }}>引当</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '10%' }}>入荷予定</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '7%' }}>メーカー</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '15%' }}>仕掛</th>
+                        <th className="py-1 px-1 text-center font-bold" style={{ width: '8%' }}>状況</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-300">
@@ -121,7 +123,22 @@ export function InventoryPrintView({
                                     </div>
                                 </td>
                                 <td className="py-1 px-1 text-right align-top tabular-nums text-slate-500 text-[9px] pt-1">
-                                    {hasAllocation(allocation) ? allocation.bags.toLocaleString() : '-'}
+                                    {hasAllocation(allocation) ? (
+                                        <div className="flex flex-col gap-0.5 ml-auto">
+                                            <div className="font-bold border-b border-slate-200 pb-[1px] mb-[1px]">
+                                                {allocation.bags.toLocaleString()}
+                                            </div>
+                                            {(detailedSaleAllocationMap?.get(product.id) || []).map((alloc, idx) => (
+                                                <div key={idx} className="text-[7px] leading-tight opacity-90 flex flex-col items-end">
+                                                    <div className="flex justify-between w-full gap-1">
+                                                        <span>{alloc.dates[0] ? format(new Date(alloc.dates[0]), "MM/dd") : '未定'}</span>
+                                                        <span className="font-medium text-blue-700">{alloc.quantity.toLocaleString()}</span>
+                                                    </div>
+                                                    <span className="text-[6px] truncate max-w-[80px] text-slate-400">{alloc.clientName}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : '-'}
                                 </td>
                                 <td className="py-1 px-1 text-right align-top tabular-nums text-emerald-800 pt-1">
                                     {incoming && incoming.total > 0 ? (
