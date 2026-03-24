@@ -50,11 +50,12 @@ export function InventoryPrintView({
                     <tr className="bg-slate-100 border-y border-slate-900">
                         <th className="py-1 px-1 text-left w-8 font-bold">画像</th>
                         <th className="py-1 px-1 text-left font-bold">商品情報</th>
+                        <th className="py-1 px-1 text-center w-14 font-bold">量目</th>
                         <th className="py-1 px-1 text-right w-20 font-bold">在庫 (現在/有効)</th>
-                        <th className="py-1 px-1 text-right w-12 font-bold">引当</th>
-                        <th className="py-1 px-1 text-right w-20 font-bold">仕掛</th>
+                        <th className="py-1 px-1 text-right w-10 font-bold">引当</th>
                         <th className="py-1 px-1 text-right w-16 font-bold">入荷予定</th>
                         <th className="py-1 px-1 text-right w-12 font-bold">メーカー</th>
+                        <th className="py-1 px-1 text-right w-20 font-bold">仕掛</th>
                         <th className="py-1 px-1 text-center w-14 font-bold">状況</th>
                     </tr>
                 </thead>
@@ -98,16 +99,17 @@ export function InventoryPrintView({
                                     )}
                                 </td>
                                 <td className="py-1 px-1 align-top">
-                                    <div className="font-bold text-[10px] leading-snug">
+                                    <div className="font-bold text-[10px] leading-snug truncate max-w-[160px]">
                                         {product.name}
-                                        <span className="text-[8px] text-slate-500 font-normal ml-1 whitespace-nowrap">
-                                            ({product.weight}kg/{getPitch(product.weight || 0)}mm/{product.shape || '-'})
-                                        </span>
                                     </div>
                                     <div className="text-slate-500 font-mono mt-px text-[7px] flex gap-2">
                                         <span>№:{product.sku || '-'}</span>
                                         {product.janCode && <span>JAN:{product.janCode}</span>}
                                     </div>
+                                </td>
+                                <td className="py-1 px-1 text-center align-top leading-tight">
+                                    <div className="font-medium text-slate-700 whitespace-nowrap">{product.weight}kg</div>
+                                    <div className="text-[7px] text-slate-500 whitespace-nowrap">{getPitch(product.weight || 0)}mm / {product.shape || '-'}</div>
                                 </td>
                                 <td className="py-1 px-1 text-right align-top tabular-nums">
                                     <div className="text-[9px] text-slate-600 border-b border-slate-200 pb-[1px] mb-[1px]">
@@ -120,9 +122,26 @@ export function InventoryPrintView({
                                 <td className="py-1 px-1 text-right align-top tabular-nums text-slate-500 text-[9px] pt-1">
                                     {hasAllocation(allocation) ? allocation.bags.toLocaleString() : '-'}
                                 </td>
+                                <td className="py-1 px-1 text-right align-top tabular-nums text-emerald-800 pt-1">
+                                    {incoming && incoming.total > 0 ? (
+                                        <>
+                                            <div className="font-bold">{incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
+                                            {incoming.items.slice(0, 1).map((item, i) => (
+                                                <div key={i} className="text-[7px] opacity-80 decoration-slate-300 underline underline-offset-2">
+                                                    {format(new Date(item.expectedDate), "M/d")}
+                                                </div>
+                                            ))}
+                                        </>
+                                    ) : '-'}
+                                </td>
+                                <td className="py-1 px-1 text-right align-top tabular-nums text-orange-700 pt-2">
+                                    {supplierStock > 0 ? (
+                                        <div className="font-medium">{supplierStock.toLocaleString()}</div>
+                                    ) : '-'}
+                                </td>
                                 <td className="py-1 px-1 text-right align-top tabular-nums text-blue-800 pt-1">
                                     {wips.length > 0 ? (
-                                        <div className="flex flex-col gap-0.5">
+                                        <div className="flex flex-col gap-0.5 max-w-[80px] ml-auto">
                                             <div className="font-bold border-b border-blue-200 pb-[1px] mb-[1px]">
                                                 {wips.reduce((sum, w) => sum + w.quantity, 0).toLocaleString()}
                                             </div>
@@ -145,23 +164,6 @@ export function InventoryPrintView({
                                                 );
                                             })}
                                         </div>
-                                    ) : '-'}
-                                </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums text-emerald-800 pt-1">
-                                    {incoming && incoming.total > 0 ? (
-                                        <>
-                                            <div className="font-bold">{incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
-                                            {incoming.items.slice(0, 1).map((item, i) => (
-                                                <div key={i} className="text-[7px] opacity-80 decoration-slate-300 underline underline-offset-2">
-                                                    {format(new Date(item.expectedDate), "M/d")}
-                                                </div>
-                                            ))}
-                                        </>
-                                    ) : '-'}
-                                </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums text-orange-700 pt-2">
-                                    {supplierStock > 0 ? (
-                                        <div className="font-medium">{supplierStock.toLocaleString()}</div>
                                     ) : '-'}
                                 </td>
                                 <td className="py-1 px-1 text-center align-middle">
