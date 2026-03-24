@@ -51,7 +51,8 @@ export function InventoryPrintView({
                         <th className="py-1 px-1 text-left w-8 font-bold">画像</th>
                         <th className="py-1 px-1 text-left font-bold">商品情報</th>
                         <th className="py-1 px-1 text-right w-20 font-bold">在庫 (現在/有効)</th>
-                        <th className="py-1 px-1 text-right w-10 font-bold">引当</th>
+                        <th className="py-1 px-1 text-right w-12 font-bold">引当</th>
+                        <th className="py-1 px-1 text-right w-20 font-bold">仕掛</th>
                         <th className="py-1 px-1 text-right w-16 font-bold">入荷予定</th>
                         <th className="py-1 px-1 text-right w-12 font-bold">メーカー</th>
                         <th className="py-1 px-1 text-center w-14 font-bold">状況</th>
@@ -76,6 +77,8 @@ export function InventoryPrintView({
                             isLowStock,
                             isRoll,
                         } = calculateStockStatus(product, currentStock, allocation, settings);
+
+                        const wips = wipMap.get(product.id) || [];
 
                         return (
                             <tr key={product.id} className="break-inside-avoid">
@@ -114,8 +117,35 @@ export function InventoryPrintView({
                                         有: <span className="font-bold">{availableBags.toLocaleString()}{isRoll ? 'm' : ''}</span>
                                     </div>
                                 </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums text-slate-500 text-[9px] pt-2">
+                                <td className="py-1 px-1 text-right align-top tabular-nums text-slate-500 text-[9px] pt-1">
                                     {hasAllocation(allocation) ? allocation.bags.toLocaleString() : '-'}
+                                </td>
+                                <td className="py-1 px-1 text-right align-top tabular-nums text-blue-800 pt-1">
+                                    {wips.length > 0 ? (
+                                        <div className="flex flex-col gap-0.5">
+                                            <div className="font-bold border-b border-blue-200 pb-[1px] mb-[1px]">
+                                                {wips.reduce((sum, w) => sum + w.quantity, 0).toLocaleString()}
+                                            </div>
+                                            {wips.map(w => {
+                                                let dateStr = "未定";
+                                                if (w.expectedCompletion) {
+                                                    const d = new Date(w.expectedCompletion);
+                                                    if (w.termType === 'specific') {
+                                                        dateStr = format(d, "M/d");
+                                                    } else {
+                                                        const termMap: Record<string, string> = { early: '上', mid: '中', late: '下' };
+                                                        dateStr = `${format(d, "M")}月${termMap[w.termType] || ''}`;
+                                                    }
+                                                }
+                                                return (
+                                                    <div key={w.id} className="flex justify-between text-[7px] leading-tight opacity-90 gap-1">
+                                                        <span>{dateStr}</span>
+                                                        <span className="font-medium">{w.quantity.toLocaleString()}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : '-'}
                                 </td>
                                 <td className="py-1 px-1 text-right align-top tabular-nums text-emerald-800 pt-1">
                                     {incoming && incoming.total > 0 ? (
@@ -178,7 +208,7 @@ export function InventoryPrintView({
                 @media print {
                     @page {
                         margin: 5mm 10mm;
-                        size: A4 portrait;
+                        size: A4 landscape;
                     }
                     body {
                         background: white !important;
