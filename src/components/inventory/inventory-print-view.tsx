@@ -48,15 +48,13 @@ export function InventoryPrintView({
             <table className="w-full border-collapse text-[9px]">
                 <thead>
                     <tr className="bg-slate-100 border-y border-slate-900">
-                        <th className="py-1 px-1 text-left w-10 font-bold">画像</th>
-                        <th className="py-1 px-1 text-left font-bold">商品名 / 受注№</th>
-                        <th className="py-1 px-1 text-center w-14 font-bold">スペック</th>
-                        <th className="py-1 px-1 text-right w-16 font-bold">現在庫</th>
-                        <th className="py-1 px-1 text-right w-12 font-bold">引当</th>
-                        <th className="py-1 px-1 text-right w-16 font-bold">有効在庫</th>
+                        <th className="py-1 px-1 text-left w-8 font-bold">画像</th>
+                        <th className="py-1 px-1 text-left font-bold">商品情報</th>
+                        <th className="py-1 px-1 text-right w-20 font-bold">在庫 (現在/有効)</th>
+                        <th className="py-1 px-1 text-right w-10 font-bold">引当</th>
                         <th className="py-1 px-1 text-right w-16 font-bold">入荷予定</th>
-                        <th className="py-1 px-1 text-right w-14 font-bold">メーカー</th>
-                        <th className="py-1 px-1 text-center w-16 font-bold">状況</th>
+                        <th className="py-1 px-1 text-right w-12 font-bold">メーカー</th>
+                        <th className="py-1 px-1 text-center w-14 font-bold">状況</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-300">
@@ -83,7 +81,7 @@ export function InventoryPrintView({
                             <tr key={product.id} className="break-inside-avoid">
                                 <td className="py-1 px-1 align-top">
                                     {product.imageUrl ? (
-                                        <div className="w-8 h-8 relative border border-slate-200 rounded overflow-hidden bg-slate-50">
+                                        <div className="w-6 h-6 relative border border-slate-200 rounded overflow-hidden bg-slate-50">
                                             <img
                                                 src={product.imageUrl}
                                                 alt=""
@@ -91,51 +89,52 @@ export function InventoryPrintView({
                                             />
                                         </div>
                                     ) : (
-                                        <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded flex items-center justify-center text-slate-300 text-[8px]">
+                                        <div className="w-6 h-6 bg-slate-50 border border-slate-100 rounded flex items-center justify-center text-slate-300 text-[6px]">
                                             No Image
                                         </div>
                                     )}
                                 </td>
                                 <td className="py-1 px-1 align-top">
-                                    <div className="font-bold text-[10px] leading-snug">{product.name}</div>
-                                    <div className="text-slate-500 font-mono mt-px text-[9px]">№: {product.sku || '-'}</div>
-                                    {product.janCode && <div className="text-[8px] text-slate-400 mt-px">JAN: {product.janCode}</div>}
-                                </td>
-                                <td className="py-1 px-1 text-center align-top leading-tight">
-                                    <div className="font-medium text-slate-700">{product.weight}kg</div>
-                                    <div className="text-[8px] text-slate-500">{getPitch(product.weight || 0)}mm</div>
-                                    <div className="text-[7px] text-slate-400 mt-px uppercase">{product.shape || '-'}</div>
-                                </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums">
-                                    <div className="font-bold text-[10px]">{currentStock.toLocaleString()}{isRoll ? 'm' : ''}</div>
-                                    {isRoll && <div className="text-[7px] text-slate-500">約{currentBags.toLocaleString()}枚</div>}
-                                </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums text-slate-500">
-                                    {hasAllocation(allocation) ? allocation.bags.toLocaleString() : '-'}
-                                </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums">
-                                    <div className={cn("font-bold text-[10px]", availableBags < 0 ? "text-red-700 font-black" : "text-emerald-800")}>
-                                        {availableBags.toLocaleString()}{isRoll ? 'm' : ''}
+                                    <div className="font-bold text-[10px] leading-snug">
+                                        {product.name}
+                                        <span className="text-[8px] text-slate-500 font-normal ml-1 whitespace-nowrap">
+                                            ({product.weight}kg/{getPitch(product.weight || 0)}mm/{product.shape || '-'})
+                                        </span>
+                                    </div>
+                                    <div className="text-slate-500 font-mono mt-px text-[7px] flex gap-2">
+                                        <span>№:{product.sku || '-'}</span>
+                                        {product.janCode && <span>JAN:{product.janCode}</span>}
                                     </div>
                                 </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums text-emerald-800">
+                                <td className="py-1 px-1 text-right align-top tabular-nums">
+                                    <div className="text-[9px] text-slate-600 border-b border-slate-200 pb-[1px] mb-[1px]">
+                                        現: <span className="font-bold text-slate-800">{currentStock.toLocaleString()}{isRoll ? 'm' : ''}</span>
+                                    </div>
+                                    <div className={cn("text-[9px]", availableBags < 0 ? "text-red-700 font-bold" : "text-emerald-800")}>
+                                        有: <span className="font-bold">{availableBags.toLocaleString()}{isRoll ? 'm' : ''}</span>
+                                    </div>
+                                </td>
+                                <td className="py-1 px-1 text-right align-top tabular-nums text-slate-500 text-[9px] pt-2">
+                                    {hasAllocation(allocation) ? allocation.bags.toLocaleString() : '-'}
+                                </td>
+                                <td className="py-1 px-1 text-right align-top tabular-nums text-emerald-800 pt-1">
                                     {incoming && incoming.total > 0 ? (
                                         <>
                                             <div className="font-bold">{incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
                                             {incoming.items.slice(0, 1).map((item, i) => (
                                                 <div key={i} className="text-[7px] opacity-80 decoration-slate-300 underline underline-offset-2">
-                                                    {format(new Date(item.expectedDate), "M/d")}入荷予定
+                                                    {format(new Date(item.expectedDate), "M/d")}
                                                 </div>
                                             ))}
                                         </>
                                     ) : '-'}
                                 </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums text-orange-700">
+                                <td className="py-1 px-1 text-right align-top tabular-nums text-orange-700 pt-2">
                                     {supplierStock > 0 ? (
                                         <div className="font-medium">{supplierStock.toLocaleString()}</div>
                                     ) : '-'}
                                 </td>
-                                <td className="py-1 px-1 text-center align-top">
+                                <td className="py-1 px-1 text-center align-middle">
                                     <div className="flex flex-col gap-0.5 items-center">
                                         {isOutOfStock ? (
                                             <span className="text-red-700 font-bold border-2 border-red-700 px-1 py-[1px] rounded-[2px] text-[8px] bg-red-50 leading-none">欠品</span>
