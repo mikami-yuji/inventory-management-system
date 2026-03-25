@@ -253,7 +253,7 @@ export default function BagsInventoryPage(): React.ReactElement {
 
     const handlePrint = useCallback(() => {
         const originalTitle = document.title;
-        document.title = `米袋_在庫一覧_${format(new Date(), "yyyyMMdd_HHmm")}`;
+        document.title = `アサヒパック_在庫一覧_${format(new Date(), "yyyyMMdd_HHmm")}`;
         window.print();
         setTimeout(() => {
             document.title = originalTitle;
