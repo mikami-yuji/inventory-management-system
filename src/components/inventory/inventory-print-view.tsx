@@ -72,7 +72,7 @@ export function InventoryPrintView({
             <table className="w-full border-collapse table-fixed text-[9px]">
                 <thead>
                     <tr className="bg-slate-100 border-y border-slate-900">
-                        <th className="py-1 px-1 text-left font-bold" style={{ width: '4%' }}>画像</th>
+                        <th className="py-1 px-1 text-left font-bold no-print" style={{ width: '4%' }}>画像</th>
                         <th className="py-1 px-1 text-left font-bold" style={{ width: '22%' }}>商品情報</th>
                         <th className="py-1 px-1 text-center font-bold" style={{ width: '10%' }}>量目</th>
                         <th className="py-1 px-1 text-right font-bold" style={{ width: '10%' }}>在庫(現在/有効)</th>
@@ -108,7 +108,9 @@ export function InventoryPrintView({
 
                         return (
                             <tr key={product.id} className="break-inside-avoid">
-                                <td className="py-1 px-1 align-top">
+                                <td className="py-1 px-1 align-top no-print">
+                                    {/* 軽量化のためPDF出力時は画像を表示しない */}
+                                    {/* 
                                     {product.imageUrl ? (
                                         <div className="w-6 h-6 relative border border-slate-200 rounded overflow-hidden bg-slate-50">
                                             <img
@@ -122,6 +124,7 @@ export function InventoryPrintView({
                                             No Image
                                         </div>
                                     )}
+                                    */}
                                 </td>
                                 <td className="py-1 px-1 align-top">
                                     <div className="font-bold text-[10px] leading-snug truncate max-w-[160px]">
@@ -293,22 +296,7 @@ export function InventoryPrintView({
                 </div>
             </div>
 
-            <style jsx global>{`
-                @media print {
-                    @page {
-                        margin: 5mm 10mm;
-                        size: A4 landscape;
-                    }
-                    body {
-                        background: white !important;
-                        -webkit-print-color-adjust: exact !important;
-                        print-color-adjust: exact !important;
-                    }
-                    .no-print {
-                        display: none !important;
-                    }
-                }
-            `}</style>
+
         </div>
     );
 }
