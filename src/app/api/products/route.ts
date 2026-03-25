@@ -149,9 +149,6 @@ const createProductSchema = z.object({
     productType: z.string().optional().nullable(),
     statusOverride: z.string().optional().nullable(),
     discontinuedDate: z.string().optional().nullable(),
-    frontColorCount: z.number().or(z.string()).optional().nullable(),
-    backColorCount: z.number().or(z.string()).optional().nullable(),
-    totalColorCount: z.number().or(z.string()).optional().nullable(),
     supplierId: z.string().optional().nullable(),
     metersPerRoll: z.number().or(z.string()).optional().nullable()
 });
@@ -203,9 +200,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             product_type: validData.productType || null,
             status_override: validData.statusOverride || 'normal',
             discontinued_date: validData.discontinuedDate || null,
-            front_color_count: validData.frontColorCount !== undefined && validData.frontColorCount !== null && validData.frontColorCount !== '' ? Number(validData.frontColorCount) : null,
-            back_color_count: validData.backColorCount !== undefined && validData.backColorCount !== null && validData.backColorCount !== '' ? Number(validData.backColorCount) : null,
-            total_color_count: validData.totalColorCount !== undefined && validData.totalColorCount !== null && validData.totalColorCount !== '' ? Number(validData.totalColorCount) : null,
             supplier_id: validData.supplierId === 'none' || !validData.supplierId ? null : validData.supplierId,
             meters_per_roll: validData.metersPerRoll !== undefined && validData.metersPerRoll !== null && validData.metersPerRoll !== '' ? Number(validData.metersPerRoll) : 400,
         };
@@ -302,9 +296,6 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         if (validData.statusOverride !== undefined) updateData.status_override = validData.statusOverride;
         if (validData.status !== undefined) updateData.status = validData.status;
         if (validData.discontinuedDate !== undefined) updateData.discontinued_date = validData.discontinuedDate;
-        if (validData.frontColorCount !== undefined) updateData.front_color_count = validData.frontColorCount !== null && validData.frontColorCount !== '' ? Number(validData.frontColorCount) : null;
-        if (validData.backColorCount !== undefined) updateData.back_color_count = validData.backColorCount !== null && validData.backColorCount !== '' ? Number(validData.backColorCount) : null;
-        if (validData.totalColorCount !== undefined) updateData.total_color_count = validData.totalColorCount !== null && validData.totalColorCount !== '' ? Number(validData.totalColorCount) : null;
         if (validData.supplierId !== undefined) updateData.supplier_id = validData.supplierId === 'none' || !validData.supplierId ? null : validData.supplierId;
         if (validData.metersPerRoll !== undefined) updateData.meters_per_roll = validData.metersPerRoll !== null && validData.metersPerRoll !== '' ? Number(validData.metersPerRoll) : 400;
 
