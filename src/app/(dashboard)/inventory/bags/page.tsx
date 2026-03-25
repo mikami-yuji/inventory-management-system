@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -251,7 +252,12 @@ export default function BagsInventoryPage(): React.ReactElement {
     const [analysisProduct, setAnalysisProduct] = useState<Product | null>(null);
 
     const handlePrint = useCallback(() => {
+        const originalTitle = document.title;
+        document.title = `米袋_在庫一覧_${format(new Date(), "yyyyMMdd_HHmm")}`;
         window.print();
+        setTimeout(() => {
+            document.title = originalTitle;
+        }, 100);
     }, []);
 
     const handleAddProduct = (): void => {
