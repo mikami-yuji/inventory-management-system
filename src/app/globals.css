@@ -124,39 +124,87 @@
   }
 }
 
-/* 印刷用スタイル */
+/* 印刷用スタイル - 徹底的な軽量化 */
 @media print {
-  body {
-    background-color: transparent !important;
+  @page {
+    margin: 10mm;
+    size: auto;
   }
 
-  .print\:hidden {
-    display: none !important;
+  /* 複雑なカラー指定(OKLCH)や透明度を排除し、PDF生成時のラスタライズを防止 */
+  :root {
+    --background: #ffffff;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --border: #e2e8f0;
+    --primary: #000000;
+    --primary-foreground: #ffffff;
+    --destructive: #ef4444;
   }
 
-  .print\:p-0 {
-    padding: 0 !important;
-  }
-
-  .print\:border-0 {
-    border: 0 !important;
-  }
-
-  .print\:shadow-none {
+  /* 全てのアニメーション、トランジション、シャドウ、角丸を無効化 */
+  *, ::before, ::after {
+    transition: none !important;
+    animation: none !important;
     box-shadow: none !important;
+    text-shadow: none !important;
+    border-radius: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-filter: none !important;
+    filter: none !important;
   }
 
-  /* サイドバーを非表示 */
-  aside,
-  nav,
-  .sidebar {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: "Helvetica", "Arial", "Meiryo", sans-serif !important;
+    -webkit-print-color-adjust: economy;
+    print-color-adjust: economy;
+  }
+
+  /* 透明度(opacity)を1に固定してラスタライズを防止 */
+  .text-muted-foreground, .text-slate-500, .bg-muted\/50 {
+    opacity: 1 !important;
+    color: #64748b !important;
+  }
+
+  /* 不要な要素の徹底排除 */
+  .print\:hidden, aside, nav, .sidebar, button:not(.print-visible) {
     display: none !important;
   }
 
-  /* メインコンテンツを全幅 */
+  /* レイアウトの最適化 */
   main {
     margin: 0 !important;
-    padding: 1rem !important;
+    padding: 0 !important;
     width: 100% !important;
+  }
+
+  .print\:p-0 { padding: 0 !important; }
+  .print\:border-0 { border: 0 !important; }
+  .print\:shadow-none { box-shadow: none !important; }
+
+  /* テーブルの最適化 */
+  table {
+    border-collapse: collapse !important;
+  }
+
+  [data-slot="table-container"] {
+    overflow: visible !important;
+  }
+  
+  tr, td, th {
+    page-break-inside: avoid !important;
+  }
+
+  /* バッジなどの装飾を簡素化 */
+  [data-slot="badge"] {
+    border: 1px solid #000 !important;
+    background: transparent !important;
+    color: #000 !important;
+    padding: 1px 4px !important;
   }
 }
