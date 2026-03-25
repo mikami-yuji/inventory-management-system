@@ -126,13 +126,13 @@ export function InventoryPrintView({
                                     {hasAllocation(allocation) ? (
                                         <div className="flex flex-col gap-0.5 ml-auto">
                                             <div className="font-bold border-b border-slate-200 pb-[1px] mb-[1px]">
-                                                {allocation.bags.toLocaleString()}
+                                                {allocation.bags.toLocaleString()}枚
                                             </div>
                                             {(detailedSaleAllocationMap?.get(product.id) || []).map((alloc, idx) => (
                                                 <div key={idx} className="text-[7px] leading-tight opacity-90 flex flex-col items-end">
                                                     <div className="flex justify-between w-full gap-1">
                                                         <span>{alloc.dates[0] ? format(new Date(alloc.dates[0]), "MM/dd") : '未定'}</span>
-                                                        <span className="font-medium text-blue-700">{alloc.quantity.toLocaleString()}</span>
+                                                        <span className="font-medium text-blue-700">{alloc.quantity.toLocaleString()}枚</span>
                                                     </div>
                                                     <span className="text-[6px] truncate max-w-[80px] text-slate-400">{alloc.clientName}</span>
                                                 </div>
@@ -144,9 +144,10 @@ export function InventoryPrintView({
                                     {incoming && incoming.total > 0 ? (
                                         <>
                                             <div className="font-bold">{incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
-                                            {incoming.items.slice(0, 1).map((item, i) => (
-                                                <div key={i} className="text-[7px] opacity-80 decoration-slate-300 underline underline-offset-2">
-                                                    {format(new Date(item.expectedDate), "M/d")}
+                                            {incoming.items.map((item, i) => (
+                                                <div key={i} className="flex justify-between text-[7px] leading-tight opacity-90 gap-1">
+                                                    <span>{format(new Date(item.expectedDate), "M/d")}</span>
+                                                    <span className="font-medium">{item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
                                                 </div>
                                             ))}
                                         </>
@@ -156,12 +157,12 @@ export function InventoryPrintView({
                                     {supplierStock > 0 ? (
                                         <div className="flex flex-col gap-0.5 max-w-[80px] ml-auto">
                                             <div className="font-bold border-b border-orange-200 pb-[1px] mb-[1px]">
-                                                {supplierStock.toLocaleString()}
+                                                {supplierStock.toLocaleString()}{isRoll ? 'm' : '枚'}
                                             </div>
                                             {supplierStockLots.map(lot => (
                                                 <div key={lot.id} className="flex justify-between text-[7px] leading-tight opacity-90 gap-1">
                                                     <span>{lot.stockDate ? format(new Date(lot.stockDate), "M/d") : '未定'}</span>
-                                                    <span className="font-medium">{lot.quantity.toLocaleString()}</span>
+                                                    <span className="font-medium">{lot.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -171,7 +172,7 @@ export function InventoryPrintView({
                                     {wips.length > 0 ? (
                                         <div className="flex flex-col gap-0.5 max-w-[80px] ml-auto">
                                             <div className="font-bold border-b border-blue-200 pb-[1px] mb-[1px]">
-                                                {wips.reduce((sum, w) => sum + w.quantity, 0).toLocaleString()}
+                                                {wips.reduce((sum, w) => sum + w.quantity, 0).toLocaleString()}{isRoll ? 'm' : '枚'}
                                             </div>
                                             {wips.map(w => {
                                                 let dateStr = "未定";
@@ -187,7 +188,7 @@ export function InventoryPrintView({
                                                 return (
                                                     <div key={w.id} className="flex justify-between text-[7px] leading-tight opacity-90 gap-1">
                                                         <span>{dateStr}</span>
-                                                        <span className="font-medium">{w.quantity.toLocaleString()}</span>
+                                                        <span className="font-medium">{w.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
                                                     </div>
                                                 );
                                             })}
