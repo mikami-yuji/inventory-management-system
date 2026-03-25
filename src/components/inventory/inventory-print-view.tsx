@@ -225,12 +225,12 @@ export function InventoryPrintView({
                 <p className="mb-3">実在庫と微差が生じる場合がありますので、詳細な納期・数量については別途お問い合わせください。</p>
                 <div className="flex justify-center items-center gap-6 mt-3 pt-3 border-t border-slate-100 max-w-lg mx-auto">
                     <div className="text-left">
-                        <p className="font-bold text-slate-700 text-[10px]">朝日パピルス株式会社</p>
-                        <p>〒558-0001 大阪府大阪市住吉区大領</p>
+                        <p className="font-bold text-slate-700 text-[10px]">株式会社アサヒパック</p>
+                        <p>〒558-0046 大阪府大阪市住吉区上住吉1-4-2</p>
                     </div>
                     <div className="text-right border-l pl-6 border-slate-200">
                         <p>TEL: 06-6673-7771</p>
-                        <p>URL: https://www.asahi-papyrus.co.jp/</p>
+                        <p>URL: https://www.asahipac.co.jp/</p>
                     </div>
                 </div>
             </div>
