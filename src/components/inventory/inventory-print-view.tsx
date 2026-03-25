@@ -50,7 +50,7 @@ export function InventoryPrintView({
         });
         
         return { meters, bags, price };
-    }, [products, inventoryMap]);
+    }, [products, inventoryMap, settings]);
 
     const today = format(new Date(), "yyyy年MM月dd日 HH:mm", { locale: ja });
 
