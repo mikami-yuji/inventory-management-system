@@ -72,8 +72,8 @@ export function InventoryPrintView({
             <table className="w-full border-collapse table-fixed text-[9px]">
                 <thead>
                     <tr className="bg-slate-100 border-y border-slate-900">
-                        <th className="py-1 px-1 text-left font-bold no-print" style={{ width: '4%' }}>画像</th>
-                        <th className="py-1 px-1 text-left font-bold" style={{ width: '22%' }}>商品情報</th>
+                        {/* 軽量化とスペース確保のため画像列を削除 */}
+                        <th className="py-1 px-1 text-left font-bold" style={{ width: '26%' }}>商品情報</th>
                         <th className="py-1 px-1 text-center font-bold" style={{ width: '10%' }}>量目</th>
                         <th className="py-1 px-1 text-right font-bold" style={{ width: '10%' }}>在庫(現在/有効)</th>
                         <th className="py-1 px-1 text-right font-bold" style={{ width: '14%' }}>引当</th>
@@ -108,26 +108,9 @@ export function InventoryPrintView({
 
                         return (
                             <tr key={product.id} className="break-inside-avoid">
-                                <td className="py-1 px-1 align-top no-print">
-                                    {/* 軽量化のためPDF出力時は画像を表示しない */}
-                                    {/* 
-                                    {product.imageUrl ? (
-                                        <div className="w-6 h-6 relative border border-slate-200 rounded overflow-hidden bg-slate-50">
-                                            <img
-                                                src={product.imageUrl}
-                                                alt=""
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="w-6 h-6 bg-slate-50 border border-slate-100 rounded flex items-center justify-center text-slate-300 text-[6px]">
-                                            No Image
-                                        </div>
-                                    )}
-                                    */}
-                                </td>
+                                {/* 商品画像列を削除してスペースを確保 */}
                                 <td className="py-1 px-1 align-top">
-                                    <div className="font-bold text-[10px] leading-snug truncate max-w-[160px]">
+                                    <div className="font-bold text-[10px] leading-snug">
                                         {product.name}
                                     </div>
                                     <div className="text-slate-500 font-mono mt-px text-[7px] flex gap-2">
