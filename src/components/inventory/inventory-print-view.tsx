@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import type { Product, WorkInProgress, IncomingStock, SupplierStockLot } from "@/types";
@@ -30,6 +30,28 @@ export function InventoryPrintView({
     incomingMap,
     settings
 }: InventoryPrintViewProps) {
+    const totals = useMemo(() => {
+        let meters = 0;
+        let bags = 0;
+        let price = 0;
+        
+        products.forEach(p => {
+            const isRoll = p.shape === 'RZ' || p.shape === 'R' || (p.material || '').includes('RZ');
+            const inv = inventoryMap.get(p.id);
+            const currentStock = inv ? inv.quantity : 0;
+            
+            if (isRoll) {
+                meters += currentStock;
+            } else {
+                bags += currentStock;
+            }
+            
+            price += currentStock * (p.unitPrice || 0);
+        });
+        
+        return { meters, bags, price };
+    }, [products, inventoryMap]);
+
     const today = format(new Date(), "yyyy年MM月dd日 HH:mm", { locale: ja });
 
     return (
@@ -238,6 +260,22 @@ export function InventoryPrintView({
                     })}
                 </tbody>
             </table>
+
+            {/* 合計欄 */}
+            <div className="flex justify-end mt-1 pt-1 border-t-2 border-slate-700 gap-6 text-[10px] text-slate-800 font-bold mb-4 mr-2">
+                <div className="flex items-center gap-2 text-blue-900 px-2 py-1">
+                    <span>現在庫合計(ロール):</span>
+                    <span className="text-[11px] tabular-nums">{totals.meters.toLocaleString()} <span className="text-[8px] font-normal">m</span></span>
+                </div>
+                <div className="flex items-center gap-2 text-emerald-900 px-2 py-1">
+                    <span>現在庫合計(単袋):</span>
+                    <span className="text-[11px] tabular-nums">{totals.bags.toLocaleString()} <span className="text-[8px] font-normal">枚</span></span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-900 bg-slate-100 rounded px-3 py-1 ml-4 border border-slate-300">
+                    <span>在庫金額合計:</span>
+                    <span className="text-[11px] tabular-nums">¥{Math.round(totals.price).toLocaleString()}</span>
+                </div>
+            </div>
 
             {/* フッター */}
             <div className="mt-8 text-center text-[8px] text-slate-400 border-t border-slate-200 pt-4">
