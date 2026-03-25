@@ -14,12 +14,14 @@ import {
     TrendingDown,
     AlertTriangle,
     ArrowLeft,
-    Loader2
+    Loader2,
+    Download
 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import * as XLSX from "xlsx";
 
 // 在庫履歴のAPI応答型
 type StockHistoryEntry = {
@@ -185,6 +187,79 @@ function StockReportContent(): React.ReactElement {
         window.print();
     };
 
+    // Excel出力処理
+    const handleExportExcel = (): void => {
+        try {
+            if (reportData.length === 0) return;
+
+            // エクセル用データに変換
+            const excelData = reportData.map(item => {
+                const isLowStock = item.daysUntilStockout !== null &&
+                    item.daysUntilStockout < 14 &&
+                    item.product.status !== 'direct_delivery' &&
+                    item.product.status !== 'discontinued' &&
+                    item.product.status !== 'on_sale_break';
+                const isOutOfStock = item.currentStock === 0 &&
+                    item.product.status !== 'direct_delivery' &&
+                    item.product.status !== 'discontinued' &&
+                    item.product.status !== 'on_sale_break';
+
+                let statusStr = "";
+                if (isOutOfStock) statusStr = "欠品";
+                else if (isLowStock) statusStr = "要注意";
+
+                return {
+                    "商品名": item.product.name,
+                    "SKU/受注No": item.product.sku || item.product.id,
+                    "量目(kg)": item.product.weight || "",
+                    "形状": item.product.shape || "",
+                    "現在庫": item.currentStock,
+                    "週間使用": item.weeklyUsage,
+                    "月間使用": item.monthlyUsage,
+                    "在庫日数": item.daysUntilStockout !== null ? `${item.daysUntilStockout}日` : "-",
+                    "推奨発注数": item.suggestedOrder > 0 ? item.suggestedOrder : "-",
+                    "ステータス": statusStr
+                };
+            });
+
+            // ワークブックの作成
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            
+            // 列幅の調整
+            const colWidths = [
+                { wch: 30 }, // 商品名
+                { wch: 15 }, // SKU
+                { wch: 10 }, // 量目
+                { wch: 15 }, // 形状
+                { wch: 10 }, // 現在庫
+                { wch: 10 }, // 週間使用
+                { wch: 10 }, // 月間使用
+                { wch: 10 }, // 在庫日数
+                { wch: 12 }, // 推奨発注数
+                { wch: 10 }, // ステータス
+            ];
+            worksheet["!cols"] = colWidths;
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "在庫一覧");
+
+            // ファイル名の生成
+            const now = new Date();
+            const dateStr = now.getFullYear() + 
+                String(now.getMonth() + 1).padStart(2, '0') + 
+                String(now.getDate()).padStart(2, '0') + "_" + 
+                String(now.getHours()).padStart(2, '0') + 
+                String(now.getMinutes()).padStart(2, '0');
+            const fileName = `アサヒパック_在庫一覧_${dateStr}.xlsx`;
+
+            // ダウンロード
+            XLSX.writeFile(workbook, fileName);
+        } catch (error) {
+            console.error("Excel出力エラー:", error);
+            alert("Excel出力中にエラーが発生しました。");
+        }
+    };
+
     // 現在日時
     const reportDate = new Date().toLocaleDateString('ja-JP', {
         year: 'numeric',
@@ -229,6 +304,10 @@ function StockReportContent(): React.ReactElement {
                             <SelectItem value="other">その他</SelectItem>
                         </SelectContent>
                     </Select>
+                    <Button onClick={handleExportExcel} variant="outline" className="gap-2 shrink-0 border-green-600 text-green-600 hover:bg-green-50">
+                        <Download className="h-4 w-4" />
+                        Excel出力
+                    </Button>
                     <Button onClick={handlePrint} className="gap-2 shrink-0">
                         <Printer className="h-4 w-4" />
                         印刷

@@ -23,10 +23,12 @@ import {
     BarChart3,
     ArrowUpDown,
     Printer,
+    Download,
 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
 import Link from "next/link";
+import * as XLSX from "xlsx";
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -333,6 +335,45 @@ function TurnoverReportContent(): React.ReactElement {
         window.print();
     };
 
+    // Excel出力
+    const handleExportExcel = (): void => {
+        try {
+            if (filteredData.length === 0) return;
+
+            const excelData = filteredData.map(item => ({
+                "商品名": item.productName,
+                "商品コード": item.productCode,
+                "カテゴリ": item.category,
+                "現在庫": item.currentStock,
+                "月間出庫": item.monthlyOutgoing,
+                "月間入庫": item.monthlyIncoming,
+                "平均在庫": item.averageStock,
+                "回転率": item.turnoverRate,
+                "ランク": item.rank,
+                "在庫日数": item.daysOfStock !== null ? `${item.daysOfStock}日` : "-",
+                "提案": item.suggestedAction
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const colWidths = [
+                { wch: 30 }, { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+                { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 40 }
+            ];
+            worksheet["!cols"] = colWidths;
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "在庫回転率");
+
+            const now = new Date();
+            const dateStr = now.getFullYear() + 
+                String(now.getMonth() + 1).padStart(2, '0') + 
+                String(now.getDate()).padStart(2, '0');
+            XLSX.writeFile(workbook, `在庫回転率レポート_${dateStr}.xlsx`);
+        } catch (error) {
+            console.error("Excel出力エラー:", error);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* ヘッダー */}
@@ -358,6 +399,10 @@ function TurnoverReportContent(): React.ReactElement {
                     <Button variant="outline" size="sm" onClick={fetchHistory} className="gap-2 shrink-0">
                         <RefreshCw className="h-4 w-4" />
                         更新
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleExportExcel} className="gap-2 shrink-0 border-green-600 text-green-600 hover:bg-green-50">
+                        <Download className="h-4 w-4" />
+                        Excel出力
                     </Button>
                     <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2 shrink-0">
                         <Printer className="h-4 w-4" />

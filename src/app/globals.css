@@ -127,8 +127,7 @@
 /* 印刷用スタイル */
 @media print {
   body {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    background-color: transparent !important;
   }
 
   .print\:hidden {

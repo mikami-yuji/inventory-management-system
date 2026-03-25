@@ -156,7 +156,6 @@ export function PurchaseOrderView({ order, senderInfo }: PurchaseOrderViewProps)
                 @media print {
                     body {
                         background-color: white !important;
-                        -webkit-print-color-adjust: exact;
                     }
                     .no-print {
                         display: none !important;
