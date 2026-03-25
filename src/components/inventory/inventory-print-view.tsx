@@ -36,11 +36,11 @@ export function InventoryPrintView({
         let price = 0;
         
         products.forEach(p => {
-            const isRoll = p.shape === 'RZ' || p.shape === 'R' || (p.material || '').includes('RZ');
             const inv = inventoryMap.get(p.id);
             const currentStock = inv ? inv.quantity : 0;
+            const status = calculateStockStatus(p, currentStock, { bags: 0, meters: 0 }, settings);
             
-            if (isRoll) {
+            if (status.isRoll) {
                 meters += currentStock;
             } else {
                 bags += currentStock;
