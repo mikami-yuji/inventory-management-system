@@ -152,9 +152,19 @@ export function InventoryPrintView({
                                         </>
                                     ) : '-'}
                                 </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums text-orange-700 pt-2">
+                                <td className="py-1 px-1 text-right align-top tabular-nums text-orange-700 pt-1">
                                     {supplierStock > 0 ? (
-                                        <div className="font-medium">{supplierStock.toLocaleString()}</div>
+                                        <div className="flex flex-col gap-0.5 max-w-[80px] ml-auto">
+                                            <div className="font-bold border-b border-orange-200 pb-[1px] mb-[1px]">
+                                                {supplierStock.toLocaleString()}
+                                            </div>
+                                            {supplierStockLots.map(lot => (
+                                                <div key={lot.id} className="flex justify-between text-[7px] leading-tight opacity-90 gap-1">
+                                                    <span>{lot.stockDate ? format(new Date(lot.stockDate), "M/d") : '未定'}</span>
+                                                    <span className="font-medium">{lot.quantity.toLocaleString()}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     ) : '-'}
                                 </td>
                                 <td className="py-1 px-1 text-right align-top tabular-nums text-blue-800 pt-1">

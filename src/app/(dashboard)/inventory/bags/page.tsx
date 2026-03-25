@@ -803,6 +803,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                 products={filteredProducts}
                 inventoryMap={inventoryMap}
                 saleAllocationMap={saleAllocationMap}
+                detailedSaleAllocationMap={detailedSaleAllocationMap}
                 wipMap={wipMap}
                 incomingMap={incomingMap}
                 supplierStockMap={supplierStockMap}
