@@ -128,7 +128,13 @@ export function InventoryPrintView({
                                             <div className="font-bold border-b border-slate-200 pb-[1px] mb-[1px]">
                                                 {allocation.bags.toLocaleString()}枚
                                             </div>
-                                            {(detailedSaleAllocationMap?.get(product.id) || []).map((alloc, idx) => (
+                                            {(detailedSaleAllocationMap?.get(product.id) || [])
+                                                .sort((a, b) => {
+                                                    const dateA = a.dates[0] ? new Date(a.dates[0]).getTime() : Infinity;
+                                                    const dateB = b.dates[0] ? new Date(b.dates[0]).getTime() : Infinity;
+                                                    return dateA - dateB;
+                                                })
+                                                .map((alloc, idx) => (
                                                 <div key={idx} className="text-[7px] leading-tight opacity-90 flex flex-col items-end">
                                                     <div className="flex justify-between w-full gap-1">
                                                         <span>{alloc.dates[0] ? format(new Date(alloc.dates[0]), "MM/dd") : '未定'}</span>
@@ -144,7 +150,9 @@ export function InventoryPrintView({
                                     {incoming && incoming.total > 0 ? (
                                         <>
                                             <div className="font-bold">{incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
-                                            {incoming.items.map((item, i) => (
+                                            {[...incoming.items]
+                                                .sort((a, b) => new Date(a.expectedDate).getTime() - new Date(b.expectedDate).getTime())
+                                                .map((item, i) => (
                                                 <div key={i} className="flex justify-between text-[7px] leading-tight opacity-90 gap-1">
                                                     <span>{format(new Date(item.expectedDate), "M/d")}</span>
                                                     <span className="font-medium">{item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
@@ -159,7 +167,13 @@ export function InventoryPrintView({
                                             <div className="font-bold border-b border-orange-200 pb-[1px] mb-[1px]">
                                                 {supplierStock.toLocaleString()}{isRoll ? 'm' : '枚'}
                                             </div>
-                                            {supplierStockLots.map(lot => (
+                                            {[...supplierStockLots]
+                                                .sort((a, b) => {
+                                                    const dateA = a.stockDate ? new Date(a.stockDate).getTime() : Infinity;
+                                                    const dateB = b.stockDate ? new Date(b.stockDate).getTime() : Infinity;
+                                                    return dateA - dateB;
+                                                })
+                                                .map(lot => (
                                                 <div key={lot.id} className="flex justify-between text-[7px] leading-tight opacity-90 gap-1">
                                                     <span>{lot.stockDate ? format(new Date(lot.stockDate), "M/d") : '未定'}</span>
                                                     <span className="font-medium">{lot.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
@@ -174,7 +188,13 @@ export function InventoryPrintView({
                                             <div className="font-bold border-b border-blue-200 pb-[1px] mb-[1px]">
                                                 {wips.reduce((sum, w) => sum + w.quantity, 0).toLocaleString()}{isRoll ? 'm' : '枚'}
                                             </div>
-                                            {wips.map(w => {
+                                            {[...wips]
+                                                .sort((a, b) => {
+                                                    const dateA = a.expectedCompletion ? new Date(a.expectedCompletion).getTime() : Infinity;
+                                                    const dateB = b.expectedCompletion ? new Date(b.expectedCompletion).getTime() : Infinity;
+                                                    return dateA - dateB;
+                                                })
+                                                .map(w => {
                                                 let dateStr = "未定";
                                                 if (w.expectedCompletion) {
                                                     const d = new Date(w.expectedCompletion);
