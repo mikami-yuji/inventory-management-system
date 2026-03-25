@@ -24,7 +24,9 @@ import {
     AlertTriangle,
     Calendar,
     Printer,
+    Download,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import {
     bagsToMeters,
     calculateStockStatus
@@ -260,6 +262,8 @@ export default function BagsInventoryPage(): React.ReactElement {
         }, 100);
     }, []);
 
+
+
     const handleAddProduct = (): void => {
         setEditingProduct(null);
         setFormDialogOpen(true);
@@ -415,6 +419,57 @@ export default function BagsInventoryPage(): React.ReactElement {
         });
     }, [bagProducts, searchQuery, weightFilter, stockFilter, originFilter, varietyFilter, statusFilter, showRemovedZeroStock, inventoryMap, saleAllocationMap, settings]);
 
+    // Excel出力
+    const handleExportExcel = useCallback((): void => {
+        try {
+            if (filteredProducts.length === 0) return;
+
+            const excelData = filteredProducts.map(p => {
+                const qty = inventoryMap.get(p.id)?.quantity || 0;
+                const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
+                const wip = wipMap.get(p.id) || [];
+                const wipQty = wip.reduce((sum, item) => sum + item.quantity, 0);
+                const supplierStock = p.supplierStock || 0;
+                const incoming = incomingMap.get(p.id)?.total || 0;
+
+                // 実質在庫
+                const effectiveStock = qty - allocation.bags + wipQty + supplierStock;
+
+                return {
+                    "商品コード": p.sku || p.id,
+                    "商品名": p.name,
+                    "区分": p.prefix || "",
+                    "産地": p.origin || "",
+                    "品種": p.variety || "",
+                    "重量": p.weight ? `${p.weight}kg` : "",
+                    "現在庫": qty,
+                    "特売引当": allocation.bags,
+                    "仕掛中": wipQty,
+                    "メーカー(直送)": supplierStock,
+                    "実質在庫": effectiveStock,
+                    "入荷予定": incoming,
+                    "状態": statusLabels[p.status] || p.status
+                };
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const colWidths = [
+                { wch: 15 }, { wch: 40 }, { wch: 10 }, { wch: 10 }, { wch: 15 },
+                { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 15 },
+                { wch: 10 }, { wch: 10 }, { wch: 15 }
+            ];
+            worksheet["!cols"] = colWidths;
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "在庫一覧");
+
+            const dateStr = format(new Date(), "yyyyMMdd_HHmm");
+            XLSX.writeFile(workbook, `アサヒパック_在庫一覧_${dateStr}.xlsx`);
+        } catch (error) {
+            console.error("Excel export error:", error);
+        }
+    }, [filteredProducts, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap]);
+
     // サマリー計算
     const summary = useMemo(() => {
         let lowStock = 0;
@@ -496,6 +551,14 @@ export default function BagsInventoryPage(): React.ReactElement {
                             </Button>
                         </div>
                     )}
+                    <Button 
+                        variant="outline" 
+                        onClick={handleExportExcel} 
+                        className={cn("gap-1.5 h-10 px-2 sm:px-4 text-xs sm:text-sm shrink-0 border-green-600 text-green-600 hover:bg-green-50", isSmallHeight && "h-7 px-2")}
+                    >
+                        <Download className="h-3.5 w-3.5" />
+                        {isSmallHeight ? 'Excel' : 'Excel出力'}
+                    </Button>
                     <Button 
                         variant="outline" 
                         onClick={handlePrint} 
