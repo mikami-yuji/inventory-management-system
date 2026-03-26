@@ -153,7 +153,7 @@ export const calculateStockPrediction = (
 ) => {
     // 初期在庫にメーカー在庫を加算（即時利用可能とみなす）
     let currentStock = availableStock + supplierStock;
-    let hasUnconfirmedWIP = false;
+    let unconfirmedWIPTotal = 0;
 
     if (currentStock <= 0 && wipItems.length === 0 && incomingItems.length === 0) {
         return { remainingDays: 0, estimatedDate: null, wipStartAlert: false, hasUnconfirmedWIP: false };
@@ -189,8 +189,9 @@ export const calculateStockPrediction = (
         if (!item.expectedDate) return;
         
         // specific 以外（上中下旬）は予測計算の在庫加算には入れない
+        // 代わりに合計数量を記録しておく
         if (item.termType && item.termType !== 'specific') {
-            hasUnconfirmedWIP = true;
+            unconfirmedWIPTotal += item.quantity;
             return;
         }
 
@@ -236,6 +237,10 @@ export const calculateStockPrediction = (
     // 仕掛開始アラート: 残り日数 <= (リードタイム + 7日) かつ 在庫がある場合
     // ※在庫が既に切れている（days=0）場合はアラート不要（欠品扱い）
     const wipStartAlert = days <= (leadDays + 7) && days > 0 && leadDays > 0;
+
+    // 納期確定警告: 在庫切れが予測される場合のみ、かつ未確定仕掛品が入れば在庫が持つ可能性がある場合
+    // 条件: (1) 未確定仕掛品がある (2) 在庫切れが予測範囲内 (3) 未確定分を含めれば在庫が改善しうる
+    const hasUnconfirmedWIP = unconfirmedWIPTotal > 0 && days < maxDays;
 
     return {
         remainingDays: days,
