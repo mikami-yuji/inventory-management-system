@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Product, WorkInProgress, IncomingStock, SupplierStockLot } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, ImageIcon, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isRollBag, calculateStockPrediction } from "@/lib/services";
+import { isRollBag, calculateStockPrediction, calculateStockStatus } from "@/lib/services";
 import { SaleEvent } from "@/hooks/use-sale-events";
 import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
@@ -39,6 +39,43 @@ export function BagsInventoryCards({
     onDetail,
     onRefetch
 }: BagsInventoryCardsProps): React.ReactElement {
+    // 予測計算をメモ化
+    const predictionMap = useMemo(() => {
+        const map = new Map<string, ReturnType<typeof calculateStockPrediction>>();
+        products.forEach(product => {
+            const currentStock = inventoryMap.get(product.id)?.quantity || 0;
+            const wipList = wipMap.get(product.id) || [];
+            const incoming = incomingMap.get(product.id);
+            const supplierLots = supplierStockLotsMap?.get(product.id) || [];
+            const supplier = supplierLots.length > 0
+                ? supplierLots.reduce((sum, lot) => sum + lot.quantity, 0)
+                : (supplierStockMap.get(product.id) || 0);
+
+            const relevantSaleItems = saleEvents
+                .filter(event => (event.status === 'active' || event.status === 'upcoming'))
+                .flatMap(event => {
+                    const item = event.items.find(i => i.productId === product.id);
+                    return item ? [{ dates: event.dates, quantity: item.allocatedQuantity }] : [];
+                });
+
+            map.set(product.id, calculateStockPrediction(
+                currentStock,
+                product.dailyShipmentRate || 0,
+                product.productionLeadDays || 0,
+                product,
+                relevantSaleItems,
+                wipList.filter(item => item.status === 'in_progress').map(item => ({ 
+                    quantity: item.quantity, 
+                    expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null,
+                    termType: item.termType
+                })),
+                incoming?.items.map(item => ({ quantity: item.quantity, expectedDate: new Date(item.expectedDate) })) || [],
+                supplier
+            ));
+        });
+        return map;
+    }, [products, inventoryMap, wipMap, incomingMap, supplierStockLotsMap, supplierStockMap, saleEvents]);
+
     if (products.length === 0) {
         return (
             <div className="text-center py-12 text-muted-foreground bg-slate-50 rounded-lg border border-dashed">
@@ -59,7 +96,7 @@ export function BagsInventoryCards({
                     supplierStockMap={supplierStockMap}
                     supplierStockLotsMap={supplierStockLotsMap}
                     incomingMap={incomingMap}
-                    saleEvents={saleEvents}
+                    prediction={predictionMap.get(product.id)!}
                     onDetail={onDetail}
                     onRefetch={onRefetch}
                 />
@@ -76,7 +113,7 @@ type ProductCardProps = {
     supplierStockMap: Map<string, number>;
     supplierStockLotsMap: Map<string, SupplierStockLot[]>;
     incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
-    saleEvents?: SaleEvent[];
+    prediction: ReturnType<typeof calculateStockPrediction>;
     onDetail: (product: Product) => void;
     onRefetch: () => void;
 };
@@ -89,7 +126,7 @@ function ProductCard({
     supplierStockMap,
     supplierStockLotsMap,
     incomingMap,
-    saleEvents = [],
+    prediction,
     onDetail,
     onRefetch
 }: ProductCardProps) {
@@ -97,10 +134,12 @@ function ProductCard({
     const [isDragging, setIsDragging] = useState(false);
     const [uploading, setUploading] = useState(false);
 
-    // 在庫計算
+    // 在庫計算 (サービスを利用)
     const stockInfo = inventoryMap.get(product.id) || { quantity: 0 };
     const currentStock = stockInfo.quantity;
     const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
+    const status = calculateStockStatus(product, currentStock, allocation);
+    
     const wipList = wipMap.get(product.id) || [];
     const wipQuantity = wipList.reduce((sum, item) => sum + item.quantity, 0);
     const supplierLots = supplierStockLotsMap?.get(product.id) || [];
@@ -109,42 +148,11 @@ function ProductCard({
         : (supplierStockMap.get(product.id) || 0);
     const incoming = incomingMap.get(product.id);
 
-    const isRoll = product.shape && isRollBag(product.shape);
-
-    // 有効在庫
-    const availableStock = Math.max(0, currentStock - (isRoll ? allocation.meters : allocation.bags));
-
-    // ステータス判定 (直送先在庫と廃盤は除外)
-    const isOutOfStock = (product.status !== 'direct_delivery' && product.status !== 'discontinued' && product.status !== 'on_sale_break') && (availableStock <= 0);
-    const isLowStock = (product.status !== 'direct_delivery' && product.status !== 'discontinued') && (
-        isRoll
-            ? availableStock > 0 && availableStock < 50
-            : availableStock > 0 && availableStock < 100
-    );
-    const hasAllocation = allocation.bags > 0;
-
-    // 在庫予測の計算
-    const relevantSaleItems = saleEvents
-        .filter(event => (event.status === 'active' || event.status === 'upcoming'))
-        .flatMap(event => {
-            const item = event.items.find(i => i.productId === product.id);
-            return item ? [{ dates: event.dates, quantity: item.allocatedQuantity }] : [];
-        });
-
-    const prediction = calculateStockPrediction(
-        currentStock,
-        product.dailyShipmentRate || 0,
-        product.productionLeadDays || 0,
-        product,
-        relevantSaleItems,
-        wipList.filter(item => item.status === 'in_progress').map(item => ({ 
-            quantity: item.quantity, 
-            expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null,
-            termType: item.termType
-        })),
-        incoming?.items.map(item => ({ quantity: item.quantity, expectedDate: new Date(item.expectedDate) })) || [],
-        supplier
-    );
+    const isRoll = status.isRoll;
+    const availableStock = status.availableStock;
+    const isOutOfStock = status.isOutOfStock;
+    const isLowStock = status.isLowStock;
+    const hasAllocation = allocation.bags > 0 || (isRoll && allocation.meters > 0);
 
     // 画像アップロード処理
     const handleDrop = async (e: React.DragEvent) => {
@@ -224,7 +232,7 @@ function ProductCard({
             onDrop={handleDrop}
             onClick={() => onDetail(product)}
         >
-            {/* 画像エリア - クリックで詳細でもいいが、フォームを開くのが無難 */}
+            {/* 画像エリア */}
             <div className="relative aspect-[4/3] bg-slate-100 group">
                 {product.imageUrl ? (
                     <Image
@@ -241,7 +249,7 @@ function ProductCard({
                     </div>
                 )}
 
-                {/* ステータスバッジ (画像の上に重ねる) */}
+                {/* ステータスバッジ */}
                 <div className="absolute top-2 left-2 flex flex-col gap-1">
                     {isOutOfStock ? (
                         <Badge variant="destructive" className="shadow-sm">欠品</Badge>
@@ -270,7 +278,7 @@ function ProductCard({
                     </div>
                 )}
 
-                {/* オーバーレイアクション（ホバー時 or ドラッグ時） */}
+                {/* オーバーレイアクション */}
                 {(isHovered || isDragging || uploading) && (
                     <div className={cn(
                         "absolute inset-0 bg-black/40 flex flex-col items-center justify-center transition-opacity duration-200",
@@ -343,7 +351,6 @@ function ProductCard({
                                 </div>
                             )}
 
-                            {/* メーカー在庫の表示 */}
                             {supplier > 0 && (
                                 <div className="text-orange-600 mt-2 text-[10px] text-right">
                                     メーカー: {supplier.toLocaleString()}{isRoll ? 'm' : '枚'}
@@ -381,15 +388,12 @@ function ProductCard({
                             </div>
                             {hasAllocation && (
                                 <div className="text-[10px] text-blue-600">
-                                    引当: {allocation.bags.toLocaleString()}枚
+                                    引当: {isRoll ? allocation.meters.toLocaleString() + 'm' : allocation.bags.toLocaleString() + '枚'}
                                 </div>
                             )}
 
-                            {/* 入荷予定の表示 */}
                             {incoming && incoming.total > 0 && (
-                                <div
-                                    className="text-[10px] text-emerald-600 font-medium mt-1"
-                                >
+                                <div className="text-[10px] text-emerald-600 font-medium mt-1">
                                     入荷予定: {incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}
                                     <div className="flex flex-col gap-0.5 mt-0.5 opacity-80 font-normal">
                                         {incoming.items.map((item, index) => (
@@ -401,7 +405,6 @@ function ProductCard({
                                 </div>
                             )}
 
-                            {/* 未設定の場合はクリックで開けるように "+" アイコンやテキストを出すことも検討可能だが一旦非表示 */}
                             {/* 在庫予測 */}
                             <div className={cn(
                                 "mt-2 p-1.5 rounded-md flex flex-col items-center border",
@@ -440,4 +443,3 @@ function ProductCard({
         </Card>
     );
 }
-

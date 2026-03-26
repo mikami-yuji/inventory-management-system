@@ -19,11 +19,24 @@ export const getPitch = (weight: number): number => {
 };
 
 // 日付を YYYY-MM-DD 形式の文字列に変換するヘルパー
+// ローカル時刻ベースで変換する
 const formatDateKey = (date: Date): string => {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
+};
+
+// YYYY-MM-DD 形式の文字列をローカル時刻の深夜0時に変換する
+const parseLocalDate = (dateStr: string): Date => {
+    const parts = dateStr.split(/[-/]/);
+    if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        return new Date(y, m, d, 0, 0, 0, 0);
+    }
+    return new Date(dateStr);
 };
 
 // ロール袋（原反/フィルム巻）かどうか判定
@@ -179,7 +192,7 @@ export const calculateStockPrediction = (
     saleItems.forEach(item => {
         const perDay = item.dates.length > 0 ? Math.floor(item.quantity / item.dates.length) : 0;
         item.dates.forEach(dateStr => {
-            const date = new Date(dateStr);
+            const date = parseLocalDate(dateStr);
             const key = formatDateKey(date);
             saleMap.set(key, (saleMap.get(key) || 0) + perDay);
         });
@@ -188,8 +201,7 @@ export const calculateStockPrediction = (
     // 入荷・仕掛マップ: 日付キー -> 数量（単位は商品に合わせる：m または 枚）
     const arrivalMap = new Map<string, number>();
     incomingItems.forEach(item => {
-        const date = new Date(item.expectedDate);
-        const key = formatDateKey(date);
+        const key = formatDateKey(new Date(item.expectedDate));
         arrivalMap.set(key, (arrivalMap.get(key) || 0) + item.quantity);
     });
     wipItems.forEach(item => {
@@ -202,8 +214,7 @@ export const calculateStockPrediction = (
             return;
         }
 
-        const date = new Date(item.expectedDate);
-        const key = formatDateKey(date);
+        const key = formatDateKey(new Date(item.expectedDate));
         arrivalMap.set(key, (arrivalMap.get(key) || 0) + item.quantity);
     });
 
