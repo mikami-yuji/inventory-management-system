@@ -126,7 +126,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                     });
 
                                 const prediction = calculateStockPrediction(
-                                    availableStock,
+                                    currentStock,
                                     product.dailyShipmentRate || 0,
                                     product.productionLeadDays || 0,
                                     product,

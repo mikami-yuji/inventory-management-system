@@ -132,7 +132,7 @@ function ProductCard({
         });
 
     const prediction = calculateStockPrediction(
-        availableStock,
+        currentStock,
         product.dailyShipmentRate || 0,
         product.productionLeadDays || 0,
         product,
