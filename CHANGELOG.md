@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.8.5] - 2026-03-26
+### Fixed
+- **特売引当計算の修正**: 終了（completed）または中止（cancelled）された特売イベントを在庫引当の合計計算から除外するように修正。在庫一覧（Bags）、スキャン画面、および特売引当詳細モーダルの全箇所でロジックを統一し、有効在庫の計算精度を向上させました。
+
 ## [0.8.4] - 2026-03-25
 ### Added
 - **Excel (.xlsx) 出力機能**: 「在庫状況報告書」、「在庫回転率レポート」に加えて、メインの **「米袋在庫管理」** ページにもExcelダウンロード機能を追加。取引先へのデータ共有をより容易にしました。

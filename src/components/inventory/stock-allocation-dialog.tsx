@@ -79,7 +79,7 @@ export function StockAllocationDialog({
         : currentInventory;
 
     const totalAllocated = allocations
-        .filter(a => a.status !== 'completed')
+        .filter(a => a.status !== 'completed' && a.status !== 'cancelled')
         .reduce((sum, item) => sum + item.quantity, 0);
     const effectiveStock = currentInventoryPieces - totalAllocated; // 有効在庫を枚数で計算（完了分は除外）
     const effectiveStockMeters = product.weight ? bagsToMeters(effectiveStock, product.weight) : 0;

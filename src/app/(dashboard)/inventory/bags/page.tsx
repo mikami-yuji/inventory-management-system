@@ -160,6 +160,7 @@ export default function BagsInventoryPage(): React.ReactElement {
     const saleAllocationMap = useMemo(() => {
         const map = new Map<string, { bags: number; meters: number }>();
         saleEvents
+            .filter(event => event.status !== 'completed' && event.status !== 'cancelled')
             .forEach(event => {
                 event.items.forEach(item => {
                     const current = map.get(item.productId) || { bags: 0, meters: 0 };

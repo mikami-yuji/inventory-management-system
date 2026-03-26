@@ -74,18 +74,20 @@ export default function ScanPage() {
 
     const saleAllocationMap = useMemo(() => {
         const map = new Map<string, { bags: number; meters: number }>();
-        saleEvents.forEach(event => {
-            event.items.forEach(item => {
-                const current = map.get(item.productId) || { bags: 0, meters: 0 };
-                const product = products.find(p => p.id === item.productId);
-                const weight = product?.weight || 5;
-                const allocatedMeters = bagsToMeters(item.allocatedQuantity, weight);
-                map.set(item.productId, {
-                    bags: current.bags + item.allocatedQuantity,
-                    meters: current.meters + allocatedMeters
+        saleEvents
+            .filter(event => event.status !== 'completed' && event.status !== 'cancelled')
+            .forEach(event => {
+                event.items.forEach(item => {
+                    const current = map.get(item.productId) || { bags: 0, meters: 0 };
+                    const product = products.find(p => p.id === item.productId);
+                    const weight = product?.weight || 5;
+                    const allocatedMeters = bagsToMeters(item.allocatedQuantity, weight);
+                    map.set(item.productId, {
+                        bags: current.bags + item.allocatedQuantity,
+                        meters: current.meters + allocatedMeters
+                    });
                 });
             });
-        });
         return map;
     }, [saleEvents, products]);
 
