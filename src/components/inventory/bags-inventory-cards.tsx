@@ -137,7 +137,11 @@ function ProductCard({
         product.productionLeadDays || 0,
         product,
         relevantSaleItems,
-        wipList.filter(item => item.status === 'in_progress').map(item => ({ quantity: item.quantity, expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null })),
+        wipList.filter(item => item.status === 'in_progress').map(item => ({ 
+            quantity: item.quantity, 
+            expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null,
+            termType: item.termType
+        })),
         incoming?.items.map(item => ({ quantity: item.quantity, expectedDate: new Date(item.expectedDate) })) || [],
         supplier
     );
@@ -399,27 +403,36 @@ function ProductCard({
 
                             {/* 未設定の場合はクリックで開けるように "+" アイコンやテキストを出すことも検討可能だが一旦非表示 */}
                             {/* 在庫予測 */}
-                            {prediction.estimatedDate && (
-                                <div className={cn(
-                                    "mt-2 p-1.5 rounded-md flex flex-col items-center border",
-                                    prediction.wipStartAlert ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-200"
-                                )}>
-                                    <div className={cn(
-                                        "text-[10px] font-bold",
-                                        prediction.wipStartAlert ? "text-red-600 animate-pulse" : "text-slate-600"
-                                    )}>
-                                        残り{prediction.remainingDays}日分
+                            <div className={cn(
+                                "mt-2 p-1.5 rounded-md flex flex-col items-center border",
+                                prediction.wipStartAlert ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-200"
+                            )}>
+                                {prediction.estimatedDate ? (
+                                    <>
+                                        <div className={cn(
+                                            "text-[10px] font-bold",
+                                            prediction.wipStartAlert ? "text-red-600 animate-pulse" : "text-slate-600"
+                                        )}>
+                                            残り{prediction.remainingDays}日分
+                                        </div>
+                                        <div className="text-[9px] text-muted-foreground">
+                                            {format(prediction.estimatedDate, "M/d")}頃 終了
+                                        </div>
+                                        {prediction.wipStartAlert && (
+                                            <Badge className="mt-0.5 h-3.5 text-[8px] bg-red-600 hover:bg-red-700 px-1 border-none leading-none">
+                                                仕掛開始!
+                                            </Badge>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="text-[10px] text-slate-400 font-medium">在庫予測: -</div>
+                                )}
+                                {prediction.hasUnconfirmedWIP && (
+                                    <div className="text-[9px] text-red-600 font-bold mt-1 animate-pulse text-center leading-tight">
+                                        納期を確定してください
                                     </div>
-                                    <div className="text-[9px] text-muted-foreground">
-                                        {format(prediction.estimatedDate, "M/d")}頃 終了
-                                    </div>
-                                    {prediction.wipStartAlert && (
-                                        <Badge className="mt-0.5 h-3.5 text-[8px] bg-red-600 hover:bg-red-700 px-1 border-none leading-none">
-                                            仕掛開始!
-                                        </Badge>
-                                    )}
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
