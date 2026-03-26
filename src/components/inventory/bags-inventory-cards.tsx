@@ -137,7 +137,7 @@ function ProductCard({
         product.productionLeadDays || 0,
         product,
         relevantSaleItems,
-        wipList.map(item => ({ quantity: item.quantity, expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null })),
+        wipList.filter(item => item.status === 'in_progress').map(item => ({ quantity: item.quantity, expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null })),
         incoming?.items.map(item => ({ quantity: item.quantity, expectedDate: new Date(item.expectedDate) })) || [],
         supplier
     );

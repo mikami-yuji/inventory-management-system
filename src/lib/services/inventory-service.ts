@@ -192,6 +192,10 @@ export const calculateStockPrediction = (
     });
 
     // 日ごとのシミュレーション
+    // Day 0 (本日) の入荷・仕掛完了を加算
+    const todayKey = today.getTime().toString();
+    currentStock += arrivalMap.get(todayKey) || 0;
+
     while (days < maxDays) {
         days++;
         const targetDate = new Date(today);
