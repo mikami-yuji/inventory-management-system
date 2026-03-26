@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 // 特売イベントの型
 export type SaleEvent = {
@@ -48,9 +48,11 @@ export function useSaleEvents(options?: { status?: string }): {
     const [events, setEvents] = useState<SaleEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const loadedRef = useRef(false);
 
     const fetchEvents = useCallback(async (): Promise<void> => {
-        setLoading(true);
+        // 初回のみローディング表示、2回目以降はバックグラウンドで更新
+        if (!loadedRef.current) setLoading(true);
         setError(null);
 
         try {
@@ -75,6 +77,7 @@ export function useSaleEvents(options?: { status?: string }): {
             const rawData = result.data || result;
             const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
             setEvents(safeData);
+            loadedRef.current = true;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'データの取得に失敗しました');
         } finally {

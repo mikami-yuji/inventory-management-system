@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 import type { WorkInProgress, WIPInput } from '@/types';
 
@@ -16,9 +16,11 @@ export function useWorkInProgress(options?: { status?: string; productId?: strin
     const [items, setItems] = useState<WorkInProgress[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const loadedRef = useRef(false);
 
     const fetchItems = useCallback(async (): Promise<void> => {
-        setLoading(true);
+        // 初回のみローディング表示、2回目以降はバックグラウンドで更新
+        if (!loadedRef.current) setLoading(true);
         setError(null);
 
         try {
@@ -46,6 +48,7 @@ export function useWorkInProgress(options?: { status?: string; productId?: strin
             const rawData = result.data || result;
             const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
             setItems(safeData);
+            loadedRef.current = true;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'データの取得に失敗しました');
         } finally {

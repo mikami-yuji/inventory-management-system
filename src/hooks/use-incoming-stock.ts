@@ -20,11 +20,13 @@ export function useIncomingStock(productId?: string): {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const isFetchingRef = useRef(false);
+    const loadedRef = useRef(false);
 
     const fetchIncomingStock = useCallback(async (): Promise<void> => {
         if (isFetchingRef.current) return;
         isFetchingRef.current = true;
-        setLoading(true);
+        // 初回のみローディング表示、2回目以降はバックグラウンドで更新
+        if (!loadedRef.current) setLoading(true);
         setError(null);
 
         try {
@@ -40,6 +42,7 @@ export function useIncomingStock(productId?: string): {
             const rawData = await response.json();
             const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
             setIncomingStocks(safeData);
+            loadedRef.current = true;
         } catch (err) {
             setError(err instanceof Error ? err.message : '入荷予定の取得に失敗しました');
         } finally {

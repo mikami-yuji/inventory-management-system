@@ -30,7 +30,6 @@ export function useInventory(options?: {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const loadedRef = useRef(false);
-    const { settings } = useAppSettings();
 
     const fetchInventory = useCallback(async (): Promise<void> => {
         if (!loadedRef.current) setLoading(true);
@@ -85,11 +84,10 @@ export function useInventory(options?: {
         }
     }, [options?.category, options?.search, options?.lowStock]);
 
+    // settingsを待たずに即座にfetchを開始（settingsはUI側の計算でのみ使用）
     useEffect(() => {
-        if (settings) {
-            fetchInventory();
-        }
-    }, [fetchInventory, settings]);
+        fetchInventory();
+    }, [fetchInventory]);
 
     return { inventory, loading, error, refetch: fetchInventory };
 }

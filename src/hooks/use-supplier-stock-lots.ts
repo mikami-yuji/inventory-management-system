@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import type { SupplierStockLot } from '@/types';
 import { apiFetch, type ApiResponse } from '@/lib/api-client';
 
@@ -14,9 +14,11 @@ export function useSupplierStockLots(): SupplierStockHook {
     const [lots, setLots] = useState<SupplierStockLot[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const loadedRef = useRef(false);
 
     const fetchLots = useCallback(async (): Promise<void> => {
-        setLoading(true);
+        // 初回のみローディング表示、2回目以降はバックグラウンドで更新
+        if (!loadedRef.current) setLoading(true);
         setError(null);
         try {
             const result = await apiFetch<ApiResponse<SupplierStockLot[]> | SupplierStockLot[]>('/api/supplier-stock');
@@ -25,9 +27,9 @@ export function useSupplierStockLots(): SupplierStockHook {
                 ? result
                 : (result.data && Array.isArray(result.data) ? result.data : []);
             setLots(safeData);
+            loadedRef.current = true;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'エラーが発生しました');
-            console.error('Supplier stock lots fetch error:', err);
         } finally {
             setLoading(false);
         }
@@ -37,12 +39,15 @@ export function useSupplierStockLots(): SupplierStockHook {
         fetchLots();
     }, [fetchLots]);
 
-    // Calculate map: productId -> lots
-    const lotsMap = new Map<string, SupplierStockLot[]>();
-    lots.forEach(lot => {
-        const current = lotsMap.get(lot.productId) || [];
-        lotsMap.set(lot.productId, [...current, lot]);
-    });
+    // useMemoでlotsMapをメモ化し、lotsが変わらない限り再計算しない
+    const lotsMap = useMemo(() => {
+        const map = new Map<string, SupplierStockLot[]>();
+        lots.forEach(lot => {
+            const current = map.get(lot.productId) || [];
+            map.set(lot.productId, [...current, lot]);
+        });
+        return map;
+    }, [lots]);
 
     return {
         lots,

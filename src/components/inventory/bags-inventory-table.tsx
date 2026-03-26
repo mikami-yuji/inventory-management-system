@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -63,6 +61,45 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
     // 画像拡大用ステート
     const [selectedImage, setSelectedImage] = useState<{ url: string; alt: string; name: string } | null>(null);
 
+    // 予測計算をメモ化（商品リスト・在庫データが変わった場合のみ再計算）
+    const predictionMap = useMemo(() => {
+        const map = new Map<string, ReturnType<typeof calculateStockPrediction>>();
+        products.forEach(product => {
+            const currentStock = inventoryMap.get(product.id)?.quantity || 0;
+            const wipList = wipMap.get(product.id) || [];
+            const incoming = incomingMap.get(product.id);
+
+            // ロットがある場合はロットの合計を優先（DB同期ズレ対策）
+            const supplierStockLots = supplierStockLotsMap?.get(product.id) || [];
+            const supplierStock = supplierStockLots.length > 0
+                ? supplierStockLots.reduce((sum, lot) => sum + lot.quantity, 0)
+                : (supplierStockMap.get(product.id) || 0);
+
+            const relevantSaleItems = saleEvents
+                .filter(event => (event.status === 'active' || event.status === 'upcoming'))
+                .flatMap(event => {
+                    const item = event.items.find(i => i.productId === product.id);
+                    return item ? [{ dates: event.dates, quantity: item.allocatedQuantity }] : [];
+                });
+
+            map.set(product.id, calculateStockPrediction(
+                currentStock,
+                product.dailyShipmentRate || 0,
+                product.productionLeadDays || 0,
+                product,
+                relevantSaleItems,
+                wipList.filter(item => item.status === 'in_progress').map(item => ({
+                    quantity: item.quantity,
+                    expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null,
+                    termType: item.termType
+                })),
+                incoming?.items.map(item => ({ quantity: item.quantity, expectedDate: new Date(item.expectedDate) })) || [],
+                supplierStock
+            ));
+        });
+        return map;
+    }, [products, inventoryMap, wipMap, incomingMap, supplierStockLotsMap, supplierStockMap, saleEvents]);
+
     return (
         <Card>
             <CardHeader>
@@ -117,24 +154,8 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 const isOutOfStock = status.isOutOfStock;
                                 const isLowStock = status.isLowStock;
 
-                                // 在庫予測の計算
-                                const relevantSaleItems = saleEvents
-                                    .filter(event => (event.status === 'active' || event.status === 'upcoming'))
-                                    .flatMap(event => {
-                                        const item = event.items.find(i => i.productId === product.id);
-                                        return item ? [{ dates: event.dates, quantity: item.allocatedQuantity }] : [];
-                                    });
-
-                                const prediction = calculateStockPrediction(
-                                    currentStock,
-                                    product.dailyShipmentRate || 0,
-                                    product.productionLeadDays || 0,
-                                    product,
-                                    relevantSaleItems,
-                                    wipList.filter(item => item.status === 'in_progress').map(item => ({ quantity: item.quantity, expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null })),
-                                    incoming?.items.map(item => ({ quantity: item.quantity, expectedDate: new Date(item.expectedDate) })) || [],
-                                    supplierStock
-                                );
+                                // メモ化された予測データを参照
+                                const prediction = predictionMap.get(product.id)!;
 
                                 const hasAllocation = allocation.bags > 0;
                                 const isInCart = items.some(item => item.product.id === product.id);
@@ -439,28 +460,34 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                             </div>
                                         </TableCell>
 
-                                        {/* 在庫予測 (Stock Prediction) */}
                                         <TableCell className="text-center max-w-[120px] bg-slate-50/50 border-x">
-                                            {prediction.estimatedDate ? (
-                                                <div className="flex flex-col items-center">
-                                                    <div className={cn(
-                                                        "font-bold text-sm",
-                                                        prediction.wipStartAlert ? "text-red-600 animate-pulse" : "text-slate-700"
-                                                    )}>
-                                                        残り{prediction.remainingDays}日
+                                            <div className="flex flex-col items-center">
+                                                {prediction.estimatedDate ? (
+                                                    <>
+                                                        <div className={cn(
+                                                            "font-bold text-sm",
+                                                            prediction.wipStartAlert ? "text-red-600 animate-pulse" : "text-slate-700"
+                                                        )}>
+                                                            残り{prediction.remainingDays}日
+                                                        </div>
+                                                        <div className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                            {format(prediction.estimatedDate, "M/d")}頃 終了
+                                                        </div>
+                                                        {prediction.wipStartAlert && (
+                                                            <Badge className="mt-1 h-3.5 text-[8px] bg-red-600 hover:bg-red-700 px-1 border-none leading-none">
+                                                                仕掛開始!
+                                                            </Badge>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <span className="text-muted-foreground">-</span>
+                                                )}
+                                                {prediction.hasUnconfirmedWIP && (
+                                                    <div className="text-[10px] text-red-600 font-bold mt-1 animate-pulse leading-tight">
+                                                        納期を確定してください
                                                     </div>
-                                                    <div className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                                        {format(prediction.estimatedDate, "M/d")}頃 終了
-                                                    </div>
-                                                    {prediction.wipStartAlert && (
-                                                        <Badge className="mt-1 h-3.5 text-[8px] bg-red-600 hover:bg-red-700 px-1 border-none leading-none">
-                                                            仕掛開始!
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <span className="text-muted-foreground">-</span>
-                                            )}
+                                                )}
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-1">
