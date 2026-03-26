@@ -22,6 +22,9 @@ import { useInventory } from "@/hooks/use-inventory";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import * as XLSX from "xlsx";
+import { format } from "date-fns";
+import { calculateStockStatus } from "@/lib/services";
+import { cn } from "@/lib/utils";
 
 // 在庫履歴のAPI応答型
 type StockHistoryEntry = {
@@ -183,9 +186,14 @@ function StockReportContent(): React.ReactElement {
     }, [reportData]);
 
     // 印刷処理
-    const handlePrint = (): void => {
+    const handlePrint = useCallback((): void => {
+        const originalTitle = document.title;
+        document.title = `アサヒパック_在庫報告書_${format(new Date(), "yyyyMMdd_HHmm")}`;
         window.print();
-    };
+        setTimeout(() => {
+            document.title = originalTitle;
+        }, 100);
+    }, []);
 
     // Excel出力処理
     const handleExportExcel = (): void => {
@@ -340,7 +348,7 @@ function StockReportContent(): React.ReactElement {
                                 </CardDescription>
                             </div>
                             <div className="sm:text-right w-full sm:w-auto">
-                                <div className="text-sm text-muted-foreground">幸南食糧株式会社</div>
+                                <div className="text-sm font-bold text-slate-700">株式会社アサヒパック</div>
                                 <div className="text-xs text-muted-foreground">在庫管理システム</div>
                             </div>
                         </div>
@@ -448,25 +456,28 @@ function StockReportContent(): React.ReactElement {
                                                     {item.product.weight && <span>{item.product.weight}kg</span>}
                                                     {item.product.shape && <span> / {item.product.shape}</span>}
                                                 </TableCell>
-                                                <TableCell className="text-right font-bold">
+                                                <TableCell className="text-right font-bold tabular-nums">
                                                     {item.currentStock.toLocaleString()}
+                                                    <span className="text-[10px] font-normal ml-0.5">
+                                                        {calculateStockStatus(item.product, item.currentStock, { bags: 0, meters: 0 }).isRoll ? 'm' : '枚'}
+                                                    </span>
                                                 </TableCell>
-                                                <TableCell className="text-right">
-                                                    {item.weeklyUsage}
+                                                <TableCell className="text-right tabular-nums">
+                                                    {item.weeklyUsage.toLocaleString()}
                                                 </TableCell>
-                                                <TableCell className="text-right">
-                                                    {item.monthlyUsage}
+                                                <TableCell className="text-right tabular-nums">
+                                                    {item.monthlyUsage.toLocaleString()}
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     {item.daysUntilStockout !== null ? (
-                                                        <Badge variant={isLowStock ? "destructive" : "secondary"}>
+                                                        <Badge variant={isLowStock ? "destructive" : "secondary"} className="font-mono">
                                                             {item.daysUntilStockout}日
                                                         </Badge>
                                                     ) : (
                                                         <span className="text-muted-foreground">-</span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="text-right text-blue-600 font-medium">
+                                                <TableCell className="text-right text-blue-700 font-bold tabular-nums">
                                                     {item.suggestedOrder > 0 ? item.suggestedOrder.toLocaleString() : '-'}
                                                 </TableCell>
                                             </TableRow>
@@ -480,9 +491,19 @@ function StockReportContent(): React.ReactElement {
                 </Card>
 
                 {/* フッター */}
-                <div className="mt-6 text-center text-sm text-muted-foreground print:mt-4">
-                    <p>本報告書は在庫管理システムから自動生成されました。</p>
-                    <p>ご不明な点がございましたら担当者までお問い合わせください。</p>
+                <div className="mt-8 text-center text-[10px] text-slate-400 border-t border-slate-200 pt-4 print:mt-4">
+                    <p className="mb-1 font-medium text-slate-500 tracking-wider">※ 本資料の在庫状況は作成日現在のシステムデータに基づいた概算値です。</p>
+                    <p className="mb-4">実在庫と微差が生じる場合がありますので、詳細な納期・数量については別途お問い合わせください。</p>
+                    <div className="flex justify-center items-center gap-8 mt-4 pt-4 border-t border-slate-100 max-w-lg mx-auto">
+                        <div className="text-left">
+                            <p className="font-bold text-slate-700 text-[11px]">株式会社アサヒパック</p>
+                            <p>〒558-0046 大阪府大阪市住吉区上住吉1-4-2</p>
+                        </div>
+                        <div className="text-right border-l pl-8 border-slate-200">
+                            <p>TEL: 06-6673-7771</p>
+                            <p>URL: https://www.asahipac.co.jp/</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

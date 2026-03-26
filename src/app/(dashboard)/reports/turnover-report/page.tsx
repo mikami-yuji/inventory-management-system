@@ -25,6 +25,8 @@ import {
     Printer,
     Download,
 } from "lucide-react";
+import { format } from "date-fns";
+import { calculateStockStatus } from "@/lib/services";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
 import Link from "next/link";
@@ -331,9 +333,14 @@ function TurnoverReportContent(): React.ReactElement {
     };
 
     // 印刷
-    const handlePrint = (): void => {
+    const handlePrint = useCallback((): void => {
+        const originalTitle = document.title;
+        document.title = `アサヒパック_在庫回転率レポート_${format(new Date(), "yyyyMMdd_HHmm")}`;
         window.print();
-    };
+        setTimeout(() => {
+            document.title = originalTitle;
+        }, 100);
+    }, []);
 
     // Excel出力
     const handleExportExcel = (): void => {
@@ -368,7 +375,7 @@ function TurnoverReportContent(): React.ReactElement {
             const dateStr = now.getFullYear() + 
                 String(now.getMonth() + 1).padStart(2, '0') + 
                 String(now.getDate()).padStart(2, '0');
-            XLSX.writeFile(workbook, `在庫回転率レポート_${dateStr}.xlsx`);
+            XLSX.writeFile(workbook, `アサヒパック_在庫回転率レポート_${dateStr}.xlsx`);
         } catch (error) {
             console.error("Excel出力エラー:", error);
         }
@@ -640,13 +647,16 @@ function TurnoverReportContent(): React.ReactElement {
                                                 <div className="font-medium text-sm">{item.productName}</div>
                                                 <div className="text-xs text-muted-foreground">{item.productCode}</div>
                                             </TableCell>
-                                            <TableCell className="text-right font-mono">
+                                            <TableCell className="text-right font-mono tabular-nums">
                                                 {item.currentStock.toLocaleString()}
+                                                <span className="text-[10px] font-normal ml-0.5">
+                                                    {calculateStockStatus(products.find(p => p.id === item.productId)!, item.currentStock, { bags: 0, meters: 0 }).isRoll ? 'm' : '枚'}
+                                                </span>
                                             </TableCell>
-                                            <TableCell className="text-right font-mono">
+                                            <TableCell className="text-right font-mono tabular-nums text-slate-600">
                                                 {item.monthlyOutgoing.toLocaleString()}
                                             </TableCell>
-                                            <TableCell className="text-right font-mono text-muted-foreground">
+                                            <TableCell className="text-right font-mono tabular-nums text-slate-400">
                                                 {item.averageStock.toLocaleString()}
                                             </TableCell>
                                             <TableCell className="text-right">
@@ -685,6 +695,22 @@ function TurnoverReportContent(): React.ReactElement {
                     )}
                 </CardContent>
             </Card>
+
+            {/* フッター */}
+            <div className="mt-8 text-center text-[10px] text-slate-400 border-t border-slate-200 pt-4 print:mt-4">
+                <p className="mb-1 font-medium text-slate-500 tracking-wider">※ 本資料の回転率データは過去30日間のシステムデータに基づいた計算値です。</p>
+                <p className="mb-4">実在庫の変化や季節要因により変動するため、仕入れ計画の参考値としてご活用ください。</p>
+                <div className="flex justify-center items-center gap-8 mt-4 pt-4 border-t border-slate-100 max-w-lg mx-auto">
+                    <div className="text-left">
+                        <p className="font-bold text-slate-700 text-[11px]">株式会社アサヒパック</p>
+                        <p>〒558-0046 大阪府大阪市住吉区上住吉1-4-2</p>
+                    </div>
+                    <div className="text-right border-l pl-8 border-slate-200">
+                        <p>TEL: 06-6673-7771</p>
+                        <p>URL: https://www.asahipac.co.jp/</p>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
