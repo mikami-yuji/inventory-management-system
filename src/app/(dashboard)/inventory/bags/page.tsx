@@ -799,6 +799,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                     supplierStockMap={supplierStockMap}
                     supplierStockLotsMap={supplierStockLotsMap}
                     incomingMap={incomingMap}
+                    saleEvents={saleEvents}
                     onDetail={handleOpenDetail}
                     onRefetch={refetch}
                 />

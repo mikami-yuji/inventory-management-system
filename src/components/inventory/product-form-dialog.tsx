@@ -34,7 +34,7 @@ import type { Product, ProductStatus } from "@/types";
 type ProductFormData = {
     name: string;
     sku: string;
-    productCode: string; // 新規追加
+    productCode: string;
     janCode: string;
     weight: string;
     shape: string;
@@ -50,15 +50,13 @@ type ProductFormData = {
     origin: string;
     variety: string;
     suffix: string;
-    // 色数フィールド
-    frontColorCount: string;
-    backColorCount: string;
-    totalColorCount: string;
     statusOverride: 'normal' | 'low_stock' | 'out_of_stock';
     status: ProductStatus;
     supplierId: string;
     discontinuedDate: string;
     metersPerRoll: string; // 1巻あたりメートル数 (300 or 400)
+    dailyShipmentRate: string; // 1日あたりの通常出荷数
+    productionLeadDays: string; // 仕掛リードタイム（日数）
 };
 
 type ProductFormDialogProps = {
@@ -87,14 +85,13 @@ const initialFormData: ProductFormData = {
     origin: "",
     variety: "",
     suffix: "",
-    frontColorCount: "",
-    backColorCount: "",
-    totalColorCount: "",
     statusOverride: 'normal',
     status: 'active',
     supplierId: "",
     discontinuedDate: "",
     metersPerRoll: "400",
+    dailyShipmentRate: "",
+    productionLeadDays: "",
 };
 
 export function ProductFormDialog({
@@ -132,14 +129,13 @@ export function ProductFormDialog({
                 origin: product.origin || "",
                 variety: product.variety || "",
                 suffix: product.suffix || "",
-                frontColorCount: product.frontColorCount?.toString() || "",
-                backColorCount: product.backColorCount?.toString() || "",
-                totalColorCount: product.totalColorCount?.toString() || "",
                 statusOverride: product.statusOverride || 'normal',
                 status: product.status || 'active',
                 supplierId: product.supplierId || "",
                 discontinuedDate: product.discontinuedDate || "",
                 metersPerRoll: product.metersPerRoll?.toString() || "400",
+                dailyShipmentRate: product.dailyShipmentRate?.toString() || "",
+                productionLeadDays: product.productionLeadDays?.toString() || "",
             });
         } else {
             setFormData(initialFormData);
@@ -181,14 +177,13 @@ export function ProductFormDialog({
                 origin: formData.origin || undefined,
                 variety: formData.variety || undefined,
                 suffix: formData.suffix || undefined,
-                frontColorCount: formData.frontColorCount ? Number(formData.frontColorCount) : undefined,
-                backColorCount: formData.backColorCount ? Number(formData.backColorCount) : undefined,
-                totalColorCount: formData.totalColorCount ? Number(formData.totalColorCount) : undefined,
                 statusOverride: formData.statusOverride,
                 status: formData.status,
                 supplierId: formData.supplierId || undefined,
                 discontinuedDate: formData.discontinuedDate || undefined,
                 metersPerRoll: formData.metersPerRoll ? Number(formData.metersPerRoll) : 400,
+                dailyShipmentRate: formData.dailyShipmentRate ? Number(formData.dailyShipmentRate) : 0,
+                productionLeadDays: formData.productionLeadDays ? Number(formData.productionLeadDays) : 0,
             };
 
             const response = await fetch("/api/products", {
@@ -286,8 +281,6 @@ export function ProductFormDialog({
                             </div>
                         </div>
                     </div>
-
-
 
                     {/* 仕入先 */}
                     <div className="space-y-2">
@@ -399,30 +392,24 @@ export function ProductFormDialog({
                                 inputMode="text"
                             />
                         </div>
-
                     </div>
 
-                    {/* 1巻あたりメートル数 */}
-                    <div className="space-y-2">
-                        <Label htmlFor="metersPerRoll">1巻あたりメートル数</Label>
-                        <Select
-                            value={formData.metersPerRoll}
-                            onValueChange={(val: string) => handleChange("metersPerRoll", val)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="400m" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="300">300m</SelectItem>
-                                <SelectItem value="400">400m</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <p className="text-[10px] text-muted-foreground">
-                            ※ロール袋の1巻あたりの長さ（デフォルト: 400m）
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="metersPerRoll">1巻あたりメートル数</Label>
+                            <Select
+                                value={formData.metersPerRoll}
+                                onValueChange={(val: string) => handleChange("metersPerRoll", val)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="400m" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="300">300m</SelectItem>
+                                    <SelectItem value="400">400m</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="unitPrice">単価 (円)</Label>
                             <CalculableInput
@@ -434,21 +421,56 @@ export function ProductFormDialog({
                                 inputMode="numeric"
                             />
                         </div>
+                    </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="printingCost">印刷代 (円)</Label>
-                            <CalculableInput
-                                id="printingCost"
-                                value={formData.printingCost === "0" ? "" : formData.printingCost}
-                                onChange={(value) => handleChange("printingCost", value === null ? "" : String(value))}
-                                placeholder="印刷代を入力"
-                                stringifyOnComplete
-                                inputMode="numeric"
-                            />
+                    <div className="space-y-2">
+                        <Label htmlFor="printingCost">印刷代 (円)</Label>
+                        <CalculableInput
+                            id="printingCost"
+                            value={formData.printingCost === "0" ? "" : formData.printingCost}
+                            onChange={(value) => handleChange("printingCost", value === null ? "" : String(value))}
+                            placeholder="印刷代を入力"
+                            stringifyOnComplete
+                            inputMode="numeric"
+                        />
+                    </div>
+
+                    {/* 運用設定: 在庫アラート, 通常出荷数, リードタイム */}
+                    <div className="space-y-4 border rounded-lg p-4 bg-slate-50">
+                        <div className="text-sm font-medium">運用設定</div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="dailyShipmentRate">通常出荷数 (1日あたり)</Label>
+                                <CalculableInput
+                                    id="dailyShipmentRate"
+                                    value={formData.dailyShipmentRate === "0" ? "" : formData.dailyShipmentRate}
+                                    onChange={(value) => handleChange("dailyShipmentRate", value === null ? "" : String(value))}
+                                    placeholder="例: 50"
+                                    stringifyOnComplete
+                                    inputMode="numeric"
+                                />
+                                <p className="text-[10px] text-muted-foreground text-amber-600">
+                                    ※「残り日数」の計算に使用します
+                                </p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="productionLeadDays">仕掛リードタイム (日間)</Label>
+                                <CalculableInput
+                                    id="productionLeadDays"
+                                    value={formData.productionLeadDays === "0" ? "" : formData.productionLeadDays}
+                                    onChange={(value) => handleChange("productionLeadDays", value === null ? "" : String(value))}
+                                    placeholder="例: 20"
+                                    stringifyOnComplete
+                                    inputMode="numeric"
+                                />
+                                <p className="text-[10px] text-muted-foreground text-amber-600">
+                                    ※アラート表示の基準になります
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="minStockAlert">在庫アラート (個別設定)</Label>
+                        <div className="space-y-2 pt-2 border-t">
+                            <Label htmlFor="minStockAlert">在庫アラート閾値 (個別設定)</Label>
                             <CalculableInput
                                 id="minStockAlert"
                                 value={formData.minStockAlert === "0" ? "" : formData.minStockAlert}
@@ -457,31 +479,27 @@ export function ProductFormDialog({
                                 stringifyOnComplete
                                 inputMode="numeric"
                             />
-                            <p className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                空欄時のデフォルト: ロール 1500m / 単袋 3000枚
+                            <p className="text-[10px] text-muted-foreground">
+                                デフォルト: ロール 1500m / 単袋 3000枚
                             </p>
                         </div>
-                    </div>
 
-                    {/* ステータス手動上書き */}
-                    <div className="space-y-2 border rounded-lg p-4 bg-amber-50">
-                        <Label htmlFor="statusOverride">ステータス（手動設定）</Label>
-                        <Select
-                            value={formData.statusOverride}
-                            onValueChange={(val: 'normal' | 'low_stock' | 'out_of_stock') => handleChange("statusOverride", val)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="通常" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="normal">自動判定（通常）</SelectItem>
-                                <SelectItem value="low_stock">在庫減少（強制）</SelectItem>
-                                <SelectItem value="out_of_stock">欠品（強制）</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground">
-                            ※「在庫減少」「欠品」を選択すると、実際の在庫数に関わらずその状態として表示されます。
-                        </p>
+                        <div className="space-y-2 pt-2 border-t">
+                            <Label htmlFor="statusOverride">ステータス表示の上書き</Label>
+                            <Select
+                                value={formData.statusOverride}
+                                onValueChange={(val: 'normal' | 'low_stock' | 'out_of_stock') => handleChange("statusOverride", val)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="通常" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="normal">自動判定（通常）</SelectItem>
+                                    <SelectItem value="low_stock">強制：在庫減少</SelectItem>
+                                    <SelectItem value="out_of_stock">強制：欠品</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     {/* 商品ステータス */}
@@ -526,46 +544,6 @@ export function ProductFormDialog({
                                 )}
                             </div>
                         )}
-                    </div>
-
-                    {/* 色数情報 */}
-                    <div className="border rounded-lg p-4 space-y-4 bg-slate-50">
-                        <div className="text-sm font-medium">色数情報</div>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="frontColorCount">表色数</Label>
-                                <Input
-                                    id="frontColorCount"
-                                    type="number"
-                                    value={formData.frontColorCount === "0" ? "" : formData.frontColorCount}
-                                    onChange={(e) => handleChange("frontColorCount", e.target.value)}
-                                    placeholder="色数"
-                                    inputMode="numeric"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="backColorCount">裏色数</Label>
-                                <Input
-                                    id="backColorCount"
-                                    type="number"
-                                    value={formData.backColorCount === "0" ? "" : formData.backColorCount}
-                                    onChange={(e) => handleChange("backColorCount", e.target.value)}
-                                    placeholder="色数"
-                                    inputMode="numeric"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="totalColorCount">総色数</Label>
-                                <Input
-                                    id="totalColorCount"
-                                    type="number"
-                                    value={formData.totalColorCount === "0" ? "" : formData.totalColorCount}
-                                    onChange={(e) => handleChange("totalColorCount", e.target.value)}
-                                    placeholder="色数"
-                                    inputMode="numeric"
-                                />
-                            </div>
-                        </div>
                     </div>
 
                     <div className="space-y-2">
@@ -622,6 +600,6 @@ export function ProductFormDialog({
                     </DialogFooter>
                 </form>
             </DialogContent>
-        </Dialog >
+        </Dialog>
     );
 }

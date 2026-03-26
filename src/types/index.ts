@@ -49,6 +49,8 @@ export type Product = {
   supplierName?: string; // 仕入先名
   discontinuedDate?: string; // 落版日/廃盤日 (YYYY-MM-DD)
   metersPerRoll?: number; // 1巻あたりのメートル数 (300 or 400、デフォルト400)
+  dailyShipmentRate?: number; // 1日あたりの通常出荷数
+  productionLeadDays?: number; // 仕掛リードタイム（日数）
 };
 
 // 仕入先マスタ

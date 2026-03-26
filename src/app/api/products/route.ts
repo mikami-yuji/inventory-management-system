@@ -37,6 +37,8 @@ type RawProductData = {
     supplier_id: string | null;
     discontinued_date: string | null;
     meters_per_roll: number | null;
+    daily_shipment_rate: string | number | null;
+    production_lead_days: number | null;
     suppliers: { name: string | null } | { name: string | null }[] | null;
 };
 
@@ -93,6 +95,8 @@ export async function GET(): Promise<NextResponse> {
                 supplierName: supplierName,
                 discontinuedDate: item.discontinued_date,
                 metersPerRoll: item.meters_per_roll !== null && item.meters_per_roll !== undefined ? Number(item.meters_per_roll) : 400,
+                dailyShipmentRate: item.daily_shipment_rate !== null && item.daily_shipment_rate !== undefined ? Number(item.daily_shipment_rate) : 0,
+                productionLeadDays: item.production_lead_days !== null && item.production_lead_days !== undefined ? Number(item.production_lead_days) : 0,
             };
         });
 
@@ -150,7 +154,9 @@ const createProductSchema = z.object({
     statusOverride: z.string().optional().nullable(),
     discontinuedDate: z.string().optional().nullable(),
     supplierId: z.string().optional().nullable(),
-    metersPerRoll: z.number().or(z.string()).optional().nullable()
+    metersPerRoll: z.number().or(z.string()).optional().nullable(),
+    dailyShipmentRate: z.number().or(z.string()).optional().nullable(),
+    productionLeadDays: z.number().or(z.string()).optional().nullable()
 });
 
 // POST: 商品を新規作成
@@ -202,6 +208,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             discontinued_date: validData.discontinuedDate || null,
             supplier_id: validData.supplierId === 'none' || !validData.supplierId ? null : validData.supplierId,
             meters_per_roll: validData.metersPerRoll !== undefined && validData.metersPerRoll !== null && validData.metersPerRoll !== '' ? Number(validData.metersPerRoll) : 400,
+            daily_shipment_rate: validData.dailyShipmentRate !== undefined && validData.dailyShipmentRate !== null && validData.dailyShipmentRate !== '' ? Number(validData.dailyShipmentRate) : 0,
+            production_lead_days: validData.productionLeadDays !== undefined && validData.productionLeadDays !== null && validData.productionLeadDays !== '' ? Number(validData.productionLeadDays) : 0,
         };
 
         const { data, error } = await supabaseClient
@@ -298,6 +306,8 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         if (validData.discontinuedDate !== undefined) updateData.discontinued_date = validData.discontinuedDate;
         if (validData.supplierId !== undefined) updateData.supplier_id = validData.supplierId === 'none' || !validData.supplierId ? null : validData.supplierId;
         if (validData.metersPerRoll !== undefined) updateData.meters_per_roll = validData.metersPerRoll !== null && validData.metersPerRoll !== '' ? Number(validData.metersPerRoll) : 400;
+        if (validData.dailyShipmentRate !== undefined) updateData.daily_shipment_rate = validData.dailyShipmentRate !== null && validData.dailyShipmentRate !== '' ? Number(validData.dailyShipmentRate) : 0;
+        if (validData.productionLeadDays !== undefined) updateData.production_lead_days = validData.productionLeadDays !== null && validData.productionLeadDays !== '' ? Number(validData.productionLeadDays) : 0;
 
         const { data: updateResults, error } = await supabaseClient
             .from('products')

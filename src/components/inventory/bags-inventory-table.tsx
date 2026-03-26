@@ -19,7 +19,9 @@ import {
 import {
     getPitch,
     calculateStockStatus,
+    calculateStockPrediction,
 } from "@/lib/services";
+import { format } from "date-fns";
 import { useCart } from "@/contexts/cart-context";
 import type { Product, WorkInProgress, IncomingStock } from "@/types";
 import { SupplierStockDialog } from "@/components/inventory/supplier-stock-dialog";
@@ -86,6 +88,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">仕掛中</TableHead>
                                 <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">在庫状況</TableHead>
                                 <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">全体状況</TableHead>
+                                <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">在庫予測</TableHead>
                                 <TableHead className="w-[140px] sticky top-0 z-40 bg-background bg-clip-padding shadow-sm text-left pl-5">発注</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -106,14 +109,29 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                     : (supplierStockMap.get(product.id) || 0);
                                 const supplierStock = supplierStockFromLots;
 
-                                const {
-                                    currentBags,
-                                    availableBags,
+                                const status = calculateStockStatus(product, currentStock, allocation, settings);
+                                const isRoll = status.isRoll;
+                                const availableStock = status.availableStock;
+                                const currentBags = status.currentBags;
+                                const availableBags = status.availableBags;
+                                const isOutOfStock = status.isOutOfStock;
+                                const isLowStock = status.isLowStock;
+
+                                // 在庫予測の計算
+                                const relevantSaleItems = saleEvents
+                                    .filter(event => (event.status === 'active' || event.status === 'upcoming'))
+                                    .flatMap(event => {
+                                        const item = event.items.find(i => i.productId === product.id);
+                                        return item ? [{ dates: event.dates, quantity: item.allocatedQuantity }] : [];
+                                    });
+
+                                const prediction = calculateStockPrediction(
                                     availableStock,
-                                    isOutOfStock,
-                                    isLowStock,
-                                    isRoll,
-                                } = calculateStockStatus(product, currentStock, allocation, settings);
+                                    product.dailyShipmentRate || 0,
+                                    product.productionLeadDays || 0,
+                                    product,
+                                    relevantSaleItems
+                                );
 
                                 const hasAllocation = allocation.bags > 0;
                                 const isInCart = items.some(item => item.product.id === product.id);
@@ -416,6 +434,30 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                     </div>
                                                 )}
                                             </div>
+                                        </TableCell>
+
+                                        {/* 在庫予測 (Stock Prediction) */}
+                                        <TableCell className="text-center max-w-[120px] bg-slate-50/50 border-x">
+                                            {prediction.estimatedDate ? (
+                                                <div className="flex flex-col items-center">
+                                                    <div className={cn(
+                                                        "font-bold text-sm",
+                                                        prediction.wipStartAlert ? "text-red-600 animate-pulse" : "text-slate-700"
+                                                    )}>
+                                                        残り{prediction.remainingDays}日
+                                                    </div>
+                                                    <div className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                        {format(prediction.estimatedDate, "M/d")}頃 終了
+                                                    </div>
+                                                    {prediction.wipStartAlert && (
+                                                        <Badge className="mt-1 h-3.5 text-[8px] bg-red-600 hover:bg-red-700 px-1 border-none leading-none">
+                                                            仕掛開始!
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-muted-foreground">-</span>
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-1">

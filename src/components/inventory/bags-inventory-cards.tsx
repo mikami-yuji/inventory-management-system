@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, ImageIcon, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isRollBag } from "@/lib/services";
+import { isRollBag, calculateStockPrediction } from "@/lib/services";
+import { SaleEvent } from "@/hooks/use-sale-events";
+import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import imageCompression from "browser-image-compression";
 import Image from "next/image";
@@ -20,6 +22,7 @@ type BagsInventoryCardsProps = {
     supplierStockMap: Map<string, number>;
     supplierStockLotsMap: Map<string, SupplierStockLot[]>;
     incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
+    saleEvents?: SaleEvent[];
     onDetail: (product: Product) => void;
     onRefetch: () => void;
 };
@@ -32,6 +35,7 @@ export function BagsInventoryCards({
     supplierStockMap,
     supplierStockLotsMap,
     incomingMap,
+    saleEvents = [],
     onDetail,
     onRefetch
 }: BagsInventoryCardsProps): React.ReactElement {
@@ -55,6 +59,7 @@ export function BagsInventoryCards({
                     supplierStockMap={supplierStockMap}
                     supplierStockLotsMap={supplierStockLotsMap}
                     incomingMap={incomingMap}
+                    saleEvents={saleEvents}
                     onDetail={onDetail}
                     onRefetch={onRefetch}
                 />
@@ -71,6 +76,7 @@ type ProductCardProps = {
     supplierStockMap: Map<string, number>;
     supplierStockLotsMap: Map<string, SupplierStockLot[]>;
     incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
+    saleEvents?: SaleEvent[];
     onDetail: (product: Product) => void;
     onRefetch: () => void;
 };
@@ -83,6 +89,7 @@ function ProductCard({
     supplierStockMap,
     supplierStockLotsMap,
     incomingMap,
+    saleEvents = [],
     onDetail,
     onRefetch
 }: ProductCardProps) {
@@ -113,6 +120,22 @@ function ProductCard({
             : availableStock > 0 && availableStock < 100
     );
     const hasAllocation = allocation.bags > 0;
+
+    // 在庫予測の計算
+    const relevantSaleItems = saleEvents
+        .filter(event => (event.status === 'active' || event.status === 'upcoming'))
+        .flatMap(event => {
+            const item = event.items.find(i => i.productId === product.id);
+            return item ? [{ dates: event.dates, quantity: item.allocatedQuantity }] : [];
+        });
+
+    const prediction = calculateStockPrediction(
+        availableStock,
+        product.dailyShipmentRate || 0,
+        product.productionLeadDays || 0,
+        product,
+        relevantSaleItems
+    );
 
     // 画像アップロード処理
     const handleDrop = async (e: React.DragEvent) => {
@@ -370,6 +393,28 @@ function ProductCard({
                             )}
 
                             {/* 未設定の場合はクリックで開けるように "+" アイコンやテキストを出すことも検討可能だが一旦非表示 */}
+                            {/* 在庫予測 */}
+                            {prediction.estimatedDate && (
+                                <div className={cn(
+                                    "mt-2 p-1.5 rounded-md flex flex-col items-center border",
+                                    prediction.wipStartAlert ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-200"
+                                )}>
+                                    <div className={cn(
+                                        "text-[10px] font-bold",
+                                        prediction.wipStartAlert ? "text-red-600 animate-pulse" : "text-slate-600"
+                                    )}>
+                                        残り{prediction.remainingDays}日分
+                                    </div>
+                                    <div className="text-[9px] text-muted-foreground">
+                                        {format(prediction.estimatedDate, "M/d")}頃 終了
+                                    </div>
+                                    {prediction.wipStartAlert && (
+                                        <Badge className="mt-0.5 h-3.5 text-[8px] bg-red-600 hover:bg-red-700 px-1 border-none leading-none">
+                                            仕掛開始!
+                                        </Badge>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

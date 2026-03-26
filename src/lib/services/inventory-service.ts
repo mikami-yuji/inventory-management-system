@@ -128,3 +128,77 @@ export const calculateStockStatus = (
         isRoll
     };
 };
+
+/**
+ * 在庫切れ予測の計算
+ * @param availableStock 実質在庫（メートルまたは枚数）
+ * @param dailyRate 1日あたりの通常出荷数（枚数ベース）
+ * @param leadDays 仕掛リードタイム（日間）
+ * @param product 商品情報 (重量情報などのため)
+ * @param saleItems 特売予定アイテムのリスト
+ */
+export const calculateStockPrediction = (
+    availableStock: number,
+    dailyRate: number,
+    leadDays: number,
+    product: Product,
+    saleItems: Array<{ dates: string[]; quantity: number }> = []
+) => {
+    if (availableStock <= 0) {
+        return { remainingDays: 0, estimatedDate: null, wipStartAlert: false };
+    }
+
+    if (dailyRate <= 0 && saleItems.length === 0) {
+        return { remainingDays: 999, estimatedDate: null, wipStartAlert: false };
+    }
+
+    const isRoll = isRollBag(product.shape || "", product.category, product.metersPerRoll);
+    let currentStockMs = availableStock;
+    let days = 0;
+    const maxDays = 365; // 最大1年分計算
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 特売マップ: 日付キー (timestamp) -> 数量 (枚数)
+    const saleMap = new Map<string, number>();
+    saleItems.forEach(item => {
+        const perDay = item.dates.length > 0 ? Math.floor(item.quantity / item.dates.length) : 0;
+        item.dates.forEach(dateStr => {
+            const date = new Date(dateStr);
+            date.setHours(0, 0, 0, 0);
+            const key = date.getTime().toString();
+            saleMap.set(key, (saleMap.get(key) || 0) + perDay);
+        });
+    });
+
+    // 日ごとのシミュレーション
+    let currentStock = availableStock;
+    while (currentStock > 0 && days < maxDays) {
+        days++;
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + days);
+        const key = targetDate.getTime().toString();
+
+        const dailySaleQty = saleMap.get(key) || 0;
+        const totalDailyOutQty = dailyRate + dailySaleQty;
+
+        // 在庫消費量の算出
+        const consumption = isRoll 
+            ? bagsToMeters(totalDailyOutQty, product.weight || 5)
+            : totalDailyOutQty;
+
+        currentStock -= consumption;
+    }
+
+    const estimatedDate = new Date(today);
+    estimatedDate.setDate(today.getDate() + days);
+
+    // 仕掛開始アラート: 残り日数 <= (リードタイム + 7日) かつ 在庫がある場合
+    const wipStartAlert = days <= (leadDays + 7) && days > 0 && leadDays > 0;
+
+    return {
+        remainingDays: days,
+        estimatedDate: days < maxDays ? estimatedDate : null,
+        wipStartAlert
+    };
+};
