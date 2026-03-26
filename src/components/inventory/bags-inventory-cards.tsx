@@ -103,8 +103,10 @@ function ProductCard({
     const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
     const wipList = wipMap.get(product.id) || [];
     const wipQuantity = wipList.reduce((sum, item) => sum + item.quantity, 0);
-    const supplier = supplierStockMap.get(product.id) || 0;
     const supplierLots = supplierStockLotsMap?.get(product.id) || [];
+    const supplier = supplierLots.length > 0
+        ? supplierLots.reduce((sum, lot) => sum + lot.quantity, 0)
+        : (supplierStockMap.get(product.id) || 0);
     const incoming = incomingMap.get(product.id);
 
     const isRoll = product.shape && isRollBag(product.shape);
@@ -134,7 +136,10 @@ function ProductCard({
         product.dailyShipmentRate || 0,
         product.productionLeadDays || 0,
         product,
-        relevantSaleItems
+        relevantSaleItems,
+        wipList.map(item => ({ quantity: item.quantity, expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null })),
+        incoming?.items.map(item => ({ quantity: item.quantity, expectedDate: new Date(item.expectedDate) })) || [],
+        supplier
     );
 
     // 画像アップロード処理

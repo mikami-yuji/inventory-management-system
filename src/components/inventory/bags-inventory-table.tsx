@@ -130,7 +130,10 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                     product.dailyShipmentRate || 0,
                                     product.productionLeadDays || 0,
                                     product,
-                                    relevantSaleItems
+                                    relevantSaleItems,
+                                    wipList.map(item => ({ quantity: item.quantity, expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null })),
+                                    incoming?.items.map(item => ({ quantity: item.quantity, expectedDate: new Date(item.expectedDate) })) || [],
+                                    supplierStock
                                 );
 
                                 const hasAllocation = allocation.bags > 0;

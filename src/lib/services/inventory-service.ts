@@ -136,24 +136,28 @@ export const calculateStockStatus = (
  * @param leadDays 仕掛リードタイム（日間）
  * @param product 商品情報 (重量情報などのため)
  * @param saleItems 特売予定アイテムのリスト
+ * @param wipItems 仕掛中アイテムのリスト
+ * @param incomingItems 入荷予定アイテムのリスト
+ * @param supplierStock メーカー在庫数
  */
 export const calculateStockPrediction = (
     availableStock: number,
     dailyRate: number,
     leadDays: number,
     product: Product,
-    saleItems: Array<{ dates: string[]; quantity: number }> = []
+    saleItems: Array<{ dates: string[]; quantity: number }> = [],
+    wipItems: Array<{ quantity: number; expectedDate: Date | null }> = [],
+    incomingItems: Array<{ quantity: number; expectedDate: Date }> = [],
+    supplierStock: number = 0
 ) => {
-    if (availableStock <= 0) {
+    // 初期在庫にメーカー在庫を加算（即時利用可能とみなす）
+    let currentStock = availableStock + supplierStock;
+
+    if (currentStock <= 0 && wipItems.length === 0 && incomingItems.length === 0) {
         return { remainingDays: 0, estimatedDate: null, wipStartAlert: false };
     }
 
-    if (dailyRate <= 0 && saleItems.length === 0) {
-        return { remainingDays: 999, estimatedDate: null, wipStartAlert: false };
-    }
-
     const isRoll = isRollBag(product.shape || "", product.category, product.metersPerRoll);
-    let currentStockMs = availableStock;
     let days = 0;
     const maxDays = 365; // 最大1年分計算
     const today = new Date();
@@ -171,14 +175,34 @@ export const calculateStockPrediction = (
         });
     });
 
+    // 入荷・仕掛マップ: 日付キー -> 数量（単位は商品に合わせる：m または 枚）
+    const arrivalMap = new Map<string, number>();
+    incomingItems.forEach(item => {
+        const date = new Date(item.expectedDate);
+        date.setHours(0, 0, 0, 0);
+        const key = date.getTime().toString();
+        arrivalMap.set(key, (arrivalMap.get(key) || 0) + item.quantity);
+    });
+    wipItems.forEach(item => {
+        if (!item.expectedDate) return;
+        const date = new Date(item.expectedDate);
+        date.setHours(0, 0, 0, 0);
+        const key = date.getTime().toString();
+        arrivalMap.set(key, (arrivalMap.get(key) || 0) + item.quantity);
+    });
+
     // 日ごとのシミュレーション
-    let currentStock = availableStock;
-    while (currentStock > 0 && days < maxDays) {
+    while (days < maxDays) {
         days++;
         const targetDate = new Date(today);
         targetDate.setDate(today.getDate() + days);
         const key = targetDate.getTime().toString();
 
+        // 1. その日に到着する在庫を加算
+        const arrivals = arrivalMap.get(key) || 0;
+        currentStock += arrivals;
+
+        // 2. その日の消費量を減算
         const dailySaleQty = saleMap.get(key) || 0;
         const totalDailyOutQty = dailyRate + dailySaleQty;
 
@@ -188,12 +212,16 @@ export const calculateStockPrediction = (
             : totalDailyOutQty;
 
         currentStock -= consumption;
+
+        // 在庫が切れたら終了
+        if (currentStock <= 0) break;
     }
 
     const estimatedDate = new Date(today);
     estimatedDate.setDate(today.getDate() + days);
 
     // 仕掛開始アラート: 残り日数 <= (リードタイム + 7日) かつ 在庫がある場合
+    // ※在庫が既に切れている（days=0）場合はアラート不要（欠品扱い）
     const wipStartAlert = days <= (leadDays + 7) && days > 0 && leadDays > 0;
 
     return {
