@@ -19,7 +19,8 @@ export const getPitch = (weight: number): number => {
 };
 
 // ロール袋（原反/フィルム巻）かどうか判定
-export function isRollBag(shape: string, category?: string, metersPerRoll?: number | null): boolean {
+export function isRollBag(shape: string | null | undefined, category?: string, metersPerRoll?: number | null): boolean {
+  const s = shape || "";
   // 1巻あたりのメートル数が設定されている、または数値がある場合はロールとして扱う
   if (metersPerRoll && metersPerRoll > 0) {
     return true;
@@ -30,10 +31,10 @@ export function isRollBag(shape: string, category?: string, metersPerRoll?: numb
     return false;
   }
     // 形状に「巻」や「ロール」が含まれる場合はロール
-    if (shape.includes('巻') || shape.includes('ロール')) return true;
+    if (s.includes('巻') || s.includes('ロール')) return true;
 
     // 特定の形状コード (RZ/RA) を持つものは、上記カテゴリ以外であればロールとして扱う
-    return shape.includes('RZ') || shape.includes('RA') || shape.includes('RＺ') || shape.includes('RＡ');
+    return s.includes('RZ') || s.includes('RA') || s.includes('RＺ') || s.includes('RＡ');
 }
 
 // デフォルトの在庫アラート閾値を取得
@@ -146,15 +147,16 @@ export const calculateStockPrediction = (
     leadDays: number,
     product: Product,
     saleItems: Array<{ dates: string[]; quantity: number }> = [],
-    wipItems: Array<{ quantity: number; expectedDate: Date | null }> = [],
+    wipItems: Array<{ quantity: number; expectedDate: Date | null; termType?: string }> = [],
     incomingItems: Array<{ quantity: number; expectedDate: Date }> = [],
     supplierStock: number = 0
 ) => {
     // 初期在庫にメーカー在庫を加算（即時利用可能とみなす）
     let currentStock = availableStock + supplierStock;
+    let hasUnconfirmedWIP = false;
 
     if (currentStock <= 0 && wipItems.length === 0 && incomingItems.length === 0) {
-        return { remainingDays: 0, estimatedDate: null, wipStartAlert: false };
+        return { remainingDays: 0, estimatedDate: null, wipStartAlert: false, hasUnconfirmedWIP: false };
     }
 
     const isRoll = isRollBag(product.shape || "", product.category, product.metersPerRoll);
@@ -185,6 +187,13 @@ export const calculateStockPrediction = (
     });
     wipItems.forEach(item => {
         if (!item.expectedDate) return;
+        
+        // specific 以外（上中下旬）は予測計算の在庫加算には入れない
+        if (item.termType && item.termType !== 'specific') {
+            hasUnconfirmedWIP = true;
+            return;
+        }
+
         const date = new Date(item.expectedDate);
         date.setHours(0, 0, 0, 0);
         const key = date.getTime().toString();
@@ -231,6 +240,7 @@ export const calculateStockPrediction = (
     return {
         remainingDays: days,
         estimatedDate: days < maxDays ? estimatedDate : null,
-        wipStartAlert
+        wipStartAlert,
+        hasUnconfirmedWIP
     };
 };

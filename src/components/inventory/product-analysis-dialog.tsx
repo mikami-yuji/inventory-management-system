@@ -21,7 +21,8 @@ import {
     TrendingDown,
     Minus,
     Calendar,
-    Layers
+    Layers,
+    Info
 } from "lucide-react";
 import { useStockHistoryAnalysis } from "@/hooks/use-stock-history-analysis";
 import { isRollBag } from "@/lib/services";
@@ -57,6 +58,7 @@ type ProductAnalysisDialogProps = {
     trigger?: React.ReactNode;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
+    hasUnconfirmedWIP?: boolean;
 };
 
 export function ProductAnalysisDialog({
@@ -64,7 +66,8 @@ export function ProductAnalysisDialog({
     currentStock,
     trigger,
     open,
-    onOpenChange
+    onOpenChange,
+    hasUnconfirmedWIP
 }: ProductAnalysisDialogProps): React.ReactElement {
     // データフェッチ (Hookを使用)
     const { history, analysis, loading } = useStockHistoryAnalysis(product.id, currentStock);
@@ -274,6 +277,12 @@ export function ProductAnalysisDialog({
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
+                                {hasUnconfirmedWIP && (
+                                    <div className="mb-3 p-1.5 bg-red-50 border border-red-200 rounded flex items-center justify-center gap-1.5 animate-pulse">
+                                        <Info className="h-3 w-3 text-red-600" />
+                                        <span className="text-[10px] font-bold text-red-600">納期を確定してください</span>
+                                    </div>
+                                )}
                                 {analysis.daysUntilStockout !== null ? (
                                     <div className="space-y-1">
                                         <div className="flex items-end gap-2">

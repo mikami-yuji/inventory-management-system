@@ -11,7 +11,7 @@ import { Pencil, Package, Clock, CalendarDays, Loader2, Mic, MicOff, TrendingDow
 import { useUpdateInventory } from "@/hooks/use-inventory";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 import { cn } from "@/lib/utils";
-import { isRollBag } from "@/lib/services";
+import { isRollBag, calculateStockPrediction } from "@/lib/services";
 import type { Product, WorkInProgress, SupplierStockLot } from "@/types";
 import { ProductAnalysisDialog } from "@/components/inventory/product-analysis-dialog";
 import Image from "next/image";
@@ -100,6 +100,22 @@ export function ProductDetailDialog({
     // 有効在庫計算 (ロールの場合はメーター同士、袋の場合は枚同士)
     const availableStock = Math.max(0, currentStock - allocationQty);
 
+    // 在庫切れ予測の計算（警告表示のため）
+    const prediction = product ? calculateStockPrediction(
+        currentStock,
+        product.dailyShipmentRate || 0,
+        product.productionLeadDays || 0,
+        product,
+        detailedAllocations.map(a => ({ dates: a.dates, quantity: a.quantity })),
+        wipItems.map(item => ({
+            quantity: item.quantity,
+            expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null,
+            termType: item.termType
+        })),
+        [], // incomingItems は今のところPropsにないので空
+        supplierStock
+    ) : null;
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden max-h-[95vh] flex flex-col">
@@ -183,6 +199,15 @@ export function ProductDetailDialog({
                                     在庫状況の確認と調整を行います
                                 </DialogDescription>
                             </DialogHeader>
+
+                            {prediction?.hasUnconfirmedWIP && (
+                                <div className="mb-4 p-2 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center gap-2 animate-pulse">
+                                    <Info className="h-4 w-4 text-red-600" />
+                                    <span className="text-xs font-bold text-red-600">
+                                        納期が不確定な仕掛品があります。納期を確定してください。
+                                    </span>
+                                </div>
+                            )}
 
                             {/* 調整フォーム (Moved to top for accessibility) */}
                             <form onSubmit={handleSave} className="space-y-3 mb-6 p-4 bg-slate-50/50 rounded-xl border border-slate-100">
@@ -362,6 +387,7 @@ export function ProductDetailDialog({
                     currentStock={currentStock}
                     open={analysisOpen}
                     onOpenChange={setAnalysisOpen}
+                    hasUnconfirmedWIP={prediction?.hasUnconfirmedWIP}
                 />
             </DialogContent>
         </Dialog>

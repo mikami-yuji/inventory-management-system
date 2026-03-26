@@ -6,7 +6,90 @@ import {
     getPitch,
     isRollBag,
     getApproxBagCount,
+    calculateStockPrediction,
 } from '../inventory-service';
+import { Product } from '@/types';
+
+// ... (existing tests)
+
+describe('calculateStockPrediction', () => {
+    const mockProduct: Product = {
+        id: '1',
+        name: 'Test Product',
+        weight: 5,
+        shape: 'RZ',
+        category: 'bag',
+        dailyShipmentRate: 100,
+        productionLeadDays: 5,
+        unitPrice: 100,
+        printingCost: 50,
+        status: 'active',
+        sku: 'TEST-001'
+    };
+
+    test('通常出荷のみ：在庫切れ日の計算が正しいこと', () => {
+        // 在庫1000枚, 1日100枚消費 -> 10日
+        const result = calculateStockPrediction(1000, 100, 5, mockProduct);
+        expect(result.remainingDays).toBe(10);
+        expect(result.hasUnconfirmedWIP).toBe(false);
+    });
+
+    test('特売がある場合：消費が早まること', () => {
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        
+        const saleItems = [
+            { dates: [tomorrow.toISOString()], quantity: 500 }
+        ];
+        
+        // 在庫1000枚, 常時100枚 + 明日500枚
+        // Day 1: 100 + 500 = 600 (残り400)
+        // Day 2: 100 (残り300)
+        // Day 3: 100 (残り200)
+        // Day 4: 100 (残り100)
+        // Day 5: 100 (残り0)
+        const result = calculateStockPrediction(1000, 100, 5, mockProduct, saleItems);
+        expect(result.remainingDays).toBe(5);
+    });
+
+    test('仕掛品（確定納期）がある場合：在庫が加算されること', () => {
+        const today = new Date();
+        const nextWeek = new Date(today);
+        nextWeek.setDate(today.getDate() + 7);
+        
+        const wipItems = [
+            { quantity: 1000, expectedDate: nextWeek, termType: 'specific' }
+        ];
+        
+        // 在庫1000枚, 1日100枚消費
+        // Day 7で在庫0になるが、1000枚追加される
+        // さらに10日持つ -> 合計20日
+        const result = calculateStockPrediction(1000, 100, 5, mockProduct, [], wipItems);
+        expect(result.remainingDays).toBe(20);
+    });
+
+    test('不確定な仕掛品（上中下旬）：計算から除外されフラグが立つこと', () => {
+        const today = new Date();
+        const wipItems = [
+            { quantity: 1000, expectedDate: today, termType: 'early' }
+        ];
+        
+        // 在庫1000枚, 1日100枚消費
+        // 上旬(early)は除外されるため、10日のまま
+        const result = calculateStockPrediction(1000, 100, 5, mockProduct, [], wipItems);
+        expect(result.remainingDays).toBe(10);
+        expect(result.hasUnconfirmedWIP).toBe(true);
+    });
+
+    test('在庫切れかつリードタイム＋7日以内の場合：wipStartAlertが立つこと', () => {
+        // 在庫500枚, 1日100枚 -> 5日
+        // 5日 <= (リードタイム5 + 7) = 12日 なのでアラート対象
+        const result = calculateStockPrediction(500, 100, 5, mockProduct);
+        expect(result.remainingDays).toBe(5);
+        expect(result.wipStartAlert).toBe(true);
+    });
+});
 
 describe('getPitch', () => {
     test('10kg以上は570mmを返す', () => {
