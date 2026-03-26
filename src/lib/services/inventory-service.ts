@@ -18,6 +18,14 @@ export const getPitch = (weight: number): number => {
     return 280; // 1kg
 };
 
+// 日付を YYYY-MM-DD 形式の文字列に変換するヘルパー
+const formatDateKey = (date: Date): string => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+};
+
 // ロール袋（原反/フィルム巻）かどうか判定
 export function isRollBag(shape: string | null | undefined, category?: string, metersPerRoll?: number | null): boolean {
   const s = shape || "";
@@ -34,7 +42,8 @@ export function isRollBag(shape: string | null | undefined, category?: string, m
     if (s.includes('巻') || s.includes('ロール')) return true;
 
     // 特定の形状コード (RZ/RA) を持つものは、上記カテゴリ以外であればロールとして扱う
-    return s.includes('RZ') || s.includes('RA') || s.includes('RＺ') || s.includes('RＡ');
+    const normalized = s.replace(/\s+/g, '').toUpperCase();
+    return normalized.includes('RZ') || normalized.includes('RA') || normalized.includes('RＺ') || normalized.includes('RＡ');
 }
 
 // デフォルトの在庫アラート閾値を取得
@@ -165,14 +174,13 @@ export const calculateStockPrediction = (
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // 特売マップ: 日付キー (timestamp) -> 数量 (枚数)
+    // 特売マップ: 日付キー (YYYY-MM-DD) -> 数量 (枚数)
     const saleMap = new Map<string, number>();
     saleItems.forEach(item => {
         const perDay = item.dates.length > 0 ? Math.floor(item.quantity / item.dates.length) : 0;
         item.dates.forEach(dateStr => {
             const date = new Date(dateStr);
-            date.setHours(0, 0, 0, 0);
-            const key = date.getTime().toString();
+            const key = formatDateKey(date);
             saleMap.set(key, (saleMap.get(key) || 0) + perDay);
         });
     });
@@ -181,8 +189,7 @@ export const calculateStockPrediction = (
     const arrivalMap = new Map<string, number>();
     incomingItems.forEach(item => {
         const date = new Date(item.expectedDate);
-        date.setHours(0, 0, 0, 0);
-        const key = date.getTime().toString();
+        const key = formatDateKey(date);
         arrivalMap.set(key, (arrivalMap.get(key) || 0) + item.quantity);
     });
     wipItems.forEach(item => {
@@ -196,21 +203,20 @@ export const calculateStockPrediction = (
         }
 
         const date = new Date(item.expectedDate);
-        date.setHours(0, 0, 0, 0);
-        const key = date.getTime().toString();
+        const key = formatDateKey(date);
         arrivalMap.set(key, (arrivalMap.get(key) || 0) + item.quantity);
     });
 
     // 日ごとのシミュレーション
     // Day 0 (本日) の入荷・仕掛完了を加算
-    const todayKey = today.getTime().toString();
+    const todayKey = formatDateKey(today);
     currentStock += arrivalMap.get(todayKey) || 0;
 
     while (days < maxDays) {
         days++;
         const targetDate = new Date(today);
         targetDate.setDate(today.getDate() + days);
-        const key = targetDate.getTime().toString();
+        const key = formatDateKey(targetDate);
 
         // 1. その日に到着する在庫を加算
         const arrivals = arrivalMap.get(key) || 0;
