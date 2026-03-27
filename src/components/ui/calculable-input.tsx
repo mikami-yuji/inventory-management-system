@@ -82,8 +82,10 @@ export const CalculableInput = React.forwardRef<HTMLInputElement, CalculableInpu
 
         const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
             if (e.key === 'Enter') {
-                e.preventDefault();
+                // Calculate the expression before potentially submitting the form
                 handleCalculateAndNotify(localValue, true);
+                // Note: We don't call e.preventDefault() here to allow standard form submission 
+                // behavior (Enter to submit) when the input is part of a form.
             }
             onKeyDown?.(e);
         };
