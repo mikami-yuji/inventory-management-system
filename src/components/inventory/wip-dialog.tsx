@@ -63,6 +63,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
     const [arrivalSchedules, setArrivalSchedules] = useState<ArrivalSchedule[]>([]);
     const [lossQuantity, setLossQuantity] = useState<number>(0);
     const [deliveryAddresses, setDeliveryAddresses] = useState<DeliveryAddress[]>([]);
+    const [defaultAddressName, setDefaultAddressName] = useState<string>('');
 
     // アクション
     const { createWIP, updateWIP, arrangeShipping, transferToIncoming, transferToSupplier, deleteWIP, loading: actionLoading } = useWIPActions();
@@ -76,8 +77,18 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
             const result = await res.json();
             if (Array.isArray(result)) {
                 setDeliveryAddresses(result);
+                const defaultAddr = result.find(a => a.isDefault);
+                if (defaultAddr) {
+                    setDefaultAddressName(defaultAddr.name);
+                    setArrivalSchedules(prev => prev.map((s, i) => i === 0 && !s.note ? { ...s, note: defaultAddr.name } : s));
+                }
             } else if (result && result.data && Array.isArray(result.data)) {
                 setDeliveryAddresses(result.data);
+                const defaultAddr = result.data.find((a: DeliveryAddress) => a.isDefault);
+                if (defaultAddr) {
+                    setDefaultAddressName(defaultAddr.name);
+                    setArrivalSchedules(prev => prev.map((s, i) => i === 0 && !s.note ? { ...s, note: defaultAddr.name } : s));
+                }
             }
         } catch (e) {
             console.error("納品先取得エラー", e);
@@ -177,7 +188,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
         setConfirmingItem(item);
         setSupplierQuantity(0);
         setArrivalSchedules([
-            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
+            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: defaultAddressName }
         ]);
         setLossQuantity(0);
     };
@@ -185,7 +196,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
     const addArrivalRow = () => {
         setArrivalSchedules([
             ...arrivalSchedules,
-            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
+            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: defaultAddressName }
         ]);
     };
 

@@ -62,6 +62,7 @@ export function SupplierStockDialog({
 
     // 納品先リスト
     const [deliveryAddresses, setDeliveryAddresses] = useState<DeliveryAddress[]>([]);
+    const [defaultAddressName, setDefaultAddressName] = useState<string>('');
 
     const fetchDeliveryAddresses = async () => {
         try {
@@ -69,8 +70,19 @@ export function SupplierStockDialog({
             const result = await res.json();
             if (Array.isArray(result)) {
                 setDeliveryAddresses(result);
+                const defaultAddr = result.find(a => a.isDefault);
+                if (defaultAddr) {
+                    setDefaultAddressName(defaultAddr.name);
+                    // 最初の一行目のnoteが空ならデフォルトをセット
+                    setArrivalSchedules((prev: ArrivalSchedule[]) => prev.map((s, i) => i === 0 && !s.note ? { ...s, note: defaultAddr.name } : s));
+                }
             } else if (result && result.data && Array.isArray(result.data)) {
                 setDeliveryAddresses(result.data);
+                const defaultAddr = result.data.find((a: DeliveryAddress) => a.isDefault);
+                if (defaultAddr) {
+                    setDefaultAddressName(defaultAddr.name);
+                    setArrivalSchedules((prev: ArrivalSchedule[]) => prev.map((s, i) => i === 0 && !s.note ? { ...s, note: defaultAddr.name } : s));
+                }
             }
         } catch (e) {
             console.error("納品先取得エラー", e);
@@ -122,7 +134,7 @@ export function SupplierStockDialog({
         if (open && product) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setArrivalSchedules([
-                { id: crypto.randomUUID(), expectedDate: new Date().toISOString().split('T')[0], quantity: 0, note: '' }
+                { id: crypto.randomUUID(), expectedDate: new Date().toISOString().split('T')[0], quantity: 0, note: defaultAddressName }
             ]);
 
             // フォームのリセット
@@ -192,7 +204,7 @@ export function SupplierStockDialog({
     const addArrivalRow = () => {
         setArrivalSchedules([
             ...arrivalSchedules,
-            { id: crypto.randomUUID(), expectedDate: new Date().toISOString().split('T')[0], quantity: 0, note: '' }
+            { id: crypto.randomUUID(), expectedDate: new Date().toISOString().split('T')[0], quantity: 0, note: defaultAddressName }
         ]);
     };
 
