@@ -132,7 +132,7 @@ export function StockAllocationDialog({
                 onClose();
             }
         }}>
-            <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col overflow-hidden">
+            <DialogContent className="sm:max-w-5xl max-h-[85vh] flex flex-col overflow-hidden">
                 <DialogHeader>
                     <DialogTitle>特売引当詳細</DialogTitle>
                     <DialogDescription>
@@ -176,7 +176,7 @@ export function StockAllocationDialog({
                         </div>
                     ) : (
                         <div className="border rounded-lg flex-1 min-h-0 overflow-auto shadow-sm w-full">
-                            <Table className="w-full min-w-[650px]">
+                            <Table className="w-full">
                                 <TableHeader className="sticky top-0 bg-background z-10">
                                     <TableRow className="hover:bg-transparent">
                                         <TableHead className="h-10 px-2 sm:px-4 text-xs sm:text-sm">イベント / 納品先</TableHead>
