@@ -176,14 +176,14 @@ export function StockAllocationDialog({
                         </div>
                     ) : (
                         <div className="border rounded-lg flex-1 min-h-0 overflow-auto shadow-sm w-full">
-                            <Table className="w-full">
+                            <Table className="w-auto">
                                 <TableHeader className="sticky top-0 bg-background z-10">
                                     <TableRow className="hover:bg-transparent">
-                                        <TableHead className="h-10 px-2 sm:px-4 text-xs sm:text-sm">イベント / 納品先</TableHead>
-                                        <TableHead className="h-10 px-1 sm:px-4 text-xs sm:text-sm">日程</TableHead>
-                                        <TableHead className="h-10 px-1 sm:px-4 text-right text-xs sm:text-sm">数量</TableHead>
-                                        <TableHead className="h-10 px-1 sm:px-4 text-center text-xs sm:text-sm">生産済</TableHead>
-                                        <TableHead className="h-10 pl-2 pr-6 sm:pl-4 sm:pr-10 text-right text-xs sm:text-sm">有効在庫</TableHead>
+                                        <TableHead className="h-10 px-2 text-xs sm:text-sm">イベント / 納品先</TableHead>
+                                        <TableHead className="h-10 px-2 text-xs sm:text-sm">日程</TableHead>
+                                        <TableHead className="h-10 px-2 text-right text-xs sm:text-sm">数量</TableHead>
+                                        <TableHead className="h-10 px-2 text-center text-xs sm:text-sm">生産済</TableHead>
+                                        <TableHead className="h-10 pl-2 pr-4 text-right text-xs sm:text-sm">有効在庫</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -199,13 +199,13 @@ export function StockAllocationDialog({
 
                                             return (
                                                 <TableRow key={i} className="hover:bg-muted/30">
-                                                    <TableCell className="px-2 py-1 sm:px-4">
+                                                    <TableCell className="px-2 py-1">
                                                         <div className="font-medium text-xs sm:text-sm leading-tight">{alloc.eventName}</div>
                                                         <Badge variant="outline" className="mt-1.5 px-1.5 py-0 h-4 text-[10px] font-normal">
                                                             {alloc.status === 'active' ? '開催中' : isCompleted ? '終了' : '予定'}
                                                         </Badge>
                                                     </TableCell>
-                                                    <TableCell className="px-1 py-1 sm:px-4 text-xs sm:text-sm">
+                                                    <TableCell className="px-2 py-1 text-xs sm:text-sm">
                                                         {alloc.dates.length > 0 ? (
                                                             <div className="flex flex-col gap-0.5">
                                                                 <span className="whitespace-nowrap">{format(new Date(alloc.dates[0]), "MM/dd", { locale: ja })}</span>
@@ -217,7 +217,7 @@ export function StockAllocationDialog({
                                                             "-"
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="px-1 py-1 sm:px-4 text-right whitespace-nowrap">
+                                                    <TableCell className="px-2 py-1 text-right whitespace-nowrap">
                                                         {editingId === alloc.itemId ? (
                                                             <div className="flex items-center justify-end gap-1">
                                                                 <Input
@@ -252,7 +252,7 @@ export function StockAllocationDialog({
                                                             </div>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="px-1 py-1 sm:px-4 text-center">
+                                                    <TableCell className="px-2 py-1 text-center">
                                                         <div className="flex justify-center">
                                                             <Checkbox 
                                                                 id={`produced-${alloc.itemId}`}
@@ -263,7 +263,7 @@ export function StockAllocationDialog({
                                                             />
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="pl-2 pr-6 py-1 sm:pl-4 sm:pr-10 text-right whitespace-nowrap">
+                                                    <TableCell className="pl-2 pr-4 py-1 text-right whitespace-nowrap">
                                                         {!isCompleted ? (
                                                             <div className="flex flex-col items-end leading-tight">
                                                                 <div className={cn(
