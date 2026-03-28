@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS sale_event_items (
   planned_quantity INTEGER NOT NULL DEFAULT 0,        -- 計画数量
   allocated_quantity INTEGER NOT NULL DEFAULT 0,     -- 引当数量
   actual_quantity INTEGER,                            -- 実績数量（出荷後入力）
+  is_produced BOOLEAN NOT NULL DEFAULT false,         -- 生産済みフラグ
   note TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
