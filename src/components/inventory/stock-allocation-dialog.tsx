@@ -175,8 +175,8 @@ export function StockAllocationDialog({
                             引当中のイベントはありません
                         </div>
                     ) : (
-                        <div className="border rounded-lg flex-1 min-h-0 overflow-y-auto shadow-sm">
-                            <Table>
+                        <div className="border rounded-lg flex-1 min-h-0 overflow-auto shadow-sm w-full">
+                            <Table className="w-full min-w-[650px]">
                                 <TableHeader className="sticky top-0 bg-background z-10">
                                     <TableRow className="hover:bg-transparent">
                                         <TableHead className="h-10 px-2 sm:px-4 text-xs sm:text-sm">イベント / 納品先</TableHead>
