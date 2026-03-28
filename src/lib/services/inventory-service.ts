@@ -42,21 +42,26 @@ const parseLocalDate = (dateStr: string): Date => {
 // ロール袋（原反/フィルム巻）かどうか判定
 export function isRollBag(shape: string | null | undefined, category?: string, metersPerRoll?: number | null): boolean {
   const s = shape || "";
-  // 1巻あたりのメートル数が設定されている、または数値がある場合はロールとして扱う
-  if (metersPerRoll && metersPerRoll > 0) {
-    return true;
-  }
+    // 1巻あたりのメートル数が設定されている、または数値がある場合はロールとして扱う
+    if (metersPerRoll && metersPerRoll > 0) {
+        return true;
+    }
 
-  // カテゴリが明示的に「袋」や「新米」の場合は、たとえ形状が RZ/RA でも枚数管理（枚）とする
-  if (category === 'bag' || category === 'new_rice') {
-    return false;
-  }
     // 形状に「巻」や「ロール」が含まれる場合はロール
     if (s.includes('巻') || s.includes('ロール')) return true;
 
-    // 特定の形状コード (RZ/RA) を持つものは、上記カテゴリ以外であればロールとして扱う
+    // 特定の形状コード (RZ/RA) を持つものはロールとして扱う
     const normalized = s.replace(/\s+/g, '').toUpperCase();
-    return normalized.includes('RZ') || normalized.includes('RA') || normalized.includes('RＺ') || normalized.includes('RＡ');
+    if (normalized.includes('RZ') || normalized.includes('RA') || normalized.includes('RＺ') || normalized.includes('RＡ')) {
+        return true;
+    }
+
+    // カテゴリが明示的に「袋」や「新米」の場合は枚数管理（枚）とする
+    if (category === 'bag' || category === 'new_rice') {
+        return false;
+    }
+
+    return false;
 }
 
 // デフォルトの在庫アラート閾値を取得

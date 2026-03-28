@@ -22,7 +22,7 @@ import {
     ArrowUpCircle,
     ArrowDownCircle
 } from "lucide-react";
-import { isRollBag } from "@/lib/services";
+import { isRollBag, bagsToMeters } from "@/lib/services";
 import { Product } from "@/types";
 import {
     Chart as ChartJS,
@@ -62,8 +62,11 @@ export function StockPredictionDialog({
     open,
     onOpenChange,
 }: StockPredictionDialogProps): React.ReactElement {
-    const isRoll = isRollBag(product.shape || "", product.category);
+    const isRoll = isRollBag(product.shape || "", product.category, product.metersPerRoll);
     const unit = isRoll ? "m" : "枚";
+
+    // 一日の平均消費を m に変換 (ロールの場合)
+    const dailyRateMeters = isRoll ? bagsToMeters(product.dailyShipmentRate || 0, product.weight || 5) : 0;
 
     const chartData = useMemo(() => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -157,8 +160,27 @@ export function StockPredictionDialog({
                                 <CardTitle className="text-xs font-medium text-muted-foreground uppercase">1日の平均消費</CardTitle>
                             </CardHeader>
                             <CardContent className="p-3 pt-1">
-                                <div className="text-2xl font-bold">{product.dailyShipmentRate?.toLocaleString() || 0}<span className="text-sm ml-1 font-normal">{unit}</span></div>
-                                <div className="text-xs text-muted-foreground">通常出荷ベース</div>
+                                <div className="text-2xl font-bold">
+                                    {isRoll ? (
+                                        <>
+                                            {dailyRateMeters.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                                            <span className="text-sm ml-1 font-normal">m</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {product.dailyShipmentRate?.toLocaleString() || 0}
+                                            <span className="text-sm ml-1 font-normal">枚</span>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                    通常出荷ベース
+                                    {isRoll && (
+                                        <span className="ml-1 opacity-70">
+                                            ({product.dailyShipmentRate?.toLocaleString() || 0}枚相当)
+                                        </span>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
                          <Card className="bg-slate-50 border-none shadow-none">
