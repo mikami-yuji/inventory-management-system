@@ -140,7 +140,7 @@ export function StockAllocationDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 px-1 sm:px-0">
+                <div className="space-y-4 px-2">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="flex justify-between items-center bg-muted/50 p-2.5 rounded-lg border border-border/50">
                             <span className="font-medium text-sm">引当合計</span>
@@ -183,7 +183,7 @@ export function StockAllocationDialog({
                                         <TableHead className="h-10 px-1 sm:px-4 text-xs sm:text-sm">日程</TableHead>
                                         <TableHead className="h-10 px-1 sm:px-4 text-right text-xs sm:text-sm">数量</TableHead>
                                         <TableHead className="h-10 px-1 sm:px-4 text-center text-xs sm:text-sm">生産済</TableHead>
-                                        <TableHead className="h-10 px-2 sm:px-4 text-right text-xs sm:text-sm">有効在庫</TableHead>
+                                        <TableHead className="h-10 pl-2 pr-4 sm:pl-4 sm:pr-8 text-right text-xs sm:text-sm">有効在庫</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -263,7 +263,7 @@ export function StockAllocationDialog({
                                                             />
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="px-2 py-3 sm:px-4 text-right whitespace-nowrap">
+                                                    <TableCell className="pl-2 pr-4 py-3 sm:pl-4 sm:pr-8 text-right whitespace-nowrap">
                                                         {!isCompleted ? (
                                                             <div className="flex flex-col items-end leading-tight">
                                                                 <div className={cn(
