@@ -132,7 +132,7 @@ export function StockAllocationDialog({
                 onClose();
             }
         }}>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
                 <DialogHeader>
                     <DialogTitle>特売引当詳細</DialogTitle>
                     <DialogDescription>
@@ -140,7 +140,7 @@ export function StockAllocationDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 px-6 py-2">
+                <div className="space-y-4 px-6 py-2 flex-1 flex flex-col min-h-0">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="flex justify-between items-center bg-muted/50 p-2.5 rounded-lg border border-border/50">
                             <span className="font-medium text-sm">引当合計</span>
@@ -175,7 +175,7 @@ export function StockAllocationDialog({
                             引当中のイベントはありません
                         </div>
                     ) : (
-                        <div className="border rounded-lg max-h-[60vh] overflow-y-auto shadow-sm">
+                        <div className="border rounded-lg flex-1 min-h-0 overflow-y-auto shadow-sm">
                             <Table>
                                 <TableHeader className="sticky top-0 bg-background z-10">
                                     <TableRow className="hover:bg-transparent">
