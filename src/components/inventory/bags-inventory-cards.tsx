@@ -12,7 +12,7 @@ import { SaleEvent } from "@/hooks/use-sale-events";
 import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import imageCompression from "browser-image-compression";
-import Image from "next/image";
+import { ProductImage } from "@/components/ui/product-image";
 
 type BagsInventoryCardsProps = {
     products: Product[];
@@ -235,11 +235,12 @@ function ProductCard({
             {/* 画像エリア */}
             <div className="relative aspect-[4/3] bg-slate-100 group">
                 {product.imageUrl ? (
-                    <Image
+                    <ProductImage
                         src={product.imageUrl}
                         alt={product.name}
+                        variant="card"
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="transition-transform duration-500 group-hover:scale-105"
                     />
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground bg-slate-50">

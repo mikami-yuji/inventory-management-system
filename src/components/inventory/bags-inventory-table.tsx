@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProductImage } from "@/components/ui/product-image";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -167,18 +168,12 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                             isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
                                         )}>
                                             {product.imageUrl ? (
-                                                <div
-                                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                                <ProductImage
+                                                    src={product.imageUrl}
+                                                    alt={product.name}
+                                                    variant="thumbnail"
                                                     onClick={() => setSelectedImage({ url: product.imageUrl!, alt: product.name, name: product.name })}
-                                                >
-                                                    <Image
-                                                        src={product.imageUrl}
-                                                        alt={product.name}
-                                                        width={48}
-                                                        height={48}
-                                                        className="w-12 h-12 object-cover rounded border"
-                                                    />
-                                                </div>
+                                                />
                                             ) : (
                                                 <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
                                                     <Package className="h-5 w-5 text-gray-400" />
