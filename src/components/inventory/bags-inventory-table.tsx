@@ -481,6 +481,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                         <div className="text-[10px] text-muted-foreground whitespace-nowrap">
                                                             {format(prediction.estimatedDate, "M/d")}頃 終了
                                                         </div>
+                                                        <div className="text-[9px] text-slate-500 mt-1 whitespace-nowrap opacity-80">
+                                                            通常: {product.dailyShipmentRate?.toLocaleString() || 0}枚/日
+                                                        </div>
                                                         {prediction.wipStartAlert && (
                                                             <Badge className="mt-1 h-3.5 text-[8px] bg-red-600 hover:bg-red-700 px-1 border-none leading-none">
                                                                 仕掛開始!
