@@ -161,23 +161,14 @@ export function StockPredictionDialog({
                             </CardHeader>
                             <CardContent className="p-3 pt-1">
                                 <div className="text-2xl font-bold">
-                                    {isRoll ? (
-                                        <>
-                                            {dailyRateMeters.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-                                            <span className="text-sm ml-1 font-normal">m</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {product.dailyShipmentRate?.toLocaleString() || 0}
-                                            <span className="text-sm ml-1 font-normal">枚</span>
-                                        </>
-                                    )}
+                                    {product.dailyShipmentRate?.toLocaleString() || 0}
+                                    <span className="text-sm ml-1 font-normal">枚</span>
                                 </div>
                                 <div className="text-xs text-muted-foreground">
                                     通常出荷ベース
                                     {isRoll && (
                                         <span className="ml-1 opacity-70">
-                                            ({product.dailyShipmentRate?.toLocaleString() || 0}枚相当)
+                                            ({dailyRateMeters.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}m相当)
                                         </span>
                                     )}
                                 </div>
