@@ -220,7 +220,10 @@ export const calculateStockPrediction = (
             return;
         }
 
-        const key = formatDateKey(new Date(item.expectedDate));
+        // 仕掛の完成予定日＝発送日のため、在庫に反映されるのは翌日とする
+        const arrivalDate = new Date(item.expectedDate);
+        arrivalDate.setDate(arrivalDate.getDate() + 1);
+        const key = formatDateKey(arrivalDate);
         arrivalMap.set(key, (arrivalMap.get(key) || 0) + item.quantity);
     });
 
