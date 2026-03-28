@@ -117,12 +117,20 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     }
 
     try {
+        const isAdmin = (session?.user as { role?: string })?.role === 'admin';
+        
         const supabase = createServerClient();
-        const { error } = await supabase
+        let query = supabase
             .from('delivery_addresses')
             .delete()
-            .eq('id', id)
-            .eq('client_id', userId);
+            .eq('id', id);
+            
+        // 管理者以外は自分のデータのみ削除可能
+        if (!isAdmin) {
+            query = query.eq('client_id', userId);
+        }
+
+        const { error } = await query;
 
         if (error) throw error;
 

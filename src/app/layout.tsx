@@ -5,6 +5,7 @@ import AuthProvider from "@/components/providers/auth-provider";
 import { CartProvider } from "@/contexts/cart-context";
 import { NotificationProvider } from "@/contexts/notification-context";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -63,6 +64,7 @@ export default function RootLayout({
               </CartProvider>
             </NotificationProvider>
           </AuthProvider>
+          <Toaster position="top-center" />
         </ThemeProvider>
       </body>
     </html>
