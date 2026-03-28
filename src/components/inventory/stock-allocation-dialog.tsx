@@ -23,6 +23,7 @@ import { ja } from "date-fns/locale";
 import { Pencil, Check, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useUpdateSaleEvent, type SaleEvent } from "@/hooks/use-sale-events";
 import { cn } from "@/lib/utils";
 import { bagsToMeters, isRollBag, metersToBags } from "@/lib/services/inventory-service"; // 修正
@@ -46,7 +47,7 @@ export function StockAllocationDialog({
     currentInventory = 0, // 追加
     onUpdate,
 }: StockAllocationDialogProps): React.ReactElement {
-    const { updateAllocation, loading } = useUpdateSaleEvent();
+    const { updateAllocation, updateProducedStatus, loading } = useUpdateSaleEvent();
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editQuantity, setEditQuantity] = useState<string>("");
 
@@ -55,14 +56,15 @@ export function StockAllocationDialog({
     // この商品を引き当てているイベントを抽出
     const allocations = saleEvents.flatMap(event => {
         const item = event.items.find(i => i.productId === product.id);
-        if (item && item.allocatedQuantity > 0) {
+        if (item && (item.allocatedQuantity > 0 || item.isProduced)) {
             return [{
                 eventId: event.id,
                 itemId: item.id,
-                eventName: event.clientName, // クライアント名をイベント名として使用
+                eventName: event.clientName,
                 dates: event.dates,
                 quantity: item.allocatedQuantity,
                 status: event.status,
+                isProduced: item.isProduced || false,
             }];
         }
         return [];
@@ -79,7 +81,7 @@ export function StockAllocationDialog({
         : currentInventory;
 
     const totalAllocated = allocations
-        .filter(a => a.status !== 'completed' && a.status !== 'cancelled')
+        .filter(a => a.status !== 'completed' && a.status !== 'cancelled' && !a.isProduced)
         .reduce((sum, item) => sum + item.quantity, 0);
     const effectiveStock = currentInventoryPieces - totalAllocated; // 有効在庫を枚数で計算（完了分は除外）
     const effectiveStockMeters = product.weight ? bagsToMeters(effectiveStock, product.weight) : 0;
@@ -103,6 +105,16 @@ export function StockAllocationDialog({
             toast.success("引当数を更新しました");
             setEditingId(null);
             if (onUpdate) onUpdate();
+        }
+    };
+
+    const handleToggleProduced = async (alloc: typeof allocations[0]) => {
+        const success = await updateProducedStatus(alloc.eventId, alloc.itemId, !alloc.isProduced);
+        if (success) {
+            toast.success(alloc.isProduced ? "生産済を解除しました" : "生産済としてマークしました");
+            if (onUpdate) onUpdate();
+        } else {
+            toast.error("更新に失敗しました");
         }
     };
 
@@ -170,6 +182,7 @@ export function StockAllocationDialog({
                                         <TableHead className="h-10 px-2 sm:px-4 text-xs sm:text-sm">イベント / 納品先</TableHead>
                                         <TableHead className="h-10 px-1 sm:px-4 text-xs sm:text-sm">日程</TableHead>
                                         <TableHead className="h-10 px-1 sm:px-4 text-right text-xs sm:text-sm">数量</TableHead>
+                                        <TableHead className="h-10 px-1 sm:px-4 text-center text-xs sm:text-sm">生産済</TableHead>
                                         <TableHead className="h-10 px-2 sm:px-4 text-right text-xs sm:text-sm">有効在庫</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -178,7 +191,7 @@ export function StockAllocationDialog({
                                         let cumulativeAllocated = 0;
                                         return allocations.map((alloc, i) => {
                                             const isCompleted = alloc.status === 'completed';
-                                            if (!isCompleted) {
+                                            if (!isCompleted && !alloc.isProduced) {
                                                 cumulativeAllocated += alloc.quantity;
                                             }
                                             const currentEffectiveStockPieces = currentInventoryPieces - cumulativeAllocated;
@@ -238,6 +251,17 @@ export function StockAllocationDialog({
                                                                 <Pencil className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground opacity-30 sm:opacity-0 sm:group-hover/edit:opacity-100 transition-opacity" />
                                                             </div>
                                                         )}
+                                                    </TableCell>
+                                                    <TableCell className="px-1 py-3 sm:px-4 text-center">
+                                                        <div className="flex justify-center">
+                                                            <Checkbox 
+                                                                id={`produced-${alloc.itemId}`}
+                                                                checked={alloc.isProduced}
+                                                                onCheckedChange={() => handleToggleProduced(alloc)}
+                                                                disabled={loading || isCompleted}
+                                                                className="h-4 w-4"
+                                                            />
+                                                        </div>
                                                     </TableCell>
                                                     <TableCell className="px-2 py-3 sm:px-4 text-right whitespace-nowrap">
                                                         {!isCompleted ? (

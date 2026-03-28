@@ -23,6 +23,7 @@ export type SaleEventItem = {
     allocatedQuantity: number;
     actualQuantity: number | null;
     currentStock: number;
+    isProduced: boolean;
     productShape?: string | null;
     productWeight?: number | null;
 };
@@ -142,6 +143,7 @@ export function useUpdateSaleEvent(): {
         description: string | null;
         items: Array<{ productId: string; plannedQuantity: number }>;
     }) => Promise<boolean>;
+    updateProducedStatus: (eventId: string, itemId: string, isProduced: boolean) => Promise<boolean>;
     deleteEvent: (eventId: string) => Promise<boolean>;
     loading: boolean;
 } {
@@ -237,6 +239,27 @@ export function useUpdateSaleEvent(): {
         }
     };
 
+    const updateProducedStatus = async (eventId: string, itemId: string, isProduced: boolean): Promise<boolean> => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/sale-events', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    eventId,
+                    action: 'updateProducedStatus',
+                    data: { itemId, isProduced }
+                })
+            });
+            const result = await response.json();
+            return !result.error;
+        } catch {
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const deleteEvent = async (eventId: string): Promise<boolean> => {
         setLoading(true);
         try {
@@ -257,6 +280,7 @@ export function useUpdateSaleEvent(): {
         updateActual,
         updateAllocation,
         updateEventDetails,
+        updateProducedStatus,
         deleteEvent,
         loading
     };

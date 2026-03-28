@@ -57,7 +57,7 @@ export function BagsInventoryCards({
                 .filter(event => (event.status === 'active' || event.status === 'upcoming'))
                 .flatMap(event => {
                     const item = event.items.find(i => i.productId === product.id);
-                    return item ? [{ dates: event.dates, quantity: item.allocatedQuantity }] : [];
+                    return item && !item.isProduced ? [{ dates: event.dates, quantity: item.allocatedQuantity }] : [];
                 });
 
             map.set(product.id, calculateStockPrediction(

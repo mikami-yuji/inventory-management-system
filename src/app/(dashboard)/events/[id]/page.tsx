@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     ArrowLeft,
     FileText,
@@ -41,7 +42,7 @@ export default function EventDetailPage(): React.ReactElement {
 
     // データ取得
     const { events, loading, refetch } = useSaleEvents();
-    const { updateStatus, updateActual, deleteEvent, loading: updating } = useUpdateSaleEvent();
+    const { updateStatus, updateActual, updateProducedStatus, deleteEvent, loading: updating } = useUpdateSaleEvent();
 
     // 現在のイベントを取得
     const event = useMemo(() => {
@@ -59,6 +60,16 @@ export default function EventDetailPage(): React.ReactElement {
             refetch();
         } else {
             alert('ステータスの更新に失敗しました');
+        }
+    };
+
+    // 生産済みトグル
+    const handleToggleProduced = async (itemId: string, currentStatus: boolean): Promise<void> => {
+        const success = await updateProducedStatus(eventId, itemId, !currentStatus);
+        if (success) {
+            refetch();
+        } else {
+            alert('生産済みステータスの更新に失敗しました');
         }
     };
 
@@ -304,6 +315,7 @@ export default function EventDetailPage(): React.ReactElement {
                                         <TableHead className="px-3 sm:px-4 text-xs sm:text-sm">商品名</TableHead>
                                         <TableHead className="px-3 sm:px-4 text-right text-xs sm:text-sm">現在庫</TableHead>
                                         <TableHead className="px-3 sm:px-4 text-right text-xs sm:text-sm">計画/実績</TableHead>
+                                        <TableHead className="px-1 sm:px-2 text-center text-xs sm:text-sm whitespace-nowrap">生産済</TableHead>
                                         <TableHead className="px-3 sm:px-4 text-center text-xs sm:text-sm whitespace-nowrap">状態</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -355,6 +367,12 @@ export default function EventDetailPage(): React.ReactElement {
                                                         </div>
                                                     )}
                                                 </div>
+                                            </TableCell>
+                                            <TableCell className="px-1 sm:px-2 py-2 sm:py-3 text-center">
+                                                <Checkbox 
+                                                    checked={item.isProduced}
+                                                    onCheckedChange={() => handleToggleProduced(item.id, item.isProduced)}
+                                                />
                                             </TableCell>
                                             <TableCell className="px-3 sm:px-4 py-2 sm:py-3 text-center">
                                                 {stockShort ? (

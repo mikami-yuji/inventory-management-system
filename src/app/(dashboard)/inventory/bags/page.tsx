@@ -163,6 +163,7 @@ export default function BagsInventoryPage(): React.ReactElement {
             .filter(event => event.status !== 'completed' && event.status !== 'cancelled')
             .forEach(event => {
                 event.items.forEach(item => {
+                    if (item.isProduced) return;
                     const current = map.get(item.productId) || { bags: 0, meters: 0 };
                     const product = allProducts.find(p => p.id === item.productId);
                     const weight = product?.weight || 5;
@@ -182,6 +183,7 @@ export default function BagsInventoryPage(): React.ReactElement {
         saleEvents.forEach(event => {
             if (event.status === 'completed' || event.status === 'cancelled') return;
             event.items.forEach(item => {
+                if (item.isProduced) return;
                 const list = map.get(item.productId) || [];
                 list.push({
                     eventId: event.id,

@@ -106,6 +106,7 @@ export type SaleEventItem = {
   allocatedQuantity: number;
   actualQuantity: number | null;
   currentStock: number;
+  isProduced: boolean;
 };
 
 // 特売イベント本体
