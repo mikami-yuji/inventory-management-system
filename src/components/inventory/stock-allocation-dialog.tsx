@@ -132,7 +132,7 @@ export function StockAllocationDialog({
                 onClose();
             }
         }}>
-            <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
+            <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col overflow-hidden">
                 <DialogHeader>
                     <DialogTitle>特売引当詳細</DialogTitle>
                     <DialogDescription>
