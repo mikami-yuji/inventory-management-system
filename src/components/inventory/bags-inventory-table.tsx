@@ -503,20 +503,19 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                         <TableCell>
                                             <div className="flex items-center gap-1">
                                                 <Button
-                                                    size="sm"
+                                                    size="icon"
                                                     variant={isInCart ? "secondary" : "outline"}
                                                     onClick={() => addToCart(product, 0)}
                                                     disabled={isOutOfStock}
-                                                    className="gap-1"
+                                                    className="h-8 w-8"
                                                 >
                                                     {isInCart ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
                                                 </Button>
-                                                <Button size="sm" variant="ghost" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onAnalyze?.(product); }} title="在庫分析">
-                                                    <LineChart className="h-3 w-3 text-blue-600" />
+                                                <Button size="icon" variant="ghost" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onAnalyze?.(product); }} title="在庫分析" className="h-8 w-8">
+                                                    <LineChart className="h-4 w-4 text-blue-600" />
                                                 </Button>
-                                                <Button size="sm" variant="outline" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(product); }} title="編集">
-                                                    <Pencil className="h-4 w-4 mr-2" />
-                                                    編集
+                                                <Button size="icon" variant="outline" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(product); }} title="編集" className="h-8 w-8">
+                                                    <Pencil className="h-4 w-4" />
                                                 </Button>
                                             </div>
                                         </TableCell>
