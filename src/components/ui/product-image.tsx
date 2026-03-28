@@ -121,10 +121,8 @@ export function ProductImage({
                 src={imageSrc}
                 alt={alt}
                 fill
-                sizes={sizes}
                 loading="lazy"
-                placeholder="blur"
-                blurDataURL={BLUR_PLACEHOLDER}
+                unoptimized
                 className={cn("object-cover", className)}
                 onError={handleError}
             />
@@ -141,10 +139,8 @@ export function ProductImage({
                 alt={alt}
                 width={width ?? 48}
                 height={height ?? 48}
-                sizes={sizes}
                 loading="lazy"
-                placeholder="blur"
-                blurDataURL={BLUR_PLACEHOLDER}
+                unoptimized
                 className={cn(
                     variant === "thumbnail" && "w-12 h-12 object-cover rounded border",
                     className

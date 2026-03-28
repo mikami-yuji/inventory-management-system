@@ -574,6 +574,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 alt={selectedImage.alt}
                                 width={1200}
                                 height={900}
+                                unoptimized
                                 className="w-auto h-auto max-w-full max-h-[75vh] object-contain rounded-md"
                             />
 
