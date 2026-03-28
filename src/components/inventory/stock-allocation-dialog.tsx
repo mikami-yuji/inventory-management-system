@@ -132,7 +132,7 @@ export function StockAllocationDialog({
                 onClose();
             }
         }}>
-            <DialogContent className="max-w-xl">
+            <DialogContent className="max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>特売引当詳細</DialogTitle>
                     <DialogDescription>
@@ -273,8 +273,8 @@ export function StockAllocationDialog({
                                                                     {currentEffectiveStockMeters.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                                                                     <span className="text-[10px] ml-0.5 font-normal">m</span>
                                                                 </div>
-                                                                {product.metersPerRoll && (
-                                                                    <div className="text-[9px] sm:text-[10px] text-muted-foreground">約{calculateRolls(currentEffectiveStockPieces)}巻</div>
+                                                                 {product.metersPerRoll && (
+                                                                    <div className="text-[9px] sm:text-[10px] text-muted-foreground whitespace-nowrap">/ 約{calculateRolls(currentEffectiveStockPieces)}巻</div>
                                                                 )}
                                                             </div>
                                                         ) : (
