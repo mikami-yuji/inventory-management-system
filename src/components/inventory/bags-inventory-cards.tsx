@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import imageCompression from "browser-image-compression";
 import { ProductImage } from "@/components/ui/product-image";
+import { StockPredictionDialog } from "@/components/inventory/stock-prediction-dialog";
 
 type BagsInventoryCardsProps = {
     products: Product[];
@@ -39,6 +40,7 @@ export function BagsInventoryCards({
     onDetail,
     onRefetch
 }: BagsInventoryCardsProps): React.ReactElement {
+    const [viewPrediction, setViewPrediction] = useState<Product | null>(null);
     // 予測計算をメモ化
     const predictionMap = useMemo(() => {
         const map = new Map<string, ReturnType<typeof calculateStockPrediction>>();
@@ -99,8 +101,17 @@ export function BagsInventoryCards({
                     prediction={predictionMap.get(product.id)!}
                     onDetail={onDetail}
                     onRefetch={onRefetch}
+                    onViewPrediction={(p) => setViewPrediction(p)}
                 />
             ))}
+            {viewPrediction && (
+                <StockPredictionDialog
+                    product={viewPrediction}
+                    prediction={predictionMap.get(viewPrediction.id)}
+                    open={!!viewPrediction}
+                    onOpenChange={() => setViewPrediction(null)}
+                />
+            )}
         </div>
     );
 }
@@ -116,6 +127,7 @@ type ProductCardProps = {
     prediction: ReturnType<typeof calculateStockPrediction>;
     onDetail: (product: Product) => void;
     onRefetch: () => void;
+    onViewPrediction: (product: Product) => void;
 };
 
 function ProductCard({
@@ -128,7 +140,8 @@ function ProductCard({
     incomingMap,
     prediction,
     onDetail,
-    onRefetch
+    onRefetch,
+    onViewPrediction
 }: ProductCardProps) {
     const [isHovered, setIsHovered] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
@@ -406,11 +419,16 @@ function ProductCard({
                                 </div>
                             )}
 
-                            {/* 在庫予測 */}
-                            <div className={cn(
-                                "mt-2 p-1.5 rounded-md flex flex-col items-center border",
-                                prediction.wipStartAlert ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-200"
-                            )}>
+                            <div 
+                                className={cn(
+                                    "mt-2 p-1.5 rounded-md flex flex-col items-center border cursor-pointer hover:bg-slate-100 transition-colors",
+                                    prediction.wipStartAlert ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-200"
+                                )}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onViewPrediction(product);
+                                }}
+                            >
                                 {prediction.estimatedDate ? (
                                     <>
                                         <div className={cn(

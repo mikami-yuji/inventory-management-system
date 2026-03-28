@@ -178,7 +178,13 @@ export const calculateStockPrediction = (
     let unconfirmedWIPTotal = 0;
 
     if (currentStock <= 0 && wipItems.length === 0 && incomingItems.length === 0) {
-        return { remainingDays: 0, estimatedDate: null, wipStartAlert: false, hasUnconfirmedWIP: false };
+        return { 
+            remainingDays: 0, 
+            estimatedDate: null, 
+            wipStartAlert: false, 
+            hasUnconfirmedWIP: false,
+            simulation: []
+        };
     }
 
     const isRoll = isRollBag(product.shape || "", product.category, product.metersPerRoll);
@@ -218,10 +224,20 @@ export const calculateStockPrediction = (
         arrivalMap.set(key, (arrivalMap.get(key) || 0) + item.quantity);
     });
 
-    // 日ごとのシミュレーション
+    const simulation = [];
+    
     // Day 0 (本日) の入荷・仕掛完了を加算
     const todayKey = formatDateKey(today);
-    currentStock += arrivalMap.get(todayKey) || 0;
+    const todayArrivals = arrivalMap.get(todayKey) || 0;
+    currentStock += todayArrivals;
+    
+    // 初期状態を記録
+    simulation.push({
+        date: new Date(today),
+        stock: currentStock,
+        arrivals: todayArrivals,
+        out: 0
+    });
 
     while (days < maxDays) {
         days++;
@@ -244,6 +260,14 @@ export const calculateStockPrediction = (
 
         currentStock -= consumption;
 
+        // 履歴を記録
+        simulation.push({
+            date: targetDate,
+            stock: Math.max(0, currentStock),
+            arrivals: arrivals,
+            out: consumption
+        });
+
         // 在庫が切れたら終了
         if (currentStock <= 0) break;
     }
@@ -263,6 +287,7 @@ export const calculateStockPrediction = (
         remainingDays: days,
         estimatedDate: days < maxDays ? estimatedDate : null,
         wipStartAlert,
-        hasUnconfirmedWIP
+        hasUnconfirmedWIP,
+        simulation
     };
 };

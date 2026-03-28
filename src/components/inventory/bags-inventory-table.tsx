@@ -32,6 +32,7 @@ import type { SaleEvent } from "@/hooks/use-sale-events";
 import type { SupplierStockLot } from "@/types";
 import { useAppSettings } from "@/hooks/use-masters";
 import Image from "next/image";
+import { StockPredictionDialog } from "@/components/inventory/stock-prediction-dialog";
 
 
 
@@ -56,6 +57,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
     const [viewAllocation, setViewAllocation] = useState<Product | null>(null);
     const [adjustStock, setAdjustStock] = useState<Product | null>(null);
     const [editStatusProduct, setEditStatusProduct] = useState<Product | null>(null);
+    const [viewPrediction, setViewPrediction] = useState<Product | null>(null);
     const { addToCart, items } = useCart();
     const { settings } = useAppSettings();
 
@@ -103,6 +105,14 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
 
     return (
         <Card>
+            {viewPrediction && (
+                <StockPredictionDialog
+                    product={viewPrediction}
+                    prediction={predictionMap.get(viewPrediction.id)}
+                    open={!!viewPrediction}
+                    onOpenChange={(open) => !open && setViewPrediction(null)}
+                />
+            )}
             <CardHeader>
                 <CardTitle>米袋在庫状況 ({products.length}件)</CardTitle>
             </CardHeader>
@@ -455,7 +465,10 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                             </div>
                                         </TableCell>
 
-                                        <TableCell className="text-center max-w-[120px] bg-slate-50/50 border-x">
+                                        <TableCell 
+                                            className="text-center max-w-[120px] bg-slate-50/50 border-x cursor-pointer hover:bg-slate-100 transition-colors"
+                                            onClick={() => setViewPrediction(product)}
+                                        >
                                             <div className="flex flex-col items-center">
                                                 {prediction.estimatedDate ? (
                                                     <>
