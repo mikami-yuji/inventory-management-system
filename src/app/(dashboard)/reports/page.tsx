@@ -17,6 +17,7 @@ import {
     Star,
     ClipboardList,
     ChevronRight,
+    Swords,
 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
@@ -93,6 +94,41 @@ export default function ReportsPage(): React.ReactElement {
                 return dateA - dateB;
             });
     }, [events]);
+
+    // ① 商品ごとの全イベント引当合計（競合検出用）
+    // productId -> { totalAllocated: number, eventNames: string[] }
+    const allocationByProduct = useMemo(() => {
+        const map = new Map<string, { totalAllocated: number; eventNames: string[] }>();
+        upcomingEvents.forEach(event => {
+            event.items.forEach(item => {
+                const existing = map.get(item.productId) || { totalAllocated: 0, eventNames: [] };
+                existing.totalAllocated += item.allocatedQuantity;
+                if (!existing.eventNames.includes(event.clientName)) {
+                    existing.eventNames.push(event.clientName);
+                }
+                map.set(item.productId, existing);
+            });
+        });
+        return map;
+    }, [upcomingEvents]);
+
+    // ② 商品×イベントごとの在庫充足予測
+    // 予測在庫 = 現在庫 - dailyShipmentRate × 残日数 (最低0)
+    const forecastStockForEvent = useMemo(() => {
+        const cache = new Map<string, number>(); // `${productId}_${eventId}` -> forecastedStock
+        upcomingEvents.forEach(event => {
+            const firstDate = event.dates[0] ? parseISO(event.dates[0]) : null;
+            const daysUntil = firstDate ? Math.max(0, differenceInDays(firstDate, today)) : 0;
+            event.items.forEach(item => {
+                const product = productMap.get(item.productId);
+                const currentStock = inventoryMap.get(item.productId) || 0;
+                const dailyRate = product?.dailyShipmentRate || 0;
+                const forecasted = Math.max(0, currentStock - dailyRate * daysUntil);
+                cache.set(`${item.productId}_${event.id}`, forecasted);
+            });
+        });
+        return cache;
+    }, [upcomingEvents, productMap, inventoryMap, today]);
 
     // 入荷予定（今日以降、日付昇順）
     const upcomingIncomingItems = useMemo(() => {
@@ -256,27 +292,72 @@ export default function ReportsPage(): React.ReactElement {
                                                 </div>
                                             </div>
 
-                                            {/* 商品リスト */}
-                                            <div className="space-y-1">
-                                                {event.items.slice(0, 4).map(item => {
-                                                    const product = productMap.get(item.productId);
+                                            {/* ① 商品別の在庫充足予測 + ② 競合検出 */}
+                                            <div className="space-y-2">
+                                                {event.items.map(item => {
                                                     const currentStock = inventoryMap.get(item.productId) || 0;
-                                                    const hasEnoughStock = currentStock >= item.plannedQuantity;
+                                                    // イベント当日の予測在庫
+                                                    const forecastedStock = forecastStockForEvent.get(`${item.productId}_${event.id}`) ?? currentStock;
+                                                    // 充足判定（予測在庫 >= 引当数）
+                                                    const isSufficient = forecastedStock >= item.allocatedQuantity;
+                                                    const shortage = item.allocatedQuantity - forecastedStock;
+                                                    // 競合検出（このイベント以外にも引当があるか）
+                                                    const alloc = allocationByProduct.get(item.productId);
+                                                    const hasConflict = alloc && alloc.eventNames.length > 1;
+                                                    const totalAllocatedAcrossEvents = alloc?.totalAllocated ?? item.allocatedQuantity;
+                                                    const exceedsStockAcrossEvents = totalAllocatedAcrossEvents > currentStock;
+
                                                     return (
-                                                        <div key={item.id} className="flex items-center justify-between text-xs text-muted-foreground">
-                                                            <span className="truncate max-w-[60%]">{item.productName}</span>
-                                                            <div className="flex items-center gap-2 shrink-0">
-                                                                <span className={cn("font-medium", !hasEnoughStock && "text-red-600")}>
-                                                                    在庫{currentStock.toLocaleString()}枚
-                                                                </span>
-                                                                <span>/ 予定{item.plannedQuantity.toLocaleString()}枚</span>
+                                                        <div key={item.id} className={cn(
+                                                            "rounded-md px-2 py-1.5 border text-xs",
+                                                            !isSufficient ? "border-red-200 bg-red-50" :
+                                                                hasConflict && exceedsStockAcrossEvents ? "border-amber-200 bg-amber-50" :
+                                                                    "border-slate-100 bg-slate-50"
+                                                        )}>
+                                                            {/* 商品名行 */}
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <span className="font-medium truncate max-w-[55%]">{item.productName}</span>
+                                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                                    {/* 競合バッジ */}
+                                                                    {hasConflict && exceedsStockAcrossEvents && (
+                                                                        <Badge variant="outline" className="text-[9px] border-amber-400 text-amber-700 bg-amber-50 gap-0.5 px-1 py-0">
+                                                                            <Swords className="h-2.5 w-2.5" />
+                                                                            競合
+                                                                        </Badge>
+                                                                    )}
+                                                                    {/* 充足ステータス */}
+                                                                    {isSufficient ? (
+                                                                        <Badge variant="outline" className="text-[9px] border-emerald-400 text-emerald-700 bg-emerald-50 px-1 py-0">
+                                                                            充足
+                                                                        </Badge>
+                                                                    ) : (
+                                                                        <Badge variant="outline" className="text-[9px] border-red-400 text-red-700 bg-red-50 px-1 py-0">
+                                                                            不足
+                                                                        </Badge>
+                                                                    )}
+                                                                </div>
                                                             </div>
+
+                                                            {/* 数値詳細行 */}
+                                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] text-muted-foreground">
+                                                                <span>現在庫 <strong className="text-slate-700">{currentStock.toLocaleString()}</strong>枚</span>
+                                                                <span>→ 当日予測 <strong className={isSufficient ? "text-emerald-700" : "text-red-700"}>{forecastedStock.toLocaleString()}</strong>枚</span>
+                                                                <span>引当 <strong className="text-blue-700">{item.allocatedQuantity.toLocaleString()}</strong>枚</span>
+                                                                {!isSufficient && (
+                                                                    <span className="text-red-600 font-medium">⚠ {shortage.toLocaleString()}枚不足</span>
+                                                                )}
+                                                            </div>
+
+                                                            {/* 競合詳細 */}
+                                                            {hasConflict && exceedsStockAcrossEvents && (
+                                                                <div className="mt-1 text-[9px] text-amber-700">
+                                                                    複数イベント合計 {totalAllocatedAcrossEvents.toLocaleString()}枚 引当 → 在庫{currentStock.toLocaleString()}枚を超過
+                                                                    （{alloc!.eventNames.join(" / ")}）
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
-                                                {event.items.length > 4 && (
-                                                    <p className="text-[11px] text-muted-foreground mt-1">他 {event.items.length - 4} 商品...</p>
-                                                )}
                                             </div>
                                         </CardContent>
                                     </Card>
