@@ -402,7 +402,7 @@ export default function ReportsPage(): React.ReactElement {
                                                         )}>
                                                             <div className="flex items-start justify-between gap-3 mb-1.5">
                                                                 <span className="font-bold text-xs md:text-sm text-slate-800 leading-tight">
-                                                                    {item.productName}
+                                                                    {item.productName}{product?.weight ? ` ${product.weight}kg` : ""}
                                                                 </span>
                                                                 <div className="flex items-center gap-1 shrink-0">
                                                                     {hasActiveWip && (
@@ -510,7 +510,7 @@ export default function ReportsPage(): React.ReactElement {
                                                     return (
                                                         <div key={idx} className="flex items-center justify-between text-xs">
                                                             <div className="min-w-0 flex-1">
-                                                                <span className="font-medium truncate block">{product?.name || item.productId}</span>
+                                                                <span className="font-medium truncate block">{product?.name || item.productId}{product?.weight ? ` ${product.weight}kg` : ""}</span>
                                                                 {item.note && <span className="text-[10px] text-muted-foreground">{item.note}</span>}
                                                             </div>
                                                             <span className="font-bold tabular-nums shrink-0 ml-2 text-emerald-700">

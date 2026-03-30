@@ -72,6 +72,7 @@ type TurnoverData = {
     rank: TurnoverRank;
     suggestedAction: string;
     daysOfStock: number | null;
+    productWeight?: number;
 };
 
 /**
@@ -235,6 +236,7 @@ function TurnoverReportContent(): React.ReactElement {
                 rank,
                 suggestedAction: getSuggestedAction(rank, currentStock, monthlyOutgoing),
                 daysOfStock,
+                productWeight: product.weight,
             };
         });
     }, [products, inventoryMap, historyByProduct]);
@@ -644,7 +646,7 @@ function TurnoverReportContent(): React.ReactElement {
                                             }
                                         >
                                             <TableCell>
-                                                <div className="font-medium text-sm">{item.productName}</div>
+                                                <div className="font-medium text-sm">{item.productName}{item.productWeight ? ` ${item.productWeight}kg` : ""}</div>
                                                 <div className="text-xs text-muted-foreground">{item.productCode}</div>
                                             </TableCell>
                                             <TableCell className="text-right font-mono tabular-nums">

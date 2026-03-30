@@ -484,7 +484,7 @@ function StockReportContent(): React.ReactElement {
                                                 className={isOutOfStock ? "bg-red-50" : isLowStock ? "bg-amber-50" : ""}
                                             >
                                                 <TableCell>
-                                                    <div className="font-medium">{item.product.name}</div>
+                                                    <div className="font-medium">{item.product.name}{item.product.weight ? ` ${item.product.weight}kg` : ""}</div>
                                                     <div className="text-xs text-muted-foreground">{item.product.sku || item.product.id}</div>
                                                 </TableCell>
                                                 <TableCell>
