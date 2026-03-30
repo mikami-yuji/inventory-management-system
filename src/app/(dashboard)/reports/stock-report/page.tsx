@@ -225,7 +225,6 @@ function StockReportContent(): React.ReactElement {
                     "週間使用": item.weeklyUsage,
                     "月間使用": item.monthlyUsage,
                     "在庫日数": item.daysUntilStockout !== null ? `${item.daysUntilStockout}日` : "-",
-                    "推奨発注数": item.suggestedOrder > 0 ? item.suggestedOrder : "-",
                     "ステータス": statusStr
                 };
             });
@@ -243,7 +242,6 @@ function StockReportContent(): React.ReactElement {
                 { wch: 10 }, // 週間使用
                 { wch: 10 }, // 月間使用
                 { wch: 10 }, // 在庫日数
-                { wch: 12 }, // 推奨発注数
                 { wch: 10 }, // ステータス
             ];
             worksheet["!cols"] = colWidths;
@@ -428,7 +426,6 @@ function StockReportContent(): React.ReactElement {
                                         <TableHead className="text-right">週間使用</TableHead>
                                         <TableHead className="text-right">月間使用</TableHead>
                                         <TableHead className="text-right">在庫日数</TableHead>
-                                        <TableHead className="text-right">推奨発注数</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -477,9 +474,7 @@ function StockReportContent(): React.ReactElement {
                                                         <span className="text-muted-foreground">-</span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="text-right text-blue-700 font-bold tabular-nums">
-                                                    {item.suggestedOrder > 0 ? item.suggestedOrder.toLocaleString() : '-'}
-                                                </TableCell>
+
                                             </TableRow>
                                         );
                                     })}

@@ -1,424 +1,421 @@
 "use client";
 
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-    BarChart3,
-    TrendingUp,
-    TrendingDown,
     Package,
-    ShoppingCart,
-    Calendar,
-    DollarSign,
-    FileText,
+    TrendingDown,
+    AlertTriangle,
     RefreshCw,
+    FileText,
+    Truck,
+    CalendarDays,
+    Star,
+    ClipboardList,
+    ChevronRight,
 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    LineElement,
-    PointElement,
-    Title,
-    Tooltip,
-    Legend,
-    ArcElement,
-} from 'chart.js';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
-
-// Chart.jsのコンポーネント登録
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    LineElement,
-    PointElement,
-    Title,
-    Tooltip,
-    Legend,
-    ArcElement
-);
+import { useSaleEvents } from "@/hooks/use-sale-events";
+import { useIncomingStock } from "@/hooks/use-incoming-stock";
+import { useWorkInProgress } from "@/hooks/use-work-in-progress";
+import { calculateStockStatus } from "@/lib/services";
+import { format, differenceInDays, parseISO, isAfter, isBefore, startOfDay } from "date-fns";
+import { ja } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 export default function ReportsPage(): React.ReactElement {
-    // APIから商品・在庫データを取得
+    // APIからデータを取得
     const { products } = useProducts();
     const { inventory } = useInventory();
+    const { events } = useSaleEvents({ status: "all" });
+    const { incomingStocks } = useIncomingStock();
+    const { items: wipItems } = useWorkInProgress({ status: "in_progress" });
 
-    // 発注データをAPIから取得
-    const [orders, setOrders] = useState<Array<{
-        id: string;
-        createdAt: string;
-        items?: Array<{
-            unitPrice: number;
-            printingCost: number;
-            quantity: number;
-        }>;
-    }>>([]);
-    const [, setOrdersLoading] = useState(true);
+    const today = startOfDay(new Date());
 
-    const fetchOrders = useCallback(async (): Promise<void> => {
-        try {
-            const res = await fetch('/api/orders');
-            if (res.ok) {
-                const result = await res.json();
-                const rawData = result.data || result;
-                const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
-                setOrders(safeData);
-            }
-        } catch (err) {
-            console.error('発注データ取得エラー:', err);
-        } finally {
-            setOrdersLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchOrders();
-    }, [fetchOrders]);
-
-    // 月別の発注サマリー（実データ集計）
-    const monthlyData = useMemo(() => {
-        const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-        const orderCounts = new Array(12).fill(0);
-        const orderAmounts = new Array(12).fill(0);
-
-        const now = new Date();
-        const currentYear = now.getFullYear();
-
-        orders.forEach(order => {
-            const date = new Date(order.createdAt);
-            // 今年分のみ集計
-            if (date.getFullYear() === currentYear) {
-                const month = date.getMonth();
-                orderCounts[month]++;
-
-                // 金額計算
-                let orderTotal = 0;
-                order.items?.forEach((item) => {
-                    orderTotal += (item.unitPrice + item.printingCost) * item.quantity;
-                });
-                orderAmounts[month] += orderTotal / 10000; // 万円単位
-            }
-        });
-
-        return { months, orderCounts, orderAmounts };
-    }, [orders]);
-
-    // カテゴリ別在庫分布
-    const categoryDistribution = useMemo(() => {
-        const categories: Record<string, number> = {};
-        products.forEach(p => {
-            const cat = p.category || 'その他';
-            categories[cat] = (categories[cat] || 0) + 1;
-        });
-        return categories;
-    }, [products]);
-
-    // 在庫状態サマリー
-    const stockStats = useMemo(() => {
-        const total = inventory.length;
-        const outOfStock = inventory.filter(i => i.quantity === 0).length;
-        const lowStock = inventory.filter(i => i.quantity > 0 && i.quantity < 50).length;
-        const normalStock = total - outOfStock - lowStock;
-
-        return { total, outOfStock, lowStock, normalStock };
+    // 在庫マップ生成
+    const inventoryMap = useMemo(() => {
+        const map = new Map<string, number>();
+        inventory.forEach(item => map.set(item.productId, item.quantity));
+        return map;
     }, [inventory]);
 
-    // 発注数グラフデータ
-    const orderCountChartData = {
-        labels: monthlyData.months,
-        datasets: [
-            {
-                label: '発注件数',
-                data: monthlyData.orderCounts,
-                backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                borderColor: 'rgba(59, 130, 246, 1)',
-                borderWidth: 1,
-            },
-        ],
-    };
+    // 商品マップ生成
+    const productMap = useMemo(() => {
+        const map = new Map(products.map(p => [p.id, p]));
+        return map;
+    }, [products]);
 
-    // 発注金額グラフデータ
-    const orderAmountChartData = {
-        labels: monthlyData.months,
-        datasets: [
-            {
-                label: '発注金額（万円）',
-                data: monthlyData.orderAmounts,
-                borderColor: 'rgba(16, 185, 129, 1)',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                fill: true,
-                tension: 0.4,
-            },
-        ],
-    };
+    // サマリー計算
+    const summary = useMemo(() => {
+        // 欠品商品
+        const outOfStock = inventory.filter(i => {
+            const product = productMap.get(i.productId);
+            if (!product) return false;
+            return i.quantity === 0 &&
+                product.status !== 'discontinued' &&
+                product.status !== 'on_sale_break' &&
+                product.status !== 'direct_delivery';
+        }).length;
 
-    // カテゴリ分布グラフデータ
-    const categoryChartData = {
-        labels: Object.keys(categoryDistribution).map(k =>
-            k === 'bag' ? '米袋' :
-                k === 'sticker' ? 'シール' :
-                    k === 'new_rice' ? '新米' :
-                        k === 'other' ? 'その他' : k
-        ),
-        datasets: [
-            {
-                data: Object.values(categoryDistribution),
-                backgroundColor: [
-                    'rgba(59, 130, 246, 0.8)',
-                    'rgba(236, 72, 153, 0.8)',
-                    'rgba(245, 158, 11, 0.8)',
-                    'rgba(107, 114, 128, 0.8)',
-                ],
-                borderWidth: 0,
-            },
-        ],
-    };
+        // 2週間以内に在庫切れ予測
+        const lowStockCount = products.filter(p => {
+            if (p.status === 'discontinued' || p.status === 'on_sale_break' || p.status === 'direct_delivery') return false;
+            const stock = inventoryMap.get(p.id) || 0;
+            if (stock === 0 || !p.dailyShipmentRate || p.dailyShipmentRate === 0) return false;
+            const daysLeft = Math.floor(stock / p.dailyShipmentRate);
+            return daysLeft > 0 && daysLeft < 14;
+        }).length;
 
-    // 在庫状態グラフデータ
-    const stockStatusChartData = {
-        labels: ['正常在庫', '低在庫', '欠品'],
-        datasets: [
-            {
-                data: [stockStats.normalStock, stockStats.lowStock, stockStats.outOfStock],
-                backgroundColor: [
-                    'rgba(16, 185, 129, 0.8)',
-                    'rgba(245, 158, 11, 0.8)',
-                    'rgba(239, 68, 68, 0.8)',
-                ],
-                borderWidth: 0,
-            },
-        ],
-    };
+        // 今後の特売引当総数（upcoming/active のもの）
+        const activeEvents = events.filter(e => e.status === 'upcoming' || e.status === 'active');
+        const totalAllocation = activeEvents.reduce((sum, e) =>
+            sum + e.items.reduce((s, item) => s + item.allocatedQuantity, 0), 0);
 
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom' as const,
-            },
-        },
-    };
+        // WIP未確認件数
+        const unconfirmedWip = wipItems.filter(w => w.confirmationStatus === 'unconfirmed').length;
+
+        return { outOfStock, lowStockCount, totalAllocation, unconfirmedWip };
+    }, [inventory, inventoryMap, products, productMap, events, wipItems]);
+
+    // 特売スケジュール（active/upcoming のみ、日付昇順）
+    const upcomingEvents = useMemo(() => {
+        return events
+            .filter(e => e.status === 'upcoming' || e.status === 'active')
+            .sort((a, b) => {
+                const dateA = a.dates[0] ? new Date(a.dates[0]).getTime() : Infinity;
+                const dateB = b.dates[0] ? new Date(b.dates[0]).getTime() : Infinity;
+                return dateA - dateB;
+            });
+    }, [events]);
+
+    // 入荷予定（今日以降、日付昇順）
+    const upcomingIncomingItems = useMemo(() => {
+        return incomingStocks
+            .filter(item => {
+                const expectedDate = parseISO(item.expectedDate);
+                return !isBefore(expectedDate, today);
+            })
+            .sort((a, b) => new Date(a.expectedDate).getTime() - new Date(b.expectedDate).getTime());
+    }, [incomingStocks, today]);
+
+    // 入荷予定を日付ごとにグループ化
+    const incomingByDate = useMemo(() => {
+        const groups = new Map<string, typeof upcomingIncomingItems>();
+        upcomingIncomingItems.forEach(item => {
+            const dateKey = item.expectedDate;
+            const existing = groups.get(dateKey) || [];
+            existing.push(item);
+            groups.set(dateKey, existing);
+        });
+        return groups;
+    }, [upcomingIncomingItems]);
 
     return (
         <div className="space-y-6">
             <div>
                 <h2 className="text-2xl md:text-3xl font-bold tracking-tight">レポート</h2>
-                <p className="text-sm text-muted-foreground">在庫・発注データの分析レポートを表示します</p>
+                <p className="text-sm text-muted-foreground">在庫・特売・入荷予定の状況サマリー</p>
             </div>
 
             {/* サマリーカード */}
             <div className="grid gap-2 grid-cols-2 md:grid-cols-4 md:gap-4">
                 <Card className="shadow-none sm:shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
-                        <CardTitle className="text-xs md:text-sm font-medium">総商品数</CardTitle>
-                        <Package className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-                        <div className="text-xl md:text-2xl font-bold">{products.length}</div>
-                        <p className="text-[10px] md:text-xs text-muted-foreground">登録商品数</p>
-                    </CardContent>
-                </Card>
-                <Card className="shadow-none sm:shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
-                        <CardTitle className="text-xs md:text-sm font-medium">総発注件数</CardTitle>
-                        <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-                        <div className="text-xl md:text-2xl font-bold">{orders.length}</div>
-                        <p className="text-[10px] md:text-xs text-muted-foreground">累計発注数</p>
-                    </CardContent>
-                </Card>
-                <Card className="shadow-none sm:shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
-                        <CardTitle className="text-xs md:text-sm font-medium">欠品商品</CardTitle>
+                        <CardTitle className="text-xs md:text-sm font-medium text-red-600">欠品商品</CardTitle>
                         <TrendingDown className="h-3 w-3 md:h-4 md:w-4 text-red-500" />
                     </CardHeader>
                     <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-                        <div className="text-xl md:text-2xl font-bold text-red-600">{stockStats.outOfStock}</div>
-                        <p className="text-[10px] md:text-xs text-muted-foreground">要発注</p>
+                        <div className="text-xl md:text-2xl font-bold text-red-600">{summary.outOfStock}</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">在庫ゼロ点数</p>
                     </CardContent>
                 </Card>
                 <Card className="shadow-none sm:shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
-                        <CardTitle className="text-xs md:text-sm font-medium">月平均発注金額</CardTitle>
-                        <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-emerald-500" />
+                        <CardTitle className="text-xs md:text-sm font-medium text-amber-600">在庫切れ予測</CardTitle>
+                        <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 text-amber-500" />
                     </CardHeader>
                     <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-                        <div className="text-xl md:text-2xl font-bold text-emerald-600">
-                            ¥{useMemo(() => {
-                                const total = monthlyData.orderAmounts.reduce((sum, val) => sum + val, 0);
-                                const monthsWithData = monthlyData.orderAmounts.filter(val => val > 0).length || 1;
-                                return Math.round(total / monthsWithData).toLocaleString();
-                            }, [monthlyData])}万
-                        </div>
-                        <p className="text-[10px] md:text-xs text-muted-foreground">
-                            今年の実績から算出
-                        </p>
+                        <div className="text-xl md:text-2xl font-bold text-amber-600">{summary.lowStockCount}</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">2週間以内に切れる商品</p>
+                    </CardContent>
+                </Card>
+                <Card className="shadow-none sm:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium text-blue-600">特売引当</CardTitle>
+                        <Star className="h-3 w-3 md:h-4 md:w-4 text-blue-500" />
+                    </CardHeader>
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold text-blue-600">{summary.totalAllocation.toLocaleString()}</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">引当済み枚数 (予定含む)</p>
+                    </CardContent>
+                </Card>
+                <Card className="shadow-none sm:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 md:p-6 md:pb-2">
+                        <CardTitle className="text-xs md:text-sm font-medium text-slate-600">仕掛未確認</CardTitle>
+                        <ClipboardList className="h-3 w-3 md:h-4 md:w-4 text-slate-500" />
+                    </CardHeader>
+                    <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                        <div className="text-xl md:text-2xl font-bold text-slate-700">{summary.unconfirmedWip}</div>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">納期未確定の仕掛件数</p>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* グラフタブ */}
-            <Tabs defaultValue="orders" className="space-y-4">
+            {/* タブ */}
+            <Tabs defaultValue="sale-schedule" className="space-y-4">
                 <TabsList>
-                    <TabsTrigger value="orders">発注推移</TabsTrigger>
-                    <TabsTrigger value="inventory">在庫分析</TabsTrigger>
-                    <TabsTrigger value="monthly">月別サマリー</TabsTrigger>
+                    <TabsTrigger value="sale-schedule" className="gap-1.5">
+                        <Star className="h-3.5 w-3.5" />
+                        特売スケジュール
+                    </TabsTrigger>
+                    <TabsTrigger value="incoming-timeline" className="gap-1.5">
+                        <Truck className="h-3.5 w-3.5" />
+                        入荷予定
+                    </TabsTrigger>
+                    <TabsTrigger value="sub-reports" className="gap-1.5">
+                        <FileText className="h-3.5 w-3.5" />
+                        詳細レポート
+                    </TabsTrigger>
                 </TabsList>
 
-                {/* 発注推移タブ */}
-                <TabsContent value="orders" className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
+                {/* ───────── 特売スケジュール ───────── */}
+                <TabsContent value="sale-schedule" className="space-y-4">
+                    {upcomingEvents.length === 0 ? (
                         <Card className="shadow-none sm:shadow-sm">
-                            <CardHeader className="p-3 md:p-6">
-                                <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-                                    <BarChart3 className="h-5 w-5" />
-                                    月別発注件数
-                                </CardTitle>
-                                <CardDescription className="text-xs md:text-sm">過去12ヶ月の発注件数推移</CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
-                                <div className="h-[300px]">
-                                    <Bar data={orderCountChartData} options={chartOptions} />
-                                </div>
+                            <CardContent className="py-12 text-center text-muted-foreground">
+                                予定中の特売イベントはありません
                             </CardContent>
                         </Card>
-                        <Card className="shadow-none sm:shadow-sm">
-                            <CardHeader className="p-3 md:p-6">
-                                <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-                                    <TrendingUp className="h-5 w-5" />
-                                    月別発注金額
-                                </CardTitle>
-                                <CardDescription className="text-xs md:text-sm">過去12ヶ月の発注金額推移</CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
-                                <div className="h-[300px]">
-                                    <Line data={orderAmountChartData} options={chartOptions} />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </TabsContent>
+                    ) : (
+                        <div className="space-y-3">
+                            {upcomingEvents.map(event => {
+                                const firstDate = event.dates[0] ? parseISO(event.dates[0]) : null;
+                                const daysUntil = firstDate ? differenceInDays(firstDate, today) : null;
+                                const totalPlanned = event.items.reduce((s, i) => s + i.plannedQuantity, 0);
+                                const totalAllocated = event.items.reduce((s, i) => s + i.allocatedQuantity, 0);
+                                const allocationRate = totalPlanned > 0 ? Math.round(totalAllocated / totalPlanned * 100) : 0;
+                                const isActive = event.status === 'active';
 
-                {/* 在庫分析タブ */}
-                <TabsContent value="inventory" className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <Card className="shadow-none sm:shadow-sm">
-                            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 md:p-6 gap-3">
-                                <div>
-                                    <CardTitle className="text-base md:text-lg text-left">カテゴリ別商品数</CardTitle>
-                                    <CardDescription className="text-xs md:text-sm text-left">商品カテゴリの分布</CardDescription>
-                                </div>
-                                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                                    <Link href="/reports/turnover-report">
-                                        <Button variant="outline" size="sm" className="gap-2">
-                                            <RefreshCw className="h-4 w-4" />
-                                            回転率レポート
-                                        </Button>
-                                    </Link>
-                                    <Link href="/reports/stock-report">
-                                        <Button variant="outline" size="sm" className="gap-2">
-                                            <FileText className="h-4 w-4" />
-                                            在庫報告書
-                                        </Button>
-                                    </Link>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
-                                <div className="h-[300px] flex items-center justify-center">
-                                    <Doughnut data={categoryChartData} options={{
-                                        ...chartOptions,
-                                        cutout: '60%',
-                                    }} />
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card className="shadow-none sm:shadow-sm">
-                            <CardHeader className="p-3 md:p-6">
-                                <CardTitle className="text-base md:text-lg">在庫状態</CardTitle>
-                                <CardDescription className="text-xs md:text-sm">現在の在庫状況の内訳</CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
-                                <div className="h-[300px] flex items-center justify-center">
-                                    <Doughnut data={stockStatusChartData} options={{
-                                        ...chartOptions,
-                                        cutout: '60%',
-                                    }} />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </TabsContent>
-
-                {/* 月別サマリータブ */}
-                <TabsContent value="monthly" className="space-y-4">
-                    <Card className="shadow-none sm:shadow-sm">
-                        <CardHeader className="p-3 md:p-6">
-                            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-                                <Calendar className="h-5 w-5" />
-                                月別発注サマリー
-                            </CardTitle>
-                            <CardDescription className="text-xs md:text-sm">過去12ヶ月の発注データ一覧</CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
-                            <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
-                                <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>月</TableHead>
-                                        <TableHead className="text-right">発注件数</TableHead>
-                                        <TableHead className="text-right">発注金額</TableHead>
-                                        <TableHead className="text-right">平均単価</TableHead>
-                                        <TableHead>前月比</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {monthlyData.months.map((month, idx) => {
-                                        const count = monthlyData.orderCounts[idx];
-                                        const amount = monthlyData.orderAmounts[idx];
-                                        const prevAmount = idx > 0 ? monthlyData.orderAmounts[idx - 1] : amount;
-                                        const change = ((amount - prevAmount) / prevAmount * 100).toFixed(1);
-                                        const isPositive = parseFloat(change) >= 0;
-
-                                        return (
-                                            <TableRow key={month}>
-                                                <TableCell className="font-medium">{month}</TableCell>
-                                                <TableCell className="text-right">{count}件</TableCell>
-                                                <TableCell className="text-right">¥{amount}万</TableCell>
-                                                <TableCell className="text-right">
-                                                    {count > 0 ? `¥${Math.round(amount * 10000 / count).toLocaleString()}` : '-'}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge
-                                                        variant={isPositive ? "default" : "destructive"}
-                                                        className="gap-1"
-                                                    >
-                                                        {isPositive ? (
-                                                            <TrendingUp className="h-3 w-3" />
-                                                        ) : (
-                                                            <TrendingDown className="h-3 w-3" />
-                                                        )}
-                                                        {isPositive ? '+' : ''}{change}%
+                                return (
+                                    <Card key={event.id} className={cn("shadow-none sm:shadow-sm", isActive && "border-blue-300 bg-blue-50/30")}>
+                                        <CardHeader className="p-3 md:p-4 pb-2">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <Badge variant={isActive ? "default" : "secondary"} className="shrink-0 text-[10px]">
+                                                        {isActive ? "開催中" : "予定"}
                                                     </Badge>
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
-                                </TableBody>
-                            </Table>
+                                                    <CardTitle className="text-sm md:text-base truncate">{event.clientName}</CardTitle>
+                                                </div>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {daysUntil !== null && daysUntil >= 0 && (
+                                                        <span className={cn("text-xs font-medium", daysUntil <= 7 ? "text-red-600" : daysUntil <= 14 ? "text-amber-600" : "text-slate-500")}>
+                                                            {daysUntil === 0 ? "今日" : `${daysUntil}日後`}
+                                                        </span>
+                                                    )}
+                                                    <Link href={`/events/${event.id}`}>
+                                                        <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs">
+                                                            詳細 <ChevronRight className="h-3 w-3" />
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="p-3 md:p-4 pt-0">
+                                            {/* 日付 */}
+                                            <div className="flex flex-wrap gap-1 mb-3">
+                                                {event.dates.slice(0, 6).map((d, i) => (
+                                                    <Badge key={i} variant="outline" className="text-[10px] font-normal">
+                                                        <CalendarDays className="h-2.5 w-2.5 mr-1" />
+                                                        {format(parseISO(d), "M/d (E)", { locale: ja })}
+                                                    </Badge>
+                                                ))}
+                                                {event.dates.length > 6 && (
+                                                    <Badge variant="outline" className="text-[10px] font-normal">+{event.dates.length - 6}日</Badge>
+                                                )}
+                                            </div>
+
+                                            {/* 引当進捗バー */}
+                                            <div className="mb-3">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-[11px] text-muted-foreground">引当進捗</span>
+                                                    <span className="text-[11px] font-medium">
+                                                        {totalAllocated.toLocaleString()} / {totalPlanned.toLocaleString()} 枚 ({allocationRate}%)
+                                                    </span>
+                                                </div>
+                                                <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={cn("h-full rounded-full transition-all", allocationRate >= 100 ? "bg-emerald-500" : allocationRate >= 70 ? "bg-blue-500" : "bg-amber-500")}
+                                                        style={{ width: `${Math.min(100, allocationRate)}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* 商品リスト */}
+                                            <div className="space-y-1">
+                                                {event.items.slice(0, 4).map(item => {
+                                                    const product = productMap.get(item.productId);
+                                                    const currentStock = inventoryMap.get(item.productId) || 0;
+                                                    const hasEnoughStock = currentStock >= item.plannedQuantity;
+                                                    return (
+                                                        <div key={item.id} className="flex items-center justify-between text-xs text-muted-foreground">
+                                                            <span className="truncate max-w-[60%]">{item.productName}</span>
+                                                            <div className="flex items-center gap-2 shrink-0">
+                                                                <span className={cn("font-medium", !hasEnoughStock && "text-red-600")}>
+                                                                    在庫{currentStock.toLocaleString()}枚
+                                                                </span>
+                                                                <span>/ 予定{item.plannedQuantity.toLocaleString()}枚</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                                {event.items.length > 4 && (
+                                                    <p className="text-[11px] text-muted-foreground mt-1">他 {event.items.length - 4} 商品...</p>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
                         </div>
-                        </CardContent>
-                    </Card>
+                    )}
+                </TabsContent>
+
+                {/* ───────── 入荷予定タイムライン ───────── */}
+                <TabsContent value="incoming-timeline" className="space-y-4">
+                    {incomingByDate.size === 0 ? (
+                        <Card className="shadow-none sm:shadow-sm">
+                            <CardContent className="py-12 text-center text-muted-foreground">
+                                登録されている入荷予定はありません
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <div className="space-y-1">
+                            {Array.from(incomingByDate.entries()).map(([dateKey, items]) => {
+                                const date = parseISO(dateKey);
+                                const daysUntil = differenceInDays(date, today);
+                                const isToday = daysUntil === 0;
+                                const isTomorrow = daysUntil === 1;
+                                const totalQty = items.reduce((s, i) => s + i.quantity, 0);
+
+                                // 日付ラベル
+                                let dateLabel = format(date, "M月d日 (E)", { locale: ja });
+                                if (isToday) dateLabel = `今日  ${dateLabel}`;
+                                else if (isTomorrow) dateLabel = `明日  ${dateLabel}`;
+
+                                return (
+                                    <div key={dateKey} className="flex gap-3">
+                                        {/* タイムライン縦線と丸 */}
+                                        <div className="flex flex-col items-center">
+                                            <div className={cn(
+                                                "w-3 h-3 rounded-full mt-4 shrink-0 border-2",
+                                                isToday ? "bg-emerald-500 border-emerald-500" :
+                                                    daysUntil <= 3 ? "bg-amber-400 border-amber-400" :
+                                                        "bg-slate-200 border-slate-300"
+                                            )} />
+                                            <div className="w-0.5 bg-slate-200 flex-1 mt-1" />
+                                        </div>
+
+                                        <Card className={cn("shadow-none sm:shadow-sm flex-1 mb-2", isToday && "border-emerald-300 bg-emerald-50/30")}>
+                                            <CardHeader className="p-3 pb-2">
+                                                <div className="flex items-center justify-between">
+                                                    <CardTitle className="text-sm font-semibold">
+                                                        {dateLabel}
+                                                    </CardTitle>
+                                                    <div className="flex items-center gap-2">
+                                                        {daysUntil >= 0 && (
+                                                            <span className={cn("text-xs font-medium", daysUntil === 0 ? "text-emerald-600" : daysUntil <= 3 ? "text-amber-600" : "text-slate-400")}>
+                                                                {isToday ? "本日入荷" : `${daysUntil}日後`}
+                                                            </span>
+                                                        )}
+                                                        <Badge variant="secondary" className="text-[10px]">
+                                                            計 {totalQty.toLocaleString()}点
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent className="p-3 pt-0 space-y-1">
+                                                {items.map((item, idx) => {
+                                                    const product = productMap.get(item.productId);
+                                                    const isRoll = product ? calculateStockStatus(product, 0, { bags: 0, meters: 0 }).isRoll : false;
+                                                    return (
+                                                        <div key={idx} className="flex items-center justify-between text-xs">
+                                                            <div className="min-w-0 flex-1">
+                                                                <span className="font-medium truncate block">{product?.name || item.productId}</span>
+                                                                {item.note && <span className="text-[10px] text-muted-foreground">{item.note}</span>}
+                                                            </div>
+                                                            <span className="font-bold tabular-nums shrink-0 ml-2 text-emerald-700">
+                                                                +{item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </TabsContent>
+
+                {/* ───────── 詳細レポートリンク ───────── */}
+                <TabsContent value="sub-reports" className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <Card className="shadow-none sm:shadow-sm">
+                            <CardHeader className="p-4 md:p-6">
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <FileText className="h-5 w-5" />
+                                    在庫報告書
+                                </CardTitle>
+                                <CardDescription>商品ごとの現在庫・月間使用量・在庫日数を一覧表示。Excel出力対応。</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-4 md:p-6 pt-0">
+                                <Link href="/reports/stock-report">
+                                    <Button variant="outline" size="sm" className="gap-2 w-full">
+                                        レポートを開く <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-none sm:shadow-sm">
+                            <CardHeader className="p-4 md:p-6">
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <RefreshCw className="h-5 w-5" />
+                                    在庫回転率レポート
+                                </CardTitle>
+                                <CardDescription>A〜Dランクで商品の動きを評価。死に筋や高回転商品を把握。Excel出力対応。</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-4 md:p-6 pt-0">
+                                <Link href="/reports/turnover-report">
+                                    <Button variant="outline" size="sm" className="gap-2 w-full">
+                                        レポートを開く <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-none sm:shadow-sm">
+                            <CardHeader className="p-4 md:p-6">
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <Package className="h-5 w-5" />
+                                    米袋 在庫状況一覧 (印刷用PDF)
+                                </CardTitle>
+                                <CardDescription>在庫・入荷予定・仕掛・メーカー在庫を含む印刷用PDFを在庫管理画面から出力できます。</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-4 md:p-6 pt-0">
+                                <Link href="/inventory/bags">
+                                    <Button variant="outline" size="sm" className="gap-2 w-full">
+                                        在庫管理画面へ <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </TabsContent>
             </Tabs>
         </div>

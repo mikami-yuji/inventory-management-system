@@ -95,7 +95,7 @@ function getSuggestedAction(rank: TurnoverRank, currentStock: number, monthlyOut
     switch (rank) {
         case 'A':
             if (currentStock < monthlyOutgoing * 0.5) {
-                return '⚠️ 在庫切れ注意！早急に仕入れ必要';
+                return '⚠️ 在庫切れ注意！早急に仕入れ検討';
             }
             return '適宜補充。在庫切れに注意';
         case 'B':
@@ -399,7 +399,7 @@ function TurnoverReportContent(): React.ReactElement {
                         {loading && <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin text-muted-foreground" />}
                     </div>
                     <p className="text-xs md:text-sm text-muted-foreground mt-1">
-                        商品ごとの回転率を分析し、仕入れ量の最適化に活用します
+                        商品ごとの回転率を分析し、仕入れ量・販売戦略の最適化に活用します
                     </p>
                 </div>
                 <div className="flex items-center gap-2 md:gap-4 overflow-x-auto pb-1">
