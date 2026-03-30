@@ -18,6 +18,7 @@ import {
     ClipboardList,
     ChevronRight,
     Swords,
+    TrendingUp,
 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
@@ -81,8 +82,34 @@ export default function ReportsPage(): React.ReactElement {
         // WIP未確認件数
         const unconfirmedWip = wipItems.filter(w => w.confirmationStatus === 'unconfirmed').length;
 
-        return { outOfStock, lowStockCount, totalAllocation, unconfirmedWip };
+        // 在庫状況分布
+        const distribution = products.reduce((acc, p) => {
+            if (p.status === 'discontinued' || p.status === 'on_sale_break' || p.status === 'direct_delivery') return acc;
+            const stock = inventoryMap.get(p.id) || 0;
+            if (stock === 0) acc.outOfStock++;
+            else if (p.dailyShipmentRate && p.dailyShipmentRate > 0) {
+                const days = stock / p.dailyShipmentRate;
+                if (days < 14) acc.lowStock++;
+                else acc.healthy++;
+            } else {
+                acc.healthy++;
+            }
+            return acc;
+        }, { healthy: 0, lowStock: 0, outOfStock: 0 });
+
+        return { outOfStock, lowStockCount, totalAllocation, unconfirmedWip, distribution };
     }, [inventory, inventoryMap, products, productMap, events, wipItems]);
+
+    // WIPマップ (productId -> hasInProgressWIP)
+    const activeWipByProduct = useMemo(() => {
+        const set = new Set<string>();
+        wipItems.forEach(item => {
+            if (item.status === 'in_progress') {
+                set.add(item.productId);
+            }
+        });
+        return set;
+    }, [wipItems]);
 
     // 特売スケジュール（active/upcoming のみ、日付昇順）
     const upcomingEvents = useMemo(() => {
@@ -203,6 +230,51 @@ export default function ReportsPage(): React.ReactElement {
                 </Card>
             </div>
 
+            {/* 在庫状況分布チャート (CSSベース) */}
+            <Card className="shadow-none sm:shadow-sm">
+                <CardHeader className="p-3 md:p-6 pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-blue-500" />
+                        在庫状況の概況
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-3 md:p-6 pt-0">
+                    <div className="space-y-4">
+                        <div className="h-4 w-full flex rounded-full overflow-hidden bg-slate-100">
+                            <div
+                                style={{ width: `${(summary.distribution.healthy / (summary.distribution.healthy + summary.distribution.lowStock + summary.distribution.outOfStock || 1)) * 100}%` }}
+                                className="bg-emerald-500 h-full"
+                                title={`正常: ${summary.distribution.healthy}点`}
+                            />
+                            <div
+                                style={{ width: `${(summary.distribution.lowStock / (summary.distribution.healthy + summary.distribution.lowStock + summary.distribution.outOfStock || 1)) * 100}%` }}
+                                className="bg-amber-400 h-full"
+                                title={`要注意: ${summary.distribution.lowStock}点`}
+                            />
+                            <div
+                                style={{ width: `${(summary.distribution.outOfStock / (summary.distribution.healthy + summary.distribution.lowStock + summary.distribution.outOfStock || 1)) * 100}%` }}
+                                className="bg-red-500 h-full"
+                                title={`欠品: ${summary.distribution.outOfStock}点`}
+                            />
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                <span className="text-muted-foreground">正常: <strong className="text-slate-700">{summary.distribution.healthy}</strong> 点</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-2 h-2 rounded-full bg-amber-400" />
+                                <span className="text-muted-foreground">要注意: <strong className="text-slate-700">{summary.distribution.lowStock}</strong> 点</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-2 h-2 rounded-full bg-red-500" />
+                                <span className="text-muted-foreground">欠品: <strong className="text-slate-700">{summary.distribution.outOfStock}</strong> 点</span>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
             {/* タブ */}
             <Tabs defaultValue="sale-schedule" className="space-y-4">
                 <TabsList>
@@ -307,6 +379,9 @@ export default function ReportsPage(): React.ReactElement {
                                                     const totalAllocatedAcrossEvents = alloc?.totalAllocated ?? item.allocatedQuantity;
                                                     const exceedsStockAcrossEvents = totalAllocatedAcrossEvents > currentStock;
 
+                                                    // WIP紐付け
+                                                    const hasActiveWip = activeWipByProduct.has(item.productId);
+
                                                     return (
                                                         <div key={item.id} className={cn(
                                                             "rounded-md px-2 py-1.5 border text-xs",
@@ -316,8 +391,15 @@ export default function ReportsPage(): React.ReactElement {
                                                         )}>
                                                             {/* 商品名行 */}
                                                             <div className="flex items-center justify-between gap-2">
-                                                                <span className="font-medium truncate max-w-[55%]">{item.productName}</span>
+                                                                <span className="font-medium truncate max-w-[50%]">{item.productName}</span>
                                                                 <div className="flex items-center gap-1.5 shrink-0">
+                                                                    {/* WIPバッジ */}
+                                                                    {hasActiveWip && (
+                                                                        <Badge variant="outline" className="text-[9px] border-slate-300 text-slate-600 bg-white gap-0.5 px-1 py-0">
+                                                                            <RefreshCw className="h-2 w-2 animate-spin-slow" />
+                                                                            仕掛中
+                                                                        </Badge>
+                                                                    )}
                                                                     {/* 競合バッジ */}
                                                                     {hasConflict && exceedsStockAcrossEvents && (
                                                                         <Badge variant="outline" className="text-[9px] border-amber-400 text-amber-700 bg-amber-50 gap-0.5 px-1 py-0">

@@ -19,10 +19,12 @@ import {
 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
+import { useIncomingStock } from "@/hooks/use-incoming-stock";
+import { useWorkInProgress } from "@/hooks/use-work-in-progress";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import * as XLSX from "xlsx";
-import { format } from "date-fns";
+import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { calculateStockStatus } from "@/lib/services";
 import { cn } from "@/lib/utils";
 
@@ -114,11 +116,37 @@ function StockReportContent(): React.ReactElement {
         }
     }, []);
 
+    const { incomingStocks, loading: incomingLoading } = useIncomingStock();
+    const { items: wipItems, loading: wipLoading } = useWorkInProgress({ status: 'in_progress' });
+
     useEffect(() => {
         fetchHistory();
     }, [fetchHistory]);
 
-    const loading = productsLoading || inventoryLoading || historyLoading;
+    const loading = productsLoading || inventoryLoading || historyLoading || incomingLoading || wipLoading;
+
+    // 入荷予定マップ (productId -> totalQuantity)
+    const incomingMap = useMemo(() => {
+        const map = new Map<string, number>();
+        const today = startOfDay(new Date());
+        incomingStocks.forEach(item => {
+            if (!isBefore(parseISO(item.expectedDate), today)) {
+                const current = map.get(item.productId) || 0;
+                map.set(item.productId, current + item.quantity);
+            }
+        });
+        return map;
+    }, [incomingStocks]);
+
+    // 仕掛中マップ (productId -> totalQuantity)
+    const wipMap = useMemo(() => {
+        const map = new Map<string, number>();
+        wipItems.forEach(item => {
+            const current = map.get(item.productId) || 0;
+            map.set(item.productId, current + item.quantity);
+        });
+        return map;
+    }, [wipItems]);
 
     // 在庫マップを作成 (productId -> quantity)
     const inventoryMap = useMemo(() => {
@@ -156,13 +184,15 @@ function StockReportContent(): React.ReactElement {
             return {
                 product,
                 currentStock,
+                incomingStock: incomingMap.get(product.id) || 0,
+                wipStock: wipMap.get(product.id) || 0,
                 weeklyUsage: analysis.weekly,
                 monthlyUsage: analysis.monthly,
                 daysUntilStockout: analysis.daysUntilStockout,
                 suggestedOrder: analysis.suggestedOrder,
                 trend: analysis.trend,
             };
-        }).filter(item => item.currentStock > 0 || item.monthlyUsage > 0);
+        }).filter(item => item.currentStock > 0 || item.monthlyUsage > 0 || item.incomingStock > 0 || item.wipStock > 0);
     }, [filteredProducts, inventoryMap, historyByProduct]);
 
     const summary = useMemo(() => {
@@ -222,8 +252,11 @@ function StockReportContent(): React.ReactElement {
                     "量目(kg)": item.product.weight || "",
                     "形状": item.product.shape || "",
                     "現在庫": item.currentStock,
-                    "週間使用": item.weeklyUsage,
-                    "月間使用": item.monthlyUsage,
+                    "入荷予定": item.incomingStock,
+                    "仕掛中": item.wipStock,
+                    "合計予測": item.currentStock + item.incomingStock + item.wipStock,
+                    "週使用": item.weeklyUsage,
+                    "月使用": item.monthlyUsage,
                     "在庫日数": item.daysUntilStockout !== null ? `${item.daysUntilStockout}日` : "-",
                     "ステータス": statusStr
                 };
@@ -239,8 +272,11 @@ function StockReportContent(): React.ReactElement {
                 { wch: 10 }, // 量目
                 { wch: 15 }, // 形状
                 { wch: 10 }, // 現在庫
-                { wch: 10 }, // 週間使用
-                { wch: 10 }, // 月間使用
+                { wch: 10 }, // 入荷予定
+                { wch: 10 }, // 仕掛中
+                { wch: 10 }, // 合計
+                { wch: 8 },  // 週使用
+                { wch: 8 },  // 月使用
                 { wch: 10 }, // 在庫日数
                 { wch: 10 }, // ステータス
             ];
@@ -423,8 +459,10 @@ function StockReportContent(): React.ReactElement {
                                         <TableHead>商品名</TableHead>
                                         <TableHead>スペック</TableHead>
                                         <TableHead className="text-right">現在庫</TableHead>
-                                        <TableHead className="text-right">週間使用</TableHead>
-                                        <TableHead className="text-right">月間使用</TableHead>
+                                        <TableHead className="text-right">入荷予定</TableHead>
+                                        <TableHead className="text-right">仕掛中</TableHead>
+                                        <TableHead className="text-right">週使用</TableHead>
+                                        <TableHead className="text-right">月使用</TableHead>
                                         <TableHead className="text-right">在庫日数</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -455,9 +493,12 @@ function StockReportContent(): React.ReactElement {
                                                 </TableCell>
                                                 <TableCell className="text-right font-bold tabular-nums">
                                                     {item.currentStock.toLocaleString()}
-                                                    <span className="text-[10px] font-normal ml-0.5">
-                                                        {calculateStockStatus(item.product, item.currentStock, { bags: 0, meters: 0 }).isRoll ? 'm' : '枚'}
-                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-right tabular-nums text-blue-600">
+                                                    {item.incomingStock > 0 ? `+${item.incomingStock.toLocaleString()}` : '-'}
+                                                </TableCell>
+                                                <TableCell className="text-right tabular-nums text-slate-500">
+                                                    {item.wipStock > 0 ? `+${item.wipStock.toLocaleString()}` : '-'}
                                                 </TableCell>
                                                 <TableCell className="text-right tabular-nums">
                                                     {item.weeklyUsage.toLocaleString()}
