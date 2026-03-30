@@ -25,7 +25,7 @@ import { useInventory } from "@/hooks/use-inventory";
 import { useSaleEvents } from "@/hooks/use-sale-events";
 import { useIncomingStock } from "@/hooks/use-incoming-stock";
 import { useWorkInProgress } from "@/hooks/use-work-in-progress";
-import { calculateStockStatus } from "@/lib/services";
+import { calculateStockStatus, bagsToMeters, metersToBags, isRollBag } from "@/lib/services";
 import { format, differenceInDays, parseISO, isAfter, isBefore, startOfDay } from "date-fns";
 import { ja } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -150,7 +150,12 @@ export default function ReportsPage(): React.ReactElement {
                 const product = productMap.get(item.productId);
                 const currentStock = inventoryMap.get(item.productId) || 0;
                 const dailyRate = product?.dailyShipmentRate || 0;
-                const forecasted = Math.max(0, currentStock - dailyRate * daysUntil);
+                
+                // ロール商品の場合、出荷レート(枚)をメートルに変換して減算
+                const isRoll = product && isRollBag(product.shape, product.category, product.metersPerRoll);
+                const dailyConsumption = isRoll ? bagsToMeters(dailyRate, product.weight || 5) : dailyRate;
+                
+                const forecasted = Math.max(0, currentStock - dailyConsumption * daysUntil);
                 cache.set(`${item.productId}_${event.id}`, forecasted);
             });
         });
@@ -367,17 +372,26 @@ export default function ReportsPage(): React.ReactElement {
                                             {/* ① 商品別の在庫充足予測 + ② 競合検出 */}
                                             <div className="space-y-2">
                                                 {event.items.map(item => {
+                                                    const product = productMap.get(item.productId);
+                                                    const isRoll = product && isRollBag(product.shape, product.category, product.metersPerRoll);
+                                                    
                                                     const currentStock = inventoryMap.get(item.productId) || 0;
-                                                    // イベント当日の予測在庫
+                                                    // イベント当日の予測在庫 (ロールならm, 一般なら枚)
                                                     const forecastedStock = forecastStockForEvent.get(`${item.productId}_${event.id}`) ?? currentStock;
-                                                    // 充足判定（予測在庫 >= 引当数）
-                                                    const isSufficient = forecastedStock >= item.allocatedQuantity;
-                                                    const shortage = item.allocatedQuantity - forecastedStock;
-                                                    // 競合検出（このイベント以外にも引当があるか）
+                                                    
+                                                    // 充足判定（予測在庫を「枚」に換算して比較）
+                                                    const forecastedBags = isRoll && product ? metersToBags(forecastedStock, product.weight || 5) : forecastedStock;
+                                                    const isSufficient = forecastedBags >= item.allocatedQuantity;
+                                                    const shortage = item.allocatedQuantity - forecastedBags;
+                                                    
+                                                    // 競合検出
                                                     const alloc = allocationByProduct.get(item.productId);
                                                     const hasConflict = alloc && alloc.eventNames.length > 1;
                                                     const totalAllocatedAcrossEvents = alloc?.totalAllocated ?? item.allocatedQuantity;
-                                                    const exceedsStockAcrossEvents = totalAllocatedAcrossEvents > currentStock;
+                                                    
+                                                    // 現在庫(m/枚)を枚数換算して比較
+                                                    const currentStockBags = isRoll && product ? metersToBags(currentStock, product.weight || 5) : currentStock;
+                                                    const exceedsStockAcrossEvents = totalAllocatedAcrossEvents > currentStockBags;
 
                                                     // WIP紐付け
                                                     const hasActiveWip = activeWipByProduct.has(item.productId);
@@ -423,8 +437,7 @@ export default function ReportsPage(): React.ReactElement {
                                                             {/* 数値詳細行 */}
                                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] text-muted-foreground">
                                                                 {(() => {
-                                                                    const product = productMap.get(item.productId);
-                                                                    const unit = product && calculateStockStatus(product, 0, { bags: 0, meters: 0 }).isRoll ? 'm' : '枚';
+                                                                    const unit = isRoll ? 'm' : '枚';
                                                                     return (
                                                                         <>
                                                                             <span>現在庫 <strong className="text-slate-700">{currentStock.toLocaleString()}</strong>{unit}</span>
@@ -442,11 +455,7 @@ export default function ReportsPage(): React.ReactElement {
                                                             {hasConflict && exceedsStockAcrossEvents && (
                                                                 <div className="mt-1 text-[9px] text-amber-700">
                                                                     複数イベント合計 {totalAllocatedAcrossEvents.toLocaleString()}枚 引当 → 在庫{currentStock.toLocaleString()}
-                                                                    {(() => {
-                                                                        const product = productMap.get(item.productId);
-                                                                        const unit = product && calculateStockStatus(product, 0, { bags: 0, meters: 0 }).isRoll ? 'm' : '枚';
-                                                                        return unit;
-                                                                    })()}
+                                                                    {isRoll ? 'm' : '枚'}
                                                                     を超過
                                                                     （{alloc!.eventNames.join(" / ")}）
                                                                 </div>
