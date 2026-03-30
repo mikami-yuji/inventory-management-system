@@ -27,7 +27,7 @@ import { useSaleEvents } from "@/hooks/use-sale-events";
 import { useIncomingStock } from "@/hooks/use-incoming-stock";
 import { useWorkInProgress } from "@/hooks/use-work-in-progress";
 import { calculateStockStatus, bagsToMeters, metersToBags, isRollBag } from "@/lib/services";
-import { format, differenceInDays, parseISO, isAfter, isBefore, startOfDay } from "date-fns";
+import { format, differenceInDays, parseISO, isAfter, isBefore, startOfDay, addDays } from "date-fns";
 import { ja } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -56,22 +56,34 @@ export default function ReportsPage(): React.ReactElement {
 
     // サマリー計算
     const summary = useMemo(() => {
-        // 欠品商品
-        const outOfStock = inventory.filter(i => {
-            const product = productMap.get(i.productId);
-            if (!product) return false;
-            return i.quantity === 0 &&
-                product.status !== 'discontinued' &&
-                product.status !== 'on_sale_break' &&
-                product.status !== 'direct_delivery';
-        }).length;
+        let outOfStockCount = 0;
+        const twoWeeksLater = addDays(today, 14);
 
-        // 2週間以内に在庫切れ予測
         const lowStockCount = products.filter(p => {
             if (p.status === 'discontinued' || p.status === 'on_sale_break' || p.status === 'direct_delivery') return false;
-            const stock = inventoryMap.get(p.id) || 0;
-            if (stock === 0 || !p.dailyShipmentRate || p.dailyShipmentRate === 0) return false;
-            const daysLeft = Math.floor(stock / p.dailyShipmentRate);
+            
+            const physical = inventoryMap.get(p.id) || 0;
+            if (physical === 0) outOfStockCount++;
+
+            // 未来在庫の考慮
+            const incoming = incomingStocks
+                .filter(s => s.productId === p.id && !isAfter(parseISO(s.expectedDate), twoWeeksLater))
+                .reduce((sum, s) => sum + s.quantity, 0);
+            
+            const wip = wipItems
+                .filter(w => w.productId === p.id && w.status === 'in_progress' && w.expectedCompletion && !isAfter(parseISO(w.expectedCompletion), twoWeeksLater) && ['confirmed', 'scheduled', 'shipping_arranged'].includes(w.confirmationStatus))
+                .reduce((sum, w) => sum + w.quantity, 0);
+            
+            const supplier = p.supplierStock || 0;
+            const totalAvailable = physical + incoming + wip + supplier;
+
+            if (!p.dailyShipmentRate || p.dailyShipmentRate === 0) return false;
+            
+            // ロール商品の場合はレートをmに変換
+            const isRoll = isRollBag(p.shape, p.category, p.metersPerRoll);
+            const dailyRate = isRoll ? bagsToMeters(p.dailyShipmentRate, p.weight || 5) : p.dailyShipmentRate;
+            
+            const daysLeft = totalAvailable / dailyRate;
             return daysLeft > 0 && daysLeft < 14;
         }).length;
 
@@ -86,10 +98,23 @@ export default function ReportsPage(): React.ReactElement {
         // 在庫状況分布
         const distribution = products.reduce((acc, p) => {
             if (p.status === 'discontinued' || p.status === 'on_sale_break' || p.status === 'direct_delivery') return acc;
-            const stock = inventoryMap.get(p.id) || 0;
-            if (stock === 0) acc.outOfStock++;
-            else if (p.dailyShipmentRate && p.dailyShipmentRate > 0) {
-                const days = stock / p.dailyShipmentRate;
+            
+            const physical = inventoryMap.get(p.id) || 0;
+            const incoming = incomingStocks
+                .filter(s => s.productId === p.id && !isAfter(parseISO(s.expectedDate), twoWeeksLater))
+                .reduce((sum, s) => sum + s.quantity, 0);
+            const wip = wipItems
+                .filter(w => w.productId === p.id && w.status === 'in_progress' && w.expectedCompletion && !isAfter(parseISO(w.expectedCompletion), twoWeeksLater) && ['confirmed', 'scheduled', 'shipping_arranged'].includes(w.confirmationStatus))
+                .reduce((sum, w) => sum + w.quantity, 0);
+            const supplier = p.supplierStock || 0;
+            const totalAvailable = physical + incoming + wip + supplier;
+
+            if (physical === 0 && totalAvailable === 0) {
+                acc.outOfStock++;
+            } else if (p.dailyShipmentRate && p.dailyShipmentRate > 0) {
+                const isRoll = isRollBag(p.shape, p.category, p.metersPerRoll);
+                const dailyRate = isRoll ? bagsToMeters(p.dailyShipmentRate, p.weight || 5) : p.dailyShipmentRate;
+                const days = totalAvailable / dailyRate;
                 if (days < 14) acc.lowStock++;
                 else acc.healthy++;
             } else {
@@ -98,8 +123,8 @@ export default function ReportsPage(): React.ReactElement {
             return acc;
         }, { healthy: 0, lowStock: 0, outOfStock: 0 });
 
-        return { outOfStock, lowStockCount, totalAllocation, unconfirmedWip, distribution };
-    }, [inventory, inventoryMap, products, productMap, events, wipItems]);
+        return { outOfStock: outOfStockCount, lowStockCount, totalAllocation, unconfirmedWip, distribution };
+    }, [inventoryMap, products, events, wipItems, incomingStocks, today]);
 
     // WIPマップ (productId -> hasInProgressWIP)
     const activeWipByProduct = useMemo(() => {
@@ -141,27 +166,71 @@ export default function ReportsPage(): React.ReactElement {
     }, [upcomingEvents]);
 
     // ② 商品×イベントごとの在庫充足予測
-    // 予測在庫 = 現在庫 - dailyShipmentRate × 残日数 (最低0)
+    // 予測在庫 = (現在庫 + 期間内の入荷予定 + 期間内の確定済み仕掛 + メーカー在庫) - (dailyShipmentRate × 残日数)
+    type ForecastBreakdown = {
+        physical: number;
+        incoming: number;
+        wip: number;
+        supplier: number;
+        consumption: number;
+        total: number;
+    };
+
     const forecastStockForEvent = useMemo(() => {
-        const cache = new Map<string, number>(); // `${productId}_${eventId}` -> forecastedStock
+        const cache = new Map<string, ForecastBreakdown>(); // `${productId}_${eventId}` -> breakdown
+        
         upcomingEvents.forEach(event => {
-            const firstDate = event.dates[0] ? parseISO(event.dates[0]) : null;
-            const daysUntil = firstDate ? Math.max(0, differenceInDays(firstDate, today)) : 0;
+            const firstDateStr = event.dates[0];
+            if (!firstDateStr) return;
+            
+            const saleStartDate = parseISO(firstDateStr);
+            const daysUntil = Math.max(0, differenceInDays(saleStartDate, today));
+
             event.items.forEach(item => {
                 const product = productMap.get(item.productId);
-                const currentStock = inventoryMap.get(item.productId) || 0;
-                const dailyRate = product?.dailyShipmentRate || 0;
-                
-                // ロール商品の場合、出荷レート(枚)をメートルに変換して減算
-                const isRoll = product && isRollBag(product.shape, product.category, product.metersPerRoll);
+                if (!product) return;
+
+                const isRoll = isRollBag(product.shape, product.category, product.metersPerRoll);
+                const dailyRate = product.dailyShipmentRate || 0;
                 const dailyConsumption = isRoll ? bagsToMeters(dailyRate, product.weight || 5) : dailyRate;
-                
-                const forecasted = Math.max(0, currentStock - dailyConsumption * daysUntil);
-                cache.set(`${item.productId}_${event.id}`, forecasted);
+                const projectedConsumption = dailyConsumption * daysUntil;
+
+                // 1. 実在庫
+                const physical = inventoryMap.get(item.productId) || 0;
+
+                // 2. 特売開始日までの入荷予定
+                const incoming = incomingStocks
+                    .filter(stock => stock.productId === item.productId && !isBefore(parseISO(stock.expectedDate), today) && !isAfter(parseISO(stock.expectedDate), saleStartDate))
+                    .reduce((sum, stock) => sum + stock.quantity, 0);
+
+                // 3. 特売開始日までの納期確定済み仕掛
+                const wip = wipItems
+                    .filter(wip => 
+                        wip.productId === item.productId && 
+                        wip.status === 'in_progress' && 
+                        wip.expectedCompletion && 
+                        !isAfter(parseISO(wip.expectedCompletion), saleStartDate) &&
+                        ['confirmed', 'scheduled', 'shipping_arranged'].includes(wip.confirmationStatus)
+                    )
+                    .reduce((sum, wip) => sum + wip.quantity, 0);
+
+                // 4. メーカー在庫
+                const supplier = product.supplierStock || 0;
+
+                const total = Math.max(0, (physical + incoming + wip + supplier) - projectedConsumption);
+
+                cache.set(`${item.productId}_${event.id}`, {
+                    physical,
+                    incoming,
+                    wip,
+                    supplier,
+                    consumption: projectedConsumption,
+                    total
+                });
             });
         });
         return cache;
-    }, [upcomingEvents, productMap, inventoryMap, today]);
+    }, [upcomingEvents, productMap, inventoryMap, incomingStocks, wipItems, today]);
 
     // 入荷予定（今日以降、日付昇順）
     const upcomingIncomingItems = useMemo(() => {
@@ -379,8 +448,9 @@ export default function ReportsPage(): React.ReactElement {
                                                 {event.items.map(item => {
                                                     const product = productMap.get(item.productId);
                                                     const isRoll = product && isRollBag(product.shape, product.category, product.metersPerRoll);
-                                                    const currentStock = inventoryMap.get(item.productId) || 0;
-                                                    const forecastedStock = forecastStockForEvent.get(`${item.productId}_${event.id}`) ?? currentStock;
+                                                    
+                                                    const forecast = forecastStockForEvent.get(`${item.productId}_${event.id}`);
+                                                    const forecastedStock = forecast?.total ?? (inventoryMap.get(item.productId) || 0);
                                                     
                                                     const forecastedBags = isRoll && product ? metersToBags(forecastedStock, product.weight || 5) : forecastedStock;
                                                     const isSufficient = forecastedBags >= item.allocatedQuantity;
@@ -389,7 +459,8 @@ export default function ReportsPage(): React.ReactElement {
                                                     const alloc = allocationByProduct.get(item.productId);
                                                     const hasConflict = alloc && alloc.eventNames.length > 1;
                                                     const totalAllocatedAcrossEvents = alloc?.totalAllocated ?? item.allocatedQuantity;
-                                                    const currentStockBags = isRoll && product ? metersToBags(currentStock, product.weight || 5) : currentStock;
+                                                    const currentPhysicalStock = inventoryMap.get(item.productId) || 0;
+                                                    const currentStockBags = isRoll && product ? metersToBags(currentPhysicalStock, product.weight || 5) : currentPhysicalStock;
                                                     const exceedsStockAcrossEvents = totalAllocatedAcrossEvents > currentStockBags;
                                                     const hasActiveWip = activeWipByProduct.has(item.productId);
 
@@ -420,8 +491,28 @@ export default function ReportsPage(): React.ReactElement {
 
                                                             <div className="space-y-1">
                                                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-[11px]">
-                                                                    <span className="text-muted-foreground">現在庫 <strong className="text-slate-700 font-medium">{currentStock.toLocaleString()}{isRoll ? 'm' : '枚'}</strong></span>
-                                                                    <span className="text-muted-foreground">当日予測 <strong className={cn("font-bold", isSufficient ? "text-emerald-700" : "text-red-700")}>{forecastedStock.toLocaleString()}{isRoll ? 'm' : '枚'}</strong></span>
+                                                                    <span className="text-muted-foreground">現在庫 <strong className="text-slate-700 font-medium">{(inventoryMap.get(item.productId) || 0).toLocaleString()}{isRoll ? 'm' : '枚'}</strong></span>
+                                                                    
+                                                                    <div className="flex items-center gap-1 group relative">
+                                                                        <span className="text-muted-foreground cursor-help border-b border-dotted border-slate-400">想定在庫 <strong className={cn("font-bold", isSufficient ? "text-emerald-700" : "text-red-700")}>{forecastedStock.toLocaleString()}{isRoll ? 'm' : '枚'}</strong></span>
+                                                                        
+                                                                        {/* シンプルなホバー内訳 */}
+                                                                        {forecast && (
+                                                                            <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-50 bg-slate-900 text-white p-2.5 rounded-lg shadow-xl text-[10px] min-w-[160px] pointer-events-none">
+                                                                                <p className="border-b border-white/20 pb-1 mb-1.5 font-bold text-slate-300">特売開始時点の予測内訳</p>
+                                                                                <div className="space-y-1">
+                                                                                    <div className="flex justify-between"><span>実在庫:</span><span>{forecast.physical.toLocaleString()}</span></div>
+                                                                                    {forecast.incoming > 0 && <div className="flex justify-between text-emerald-400"><span>入荷予定:</span><span>+{forecast.incoming.toLocaleString()}</span></div>}
+                                                                                    {forecast.wip > 0 && <div className="flex justify-between text-blue-400"><span>仕掛(確定):</span><span>+{forecast.wip.toLocaleString()}</span></div>}
+                                                                                    {forecast.supplier > 0 && <div className="flex justify-between text-amber-400"><span>メーカー在庫:</span><span>+{forecast.supplier.toLocaleString()}</span></div>}
+                                                                                    <div className="flex justify-between border-t border-white/20 mt-1 pt-1 text-slate-400"><span>期間消費予測:</span><span>-{Math.round(forecast.consumption).toLocaleString()}</span></div>
+                                                                                    <div className="flex justify-between font-bold pt-1 text-[11px]"><span>合計予測:</span><span>{forecast.total.toLocaleString()}</span></div>
+                                                                                </div>
+                                                                                <div className="absolute top-full left-4 w-2 h-2 bg-slate-900 rotate-45 -translate-y-1"></div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+
                                                                     <span className="text-muted-foreground">引当 <strong className="text-blue-700 font-medium">{item.allocatedQuantity.toLocaleString()}枚</strong></span>
                                                                 </div>
                                                                 {!isSufficient && (
@@ -434,7 +525,7 @@ export default function ReportsPage(): React.ReactElement {
                                                             {hasConflict && exceedsStockAcrossEvents && (
                                                                 <div className="mt-1.5 pt-1.5 border-t border-amber-200/50 text-[9px] text-amber-700 leading-tight">
                                                                     <p className="font-semibold">競合アラート:</p>
-                                                                    <p>合計 {totalAllocatedAcrossEvents.toLocaleString()}枚 引当 → 在庫{currentStock.toLocaleString()}{isRoll ? 'm' : '枚'}を超過</p>
+                                                                    <p>合計 {totalAllocatedAcrossEvents.toLocaleString()}枚 引当 → 在庫{(inventoryMap.get(item.productId) || 0).toLocaleString()}{isRoll ? 'm' : '枚'}を超過</p>
                                                                     <p className="opacity-80">({alloc!.eventNames.join(" / ")})</p>
                                                                 </div>
                                                             )}

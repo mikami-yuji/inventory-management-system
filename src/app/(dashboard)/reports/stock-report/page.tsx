@@ -186,26 +186,30 @@ function StockReportContent(): React.ReactElement {
                 currentStock,
                 incomingStock: incomingMap.get(product.id) || 0,
                 wipStock: wipMap.get(product.id) || 0,
+                supplierStock: product.supplierStock || 0,
                 weeklyUsage: analysis.weekly,
                 monthlyUsage: analysis.monthly,
                 daysUntilStockout: analysis.daysUntilStockout,
                 suggestedOrder: analysis.suggestedOrder,
                 trend: analysis.trend,
             };
-        }).filter(item => item.currentStock > 0 || item.monthlyUsage > 0 || item.incomingStock > 0 || item.wipStock > 0);
+        }).filter(item => item.currentStock > 0 || item.monthlyUsage > 0 || item.incomingStock > 0 || item.wipStock > 0 || item.supplierStock > 0);
     }, [filteredProducts, inventoryMap, historyByProduct]);
 
     const summary = useMemo(() => {
         const totalProducts = reportData.length;
-        const lowStockItems = reportData.filter(r =>
-            r.daysUntilStockout !== null &&
-            r.daysUntilStockout < 14 &&
-            r.product.status !== 'direct_delivery' &&
-            r.product.status !== 'discontinued' &&
-            r.product.status !== 'on_sale_break'
-        ).length;
-        const outOfStockItems = reportData.filter(r =>
-            r.currentStock === 0 &&
+        const lowStockItems = reportData.filter(r => {
+            const dailyAvg = r.monthlyUsage / 30;
+            if (dailyAvg <= 0) return false;
+            const totalPipeline = r.currentStock + r.incomingStock + r.wipStock + r.supplierStock;
+            const daysLeft = totalPipeline / dailyAvg;
+            return daysLeft > 0 && daysLeft < 14 &&
+                r.product.status !== 'direct_delivery' &&
+                r.product.status !== 'discontinued' &&
+                r.product.status !== 'on_sale_break';
+        }).length;
+        const outOfStockItems = reportData.filter(r => 
+            r.currentStock === 0 && (r.incomingStock + r.wipStock + r.supplierStock) === 0 &&
             r.product.status !== 'direct_delivery' &&
             r.product.status !== 'discontinued' &&
             r.product.status !== 'on_sale_break'
@@ -461,6 +465,7 @@ function StockReportContent(): React.ReactElement {
                                         <TableHead className="text-right">現在庫</TableHead>
                                         <TableHead className="text-right">入荷予定</TableHead>
                                         <TableHead className="text-right">仕掛中</TableHead>
+                                        <TableHead className="text-right">メーカー</TableHead>
                                         <TableHead className="text-right">週使用</TableHead>
                                         <TableHead className="text-right">月使用</TableHead>
                                         <TableHead className="text-right">在庫日数</TableHead>
@@ -468,12 +473,17 @@ function StockReportContent(): React.ReactElement {
                                 </TableHeader>
                                 <TableBody>
                                     {reportData.map(item => {
-                                        const isLowStock = item.daysUntilStockout !== null &&
-                                            item.daysUntilStockout < 14 &&
+                                        const dailyAvg = item.monthlyUsage / 30;
+                                        const totalPipeline = item.currentStock + item.incomingStock + item.wipStock + item.supplierStock;
+                                        const daysLeft = dailyAvg > 0 ? totalPipeline / dailyAvg : null;
+
+                                        const isLowStock = daysLeft !== null &&
+                                            daysLeft < 14 &&
                                             item.product.status !== 'direct_delivery' &&
                                             item.product.status !== 'discontinued' &&
                                             item.product.status !== 'on_sale_break';
                                         const isOutOfStock = item.currentStock === 0 &&
+                                            (item.incomingStock + item.wipStock + item.supplierStock) === 0 &&
                                             item.product.status !== 'direct_delivery' &&
                                             item.product.status !== 'discontinued' &&
                                             item.product.status !== 'on_sale_break';
@@ -513,16 +523,24 @@ function StockReportContent(): React.ReactElement {
                                                         </>
                                                     ) : '-'}
                                                 </TableCell>
-                                                <TableCell className="text-right tabular-nums">
+                                                <TableCell className="text-right tabular-nums text-amber-600 font-medium font-bold">
+                                                    {item.supplierStock > 0 ? (
+                                                        <>
+                                                            {item.supplierStock.toLocaleString()}
+                                                            <span className="text-[10px] font-normal ml-0.5">{calculateStockStatus(item.product, 0, { bags: 0, meters: 0 }).isRoll ? 'm' : '枚'}</span>
+                                                        </>
+                                                    ) : '-'}
+                                                </TableCell>
+                                                <TableCell className="text-right tabular-nums text-slate-600">
                                                     {item.weeklyUsage.toLocaleString()}
                                                 </TableCell>
-                                                <TableCell className="text-right tabular-nums">
+                                                <TableCell className="text-right tabular-nums text-slate-600">
                                                     {item.monthlyUsage.toLocaleString()}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    {item.daysUntilStockout !== null ? (
+                                                    {daysLeft !== null ? (
                                                         <Badge variant={isLowStock ? "destructive" : "secondary"} className="font-mono">
-                                                            {item.daysUntilStockout}日
+                                                            {Math.floor(daysLeft)}日
                                                         </Badge>
                                                     ) : (
                                                         <span className="text-muted-foreground">-</span>
