@@ -316,148 +316,124 @@ export default function ReportsPage(): React.ReactElement {
                                 const isActive = event.status === 'active';
 
                                 return (
-                                    <Card key={event.id} className={cn("shadow-none sm:shadow-sm", isActive && "border-blue-300 bg-blue-50/30")}>
-                                        <CardHeader className="p-3 md:p-4 pb-2">
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                    <Card key={event.id} className={cn("shadow-none border-slate-200 overflow-hidden", isActive && "border-blue-200 bg-blue-50/10")}>
+                                        <CardHeader className="p-2 px-3 bg-slate-50/50 border-b border-slate-100">
+                                            <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2 min-w-0">
-                                                    <Badge variant={isActive ? "default" : "secondary"} className="shrink-0 text-[10px]">
+                                                    <Badge variant={isActive ? "default" : "secondary"} className="h-5 text-[10px] px-1.5 shrink-0">
                                                         {isActive ? "開催中" : "予定"}
                                                     </Badge>
-                                                    <CardTitle className="text-sm md:text-base truncate">{event.clientName}</CardTitle>
+                                                    <h3 className="font-bold text-sm truncate">{event.clientName}</h3>
                                                 </div>
-                                                <div className="flex items-center gap-2 shrink-0">
+                                                <div className="flex items-center gap-3 shrink-0 ml-2">
                                                     {daysUntil !== null && daysUntil >= 0 && (
-                                                        <span className={cn("text-xs font-medium", daysUntil <= 7 ? "text-red-600" : daysUntil <= 14 ? "text-amber-600" : "text-slate-500")}>
+                                                        <span className={cn("text-[11px] font-medium", daysUntil === 0 ? "text-emerald-600" : daysUntil <= 7 ? "text-red-600" : "text-slate-500")}>
                                                             {daysUntil === 0 ? "今日" : `${daysUntil}日後`}
                                                         </span>
                                                     )}
                                                     <Link href={`/events/${event.id}`}>
-                                                        <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs">
+                                                        <Button variant="ghost" size="sm" className="h-6 w-auto px-1 gap-0.5 text-[11px]">
                                                             詳細 <ChevronRight className="h-3 w-3" />
                                                         </Button>
                                                     </Link>
                                                 </div>
                                             </div>
                                         </CardHeader>
-                                        <CardContent className="p-3 md:p-4 pt-0">
-                                            {/* 日付 */}
-                                            <div className="flex flex-wrap gap-1 mb-3">
-                                                {event.dates.slice(0, 6).map((d, i) => (
-                                                    <Badge key={i} variant="outline" className="text-[10px] font-normal">
-                                                        <CalendarDays className="h-2.5 w-2.5 mr-1" />
-                                                        {format(parseISO(d), "M/d (E)", { locale: ja })}
-                                                    </Badge>
-                                                ))}
-                                                {event.dates.length > 6 && (
-                                                    <Badge variant="outline" className="text-[10px] font-normal">+{event.dates.length - 6}日</Badge>
-                                                )}
-                                            </div>
+                                        <CardContent className="p-2 px-3">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-x-4 gap-y-1.5 mb-2">
+                                                {/* 日付 */}
+                                                <div className="flex flex-wrap gap-1">
+                                                    {event.dates.slice(0, 3).map((d, i) => (
+                                                        <Badge key={i} variant="outline" className="text-[9px] font-normal py-0 h-4 border-slate-200">
+                                                            {format(parseISO(d), "M/d(E)", { locale: ja })}
+                                                        </Badge>
+                                                    ))}
+                                                    {event.dates.length > 3 && (
+                                                        <Badge variant="outline" className="text-[9px] font-normal py-0 h-4 border-slate-200">+{event.dates.length - 3}日</Badge>
+                                                    )}
+                                                </div>
 
-                                            {/* 引当進捗バー */}
-                                            <div className="mb-3">
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-[11px] text-muted-foreground">引当進捗</span>
-                                                    <span className="text-[11px] font-medium">
-                                                        {totalAllocated.toLocaleString()} / {totalPlanned.toLocaleString()} 枚 ({allocationRate}%)
+                                                {/* 引当進捗バー (コンパクト化) */}
+                                                <div className="flex items-center gap-2 min-w-[140px] sm:min-w-[180px] lg:min-w-[220px]">
+                                                    <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className={cn("h-full rounded-full transition-all", allocationRate >= 100 ? "bg-emerald-500" : allocationRate >= 70 ? "bg-blue-500" : "bg-amber-500")}
+                                                            style={{ width: `${Math.min(100, allocationRate)}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-[10px] font-medium whitespace-nowrap text-slate-600">
+                                                        引当 {totalAllocated.toLocaleString()} / {totalPlanned.toLocaleString()} 枚 ({allocationRate}%)
                                                     </span>
                                                 </div>
-                                                <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                                    <div
-                                                        className={cn("h-full rounded-full transition-all", allocationRate >= 100 ? "bg-emerald-500" : allocationRate >= 70 ? "bg-blue-500" : "bg-amber-500")}
-                                                        style={{ width: `${Math.min(100, allocationRate)}%` }}
-                                                    />
-                                                </div>
                                             </div>
 
-                                            {/* ① 商品別の在庫充足予測 + ② 競合検出 */}
-                                            <div className="space-y-2">
+                                            {/* 商品別詳細を2カラム等でコンパクトに表示 */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1.5">
                                                 {event.items.map(item => {
                                                     const product = productMap.get(item.productId);
                                                     const isRoll = product && isRollBag(product.shape, product.category, product.metersPerRoll);
-                                                    
                                                     const currentStock = inventoryMap.get(item.productId) || 0;
-                                                    // イベント当日の予測在庫 (ロールならm, 一般なら枚)
                                                     const forecastedStock = forecastStockForEvent.get(`${item.productId}_${event.id}`) ?? currentStock;
                                                     
-                                                    // 充足判定（予測在庫を「枚」に換算して比較）
                                                     const forecastedBags = isRoll && product ? metersToBags(forecastedStock, product.weight || 5) : forecastedStock;
                                                     const isSufficient = forecastedBags >= item.allocatedQuantity;
                                                     const shortage = item.allocatedQuantity - forecastedBags;
                                                     
-                                                    // 競合検出
                                                     const alloc = allocationByProduct.get(item.productId);
                                                     const hasConflict = alloc && alloc.eventNames.length > 1;
                                                     const totalAllocatedAcrossEvents = alloc?.totalAllocated ?? item.allocatedQuantity;
-                                                    
-                                                    // 現在庫(m/枚)を枚数換算して比較
                                                     const currentStockBags = isRoll && product ? metersToBags(currentStock, product.weight || 5) : currentStock;
                                                     const exceedsStockAcrossEvents = totalAllocatedAcrossEvents > currentStockBags;
-
-                                                    // WIP紐付け
                                                     const hasActiveWip = activeWipByProduct.has(item.productId);
 
                                                     return (
                                                         <div key={item.id} className={cn(
-                                                            "rounded-md px-2 py-1.5 border text-xs",
+                                                            "rounded px-2 py-1 border text-[11px] flex flex-col justify-between",
                                                             !isSufficient ? "border-red-200 bg-red-50" :
-                                                                hasConflict && exceedsStockAcrossEvents ? "border-amber-200 bg-amber-50" :
-                                                                    "border-slate-100 bg-slate-50"
+                                                                hasConflict && exceedsStockAcrossEvents ? "border-amber-200 bg-amber-50/40" :
+                                                                    "border-slate-100 bg-slate-50/40"
                                                         )}>
-                                                            {/* 商品名行 */}
-                                                            <div className="flex items-center justify-between gap-2">
-                                                                <span className="font-medium truncate max-w-[50%]">{item.productName}</span>
-                                                                <div className="flex items-center gap-1.5 shrink-0">
-                                                                    {/* WIPバッジ */}
+                                                            <div className="flex items-center justify-between gap-2 overflow-hidden mb-0.5">
+                                                                <span className="font-bold truncate text-[10px] sm:text-[11px] flex-1">{item.productName}</span>
+                                                                <div className="flex items-center gap-1 shrink-0 scale-[0.85] origin-right">
                                                                     {hasActiveWip && (
-                                                                        <Badge variant="outline" className="text-[9px] border-slate-300 text-slate-600 bg-white gap-0.5 px-1 py-0">
-                                                                            <RefreshCw className="h-2 w-2 animate-spin-slow" />
-                                                                            仕掛中
+                                                                        <Badge variant="outline" className="h-3.5 text-[8px] bg-white px-1 py-0 pointer-events-none border-slate-300">
+                                                                             仕掛
                                                                         </Badge>
                                                                     )}
-                                                                    {/* 競合バッジ */}
                                                                     {hasConflict && exceedsStockAcrossEvents && (
-                                                                        <Badge variant="outline" className="text-[9px] border-amber-400 text-amber-700 bg-amber-50 gap-0.5 px-1 py-0">
-                                                                            <Swords className="h-2.5 w-2.5" />
-                                                                            競合
+                                                                        <Badge variant="outline" className="h-3.5 text-[8px] bg-amber-50 px-1 py-0 border-amber-400 text-amber-700 pointer-events-none">
+                                                                             競合
                                                                         </Badge>
                                                                     )}
-                                                                    {/* 充足ステータス */}
-                                                                    {isSufficient ? (
-                                                                        <Badge variant="outline" className="text-[9px] border-emerald-400 text-emerald-700 bg-emerald-50 px-1 py-0">
-                                                                            充足
-                                                                        </Badge>
-                                                                    ) : (
-                                                                        <Badge variant="outline" className="text-[9px] border-red-400 text-red-700 bg-red-50 px-1 py-0">
-                                                                            不足
-                                                                        </Badge>
-                                                                    )}
+                                                                    <Badge variant="outline" className={cn(
+                                                                        "h-3.5 text-[8px] px-1 py-0 pointer-events-none",
+                                                                        isSufficient ? "border-emerald-400 text-emerald-700 bg-emerald-50" : "border-red-400 text-red-700 bg-red-50"
+                                                                    )}>
+                                                                        {isSufficient ? '充足' : '不足'}
+                                                                    </Badge>
                                                                 </div>
                                                             </div>
 
-                                                            {/* 数値詳細行 */}
-                                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] text-muted-foreground">
+                                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0 text-[10px] text-muted-foreground/90 leading-tight">
                                                                 {(() => {
                                                                     const unit = isRoll ? 'm' : '枚';
                                                                     return (
                                                                         <>
-                                                                            <span>現在庫 <strong className="text-slate-700">{currentStock.toLocaleString()}</strong>{unit}</span>
-                                                                            <span>→ 当日予測 <strong className={isSufficient ? "text-emerald-700" : "text-red-700"}>{forecastedStock.toLocaleString()}</strong>{unit}</span>
-                                                                            <span>引当 <strong className="text-blue-700">{item.allocatedQuantity.toLocaleString()}</strong>枚</span>
+                                                                            <span>在庫 {currentStock.toLocaleString()}{unit}</span>
+                                                                            <span>→ <strong className={isSufficient ? "text-emerald-700" : "text-red-700"}>{forecastedStock.toLocaleString()}{unit}</strong></span>
+                                                                            <span>引当 <strong className="text-blue-700/80">{item.allocatedQuantity.toLocaleString()}枚</strong></span>
                                                                             {!isSufficient && (
-                                                                                <span className="text-red-600 font-medium">⚠ {shortage.toLocaleString()}枚不足</span>
+                                                                                <span className="text-red-600 font-bold">⚠ {shortage.toLocaleString()}枚不足</span>
                                                                             )}
                                                                         </>
                                                                     );
                                                                 })()}
                                                             </div>
 
-                                                            {/* 競合詳細 */}
                                                             {hasConflict && exceedsStockAcrossEvents && (
-                                                                <div className="mt-1 text-[9px] text-amber-700">
-                                                                    複数イベント合計 {totalAllocatedAcrossEvents.toLocaleString()}枚 引当 → 在庫{currentStock.toLocaleString()}
-                                                                    {isRoll ? 'm' : '枚'}
-                                                                    を超過
-                                                                    （{alloc!.eventNames.join(" / ")}）
+                                                                <div className="mt-0.5 text-[8px] text-amber-700 leading-none opacity-80 truncate">
+                                                                    競合: 合計 {totalAllocatedAcrossEvents.toLocaleString()}枚 引当 ({alloc!.eventNames.join("/")})
                                                                 </div>
                                                             )}
                                                         </div>
