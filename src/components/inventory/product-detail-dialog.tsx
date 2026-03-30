@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { isRollBag, calculateStockPrediction } from "@/lib/services";
 import type { Product, WorkInProgress, SupplierStockLot } from "@/types";
 import { ProductAnalysisDialog } from "@/components/inventory/product-analysis-dialog";
-import Image from "next/image";
+import { ProductImage } from "@/components/ui/product-image";
 
 export type SaleAllocationDetail = {
     eventId: string;
@@ -126,9 +126,10 @@ export function ProductDetailDialog({
                             <div className="flex flex-row md:flex-col items-center md:items-start gap-4 md:gap-0">
                                 <div className="w-24 h-24 md:w-full md:aspect-square bg-white rounded-lg border shadow-sm overflow-hidden md:mb-4 flex-shrink-0">
                                     {product.imageUrl ? (
-                                        <Image
+                                        <ProductImage
                                             src={product.imageUrl}
                                             alt={product.name}
+                                            variant="detail"
                                             width={200}
                                             height={200}
                                             className="w-full h-full object-cover"

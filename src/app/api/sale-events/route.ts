@@ -89,6 +89,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                     planned_quantity,
                     allocated_quantity,
                     actual_quantity,
+                    is_produced,
                     products (
                         id,
                         name,
@@ -160,6 +161,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                     allocatedQuantity: item.allocated_quantity as number,
                     actualQuantity: item.actual_quantity as number,
                     currentStock: inventoryMap.get(item.product_id as string) || 0,
+                    isProduced: (item.is_produced as boolean) || false,
                     productShape: product?.shape as string || null,
                     productWeight: product?.weight as number || null
                 };
@@ -261,7 +263,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
 
         const { eventId, action, data: updateData } = body as {
             eventId: string
-            action: 'updateStatus' | 'updateActual' | 'allocateStock' | 'updateAllocation' | 'updateEvent'
+            action: 'updateStatus' | 'updateActual' | 'allocateStock' | 'updateAllocation' | 'updateEvent' | 'updateProducedStatus'
             data: Record<string, unknown>
         }
 
@@ -424,6 +426,18 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                             allocated_quantity: 0
                         })
                 }
+            }
+        } else if (action === 'updateProducedStatus') {
+            // 生産済みステータスの更新
+            const { itemId, isProduced } = updateData as { itemId: string; isProduced: boolean }
+            
+            const { error } = await supabase
+                .from('sale_event_items')
+                .update({ is_produced: isProduced })
+                .eq('id', itemId)
+
+            if (error) {
+                return NextResponse.json({ data: null, error: error.message }, { status: 500 })
             }
         }
 

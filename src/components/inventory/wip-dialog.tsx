@@ -62,12 +62,38 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
     const [supplierQuantity, setSupplierQuantity] = useState<number>(0);
     const [arrivalSchedules, setArrivalSchedules] = useState<ArrivalSchedule[]>([]);
     const [lossQuantity, setLossQuantity] = useState<number>(0);
+    const [deliveryAddresses, setDeliveryAddresses] = useState<DeliveryAddress[]>([]);
+    const [defaultAddressName, setDefaultAddressName] = useState<string>('');
 
     // アクション
     const { createWIP, updateWIP, arrangeShipping, transferToIncoming, transferToSupplier, deleteWIP, loading: actionLoading } = useWIPActions();
 
     // フォーム状態
     const [editingWIPId, setEditingWIPId] = useState<string | null>(null);
+
+    const fetchDeliveryAddresses = async () => {
+        try {
+            const res = await fetch('/api/delivery-addresses');
+            const result = await res.json();
+            if (Array.isArray(result)) {
+                setDeliveryAddresses(result);
+                const defaultAddr = result.find(a => a.isDefault);
+                if (defaultAddr) {
+                    setDefaultAddressName(defaultAddr.name);
+                    setArrivalSchedules(prev => prev.map((s, i) => i === 0 && !s.note ? { ...s, note: defaultAddr.name } : s));
+                }
+            } else if (result && result.data && Array.isArray(result.data)) {
+                setDeliveryAddresses(result.data);
+                const defaultAddr = result.data.find((a: DeliveryAddress) => a.isDefault);
+                if (defaultAddr) {
+                    setDefaultAddressName(defaultAddr.name);
+                    setArrivalSchedules(prev => prev.map((s, i) => i === 0 && !s.note ? { ...s, note: defaultAddr.name } : s));
+                }
+            }
+        } catch (e) {
+            console.error("納品先取得エラー", e);
+        }
+    };
 
     const refetch = async () => {
         if (!product?.id) return;
@@ -86,6 +112,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
     useEffect(() => {
         if (open && product) {
             refetch();
+            fetchDeliveryAddresses();
             resetForm();
         }
     }, [open, product]);
@@ -161,7 +188,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
         setConfirmingItem(item);
         setSupplierQuantity(0);
         setArrivalSchedules([
-            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
+            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: defaultAddressName }
         ]);
         setLossQuantity(0);
     };
@@ -169,7 +196,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
     const addArrivalRow = () => {
         setArrivalSchedules([
             ...arrivalSchedules,
-            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: '' }
+            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: defaultAddressName }
         ]);
     };
 
@@ -301,41 +328,56 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
                             <div className="space-y-3">
                                 <Label className="text-xs">入荷予定へ移動</Label>
                                 {arrivalSchedules.map((schedule) => (
-                                    <div key={schedule.id} className="grid grid-cols-12 gap-2 items-start bg-muted/20 p-2 rounded">
-                                        <div className="col-span-4">
-                                            <Input 
-                                                type="date" 
-                                                value={schedule.expectedDate}
-                                                onChange={e => updateArrivalRow(schedule.id, { expectedDate: e.target.value })}
-                                                className="h-8 text-xs"
-                                            />
+                                    <div key={schedule.id} className="relative bg-muted/30 p-3 rounded-md border space-y-3">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-destructive"
+                                            onClick={() => removeArrivalRow(schedule.id)}
+                                            disabled={arrivalSchedules.length <= 1}
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] text-muted-foreground">着日（入荷予定日）</Label>
+                                                <Input 
+                                                    type="date" 
+                                                    value={schedule.expectedDate}
+                                                    onChange={e => updateArrivalRow(schedule.id, { expectedDate: e.target.value })}
+                                                    className="h-8 text-xs"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] text-muted-foreground">数量 ({product?.shape?.includes('枚') ? '枚' : 'm'})</Label>
+                                                <Input 
+                                                    type="number" 
+                                                    value={schedule.quantity || ""}
+                                                    onChange={e => updateArrivalRow(schedule.id, { quantity: Number(e.target.value) })}
+                                                    className="h-8 text-xs"
+                                                    placeholder="数量"
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="col-span-3">
-                                            <Input 
-                                                type="number" 
-                                                value={schedule.quantity || ""}
-                                                onChange={e => updateArrivalRow(schedule.id, { quantity: Number(e.target.value) })}
-                                                className="h-8 text-xs"
-                                                placeholder="数量"
-                                            />
-                                        </div>
-                                        <div className="col-span-4">
-                                            <Input 
+
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] text-muted-foreground">納入先（出荷先）</Label>
+                                            <Select
                                                 value={schedule.note}
-                                                onChange={e => updateArrivalRow(schedule.id, { note: e.target.value })}
-                                                className="h-8 text-xs"
-                                                placeholder="備考"
-                                            />
-                                        </div>
-                                        <div className="col-span-1 flex justify-end">
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon" 
-                                                className="h-8 w-8 text-destructive"
-                                                onClick={() => removeArrivalRow(schedule.id)}
+                                                onValueChange={(val) => updateArrivalRow(schedule.id, { note: val })}
                                             >
-                                                <X className="h-4 w-4" />
-                                            </Button>
+                                                <SelectTrigger className="h-8 text-xs bg-white">
+                                                    <SelectValue placeholder="納入先を選択（任意）" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {deliveryAddresses.map(addr => (
+                                                        <SelectItem key={addr.id} value={addr.name}>
+                                                            {addr.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     </div>
                                 ))}

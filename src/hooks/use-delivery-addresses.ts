@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { DeliveryAddress } from '@/types';
+import { toast } from 'react-hot-toast';
 
 /**
  * 納品先住所データを取得・操作するフック
@@ -96,23 +97,26 @@ export function useDeliveryAddresses(): {
 
     // 住所を削除
     const deleteAddress = async (id: string): Promise<boolean> => {
-        if (!confirm('本当に削除しますか？')) return false;
-
+        if (!confirm('この納品先を削除してもよろしいですか？')) return false;
+        
         setLoading(true);
         try {
             const response = await fetch(`/api/delivery-addresses?id=${id}`, {
                 method: 'DELETE',
             });
-
+            
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || '削除に失敗しました');
             }
-
+            
+            toast.success('納品先を削除しました');
             await fetchAddresses();
             return true;
         } catch (err) {
-            setError(err instanceof Error ? err.message : '削除に失敗しました');
+            const msg = err instanceof Error ? err.message : '削除に失敗しました';
+            setError(msg);
+            toast.error(msg);
             return false;
         } finally {
             setLoading(false);

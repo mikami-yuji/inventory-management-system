@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProductImage } from "@/components/ui/product-image";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import type { SaleEvent } from "@/hooks/use-sale-events";
 import type { SupplierStockLot } from "@/types";
 import { useAppSettings } from "@/hooks/use-masters";
 import Image from "next/image";
+import { StockPredictionDialog } from "@/components/inventory/stock-prediction-dialog";
 
 
 
@@ -55,6 +57,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
     const [viewAllocation, setViewAllocation] = useState<Product | null>(null);
     const [adjustStock, setAdjustStock] = useState<Product | null>(null);
     const [editStatusProduct, setEditStatusProduct] = useState<Product | null>(null);
+    const [viewPrediction, setViewPrediction] = useState<Product | null>(null);
     const { addToCart, items } = useCart();
     const { settings } = useAppSettings();
 
@@ -79,7 +82,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                 .filter(event => (event.status === 'active' || event.status === 'upcoming'))
                 .flatMap(event => {
                     const item = event.items.find(i => i.productId === product.id);
-                    return item ? [{ dates: event.dates, quantity: item.allocatedQuantity }] : [];
+                    return item && !item.isProduced ? [{ dates: event.dates, quantity: item.allocatedQuantity }] : [];
                 });
 
             map.set(product.id, calculateStockPrediction(
@@ -102,6 +105,14 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
 
     return (
         <Card>
+            {viewPrediction && (
+                <StockPredictionDialog
+                    product={viewPrediction}
+                    prediction={predictionMap.get(viewPrediction.id)}
+                    open={!!viewPrediction}
+                    onOpenChange={(open) => !open && setViewPrediction(null)}
+                />
+            )}
             <CardHeader>
                 <CardTitle>米袋在庫状況 ({products.length}件)</CardTitle>
             </CardHeader>
@@ -167,18 +178,12 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                             isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
                                         )}>
                                             {product.imageUrl ? (
-                                                <div
-                                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                                <ProductImage
+                                                    src={product.imageUrl}
+                                                    alt={product.name}
+                                                    variant="thumbnail"
                                                     onClick={() => setSelectedImage({ url: product.imageUrl!, alt: product.name, name: product.name })}
-                                                >
-                                                    <Image
-                                                        src={product.imageUrl}
-                                                        alt={product.name}
-                                                        width={48}
-                                                        height={48}
-                                                        className="w-12 h-12 object-cover rounded border"
-                                                    />
-                                                </div>
+                                                />
                                             ) : (
                                                 <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
                                                     <Package className="h-5 w-5 text-gray-400" />
@@ -460,7 +465,10 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                             </div>
                                         </TableCell>
 
-                                        <TableCell className="text-center max-w-[120px] bg-slate-50/50 border-x">
+                                        <TableCell 
+                                            className="text-center max-w-[120px] bg-slate-50/50 border-x cursor-pointer hover:bg-slate-100 transition-colors"
+                                            onClick={() => setViewPrediction(product)}
+                                        >
                                             <div className="flex flex-col items-center">
                                                 {prediction.estimatedDate ? (
                                                     <>
@@ -472,6 +480,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                         </div>
                                                         <div className="text-[10px] text-muted-foreground whitespace-nowrap">
                                                             {format(prediction.estimatedDate, "M/d")}頃 終了
+                                                        </div>
+                                                        <div className="text-[9px] text-slate-500 mt-1 whitespace-nowrap opacity-80">
+                                                            通常: {product.dailyShipmentRate?.toLocaleString() || 0}枚/日
                                                         </div>
                                                         {prediction.wipStartAlert && (
                                                             <Badge className="mt-1 h-3.5 text-[8px] bg-red-600 hover:bg-red-700 px-1 border-none leading-none">
@@ -492,20 +503,19 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                         <TableCell>
                                             <div className="flex items-center gap-1">
                                                 <Button
-                                                    size="sm"
+                                                    size="icon"
                                                     variant={isInCart ? "secondary" : "outline"}
                                                     onClick={() => addToCart(product, 0)}
                                                     disabled={isOutOfStock}
-                                                    className="gap-1"
+                                                    className="h-8 w-8"
                                                 >
                                                     {isInCart ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
                                                 </Button>
-                                                <Button size="sm" variant="ghost" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onAnalyze?.(product); }} title="在庫分析">
-                                                    <LineChart className="h-3 w-3 text-blue-600" />
+                                                <Button size="icon" variant="ghost" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onAnalyze?.(product); }} title="在庫分析" className="h-8 w-8">
+                                                    <LineChart className="h-4 w-4 text-blue-600" />
                                                 </Button>
-                                                <Button size="sm" variant="outline" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(product); }} title="編集">
-                                                    <Pencil className="h-4 w-4 mr-2" />
-                                                    編集
+                                                <Button size="icon" variant="outline" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(product); }} title="編集" className="h-8 w-8">
+                                                    <Pencil className="h-4 w-4" />
                                                 </Button>
                                             </div>
                                         </TableCell>
@@ -579,6 +589,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                 alt={selectedImage.alt}
                                 width={1200}
                                 height={900}
+                                unoptimized
                                 className="w-auto h-auto max-w-full max-h-[75vh] object-contain rounded-md"
                             />
 

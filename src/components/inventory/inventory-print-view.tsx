@@ -125,11 +125,11 @@ export function InventoryPrintView({
                                 <td className="py-1 px-1 text-right align-top tabular-nums">
                                     <div className="text-[11px] text-slate-900 border-b border-slate-200 pb-[1px] mb-0.5">
                                         <span className="text-[7px] font-normal mr-0.5 opacity-70">現:</span>
-                                        <span className="font-bold">{currentStock.toLocaleString()}{isRoll ? 'm' : ''}</span>
+                                        <span className="font-bold">{currentStock.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
                                     </div>
                                     <div className={cn("text-[8px] leading-tight", availableStock < 0 ? "text-red-700 font-bold" : "text-slate-500")}>
                                         <span className="opacity-70">有:</span>
-                                        <span>{availableStock.toLocaleString()}{isRoll ? 'm' : ''}</span>
+                                        <span>{availableStock.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
                                     </div>
                                 </td>
                                 <td className="py-1 px-1 text-right align-top tabular-nums text-slate-500 text-[9px] pt-1">
