@@ -353,7 +353,7 @@ export default function ReportsPage(): React.ReactElement {
                                                 <div className="flex justify-between items-center mb-1">
                                                     <span className="text-[11px] text-muted-foreground">引当進捗</span>
                                                     <span className="text-[11px] font-medium">
-                                                        {totalAllocated.toLocaleString()} / {totalPlanned.toLocaleString()} 枚 ({allocationRate}%)
+                                                        {totalAllocated.toLocaleString()} / {totalPlanned.toLocaleString()} ({allocationRate}%)
                                                     </span>
                                                 </div>
                                                 <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
@@ -422,18 +422,30 @@ export default function ReportsPage(): React.ReactElement {
 
                                                             {/* 数値詳細行 */}
                                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] text-muted-foreground">
-                                                                <span>現在庫 <strong className="text-slate-700">{currentStock.toLocaleString()}</strong>枚</span>
-                                                                <span>→ 当日予測 <strong className={isSufficient ? "text-emerald-700" : "text-red-700"}>{forecastedStock.toLocaleString()}</strong>枚</span>
-                                                                <span>引当 <strong className="text-blue-700">{item.allocatedQuantity.toLocaleString()}</strong>枚</span>
-                                                                {!isSufficient && (
-                                                                    <span className="text-red-600 font-medium">⚠ {shortage.toLocaleString()}枚不足</span>
-                                                                )}
+                                                                {(() => {
+                                                                    const product = productMap.get(item.productId);
+                                                                    const unit = product && calculateStockStatus(product, 0, { bags: 0, meters: 0 }).isRoll ? 'm' : '枚';
+                                                                    return (
+                                                                        <>
+                                                                            <span>現在庫 <strong className="text-slate-700">{currentStock.toLocaleString()}</strong>{unit}</span>
+                                                                            <span>→ 当日予測 <strong className={isSufficient ? "text-emerald-700" : "text-red-700"}>{forecastedStock.toLocaleString()}</strong>{unit}</span>
+                                                                            <span>引当 <strong className="text-blue-700">{item.allocatedQuantity.toLocaleString()}</strong>{unit}</span>
+                                                                            {!isSufficient && (
+                                                                                <span className="text-red-600 font-medium">⚠ {shortage.toLocaleString()}{unit}不足</span>
+                                                                            )}
+                                                                        </>
+                                                                    );
+                                                                })()}
                                                             </div>
 
                                                             {/* 競合詳細 */}
                                                             {hasConflict && exceedsStockAcrossEvents && (
                                                                 <div className="mt-1 text-[9px] text-amber-700">
-                                                                    複数イベント合計 {totalAllocatedAcrossEvents.toLocaleString()}枚 引当 → 在庫{currentStock.toLocaleString()}枚を超過
+                                                                    {(() => {
+                                                                        const product = productMap.get(item.productId);
+                                                                        const unit = product && calculateStockStatus(product, 0, { bags: 0, meters: 0 }).isRoll ? 'm' : '枚';
+                                                                        return `複数イベント合計 ${totalAllocatedAcrossEvents.toLocaleString()}${unit} 引当 → 在庫${currentStock.toLocaleString()}${unit}を超過`;
+                                                                    })()}
                                                                     （{alloc!.eventNames.join(" / ")}）
                                                                 </div>
                                                             )}

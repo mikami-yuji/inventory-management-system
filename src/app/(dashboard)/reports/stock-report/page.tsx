@@ -493,12 +493,25 @@ function StockReportContent(): React.ReactElement {
                                                 </TableCell>
                                                 <TableCell className="text-right font-bold tabular-nums">
                                                     {item.currentStock.toLocaleString()}
+                                                    <span className="text-[10px] font-normal ml-0.5">
+                                                        {calculateStockStatus(item.product, 0, { bags: 0, meters: 0 }).isRoll ? 'm' : '枚'}
+                                                    </span>
                                                 </TableCell>
                                                 <TableCell className="text-right tabular-nums text-blue-600">
-                                                    {item.incomingStock > 0 ? `+${item.incomingStock.toLocaleString()}` : '-'}
+                                                    {item.incomingStock > 0 ? (
+                                                        <>
+                                                            +{item.incomingStock.toLocaleString()}
+                                                            <span className="text-[10px] ml-0.5">{calculateStockStatus(item.product, 0, { bags: 0, meters: 0 }).isRoll ? 'm' : '枚'}</span>
+                                                        </>
+                                                    ) : '-'}
                                                 </TableCell>
                                                 <TableCell className="text-right tabular-nums text-slate-500">
-                                                    {item.wipStock > 0 ? `+${item.wipStock.toLocaleString()}` : '-'}
+                                                    {item.wipStock > 0 ? (
+                                                        <>
+                                                            +{item.wipStock.toLocaleString()}
+                                                            <span className="text-[10px] ml-0.5">{calculateStockStatus(item.product, 0, { bags: 0, meters: 0 }).isRoll ? 'm' : '枚'}</span>
+                                                        </>
+                                                    ) : '-'}
                                                 </TableCell>
                                                 <TableCell className="text-right tabular-nums">
                                                     {item.weeklyUsage.toLocaleString()}
