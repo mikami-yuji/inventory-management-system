@@ -13,11 +13,12 @@ import { Product } from '@/types';
 // ... (existing tests)
 
 describe('calculateStockPrediction', () => {
+    // ロール袋ではない形状（H）を使用することでメートル換算を避け、枚数ベースのテストを実施
     const mockProduct: Product = {
         id: '1',
         name: 'Test Product',
         weight: 5,
-        shape: 'RZ',
+        shape: 'H',
         category: 'bag',
         dailyShipmentRate: 100,
         productionLeadDays: 5,

@@ -49,7 +49,10 @@ describe('use-inventory hooks', () => {
             expect(result.current.inventory[0].productId).toBe('p1');
             expect(result.current.inventory[0].quantity).toBe(50);
             expect(result.current.error).toBeNull();
-            expect(global.fetch).toHaveBeenCalledWith('/api/inventory');
+            // apiFetchはデフォルトで Content-Type ヘッダーを追加する
+            expect(global.fetch).toHaveBeenCalledWith('/api/inventory', expect.objectContaining({
+                headers: expect.objectContaining({ 'Content-Type': 'application/json' })
+            }));
         });
 
         test('APIエラー時にerrorがセットされる', async () => {
@@ -66,7 +69,8 @@ describe('use-inventory hooks', () => {
                 expect(result.current.loading).toBe(false);
             });
 
-            expect(result.current.error).toBe('HTTP error! status: 500');
+            // apiFetchのエラーメッセージ形式: 'APIエラー (ステータスコード)'
+            expect(result.current.error).toBe('APIエラー (500)');
             expect(result.current.inventory).toEqual([]);
         });
     });

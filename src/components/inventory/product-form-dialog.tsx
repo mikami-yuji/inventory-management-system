@@ -514,13 +514,15 @@ export function ProductFormDialog({
                                     <SelectValue placeholder="正常" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="active">正常</SelectItem>
+                                    <SelectItem value="active">有効/正常</SelectItem>
+                                    <SelectItem value="wip_check">仕掛確認</SelectItem>
+                                    <SelectItem value="spot">スポット</SelectItem>
                                     <SelectItem value="plate_removal_scheduled">落版予定</SelectItem>
                                     <SelectItem value="plate_removed">落版</SelectItem>
+                                    <SelectItem value="discontinued">廃盤</SelectItem>
                                     <SelectItem value="direct_delivery">直送先在庫</SelectItem>
                                     <SelectItem value="on_sale_break">販売中断</SelectItem>
-                                    <SelectItem value="discontinued">廃盤</SelectItem>
-                                    <SelectItem value="inactive">非表示（削除扱い）</SelectItem>
+                                    <SelectItem value="inactive">無効 (非表示)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

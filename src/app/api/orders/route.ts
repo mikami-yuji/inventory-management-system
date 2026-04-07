@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import type { ApiResponse, Order } from '@/types'
-import { sendOrderNotificationEmail } from '@/lib/mail'
+// sendOrderNotificationEmailはメール送信処理コメントアウト中のため未使用（将来の機能追加用に保留）
+// import { sendOrderNotificationEmail } from '@/lib/mail'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { z } from 'zod'

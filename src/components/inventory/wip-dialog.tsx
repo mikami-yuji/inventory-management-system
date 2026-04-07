@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { 
     Dialog, 
@@ -95,7 +95,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
         }
     };
 
-    const refetch = async () => {
+    const refetch = useCallback(async (): Promise<void> => {
         if (!product?.id) return;
         setLoading(true);
         try {
@@ -107,7 +107,16 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
         } finally {
             setLoading(false);
         }
-    };
+    }, [product?.id]);
+
+    const resetForm = useCallback((): void => {
+        setQuantity(0);
+        setStartedAt(format(new Date(), 'yyyy-MM-dd'));
+        setExpectedCompletion("");
+        setTermType("specific");
+        setNote("");
+        setEditingWIPId(null);
+    }, []);
 
     useEffect(() => {
         if (open && product) {
@@ -115,16 +124,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
             fetchDeliveryAddresses();
             resetForm();
         }
-    }, [open, product]);
-
-    const resetForm = () => {
-        setQuantity(0);
-        setStartedAt(format(new Date(), 'yyyy-MM-dd'));
-        setExpectedCompletion("");
-        setTermType("specific");
-        setNote("");
-        setEditingWIPId(null);
-    };
+    }, [open, product, refetch, fetchDeliveryAddresses, resetForm]);
 
     const handleEdit = (item: WorkInProgress) => {
         setEditingWIPId(item.id);
@@ -145,11 +145,10 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
             const success = await updateWIP(editingWIPId, {
                 quantity,
                 startedAt,
-                expectedCompletion: expectedCompletion || null,
+                expectedCompletion: expectedCompletion || undefined,
                 termType,
-                note: note || null,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } as any);
+                note: note || undefined,
+            });
             result = { success };
         } else {
             result = await createWIP({
@@ -167,18 +166,6 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
             refetch();
             setActiveTab("list");
             resetForm();
-        }
-    };
-
-    const handleArrangeShipping = async (id: string) => {
-        if (!confirm("手配した数量を出荷済みにし、仕掛中から完了させます。よろしいですか？")) return;
-        const success = await arrangeShipping(id);
-        if (success) {
-            toast.success("出荷手配を完了しました");
-            onSuccess();
-            refetch();
-        } else {
-            toast.error("処理に失敗しました");
         }
     };
 
@@ -273,18 +260,17 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
     };
 
     // 日付表示フォーマッター
-    const displayDate = (dateStr: string | null, termType: string) => {
+    const displayDate = (dateStr: string | null, termTypeArg: string) => {
         if (!dateStr) return "未定";
-        if (termType === 'specific' || !termType) return format(new Date(dateStr), 'yyyy/MM/dd');
+        if (termTypeArg === 'specific' || !termTypeArg) return format(new Date(dateStr), 'yyyy/MM/dd');
 
         const date = new Date(dateStr);
         const y = date.getFullYear();
         const m = date.getMonth() + 1;
-        const d = date.getDate();
 
-        if (termType === 'early') return `${y}/${m} 上旬`;
-        if (termType === 'mid') return `${y}/${m} 中旬`;
-        if (termType === 'late') return `${y}/${m} 下旬`;
+        if (termTypeArg === 'early') return `${y}/${m} 上旬`;
+        if (termTypeArg === 'mid') return `${y}/${m} 中旬`;
+        if (termTypeArg === 'late') return `${y}/${m} 下旬`;
         return format(date, 'yyyy/MM/dd');
     };
 
@@ -524,7 +510,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label>納期区分</Label>
-                                        <Select value={termType} onValueChange={(val) => setTermType(val as any)}>
+                                        <Select value={termType} onValueChange={(val) => setTermType(val as "specific" | "early" | "mid" | "late")}>
                                             <SelectTrigger>
                                                 <SelectValue />
                                             </SelectTrigger>

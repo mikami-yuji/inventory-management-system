@@ -26,7 +26,6 @@ import { useSearchParams } from "next/navigation";
 import * as XLSX from "xlsx";
 import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { calculateStockStatus } from "@/lib/services";
-import { cn } from "@/lib/utils";
 
 // 在庫履歴のAPI応答型
 type StockHistoryEntry = {

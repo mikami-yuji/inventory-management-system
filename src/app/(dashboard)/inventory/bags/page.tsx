@@ -16,10 +16,8 @@ import {
     Plus,
     Package,
     TrendingDown,
-    Smartphone,
     LayoutGrid,
     List,
-    Monitor,
     X,
     AlertTriangle,
     Calendar,
@@ -326,14 +324,17 @@ export default function BagsInventoryPage(): React.ReactElement {
         return Array.from(varieties).sort((a, b) => (a || "").localeCompare(b || "", "ja")) as string[];
     }, [bagProducts]);
 
-    // ステータスの表示名マップ
+    // ステータスの表示名マップ（ProductStatusDialog と内容を統一）
     const statusLabels: Record<string, string> = {
-        active: "通常 (稼働中)",
+        active: "有効/正常",
+        wip_check: "仕掛確認",
+        spot: "スポット",
         plate_removal_scheduled: "落版予定",
         plate_removed: "落版",
+        discontinued: "廃盤",
         direct_delivery: "直送先在庫",
         on_sale_break: "販売中断",
-        discontinued: "廃盤",
+        inactive: "無効 (非表示)",
     };
 
     // フィルタリングされた商品
@@ -471,7 +472,7 @@ export default function BagsInventoryPage(): React.ReactElement {
         } catch (error) {
             console.error("Excel export error:", error);
         }
-    }, [filteredProducts, inventoryMap, saleAllocationMap, wipMap, supplierStockMap, incomingMap]);
+    }, [filteredProducts, inventoryMap, saleAllocationMap, wipMap, incomingMap]);
 
     // サマリー計算
     const summary = useMemo(() => {

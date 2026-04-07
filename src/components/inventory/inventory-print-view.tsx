@@ -96,8 +96,6 @@ export function InventoryPrintView({
                             : (supplierStockMap.get(product.id) || 0);
 
                         const {
-                            currentBags,
-                            availableBags,
                             availableStock,
                             isOutOfStock,
                             isLowStock,

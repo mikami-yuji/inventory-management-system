@@ -82,7 +82,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             id: data.id,
             productId: data.product_id,
             expectedDate: data.expected_date,
-            shippedDate: data.shipped_date,
             quantity: data.quantity,
             note: data.note,
         }, { status: 201 });
@@ -126,7 +125,6 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
             id: data.id,
             productId: data.product_id,
             expectedDate: data.expected_date,
-            shippedDate: data.shipped_date,
             quantity: data.quantity,
             note: data.note,
         });

@@ -13,7 +13,7 @@ import { CalculableInput } from "@/components/ui/calculable-input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Trash2, Edit2, Plus, Loader2 } from "lucide-react";
+import { CalendarIcon, Trash2, Edit2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -39,7 +39,9 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
-    const [loadingAddresses, setLoadingAddresses] = useState(false);
+    // setLoadingAddressesは将来のローディング表示用に保持。現在はアドレス読み込み
+    // の内部状態としてのみ使用する（UIに直接出力しない）
+    const [, setLoadingAddresses] = useState(false);
 
     // 商品ごとの入荷予定データ
     const { incomingStocks, loading: loadingStocks, addIncomingStock, updateIncomingStock, deleteIncomingStock, receiveIncomingStock, refetch } = useIncomingStock(product?.id);
