@@ -140,6 +140,15 @@ export type OrderType = 'standard' | 'special_event';
 export type OrderItem = {
   productId: string;
   quantity: number;
+  // APIレスポンスで返される商品情報（joinによって付与される）
+  productName?: string;
+  sku?: string;
+  weight?: number | null;
+  shape?: string | null;
+  category?: string;
+  metersPerRoll?: number | null;
+  unitPrice?: number;
+  printingCost?: number;
 };
 
 // 発注
@@ -151,11 +160,12 @@ export type Order = {
   type: OrderType;
   items: OrderItem[];
   eventId?: string; // 特売発注の場合のイベントID
-  shipmentSource?: 'inventory' | 'supplier'; // 出荷元 (在庫 or メーカー直送)
+  shipmentSource?: 'inventory' | 'supplier' | 'wip' | 'wip-request'; // 出荷元
   deliveryName?: string;
   deliveryPostalCode?: string;
   deliveryAddress?: string;
   deliveryPhone?: string;
+  preferredShape?: string; // 希望形状（特記事項）
 };
 
 // 納品先住所

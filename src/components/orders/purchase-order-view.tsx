@@ -2,34 +2,11 @@
 
 import React from "react";
 import { format } from "date-fns";
+import type { Order, OrderItem } from "@/types";
 import { isRollBag } from "@/lib/services/inventory-service";
 
-// 注文アイテム型（purchase-order-view用）
-type OrderItemView = {
-    sku?: string;
-    weight?: number;
-    productName: string;
-    quantity: number;
-    shape?: string;
-    category?: string;
-    metersPerRoll?: number;
-};
-
-// 注文詳細型（purchase-order-view用）
-type OrderDetailView = {
-    id: string;
-    createdAt: string;
-    shipmentSource?: string;
-    deliveryName?: string;
-    deliveryPhone?: string;
-    deliveryPostalCode?: string;
-    deliveryAddress?: string;
-    preferredShape?: string;
-    items: OrderItemView[];
-};
-
 type PurchaseOrderViewProps = {
-    order: OrderDetailView;
+    order: Order;
     senderInfo?: {
         name: string;
         postalCode?: string;
@@ -129,7 +106,7 @@ export function PurchaseOrderView({ order, senderInfo }: PurchaseOrderViewProps)
                         </tr>
                     </thead>
                     <tbody className="divide-y">
-                        {order.items.map((item: OrderItemView, index: number) => (
+                        {order.items.map((item: OrderItem, index: number) => (
                             <tr key={index}>
                                 <td className="py-4 text-sm font-mono">{item.sku || '-'}</td>
                                 <td className="py-4">
