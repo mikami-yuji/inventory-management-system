@@ -80,7 +80,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
     // フォーム状態
     const [editingWIPId, setEditingWIPId] = useState<string | null>(null);
 
-    const fetchDeliveryAddresses = async () => {
+    const fetchDeliveryAddresses = useCallback(async () => {
         try {
             const res = await fetch('/api/delivery-addresses');
             const result = await res.json();
@@ -102,7 +102,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
         } catch (e) {
             console.error("納品先取得エラー", e);
         }
-    };
+    }, []);
 
     const refetch = useCallback(async (): Promise<void> => {
         if (!product?.id) return;
