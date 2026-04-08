@@ -16,7 +16,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
         const tokenPromise = getToken({ req: request });
         const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth Timeout')), 5000));
         
-        const token = await Promise.race([tokenPromise, timeoutPromise]) as any;
+        const token = await Promise.race([tokenPromise, timeoutPromise]) as unknown;
 
         // 認証済みの場合はそのまま通過
         if (token) {

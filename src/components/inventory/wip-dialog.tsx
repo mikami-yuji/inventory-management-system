@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useWIPActions } from "@/hooks/use-work-in-progress";
+import { useWIPActions, useWorkInProgress } from "@/hooks/use-work-in-progress";
 import { Product } from "@/types";
 import { Plus, Trash2, Calendar as CalendarIcon, Save } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,7 +47,18 @@ type ArrivalSchedule = {
 
 export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogProps) {
     const [activeTab, setActiveTab] = useState<string>("list");
-    const [wipList, setWipList] = useState<WorkInProgress[]>([]);
+    
+    // フックを使用してデータを取得
+    const { 
+        items: hookedWipList, 
+        loading: fetchLoading, 
+        error: fetchError, 
+        refetch: remoteRefetch 
+    } = useWorkInProgress({ 
+        productId: product?.id || undefined, 
+        status: "in_progress" 
+    });
+
     const [loading, setLoading] = useState(false);
 
     // フォーム用
@@ -98,17 +109,8 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
 
     const refetch = useCallback(async (): Promise<void> => {
         if (!product?.id) return;
-        setLoading(true);
-        try {
-            const res = await fetch(`/api/work-in-progress?productId=${product.id}&status=in_progress`);
-            const json = await res.json();
-            if (json.data) setWipList(json.data);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    }, [product?.id]);
+        remoteRefetch();
+    }, [remoteRefetch, product?.id]);
 
     const resetForm = useCallback((): void => {
         setQuantity(0);
@@ -121,11 +123,23 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
 
     useEffect(() => {
         if (open && product) {
-            refetch();
-            fetchDeliveryAddresses();
-            resetForm();
+            // ページロード時やダイアログ起動時の同期的なsetStateによる警告を避けるため、
+            // わずかに遅延させて初期化処理を実行します。
+            const initTimer = setTimeout(() => {
+                refetch();
+                fetchDeliveryAddresses();
+                resetForm();
+            }, 0);
+            return () => clearTimeout(initTimer);
         }
     }, [open, product, refetch, fetchDeliveryAddresses, resetForm]);
+
+    // 通信エラー時の通知
+    useEffect(() => {
+        if (fetchError && open) {
+            toast.error(fetchError);
+        }
+    }, [fetchError, open]);
 
     const handleEdit = (item: WorkInProgress) => {
         setEditingWIPId(item.id);
@@ -418,9 +432,12 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
                         </TabsList>
 
                         <TabsContent value="list" className="py-4">
-                            {loading ? (
-                                <div className="text-center py-8 text-muted-foreground">読み込み中...</div>
-                            ) : wipList.length === 0 ? (
+                            {fetchLoading ? (
+                                <div className="text-center py-8 text-muted-foreground whitespace-pre-wrap">
+                                    読み込み中...
+                                    {fetchError && `\nエラー: ${fetchError}`}
+                                </div>
+                            ) : hookedWipList.length === 0 ? (
                                 <div className="text-center py-8 text-muted-foreground">仕掛中のアイテムはありません</div>
                             ) : (
                                 <Table>
@@ -433,7 +450,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {wipList.map((item) => (
+                                        {hookedWipList.map((item) => (
                                             <TableRow key={item.id}>
                                                 <TableCell className="text-xs">
                                                     {item.startedAt ? format(new Date(item.startedAt), 'yyyy/MM/dd') : '-'}
