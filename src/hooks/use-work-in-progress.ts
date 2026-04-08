@@ -23,9 +23,12 @@ export function useWorkInProgress(options?: { status?: string; productId?: strin
         if (!loadedRef.current) setLoading(true);
         setError(null);
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒でタイムアウト
+
         try {
             const params = new URLSearchParams();
-            if (options?.status) {
+            if (options?.status && options.status !== 'all') {
                 params.append('status', options.status);
             }
             if (options?.productId) {
@@ -33,10 +36,13 @@ export function useWorkInProgress(options?: { status?: string; productId?: strin
             }
 
             const url = `/api/work-in-progress${params.toString() ? `?${params.toString()}` : ''}`;
-            const response = await fetch(url);
+            const response = await fetch(url, { signal: controller.signal });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                if (response.status === 401) {
+                    throw new Error('セッションが切れました。再ログインしてください。');
+                }
+                throw new Error(`HTTPエラー! ステータス: ${response.status}`);
             }
 
             const result = await response.json();
@@ -50,8 +56,14 @@ export function useWorkInProgress(options?: { status?: string; productId?: strin
             setItems(safeData);
             loadedRef.current = true;
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'データの取得に失敗しました');
+            console.error('WIP取得エラー:', err);
+            if (err instanceof Error && err.name === 'AbortError') {
+                setError('リクエストがタイムアウトしました。通信環境を確認してください。');
+            } else {
+                setError(err instanceof Error ? err.message : 'データの取得に失敗しました');
+            }
         } finally {
+            clearTimeout(timeoutId);
             setLoading(false);
         }
     }, [options?.status, options?.productId]);

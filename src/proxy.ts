@@ -8,16 +8,28 @@ import { getToken } from 'next-auth/jwt'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
-    const token = await getToken({ req: request })
     const { pathname } = request.nextUrl
+    console.log(`[Proxy] Request: ${pathname}`);
 
-    // 認証済みの場合はそのまま通過
-    if (token) {
-        return NextResponse.next()
+    try {
+        // getTokenがハングする場合があるため、タイムアウトを設ける
+        const tokenPromise = getToken({ req: request });
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth Timeout')), 5000));
+        
+        const token = await Promise.race([tokenPromise, timeoutPromise]) as any;
+
+        // 認証済みの場合はそのまま通過
+        if (token) {
+            return NextResponse.next()
+        }
+    } catch (error) {
+        console.error(`[Proxy] Auth Error at ${pathname}:`, error);
+        // エラー時はフェイルセーフとして未認証扱いにする（ハングさせるより良い）
     }
 
     // APIルートの場合は401 JSONを返す（リダイレクトしない）
     if (pathname.startsWith('/api/')) {
+        console.log(`[Proxy] Blocking API request: ${pathname}`);
         return NextResponse.json(
             { error: '認証が必要です' },
             { status: 401 }
@@ -25,6 +37,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     }
 
     // ページルートの場合はログインページにリダイレクト
+    console.log(`[Proxy] Redirecting to login: ${pathname}`);
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(loginUrl)
