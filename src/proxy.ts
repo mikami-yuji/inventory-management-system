@@ -1,5 +1,5 @@
 /**
- * 認証ミドルウェア
+ * 認証プロキシ（Next.js 16対応）
  * - ページルート: 未認証ユーザーをログインページにリダイレクト
  * - APIルート: 未認証リクエストに401 JSONを返す
  */
@@ -7,7 +7,7 @@
 import { getToken } from 'next-auth/jwt'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function middleware(request: NextRequest): Promise<NextResponse> {
+export async function proxy(request: NextRequest): Promise<NextResponse> {
     const token = await getToken({ req: request })
     const { pathname } = request.nextUrl
 
@@ -53,4 +53,3 @@ export const config = {
         '/api/supplier-stock/:path*',
     ],
 }
-
