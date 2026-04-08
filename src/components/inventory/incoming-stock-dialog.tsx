@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CalculableInput } from "@/components/ui/calculable-input";
@@ -149,6 +149,9 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
             <DialogContent className="max-w-md">
                 <DialogHeader>
                     <DialogTitle>入荷予定の管理: {product.name}</DialogTitle>
+                    <DialogDescription className="sr-only">
+                        商品の入荷予定日、数量、出荷先などの情報を登録・編集します。
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6">

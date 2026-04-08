@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { 
     Dialog, 
     DialogContent, 
+    DialogDescription,
     DialogHeader, 
     DialogTitle, 
     DialogFooter 
@@ -280,6 +281,9 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
                 <DialogHeader>
                     <div className="flex justify-between items-center pr-6">
                         <DialogTitle>仕掛管理: {product?.name}</DialogTitle>
+                        <DialogDescription className="sr-only">
+                            仕掛品の状態確認、納期確定、入荷予定またはメーカー在庫への移動を行います。
+                        </DialogDescription>
                     </div>
                 </DialogHeader>
 
