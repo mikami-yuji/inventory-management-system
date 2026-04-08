@@ -7,7 +7,7 @@ import type { WorkInProgress, WIPInput } from '@/types';
 /**
  * 仕掛中一覧を取得するフック
  */
-export function useWorkInProgress(options?: { status?: string; productId?: string }): {
+export function useWorkInProgress(status?: string, productId?: string): {
     items: WorkInProgress[];
     loading: boolean;
     error: string | null;
@@ -17,22 +17,29 @@ export function useWorkInProgress(options?: { status?: string; productId?: strin
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const loadedRef = useRef(false);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const fetchItems = useCallback(async (): Promise<void> => {
+        // 以前のリクエストがあればキャンセル
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
         // 初回のみローディング表示、2回目以降はバックグラウンドで更新
         if (!loadedRef.current) setLoading(true);
         setError(null);
 
         const controller = new AbortController();
+        abortControllerRef.current = controller;
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒でタイムアウト
 
         try {
             const params = new URLSearchParams();
-            if (options?.status && options.status !== 'all') {
-                params.append('status', options.status);
+            if (status && status !== 'all') {
+                params.append('status', status);
             }
-            if (options?.productId) {
-                params.append('productId', options.productId);
+            if (productId) {
+                params.append('productId', productId);
             }
 
             const url = `/api/work-in-progress${params.toString() ? `?${params.toString()}` : ''}`;
@@ -55,21 +62,33 @@ export function useWorkInProgress(options?: { status?: string; productId?: strin
             const safeData = Array.isArray(rawData) ? rawData : (Array.isArray(rawData.data) ? rawData.data : []);
             setItems(safeData);
             loadedRef.current = true;
+            setError(null);
         } catch (err) {
-            console.error('WIP取得エラー:', err);
+            // 自発的なキャンセル（AbortError）の場合はエラーとしてセットしない
             if (err instanceof Error && err.name === 'AbortError') {
-                setError('リクエストがタイムアウトしました。通信環境を確認してください。');
-            } else {
-                setError(err instanceof Error ? err.message : 'データの取得に失敗しました');
+                console.log('WIP取得リクエストがキャンセルされました');
+                // 前のリクエストがキャンセルされただけなので、ローディング状態は新しいリクエストに引き継がれる
+                return;
             }
+
+            console.error('WIP取得エラー:', err);
+            setError(err instanceof Error ? err.message : 'データの取得に失敗しました');
         } finally {
             clearTimeout(timeoutId);
-            setLoading(false);
+            if (abortControllerRef.current === controller) {
+                setLoading(false);
+                abortControllerRef.current = null;
+            }
         }
-    }, [options?.status, options?.productId]);
+    }, [status, productId]);
 
     useEffect(() => {
         fetchItems();
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
     }, [fetchItems]);
 
     return { items, loading, error, refetch: fetchItems };

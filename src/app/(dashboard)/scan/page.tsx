@@ -38,7 +38,7 @@ export default function ScanPage() {
     const { inventory: inventoryData, refetch: refetchInventory } = useInventory();
     const { updateStock } = useUpdateInventory();
     const { events: saleEvents } = useSaleEvents();
-    const { items: wipItems, refetch: refetchWIP } = useWorkInProgress({ status: 'in_progress' });
+    const { items: wipItems, refetch: refetchWIP } = useWorkInProgress('in_progress');
     const { refetch: refetchIncoming } = useIncomingStock();
     const { lotsMap: supplierStockLotsMap, refetch: refetchLots } = useSupplierStockLots();
 

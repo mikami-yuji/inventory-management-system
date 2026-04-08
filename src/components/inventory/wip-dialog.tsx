@@ -54,10 +54,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
         loading: fetchLoading, 
         error: fetchError, 
         refetch: remoteRefetch 
-    } = useWorkInProgress({ 
-        productId: product?.id || undefined, 
-        status: "in_progress" 
-    });
+    } = useWorkInProgress("in_progress", product?.id || undefined);
 
     const [loading, setLoading] = useState(false);
 

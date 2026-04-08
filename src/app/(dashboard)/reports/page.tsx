@@ -35,7 +35,7 @@ export default function ReportsPage(): React.ReactElement {
     const { inventory } = useInventory();
     const { events } = useSaleEvents({ status: "all" });
     const { incomingStocks } = useIncomingStock();
-    const { items: wipItems } = useWorkInProgress({ status: "in_progress" });
+    const { items: wipItems } = useWorkInProgress("in_progress");
 
     const today = startOfDay(new Date());
 

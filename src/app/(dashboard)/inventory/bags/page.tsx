@@ -131,7 +131,7 @@ export default function BagsInventoryPage(): React.ReactElement {
     const { products: allProducts, loading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
     const { inventory: inventoryData, loading: inventoryLoading, refetch: refetchInventory } = useInventory();
     const { events: saleEvents, loading: eventsLoading, refetch: refetchEvents } = useSaleEvents();
-    const { items: wipItems, loading: wipLoading, refetch: refetchWIP } = useWorkInProgress({ status: 'in_progress' });
+    const { items: wipItems, loading: wipLoading, refetch: refetchWIP } = useWorkInProgress('in_progress');
     const { incomingStocks, loading: incomingLoading, refetch: refetchIncoming } = useIncomingStock();
     const { lotsMap: supplierStockLotsMap, loading: lotsLoading, refetch: refetchLots } = useSupplierStockLots();
     const { settings } = useAppSettings();

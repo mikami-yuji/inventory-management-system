@@ -116,7 +116,7 @@ function StockReportContent(): React.ReactElement {
     }, []);
 
     const { incomingStocks, loading: incomingLoading } = useIncomingStock();
-    const { items: wipItems, loading: wipLoading } = useWorkInProgress({ status: 'in_progress' });
+    const { items: wipItems, loading: wipLoading } = useWorkInProgress('in_progress');
 
     useEffect(() => {
         fetchHistory();
