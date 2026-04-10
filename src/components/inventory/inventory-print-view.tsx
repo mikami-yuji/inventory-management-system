@@ -116,16 +116,16 @@ export function InventoryPrintView({
             <table className="w-full border-collapse table-fixed text-[9px]">
                 <thead>
                     <tr className="bg-slate-100 border-y border-slate-900">
-                        <th className="py-1 px-1 text-left font-bold" style={{ width: '22%' }}>商品情報</th>
-                        <th className="py-1 px-1 text-center font-bold" style={{ width: '8%' }}>量目</th>
-                        <th className="py-1 px-1 text-right font-bold" style={{ width: '9%' }}>在庫(現/有)</th>
+                        <th className="py-1 px-1 text-left font-bold" style={{ width: '25%' }}>商品情報</th>
+                        <th className="py-1 px-1 text-center font-bold" style={{ width: '7%' }}>量目</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '10%' }}>在庫(現/有)</th>
                         <th className="py-1 px-1 text-right font-bold" style={{ width: '12%' }}>引当</th>
-                        <th className="py-1 px-1 text-right font-bold" style={{ width: '9%' }}>入荷予定</th>
-                        <th className="py-1 px-1 text-right font-bold" style={{ width: '6%' }}>メーカー</th>
-                        <th className="py-1 px-1 text-right font-bold" style={{ width: '13%' }}>仕掛</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '10%' }}>入荷予定</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '8%' }}>メーカー</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '14%' }}>仕掛</th>
                         {/* 在庫予測列 */}
-                        <th className="py-1 px-1 text-center font-bold bg-blue-50 border-x border-blue-200" style={{ width: '13%' }}>在庫予測</th>
-                        <th className="py-1 px-1 text-center font-bold" style={{ width: '8%' }}>状況</th>
+                        <th className="py-1 px-1 text-center font-bold bg-blue-50 border-x border-blue-200" style={{ width: '8%' }}>予測</th>
+                        <th className="py-1 px-1 text-center font-bold" style={{ width: '6%' }}>状況</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-300">
@@ -279,34 +279,22 @@ export function InventoryPrintView({
                                     {prediction && prediction.estimatedDate ? (
                                         <div className="flex flex-col items-center gap-0.5">
                                             <div className={cn(
-                                                "font-bold text-[10px]",
+                                                "font-bold text-[9px]",
                                                 prediction.wipStartAlert ? "text-red-700" : "text-slate-800"
                                             )}>
-                                                残り{prediction.remainingDays}日
+                                                {prediction.remainingDays}日
                                             </div>
-                                            <div className="text-[8px] text-slate-600 whitespace-nowrap">
-                                                {format(prediction.estimatedDate, "M/d")}頃 終了
+                                            <div className="text-[7px] text-slate-600 whitespace-nowrap">
+                                                {format(prediction.estimatedDate, "M/d")}
                                             </div>
-                                            {product.dailyShipmentRate && product.dailyShipmentRate > 0 && (
-                                                <div className="text-[7px] text-slate-400 whitespace-nowrap">
-                                                    {product.dailyShipmentRate.toLocaleString()}{isRoll ? 'm' : '枚'}/日
-                                                </div>
-                                            )}
                                             {prediction.wipStartAlert && (
-                                                <div className="text-[7px] font-bold text-red-700 border border-red-400 rounded px-1 bg-red-50 leading-tight whitespace-nowrap">
-                                                    仕掛開始!
-                                                </div>
-                                            )}
-                                            {prediction.hasUnconfirmedWIP && (
-                                                <div className="text-[7px] text-amber-700 font-bold leading-tight whitespace-nowrap">
-                                                    納期未確定
+                                                <div className="text-[6px] font-bold text-red-700 border border-red-400 rounded px-0.5 bg-red-50 leading-tight whitespace-nowrap">
+                                                    仕掛!
                                                 </div>
                                             )}
                                         </div>
                                     ) : (
-                                        <span className="text-[8px] text-slate-400">
-                                            {product.dailyShipmentRate && product.dailyShipmentRate > 0 ? '-' : '出荷速度未設定'}
-                                        </span>
+                                        <span className="text-[8px] text-slate-300">-</span>
                                     )}
                                 </td>
 
