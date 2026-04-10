@@ -91,7 +91,7 @@ export function StockAllocationDialog({
         product,
         allocations
             .filter(a => a.status !== 'completed' && a.status !== 'cancelled' && !a.isProduced)
-            .map(a => ({ dates: a.dates, quantity: a.quantity })),
+            .map(a => ({ dates: a.dates, quantity: a.quantity, eventName: a.eventName })),
         wips
             .filter(w => w.status === 'in_progress')
             .map(w => ({

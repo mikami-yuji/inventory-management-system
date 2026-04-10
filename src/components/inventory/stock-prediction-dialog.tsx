@@ -239,8 +239,12 @@ export function StockPredictionDialog({
                                                     )}
                                                     {ev.out > (product.dailyShipmentRate || 0) + 1 && (
                                                         <div className="flex items-center gap-1.5 text-blue-600 font-medium text-xs">
-                                                            <ArrowDownCircle className="h-3.5 w-3.5" />
-                                                            <span>大量出荷 (特売等)</span>
+                                                            <ArrowDownCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                                                            <span>
+                                                                {ev.outNames && ev.outNames.length > 0 
+                                                                    ? ev.outNames.join(", ") 
+                                                                    : "大量出荷 (特売等)"}
+                                                            </span>
                                                         </div>
                                                     )}
                                                 </td>

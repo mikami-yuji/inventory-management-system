@@ -173,7 +173,7 @@ export const calculateStockPrediction = (
     dailyRate: number,
     leadDays: number,
     product: Product,
-    saleItems: Array<{ dates: string[]; quantity: number }> = [],
+    saleItems: Array<{ dates: string[]; quantity: number; eventName?: string }> = [],
     wipItems: Array<{ quantity: number; expectedDate: Date | null; termType?: string }> = [],
     incomingItems: Array<{ quantity: number; expectedDate: Date }> = [],
     supplierStock: number = 0
@@ -198,14 +198,24 @@ export const calculateStockPrediction = (
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // 特売マップ: 日付キー (YYYY-MM-DD) -> 数量 (枚数)
-    const saleMap = new Map<string, number>();
+    // 特売マップ: 日付キー (YYYY-MM-DD) -> { quantity: 数量, names: 店名リスト }
+    const saleMap = new Map<string, { quantity: number; names: string[] }>();
     saleItems.forEach(item => {
         const perDay = item.dates.length > 0 ? Math.floor(item.quantity / item.dates.length) : 0;
         item.dates.forEach(dateStr => {
             const date = parseLocalDate(dateStr);
             const key = formatDateKey(date);
-            saleMap.set(key, (saleMap.get(key) || 0) + perDay);
+            const existing = saleMap.get(key) || { quantity: 0, names: [] };
+            
+            const newNames = [...existing.names];
+            if (item.eventName && !newNames.includes(item.eventName)) {
+                newNames.push(item.eventName);
+            }
+
+            saleMap.set(key, { 
+                quantity: existing.quantity + perDay,
+                names: newNames
+            });
         });
     });
 
@@ -244,7 +254,8 @@ export const calculateStockPrediction = (
         date: new Date(today),
         stock: currentStock,
         arrivals: todayArrivals,
-        out: 0
+        out: 0,
+        outNames: []
     });
 
     while (days < maxDays) {
@@ -258,7 +269,8 @@ export const calculateStockPrediction = (
         currentStock += arrivals;
 
         // 2. その日の消費量を減算
-        const dailySaleQty = saleMap.get(key) || 0;
+        const saleData = saleMap.get(key) || { quantity: 0, names: [] };
+        const dailySaleQty = saleData.quantity;
         const totalDailyOutQty = dailyRate + dailySaleQty;
 
         // 在庫消費量の算出
@@ -273,7 +285,8 @@ export const calculateStockPrediction = (
             date: targetDate,
             stock: Math.max(0, currentStock),
             arrivals: arrivals,
-            out: consumption
+            out: consumption,
+            outNames: saleData.names
         });
 
         // 在庫が切れたら終了
