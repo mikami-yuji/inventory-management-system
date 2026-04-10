@@ -882,6 +882,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                 incomingMap={incomingMap}
                 supplierStockMap={supplierStockMap}
                 supplierStockLotsMap={supplierStockLotsMap}
+                saleEvents={saleEvents}
                 settings={settings}
             />
         </div>

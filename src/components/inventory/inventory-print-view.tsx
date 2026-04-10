@@ -4,8 +4,9 @@ import React, { useMemo } from "react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import type { Product, WorkInProgress, IncomingStock, SupplierStockLot } from "@/types";
-import { calculateStockStatus, getPitch } from "@/lib/services";
+import { calculateStockStatus, calculateStockPrediction, getPitch } from "@/lib/services";
 import { cn } from "@/lib/utils";
+import type { SaleEvent } from "@/hooks/use-sale-events";
 
 type InventoryPrintViewProps = {
     products: Product[];
@@ -16,6 +17,8 @@ type InventoryPrintViewProps = {
     supplierStockMap: Map<string, number>;
     supplierStockLotsMap: Map<string, SupplierStockLot[]>;
     incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
+    // 在庫予測に必要な特売イベント情報
+    saleEvents?: SaleEvent[];
     settings?: Record<string, unknown>;
 };
 
@@ -28,8 +31,9 @@ export function InventoryPrintView({
     supplierStockMap,
     supplierStockLotsMap,
     incomingMap,
+    saleEvents = [],
     settings
-}: InventoryPrintViewProps) {
+}: InventoryPrintViewProps): React.ReactElement {
     const totals = useMemo(() => {
         let meters = 0;
         let bags = 0;
@@ -52,6 +56,46 @@ export function InventoryPrintView({
         return { meters, bags, price };
     }, [products, inventoryMap, settings]);
 
+    // 各商品の在庫予測を事前計算
+    const predictionMap = useMemo(() => {
+        const map = new Map<string, ReturnType<typeof calculateStockPrediction>>();
+        products.forEach(product => {
+            const currentStock = inventoryMap.get(product.id)?.quantity || 0;
+            const wipList = wipMap.get(product.id) || [];
+            const incoming = incomingMap.get(product.id);
+
+            // ロットがある場合はロットの合計を優先
+            const supplierStockLots = supplierStockLotsMap?.get(product.id) || [];
+            const supplierStock = supplierStockLots.length > 0
+                ? supplierStockLots.reduce((sum, lot) => sum + lot.quantity, 0)
+                : (supplierStockMap.get(product.id) || 0);
+
+            // 対象の特売引当データを抽出
+            const relevantSaleItems = saleEvents
+                .filter(event => (event.status === 'active' || event.status === 'upcoming'))
+                .flatMap(event => {
+                    const item = event.items.find(i => i.productId === product.id);
+                    return item && !item.isProduced ? [{ dates: event.dates, quantity: item.allocatedQuantity }] : [];
+                });
+
+            map.set(product.id, calculateStockPrediction(
+                currentStock,
+                product.dailyShipmentRate || 0,
+                product.productionLeadDays || 0,
+                product,
+                relevantSaleItems,
+                wipList.filter(item => item.status === 'in_progress').map(item => ({
+                    quantity: item.quantity,
+                    expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null,
+                    termType: item.termType
+                })),
+                incoming?.items.map(item => ({ quantity: item.quantity, expectedDate: new Date(item.expectedDate) })) || [],
+                supplierStock
+            ));
+        });
+        return map;
+    }, [products, inventoryMap, wipMap, incomingMap, supplierStockLotsMap, supplierStockMap, saleEvents]);
+
     const today = format(new Date(), "yyyy年MM月dd日 HH:mm", { locale: ja });
 
     return (
@@ -72,14 +116,15 @@ export function InventoryPrintView({
             <table className="w-full border-collapse table-fixed text-[9px]">
                 <thead>
                     <tr className="bg-slate-100 border-y border-slate-900">
-                        {/* 軽量化とスペース確保のため画像列を削除 */}
-                        <th className="py-1 px-1 text-left font-bold" style={{ width: '26%' }}>商品情報</th>
-                        <th className="py-1 px-1 text-center font-bold" style={{ width: '10%' }}>量目</th>
-                        <th className="py-1 px-1 text-right font-bold" style={{ width: '10%' }}>在庫(現在/有効)</th>
-                        <th className="py-1 px-1 text-right font-bold" style={{ width: '14%' }}>引当</th>
-                        <th className="py-1 px-1 text-right font-bold" style={{ width: '10%' }}>入荷予定</th>
-                        <th className="py-1 px-1 text-right font-bold" style={{ width: '7%' }}>メーカー</th>
-                        <th className="py-1 px-1 text-right font-bold" style={{ width: '15%' }}>仕掛</th>
+                        <th className="py-1 px-1 text-left font-bold" style={{ width: '22%' }}>商品情報</th>
+                        <th className="py-1 px-1 text-center font-bold" style={{ width: '8%' }}>量目</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '9%' }}>在庫(現/有)</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '12%' }}>引当</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '9%' }}>入荷予定</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '6%' }}>メーカー</th>
+                        <th className="py-1 px-1 text-right font-bold" style={{ width: '13%' }}>仕掛</th>
+                        {/* 在庫予測列 */}
+                        <th className="py-1 px-1 text-center font-bold bg-blue-50 border-x border-blue-200" style={{ width: '13%' }}>在庫予測</th>
                         <th className="py-1 px-1 text-center font-bold" style={{ width: '8%' }}>状況</th>
                     </tr>
                 </thead>
@@ -104,9 +149,12 @@ export function InventoryPrintView({
 
                         const wips = wipMap.get(product.id) || [];
 
+                        // 在庫予測データ
+                        const prediction = predictionMap.get(product.id);
+
                         return (
                             <tr key={product.id} className="break-inside-avoid">
-                                {/* 商品画像列を削除してスペースを確保 */}
+                                {/* 商品情報 */}
                                 <td className="py-1 px-1 align-top">
                                     <div className="font-bold text-[10px] leading-snug">
                                         {product.name}
@@ -150,8 +198,7 @@ export function InventoryPrintView({
                                                     </div>
                                                     <span className="text-[6px] truncate max-w-[80px] text-slate-400">{alloc.clientName}</span>
                                                 </div>
-                                            ))}
-                                        </div>
+                                            ))}</div>
                                     ) : '-'}
                                 </td>
                                 <td className="py-1 px-1 text-right align-top tabular-nums text-emerald-800 pt-1">
@@ -226,6 +273,43 @@ export function InventoryPrintView({
                                         </div>
                                     ) : '-'}
                                 </td>
+
+                                {/* 在庫予測列 */}
+                                <td className="py-1 px-1 text-center align-middle bg-blue-50/40 border-x border-blue-100">
+                                    {prediction && prediction.estimatedDate ? (
+                                        <div className="flex flex-col items-center gap-0.5">
+                                            <div className={cn(
+                                                "font-bold text-[10px]",
+                                                prediction.wipStartAlert ? "text-red-700" : "text-slate-800"
+                                            )}>
+                                                残り{prediction.remainingDays}日
+                                            </div>
+                                            <div className="text-[8px] text-slate-600 whitespace-nowrap">
+                                                {format(prediction.estimatedDate, "M/d")}頃 終了
+                                            </div>
+                                            {product.dailyShipmentRate && product.dailyShipmentRate > 0 && (
+                                                <div className="text-[7px] text-slate-400 whitespace-nowrap">
+                                                    {product.dailyShipmentRate.toLocaleString()}{isRoll ? 'm' : '枚'}/日
+                                                </div>
+                                            )}
+                                            {prediction.wipStartAlert && (
+                                                <div className="text-[7px] font-bold text-red-700 border border-red-400 rounded px-1 bg-red-50 leading-tight whitespace-nowrap">
+                                                    仕掛開始!
+                                                </div>
+                                            )}
+                                            {prediction.hasUnconfirmedWIP && (
+                                                <div className="text-[7px] text-amber-700 font-bold leading-tight whitespace-nowrap">
+                                                    納期未確定
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <span className="text-[8px] text-slate-400">
+                                            {product.dailyShipmentRate && product.dailyShipmentRate > 0 ? '-' : '出荷速度未設定'}
+                                        </span>
+                                    )}
+                                </td>
+
                                 <td className="py-1 px-1 text-center align-middle">
                                     <div className="flex flex-col gap-0.5 items-center">
                                         {isOutOfStock ? (
@@ -264,6 +348,15 @@ export function InventoryPrintView({
                     <span>在庫金額合計:</span>
                     <span className="text-[11px] tabular-nums">¥{Math.round(totals.price).toLocaleString()}</span>
                 </div>
+            </div>
+
+            {/* 凡例 */}
+            <div className="flex gap-4 text-[8px] text-slate-500 mb-4 ml-1">
+                <span className="flex items-center gap-1">
+                    <span className="inline-block w-3 h-3 bg-blue-50 border border-blue-200 rounded-sm"></span>
+                    在庫予測列: 出荷速度(枚/日)に基づく在庫枯渇予測
+                </span>
+                <span className="text-red-600 font-bold">仕掛開始! = 今すぐ製造手配が必要</span>
             </div>
 
             {/* フッター */}
