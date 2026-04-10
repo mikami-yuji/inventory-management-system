@@ -276,7 +276,11 @@ export function StockAllocationDialog({
                                         const isCompleted = alloc.status === 'completed';
                                         const sim = getSimulationAtDate(alloc.dates[0]);
                                         const currentEffectiveStockMeters = sim.stock;
-                                        const hasArrival = sim.arrivals > 0;
+                                        
+                                        // 同日の入荷バッジ重複を避けるため、日付が前行と同じなら非表示
+                                        const prevAlloc = i > 0 ? allocations[i - 1] : null;
+                                        const isFirstOfDate = !prevAlloc || prevAlloc.dates[0] !== alloc.dates[0];
+                                        const showArrival = sim.arrivals > 0 && isFirstOfDate;
 
                                         return (
                                             <TableRow key={i} className={cn("hover:bg-muted/30", !isCompleted && currentEffectiveStockMeters <= (product.minStockAlert || 0) && "bg-red-50/30")}>
@@ -286,7 +290,7 @@ export function StockAllocationDialog({
                                                         <Badge variant="outline" className="px-1.5 py-0 h-4 text-[10px] font-normal">
                                                             {alloc.status === 'active' ? '開催中' : isCompleted ? '終了' : '予定'}
                                                         </Badge>
-                                                        {hasArrival && (
+                                                        {showArrival && (
                                                             <Badge className="bg-emerald-500 hover:bg-emerald-600 px-1 py-0 h-4 text-[9px] font-bold border-none text-white whitespace-nowrap">
                                                                 +{sim.arrivals.toLocaleString()} 入荷あり
                                                             </Badge>
