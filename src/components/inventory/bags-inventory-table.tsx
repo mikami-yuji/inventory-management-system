@@ -559,6 +559,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                 onClose={() => setViewAllocation(null)}
                 saleEvents={saleEvents}
                 currentInventory={viewAllocation ? (inventoryMap.get(viewAllocation.id)?.quantity || 0) : 0}
+                wips={viewAllocation ? (wipMap.get(viewAllocation.id) || []) : []}
+                incomingItems={viewAllocation ? (incomingMap.get(viewAllocation.id)?.items || []) : []}
+                supplierStock={viewAllocation ? (supplierStockMap.get(viewAllocation.id) || 0) : 0}
                 onUpdate={onRefetch}
             />
             <ProductStatusDialog

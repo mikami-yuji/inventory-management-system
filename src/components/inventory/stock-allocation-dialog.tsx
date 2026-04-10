@@ -26,8 +26,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useUpdateSaleEvent, type SaleEvent } from "@/hooks/use-sale-events";
 import { cn } from "@/lib/utils";
-import { bagsToMeters, isRollBag, metersToBags } from "@/lib/services/inventory-service"; // 修正
-import type { Product } from "@/types";
+import { bagsToMeters, isRollBag, metersToBags, calculateStockPrediction } from "@/lib/services/inventory-service";
+import type { Product, WorkInProgress, IncomingStock } from "@/types";
 import { toast } from "react-hot-toast";
 
 type StockAllocationDialogProps = {
@@ -35,7 +35,10 @@ type StockAllocationDialogProps = {
     onClose: () => void;
     product: Product | null;
     saleEvents: SaleEvent[];
-    currentInventory?: number; // 追加
+    currentInventory?: number;
+    wips?: WorkInProgress[];
+    incomingItems?: IncomingStock[];
+    supplierStock?: number;
     onUpdate?: () => void;
 };
 
@@ -44,7 +47,10 @@ export function StockAllocationDialog({
     onClose,
     product,
     saleEvents,
-    currentInventory = 0, // 追加
+    currentInventory = 0,
+    wips = [],
+    incomingItems = [],
+    supplierStock = 0,
     onUpdate,
 }: StockAllocationDialogProps): React.ReactElement {
     const { updateAllocation, updateProducedStatus, loading } = useUpdateSaleEvent();
@@ -76,20 +82,82 @@ export function StockAllocationDialog({
 
     // 現在庫（枚数ベース）を準備
     const isRoll = product.shape ? isRollBag(product.shape) : false;
-    const currentInventoryPieces = isRoll && product.weight 
-        ? metersToBags(currentInventory, product.weight) 
-        : currentInventory;
+    
+    // 在庫予測シミュレーションを実行
+    const prediction = calculateStockPrediction(
+        currentInventory,
+        product.dailyShipmentRate || 0,
+        product.productionLeadDays || 0,
+        product,
+        allocations
+            .filter(a => a.status !== 'completed' && a.status !== 'cancelled' && !a.isProduced)
+            .map(a => ({ dates: a.dates, quantity: a.quantity })),
+        wips
+            .filter(w => w.status === 'in_progress')
+            .map(w => ({
+                quantity: w.quantity,
+                expectedDate: w.expectedCompletion ? new Date(w.expectedCompletion) : null,
+                termType: w.termType
+            })),
+        incomingItems.map(i => ({
+            quantity: i.quantity,
+            expectedDate: new Date(i.expectedDate)
+        })),
+        supplierStock
+    );
 
+    // 有効在庫（最終的な予測値）
+    const finalSimulation = prediction.simulation[prediction.simulation.length - 1];
+    const effectiveStockMeters = finalSimulation ? finalSimulation.stock : 0;
+    const effectiveStockPieces = isRoll && product.weight 
+        ? metersToBags(effectiveStockMeters, product.weight)
+        : effectiveStockMeters;
+    
+    // 合計引当数（計算用）
     const totalAllocated = allocations
         .filter(a => a.status !== 'completed' && a.status !== 'cancelled' && !a.isProduced)
         .reduce((sum, item) => sum + item.quantity, 0);
-    const effectiveStock = currentInventoryPieces - totalAllocated; // 有効在庫を枚数で計算（完了分は除外）
-    const effectiveStockMeters = product.weight ? bagsToMeters(effectiveStock, product.weight) : 0;
+
+    // シミュレーションから特定の日付の在庫と入荷情報を取得するヘルパー
+    const getSimulationAtDate = (dateStr: string) => {
+        if (!prediction.simulation.length) return { stock: 0, arrivals: 0 };
+        const targetDate = new Date(dateStr);
+        targetDate.setHours(0, 0, 0, 0);
+        
+        // 日付が一致する記録を探す
+        const exactRecord = prediction.simulation.find(s => {
+            const d = new Date(s.date);
+            d.setHours(0, 0, 0, 0);
+            return d.getTime() === targetDate.getTime();
+        });
+
+        if (exactRecord) return { stock: exactRecord.stock, arrivals: exactRecord.arrivals };
+
+        // 一致しない場合は、それ以前で最も近いシミュレーション結果を探す
+        const record = [...prediction.simulation]
+            .reverse()
+            .find(s => {
+                const d = new Date(s.date);
+                d.setHours(0, 0, 0, 0);
+                return d.getTime() <= targetDate.getTime();
+            });
+        
+        return { 
+            stock: record ? record.stock : prediction.simulation[0].stock,
+            arrivals: 0
+        };
+    };
 
     // 巻数の計算ヘルパー（枚数 -> メートル -> 巻数）
-    const calculateRolls = (quantity: number) => {
+    const calculateRolls = (quantityPieces: number) => {
         if (!product.metersPerRoll || !product.weight) return null;
-        const meters = bagsToMeters(quantity, product.weight);
+        const meters = bagsToMeters(quantityPieces, product.weight);
+        return (meters / product.metersPerRoll).toFixed(1);
+    };
+
+    // メートルから巻数を直接計算するヘルパー
+    const calculateRollsFromMeters = (meters: number) => {
+        if (!product.metersPerRoll) return null;
         return (meters / product.metersPerRoll).toFixed(1);
     };
 
@@ -154,21 +222,38 @@ export function StockAllocationDialog({
                             </span>
                         </div>
                         <div className="flex justify-between items-center bg-blue-50/50 p-2.5 rounded-lg border border-blue-100">
-                            <span className="font-medium text-sm">有効在庫</span>
+                            <span className="font-medium text-sm">有効在庫 (予測)</span>
                             <span className={cn(
                                 "text-base font-bold",
-                                effectiveStock <= 0 ? "text-red-600" : "text-emerald-600"
+                                effectiveStockMeters <= (product.minStockAlert || 0) ? "text-red-600" : "text-emerald-600"
                             )}>
                                 {effectiveStockMeters.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                                 <span className="text-xs ml-0.5">m</span>
                                 {product.metersPerRoll && (
                                     <span className="text-xs font-normal text-muted-foreground ml-1">
-                                        / 約{calculateRolls(effectiveStock)}巻
+                                        / 約{calculateRollsFromMeters(effectiveStockMeters)}巻
                                     </span>
                                 )}
                             </span>
                         </div>
                     </div>
+
+                    {prediction.estimatedDate && (
+                        <div className={cn(
+                            "px-3 py-2 rounded-md text-xs border flex items-center gap-2",
+                            prediction.remainingDays < 14 ? "bg-red-50 border-red-200 text-red-700" : "bg-emerald-50 border-emerald-200 text-emerald-700"
+                        )}>
+                            <div className="flex-1">
+                                <span className="font-bold">在庫枯渇予測:</span> {format(prediction.estimatedDate, "yyyy/MM/dd")}頃 (残り {prediction.remainingDays}日)
+                                {product.dailyShipmentRate && product.dailyShipmentRate > 0 && (
+                                    <span className="ml-2 opacity-80">通常出荷: {product.dailyShipmentRate.toLocaleString()}枚/日 を考慮</span>
+                                )}
+                            </div>
+                            {prediction.wipStartAlert && (
+                                <Badge className="bg-red-600 animate-pulse border-none">仕掛開始推奨!</Badge>
+                            )}
+                        </div>
+                    )}
 
                     {allocations.length === 0 ? (
                         <div className="text-center text-muted-foreground py-4">
@@ -177,7 +262,7 @@ export function StockAllocationDialog({
                     ) : (
                         <div className="border rounded-lg flex-1 min-h-0 overflow-auto shadow-sm w-full">
                             <Table className="w-full">
-                                <TableHeader className="sticky top-0 bg-background z-10">
+                                <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
                                     <TableRow className="hover:bg-transparent">
                                         <TableHead className="h-10 px-2 text-xs sm:text-sm">イベント / 納品先</TableHead>
                                         <TableHead className="h-10 px-2 text-xs sm:text-sm">日程</TableHead>
@@ -187,104 +272,106 @@ export function StockAllocationDialog({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {(() => {
-                                        let cumulativeAllocated = 0;
-                                        return allocations.map((alloc, i) => {
-                                            const isCompleted = alloc.status === 'completed';
-                                            if (!isCompleted && !alloc.isProduced) {
-                                                cumulativeAllocated += alloc.quantity;
-                                            }
-                                            const currentEffectiveStockPieces = currentInventoryPieces - cumulativeAllocated;
-                                            const currentEffectiveStockMeters = product.weight ? bagsToMeters(currentEffectiveStockPieces, product.weight) : 0;
+                                    {allocations.map((alloc, i) => {
+                                        const isCompleted = alloc.status === 'completed';
+                                        const sim = getSimulationAtDate(alloc.dates[0]);
+                                        const currentEffectiveStockMeters = sim.stock;
+                                        const hasArrival = sim.arrivals > 0;
 
-                                            return (
-                                                <TableRow key={i} className="hover:bg-muted/30">
-                                                    <TableCell className="px-2 py-1">
-                                                        <div className="font-medium text-xs sm:text-sm leading-tight">{alloc.eventName}</div>
-                                                        <Badge variant="outline" className="mt-1.5 px-1.5 py-0 h-4 text-[10px] font-normal">
+                                        return (
+                                            <TableRow key={i} className={cn("hover:bg-muted/30", !isCompleted && currentEffectiveStockMeters <= (product.minStockAlert || 0) && "bg-red-50/30")}>
+                                                <TableCell className="px-2 py-1">
+                                                    <div className="font-medium text-xs sm:text-sm leading-tight">{alloc.eventName}</div>
+                                                    <div className="flex items-center gap-1.5 mt-1">
+                                                        <Badge variant="outline" className="px-1.5 py-0 h-4 text-[10px] font-normal">
                                                             {alloc.status === 'active' ? '開催中' : isCompleted ? '終了' : '予定'}
                                                         </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="px-2 py-1 text-xs sm:text-sm">
-                                                        {alloc.dates.length > 0 ? (
-                                                            <div className="flex flex-col gap-0.5">
-                                                                <span className="whitespace-nowrap">{format(new Date(alloc.dates[0]), "MM/dd", { locale: ja })}</span>
-                                                                {alloc.dates.length > 1 && (
-                                                                    <span className="text-muted-foreground text-[10px]">他{alloc.dates.length - 1}日</span>
-                                                                )}
-                                                            </div>
-                                                        ) : (
-                                                            "-"
+                                                        {hasArrival && (
+                                                            <Badge className="bg-emerald-500 hover:bg-emerald-600 px-1 py-0 h-4 text-[9px] font-bold border-none text-white whitespace-nowrap">
+                                                                +{sim.arrivals.toLocaleString()} 入荷あり
+                                                            </Badge>
                                                         )}
-                                                    </TableCell>
-                                                    <TableCell className="px-2 py-1 text-right whitespace-nowrap">
-                                                        {editingId === alloc.itemId ? (
-                                                            <div className="flex items-center justify-end gap-1">
-                                                                <Input
-                                                                    type="number"
-                                                                    value={editQuantity === "0" ? "" : editQuantity}
-                                                                    onChange={(e) => setEditQuantity(e.target.value)}
-                                                                    className="w-16 sm:w-20 h-7 px-1 text-right text-xs sm:text-sm"
-                                                                    autoFocus
-                                                                    min={0}
-                                                                    placeholder="数量"
-                                                                    onKeyDown={(e) => {
-                                                                        if (e.key === 'Enter') handleSave(alloc);
-                                                                        if (e.key === 'Escape') setEditingId(null);
-                                                                    }}
-                                                                />
-                                                                <Button size="icon" variant="ghost" className="h-6 w-6 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => handleSave(alloc)} disabled={loading}>
-                                                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                                                                </Button>
-                                                                <Button size="icon" variant="ghost" className="h-6 w-6 text-gray-400 hover:bg-gray-100" onClick={() => setEditingId(null)} disabled={loading}>
-                                                                    <X className="h-4 w-4" />
-                                                                </Button>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="font-medium flex items-center justify-end gap-1 sm:gap-2 group/edit cursor-pointer" onClick={() => handleEdit(alloc)}>
-                                                                <div className="flex flex-col items-end leading-tight">
-                                                                    <span className="text-xs sm:text-sm">{alloc.quantity.toLocaleString()} <span className="text-[10px] sm:text-xs font-normal opacity-70">{unit}</span></span>
-                                                                    {product.metersPerRoll && (
-                                                                        <span className="text-[9px] sm:text-[10px] text-muted-foreground">約{calculateRolls(alloc.quantity)}巻</span>
-                                                                    )}
-                                                                </div>
-                                                                <Pencil className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground opacity-30 sm:opacity-0 sm:group-hover/edit:opacity-100 transition-opacity" />
-                                                            </div>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="px-2 py-1 text-center">
-                                                        <div className="flex justify-center">
-                                                            <Checkbox 
-                                                                id={`produced-${alloc.itemId}`}
-                                                                checked={alloc.isProduced}
-                                                                onCheckedChange={() => handleToggleProduced(alloc)}
-                                                                disabled={loading || isCompleted}
-                                                                className="h-4 w-4"
-                                                            />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="px-2 py-1 text-xs sm:text-sm">
+                                                    {alloc.dates.length > 0 ? (
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <span className="whitespace-nowrap">{format(new Date(alloc.dates[0]), "MM/dd", { locale: ja })}</span>
+                                                            {alloc.dates.length > 1 && (
+                                                                <span className="text-muted-foreground text-[10px]">他{alloc.dates.length - 1}日</span>
+                                                            )}
                                                         </div>
-                                                    </TableCell>
-                                                    <TableCell className="pl-2 pr-4 py-1 text-right whitespace-nowrap">
-                                                        {!isCompleted ? (
+                                                    ) : (
+                                                        "-"
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="px-2 py-1 text-right whitespace-nowrap">
+                                                    {editingId === alloc.itemId ? (
+                                                        <div className="flex items-center justify-end gap-1">
+                                                            <Input
+                                                                type="number"
+                                                                value={editQuantity === "0" ? "" : editQuantity}
+                                                                onChange={(e) => setEditQuantity(e.target.value)}
+                                                                className="w-16 sm:w-20 h-7 px-1 text-right text-xs sm:text-sm"
+                                                                autoFocus
+                                                                min={0}
+                                                                placeholder="数量"
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') handleSave(alloc);
+                                                                    if (e.key === 'Escape') setEditingId(null);
+                                                                }}
+                                                            />
+                                                            <Button size="icon" variant="ghost" className="h-6 w-6 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={() => handleSave(alloc)} disabled={loading}>
+                                                                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                                                            </Button>
+                                                            <Button size="icon" variant="ghost" className="h-6 w-6 text-gray-400 hover:bg-gray-100" onClick={() => setEditingId(null)} disabled={loading}>
+                                                                <X className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="font-medium flex items-center justify-end gap-1 sm:gap-2 group/edit cursor-pointer" onClick={() => handleEdit(alloc)}>
                                                             <div className="flex flex-col items-end leading-tight">
-                                                                <div className={cn(
-                                                                    "font-semibold text-xs sm:text-sm",
-                                                                    currentEffectiveStockPieces <= 0 ? "text-red-600" : "text-emerald-600"
-                                                                )}>
-                                                                    {currentEffectiveStockMeters.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-                                                                    <span className="text-[10px] ml-0.5 font-normal">m</span>
-                                                                </div>
-                                                                 {product.metersPerRoll && (
-                                                                    <div className="text-[9px] sm:text-[10px] text-muted-foreground whitespace-nowrap">/ 約{calculateRolls(currentEffectiveStockPieces)}巻</div>
+                                                                <span className="text-xs sm:text-sm">{alloc.quantity.toLocaleString()} <span className="text-[10px] sm:text-xs font-normal opacity-70">{unit}</span></span>
+                                                                {product.metersPerRoll && (
+                                                                    <span className="text-[9px] sm:text-[10px] text-muted-foreground">約{calculateRolls(alloc.quantity)}巻</span>
                                                                 )}
                                                             </div>
-                                                        ) : (
-                                                            <div className="text-muted-foreground text-[10px] sm:text-xs">-</div>
-                                                        )}
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        });
-                                    })()}
+                                                            <Pencil className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground opacity-30 sm:opacity-0 sm:group-hover/edit:opacity-100 transition-opacity" />
+                                                        </div>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="px-2 py-1 text-center">
+                                                    <div className="flex justify-center">
+                                                        <Checkbox 
+                                                            id={`produced-${alloc.itemId}`}
+                                                            checked={alloc.isProduced}
+                                                            onCheckedChange={() => handleToggleProduced(alloc)}
+                                                            disabled={loading || isCompleted}
+                                                            className="h-4 w-4"
+                                                        />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="pl-2 pr-4 py-1 text-right whitespace-nowrap">
+                                                    {!isCompleted ? (
+                                                        <div className="flex flex-col items-end leading-tight">
+                                                            <div className={cn(
+                                                                "font-semibold text-xs sm:text-sm",
+                                                                currentEffectiveStockMeters <= (product.minStockAlert || 0) ? "text-red-600" : "text-emerald-600"
+                                                            )}>
+                                                                {currentEffectiveStockMeters.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                                                                <span className="text-[10px] ml-0.5 font-normal">m</span>
+                                                            </div>
+                                                                {product.metersPerRoll && (
+                                                                <div className="text-[9px] sm:text-[10px] text-muted-foreground whitespace-nowrap">/ 約{calculateRollsFromMeters(currentEffectiveStockMeters)}巻</div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-muted-foreground text-[10px] sm:text-xs">-</div>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                                 </TableBody>
                             </Table>
                         </div>
