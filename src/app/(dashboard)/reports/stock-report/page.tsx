@@ -129,7 +129,7 @@ function StockReportContent(): React.ReactElement {
         const map = new Map<string, number>();
         const today = startOfDay(new Date());
         incomingStocks.forEach(item => {
-            if (!isBefore(parseISO(item.expectedDate), today)) {
+            if (item.expectedDate && !isBefore(parseISO(item.expectedDate), today)) {
                 const current = map.get(item.productId) || 0;
                 map.set(item.productId, current + item.quantity);
             }

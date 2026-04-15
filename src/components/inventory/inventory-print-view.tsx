@@ -89,7 +89,10 @@ export function InventoryPrintView({
                     expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null,
                     termType: item.termType
                 })),
-                incoming?.items.map(item => ({ quantity: item.quantity, expectedDate: new Date(item.expectedDate) })) || [],
+                incoming?.items.map(item => ({ 
+                    quantity: item.quantity, 
+                    expectedDate: item.expectedDate ? new Date(item.expectedDate) : null 
+                })) || [],
                 supplierStock
             ));
         });
@@ -206,11 +209,15 @@ export function InventoryPrintView({
                                         <>
                                             <div className="font-bold">{incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
                                             {[...incoming.items]
-                                                .sort((a, b) => new Date(a.expectedDate).getTime() - new Date(b.expectedDate).getTime())
+                                                .sort((a, b) => {
+                                                    const dateA = a.expectedDate || "9999-12-31";
+                                                    const dateB = b.expectedDate || "9999-12-31";
+                                                    return dateA.localeCompare(dateB);
+                                                })
                                                 .map((item, i) => (
                                                 <div key={i} className="flex flex-col items-end text-[7px] leading-tight opacity-90 gap-0">
                                                     <div className="flex justify-between w-full gap-1">
-                                                        <span>{format(new Date(item.expectedDate), "M/d")}</span>
+                                                        <span>{item.expectedDate ? format(new Date(item.expectedDate), "M/d") : '未定'}</span>
                                                         <span className="font-medium">{item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
                                                     </div>
                                                     {item.note && <span className="text-[6px] text-slate-500 truncate max-w-[80px] break-all">{item.note}</span>}

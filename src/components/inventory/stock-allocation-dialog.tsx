@@ -101,7 +101,7 @@ export function StockAllocationDialog({
             })),
         incomingItems.map(i => ({
             quantity: i.quantity,
-            expectedDate: new Date(i.expectedDate)
+            expectedDate: i.expectedDate ? new Date(i.expectedDate) : null
         })),
         supplierStock
     );

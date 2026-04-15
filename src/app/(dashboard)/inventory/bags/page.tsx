@@ -218,7 +218,11 @@ export default function BagsInventoryPage(): React.ReactElement {
 
             map.set(stock.productId, {
                 total: current.total + stock.quantity,
-                items: [...current.items, stock].sort((a, b) => a.expectedDate.localeCompare(b.expectedDate))
+                items: [...current.items, stock].sort((a, b) => {
+                    const dateA = a.expectedDate || "9999-12-31";
+                    const dateB = b.expectedDate || "9999-12-31";
+                    return dateA.localeCompare(dateB);
+                })
             });
         });
 

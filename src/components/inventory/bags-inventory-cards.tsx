@@ -71,7 +71,10 @@ export function BagsInventoryCards({
                     expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null,
                     termType: item.termType
                 })),
-                incoming?.items.map(item => ({ quantity: item.quantity, expectedDate: new Date(item.expectedDate) })) || [],
+                incoming?.items.map(item => ({ 
+                    quantity: item.quantity, 
+                    expectedDate: item.expectedDate ? new Date(item.expectedDate) : null 
+                })) || [],
                 supplier
             ));
         });

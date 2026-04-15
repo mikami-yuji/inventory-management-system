@@ -65,7 +65,7 @@ export default function ReportsPage(): React.ReactElement {
 
             // 未来在庫の考慮
             const incoming = incomingStocks
-                .filter(s => s.productId === p.id && !isAfter(parseISO(s.expectedDate), twoWeeksLater))
+                .filter(s => s.productId === p.id && s.expectedDate && !isAfter(parseISO(s.expectedDate), twoWeeksLater))
                 .reduce((sum, s) => sum + s.quantity, 0);
             
             const wip = wipItems
@@ -99,7 +99,7 @@ export default function ReportsPage(): React.ReactElement {
             
             const physical = inventoryMap.get(p.id) || 0;
             const incoming = incomingStocks
-                .filter(s => s.productId === p.id && !isAfter(parseISO(s.expectedDate), twoWeeksLater))
+                .filter(s => s.productId === p.id && s.expectedDate && !isAfter(parseISO(s.expectedDate), twoWeeksLater))
                 .reduce((sum, s) => sum + s.quantity, 0);
             const wip = wipItems
                 .filter(w => w.productId === p.id && w.status === 'in_progress' && w.expectedCompletion && !isAfter(parseISO(w.expectedCompletion), twoWeeksLater) && ['confirmed', 'scheduled', 'shipping_arranged'].includes(w.confirmationStatus))
@@ -198,7 +198,12 @@ export default function ReportsPage(): React.ReactElement {
 
                 // 2. 特売開始日までの入荷予定
                 const incoming = incomingStocks
-                    .filter(stock => stock.productId === item.productId && !isBefore(parseISO(stock.expectedDate), today) && !isAfter(parseISO(stock.expectedDate), saleStartDate))
+                    .filter(stock => 
+                        stock.productId === item.productId && 
+                        stock.expectedDate && 
+                        !isBefore(parseISO(stock.expectedDate), today) && 
+                        !isAfter(parseISO(stock.expectedDate), saleStartDate)
+                    )
                     .reduce((sum, stock) => sum + stock.quantity, 0);
 
                 // 3. 特売開始日までの納期確定済み仕掛
@@ -230,21 +235,26 @@ export default function ReportsPage(): React.ReactElement {
         return cache;
     }, [upcomingEvents, productMap, inventoryMap, incomingStocks, wipItems, today]);
 
-    // 入荷予定（今日以降、日付昇順）
+    // 入荷予定（今日以降、日付昇順、納期未定は含めない）
     const upcomingIncomingItems = useMemo(() => {
         return incomingStocks
             .filter(item => {
+                if (!item.expectedDate) return false;
                 const expectedDate = parseISO(item.expectedDate);
                 return !isBefore(expectedDate, today);
             })
-            .sort((a, b) => new Date(a.expectedDate).getTime() - new Date(b.expectedDate).getTime());
+            .sort((a, b) => {
+                const dateA = a.expectedDate || "9999-12-31";
+                const dateB = b.expectedDate || "9999-12-31";
+                return dateA.localeCompare(dateB);
+            });
     }, [incomingStocks, today]);
 
     // 入荷予定を日付ごとにグループ化
     const incomingByDate = useMemo(() => {
         const groups = new Map<string, typeof upcomingIncomingItems>();
         upcomingIncomingItems.forEach(item => {
-            const dateKey = item.expectedDate;
+            const dateKey = item.expectedDate!;
             const existing = groups.get(dateKey) || [];
             existing.push(item);
             groups.set(dateKey, existing);

@@ -96,7 +96,7 @@ export default function DashboardPage(): React.ReactElement {
         productId: string;
         productName: string;
         productWeight: number | null;
-        expectedDate: string;
+        expectedDate: string | null;
         quantity: number;
         note: string | null;
         productShape?: string | null;
@@ -126,7 +126,7 @@ export default function DashboardPage(): React.ReactElement {
                     productId: item.product_id || item.productId || '',
                     productName: item.products?.name || item.productName || '不明',
                     productWeight: item.products?.weight !== undefined ? item.products?.weight : (item.productWeight || null),
-                    expectedDate: item.expected_date || item.expectedDate || '',
+                    expectedDate: item.expected_date || item.expectedDate || null,
                     quantity: item.quantity,
                     note: item.note,
                 })));
@@ -568,7 +568,7 @@ export default function DashboardPage(): React.ReactElement {
                                             {stock.productName.slice(0, 30)}{stock.productName.length > 30 ? '...' : ''} {stock.productWeight ? `${stock.productWeight}kg` : ''}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                            {stock.expectedDate} / {stock.quantity.toLocaleString()}{isRollBag(stock.productShape || '') ? 'm' : '枚'}
+                                            {stock.expectedDate || "納期確認中"} / {stock.quantity.toLocaleString()}{isRollBag(stock.productShape || '') ? 'm' : '枚'}
                                         </p>
                                     </div>
                                     {stock.note && (
