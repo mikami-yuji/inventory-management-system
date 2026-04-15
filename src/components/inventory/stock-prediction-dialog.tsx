@@ -73,6 +73,26 @@ type StockPredictionDialogProps = {
     incomingItems: any[];
 };
 
+type SimulationPoint = {
+    date: Date;
+    stock: number;
+    in: number;
+    out: number;
+    arrivals: number;
+    outNames: string[];
+};
+
+type PredictionData = {
+    simulation: SimulationPoint[];
+    estimatedDate: Date | null;
+    remainingDays: number | null;
+    analysis: {
+        alerts: Array<{ date: Date; quantity: number }>;
+        pendingIncomingTotal: number;
+    };
+    hasUnconfirmedWIP: boolean;
+};
+
 export function StockPredictionDialog({
     product,
     prediction: basePrediction,
@@ -119,14 +139,14 @@ export function StockPredictionDialog({
     const filteredSimulation = useMemo(() => {
         if (!prediction?.simulation) return [];
         const cutoffDate = addDays(new Date().setHours(0,0,0,0), displayPeriod);
-        return prediction.simulation.filter((s: any) => !isAfter(s.date, cutoffDate));
+        return prediction.simulation.filter((s: SimulationPoint) => !isAfter(s.date, cutoffDate));
     }, [prediction, displayPeriod]);
 
     const chartData = useMemo(() => {
         if (filteredSimulation.length === 0) return null;
 
-        const labels = filteredSimulation.map((s: any) => format(s.date, "M/d"));
-        const data = filteredSimulation.map((s: any) => s.stock);
+        const labels = filteredSimulation.map((s: SimulationPoint) => format(s.date, "M/d"));
+        const data = filteredSimulation.map((s: SimulationPoint) => s.stock);
 
         return {
             labels,
@@ -151,20 +171,16 @@ export function StockPredictionDialog({
         plugins: {
             legend: { display: false },
             tooltip: {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 callbacks: {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    label: (context: any) => `在庫: ${context.parsed.y.toLocaleString()}${unit}`
+                    label: (context: { parsed: { y: number } }) => `在庫: ${context.parsed.y.toLocaleString()}${unit}`
                 }
             }
         },
         scales: {
             y: {
                 beginAtZero: true,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ticks: {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    callback: (value: any) => value.toLocaleString() + unit
+                    callback: (value: string | number) => value.toLocaleString() + unit
                 }
             }
         }
@@ -172,7 +188,7 @@ export function StockPredictionDialog({
 
     // 主要なイベントの抽出 (フィルタリング後のデータから)
     const events = useMemo(() => {
-        return filteredSimulation.filter((s: any) => s.arrivals > 0 || (s.out > (product.dailyShipmentRate || 0) + 1));
+        return filteredSimulation.filter((s: SimulationPoint) => s.arrivals > 0 || (s.out > (product.dailyShipmentRate || 0) + 1));
     }, [filteredSimulation, product.dailyShipmentRate]);
 
     return (
