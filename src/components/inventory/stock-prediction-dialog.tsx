@@ -90,7 +90,7 @@ export function StockPredictionDialog({
     const [newSimDate, setNewSimDate] = React.useState<string>(format(new Date(), "yyyy-MM-dd"));
     
     // 表示期間 (日数)
-    const [displayPeriod, setDisplayPeriod] = React.useState<number>(90);
+    const [displayPeriod, setDisplayPeriod] = React.useState<number>(60);
 
     // シミュレーション実行
     const prediction = useMemo(() => {
@@ -191,9 +191,9 @@ export function StockPredictionDialog({
                             className="mr-10"
                         >
                             <TabsList className="h-8">
+                                <TabsTrigger value="60" className="text-xs px-3">2ヶ月</TabsTrigger>
                                 <TabsTrigger value="90" className="text-xs px-3">3ヶ月</TabsTrigger>
                                 <TabsTrigger value="180" className="text-xs px-3">半年</TabsTrigger>
-                                <TabsTrigger value="365" className="text-xs px-3">1年</TabsTrigger>
                             </TabsList>
                         </Tabs>
                     </DialogTitle>
