@@ -412,7 +412,7 @@ function ProductCard({
                                     <div className="flex flex-col gap-0.5 mt-0.5 opacity-80 font-normal">
                                         {incoming.items.map((item, index) => (
                                             <div key={index}>
-                                                {new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {item.quantity.toLocaleString()}
+                                                {item.expectedDate ? new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' }) : <span className="font-bold">納期確認中</span>}: {item.quantity.toLocaleString()}
                                             </div>
                                         ))}
                                     </div>

@@ -321,7 +321,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                     <div className="flex flex-col gap-0.5 mt-0.5">
                                                         {incoming.items.map((item, index) => (
                                                             <div key={index} className="text-[10px] leading-tight opacity-80 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]" title={item.note || ''}>
-                                                                {new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {item.quantity.toLocaleString()}
+                                                                {item.expectedDate ? new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' }) : <span className="font-bold">納期確認中</span>}: {item.quantity.toLocaleString()}
                                                                 {item.note && <span className="ml-1 text-[9px] text-emerald-700">({item.note})</span>}
                                                             </div>
                                                         ))}

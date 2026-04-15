@@ -41,7 +41,8 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
     const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
     // setLoadingAddressesは将来のローディング表示用に保持。現在はアドレス読み込み
     // の内部状態としてのみ使用する（UIに直接出力しない）
-    const [, setLoadingAddresses] = useState(false);
+    const [loadingAddresses, setLoadingAddresses] = useState(false);
+    const [isTBD, setIsTBD] = useState(false);
 
     // 商品ごとの入荷予定データ
     const { incomingStocks, loading: loadingStocks, addIncomingStock, updateIncomingStock, deleteIncomingStock, receiveIncomingStock, refetch } = useIncomingStock(product?.id);
@@ -67,6 +68,7 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
     useEffect(() => {
         if (open) {
             setDate(new Date());
+            setIsTBD(false);
             setQuantity("");
             setNote("");
             setEditingId(null);
@@ -78,13 +80,13 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
     // 送信ハンドラ
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!product || !date || !quantity) return;
+        if (!product || (!date && !isTBD) || !quantity) return;
 
         setIsSubmitting(true);
         try {
             if (editingId) {
                 const success = await updateIncomingStock(editingId, {
-                    expectedDate: format(date, "yyyy-MM-dd"),
+                    expectedDate: isTBD || !date ? null : format(date, "yyyy-MM-dd"),
                     quantity: parseInt(quantity, 10),
                     note: note
                 });
@@ -93,12 +95,13 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
                     setEditingId(null);
                     setQuantity("");
                     setNote("");
+                    setIsTBD(false);
                     if (onSuccess) onSuccess();
                 }
             } else {
                 const success = await addIncomingStock({
                     productId: product.id,
-                    expectedDate: format(date, "yyyy-MM-dd"),
+                    expectedDate: isTBD || !date ? null : format(date, "yyyy-MM-dd"),
                     quantity: parseInt(quantity, 10),
                     note: note
                 });
@@ -121,7 +124,13 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
     // 編集モード切替
     const handleEdit = (stock: IncomingStock): void => {
         setEditingId(stock.id);
-        setDate(new Date(stock.expectedDate));
+        if (stock.expectedDate) {
+            setDate(new Date(stock.expectedDate));
+            setIsTBD(false);
+        } else {
+            setDate(undefined);
+            setIsTBD(true);
+        }
         setQuantity(String(stock.quantity));
         setNote(stock.note || "");
     };
@@ -129,6 +138,7 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
     const cancelEdit = () => {
         setEditingId(null);
         setDate(new Date());
+        setIsTBD(false);
         setQuantity("");
         setNote("");
     };
@@ -175,22 +185,42 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
                                             variant={"outline"}
                                             className={cn(
                                                 "w-full justify-start text-left font-normal",
-                                                !date && "text-muted-foreground"
+                                                (!date && !isTBD) && "text-muted-foreground",
+                                                isTBD && "opacity-50"
                                             )}
+                                            disabled={isTBD}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {date ? format(date, "yyyy年MM月dd日", { locale: ja }) : <span>日付を選択</span>}
+                                            {isTBD ? (
+                                                <span className="text-orange-600 font-bold">納期確認中</span>
+                                            ) : date ? (
+                                                format(date, "yyyy年MM月dd日", { locale: ja })
+                                            ) : (
+                                                <span>日付を選択</span>
+                                            )}
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar
-                                            mode="single"
-                                            selected={date}
-                                            onSelect={setDate}
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
+                                    {!isTBD && (
+                                        <PopoverContent className="w-auto p-0">
+                                            <Calendar
+                                                mode="single"
+                                                selected={date}
+                                                onSelect={setDate}
+                                                initialFocus
+                                            />
+                                        </PopoverContent>
+                                    )}
                                 </Popover>
+                                <div className="flex items-center space-x-2 mt-1">
+                                    <input
+                                        type="checkbox"
+                                        id="edit-isTBD"
+                                        checked={isTBD}
+                                        onChange={(e) => setIsTBD(e.target.checked)}
+                                        className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-600"
+                                    />
+                                    <Label htmlFor="edit-isTBD" className="text-xs text-orange-700 cursor-pointer">納期確認中（着日未定）</Label>
+                                </div>
                             </div>
 
                             <div className="grid gap-2">
@@ -266,7 +296,7 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
                                     <div key={stock.id} className="flex items-center justify-between p-3 border rounded-lg bg-card">
                                         <div>
                                             <div className="text-sm text-muted-foreground">
-                                                納品: {format(new Date(stock.expectedDate), "M/d")}
+                                                納品: {stock.expectedDate ? format(new Date(stock.expectedDate), "M/d") : <span className="text-orange-600 font-bold italic">納期確認中</span>}
                                             </div>
                                             <div className="text-sm text-muted-foreground">
                                                 {stock.quantity.toLocaleString()}

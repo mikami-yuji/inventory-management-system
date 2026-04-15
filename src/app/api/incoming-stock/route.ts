@@ -54,10 +54,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         const supabaseClient = createServerClient();
         const body = await request.json();
 
-        // 必須チェック
-        if (!body.productId || !body.expectedDate || body.quantity === undefined) {
+        // 必須チェック (expectedDate は null または undefined の場合にチェックを緩和)
+        if (!body.productId || body.quantity === undefined) {
             return NextResponse.json(
-                { error: '商品ID、入荷予定日、数量は必須です' },
+                { error: '商品ID、数量は必須です' },
                 { status: 400 }
             );
         }
@@ -105,7 +105,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         }
 
         const updateData: Record<string, string | number | null> = {};
-        if (body.expectedDate) updateData.expected_date = body.expectedDate;
+        if (body.expectedDate !== undefined) updateData.expected_date = body.expectedDate;
         if (body.quantity !== undefined) updateData.quantity = body.quantity;
         if (body.note !== undefined) updateData.note = body.note;
 

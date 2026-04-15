@@ -221,7 +221,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             const product = Array.isArray(wipItem.products) ? wipItem.products[0] : wipItem.products;
             const insertData = schedules.map(s => ({
                 product_id: (wipItem as Record<string, unknown>).product_id,
-                expected_date: s.expectedDate,
+                expected_date: s.expectedDate || null,
                 quantity: s.quantity,
                 note: s.note || '仕掛品からの予定'
             }))

@@ -222,7 +222,11 @@ export const calculateStockPrediction = (
     // 入荷・仕掛マップ: 日付キー -> 数量（単位は商品に合わせる：m または 枚）
     const arrivalMap = new Map<string, number>();
     incomingItems.forEach(item => {
-        const key = formatDateKey(new Date(item.expectedDate));
+        if (!item.expectedDate) return;
+        const date = new Date(item.expectedDate);
+        if (isNaN(date.getTime())) return;
+        
+        const key = formatDateKey(date);
         arrivalMap.set(key, (arrivalMap.get(key) || 0) + item.quantity);
     });
     wipItems.forEach(item => {

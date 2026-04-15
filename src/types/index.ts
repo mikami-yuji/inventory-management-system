@@ -87,7 +87,7 @@ export type IncomingStock = {
   id: string;
   productId: string;
   elementId?: string; // ユニークキー用
-  expectedDate: string; // YYYY-MM-DD
+  expectedDate: string | null; // YYYY-MM-DD または null (納期確認中)
   shippedDate?: string; // 出荷日 (YYYY-MM-DD)
   quantity: number;
   note?: string;

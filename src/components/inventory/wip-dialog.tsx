@@ -30,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "react-hot-toast";
 import type { WorkInProgress, DeliveryAddress } from "@/types";
 import { X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type WIPDialogProps = {
     product: Product | null;
@@ -41,6 +42,7 @@ type WIPDialogProps = {
 type ArrivalSchedule = {
     id: string;
     expectedDate: string;
+    isTBD?: boolean;
     quantity: number;
     note: string;
 };
@@ -187,7 +189,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
         setConfirmingItem(item);
         setSupplierQuantity(0);
         setArrivalSchedules([
-            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: defaultAddressName }
+            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), isTBD: false, quantity: 0, note: defaultAddressName }
         ]);
         setLossQuantity(0);
     };
@@ -195,7 +197,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
     const addArrivalRow = () => {
         setArrivalSchedules([
             ...arrivalSchedules,
-            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), quantity: 0, note: defaultAddressName }
+            { id: crypto.randomUUID(), expectedDate: format(new Date(), 'yyyy-MM-dd'), isTBD: false, quantity: 0, note: defaultAddressName }
         ]);
     };
 
@@ -231,7 +233,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
         const activeSchedules = arrivalSchedules.filter(s => s.quantity > 0);
         if (activeSchedules.length > 0 && success) {
             const result = await transferToIncoming(confirmingId, activeSchedules.map(s => ({
-                expectedDate: s.expectedDate,
+                expectedDate: s.isTBD ? "" : s.expectedDate,
                 quantity: s.quantity,
                 note: s.note
             })));
@@ -348,7 +350,16 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
                                                     value={schedule.expectedDate}
                                                     onChange={e => updateArrivalRow(schedule.id, { expectedDate: e.target.value })}
                                                     className="h-8 text-xs"
+                                                    disabled={schedule.isTBD}
                                                 />
+                                                <div className="flex items-center space-x-2 mt-1">
+                                                    <Checkbox 
+                                                        id={`tbd-${schedule.id}`} 
+                                                        checked={schedule.isTBD} 
+                                                        onCheckedChange={(checked) => updateArrivalRow(schedule.id, { isTBD: !!checked })}
+                                                    />
+                                                    <Label htmlFor={`tbd-${schedule.id}`} className="text-[10px] text-muted-foreground cursor-pointer select-none">納期確認中</Label>
+                                                </div>
                                             </div>
                                             <div className="space-y-1">
                                                 <Label className="text-[10px] text-muted-foreground">数量 ({product?.shape?.includes('枚') ? '枚' : 'm'})</Label>
