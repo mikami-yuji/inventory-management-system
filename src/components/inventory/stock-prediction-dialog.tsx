@@ -179,23 +179,9 @@ export function StockPredictionDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                            <Calendar className="h-5 w-5 text-blue-500" />
-                            在庫予測の詳細: {product.name}
-                        </div>
-                        
-                        <Tabs 
-                            value={String(displayPeriod)} 
-                            onValueChange={(val) => setDisplayPeriod(Number(val))}
-                            className="mr-10"
-                        >
-                            <TabsList className="h-8">
-                                <TabsTrigger value="60" className="text-xs px-3">2ヶ月</TabsTrigger>
-                                <TabsTrigger value="90" className="text-xs px-3">3ヶ月</TabsTrigger>
-                                <TabsTrigger value="180" className="text-xs px-3">半年</TabsTrigger>
-                            </TabsList>
-                        </Tabs>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-blue-500" />
+                        在庫予測の詳細: {product.name}
                     </DialogTitle>
                     <DialogDescription>
                         現在の在庫と予定（入荷・仕掛・特売）に基づいたシミュレーション結果です。
@@ -278,13 +264,25 @@ export function StockPredictionDialog({
                     </div>
 
                     {/* 予測グラフ & シミュレーション入力 */}
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                        <Card className="lg:col-span-3 border-slate-100">
-                            <CardHeader className="p-4 pb-0">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <Card className="lg:col-span-2 border-slate-100 shadow-sm">
+                            <CardHeader className="p-4 pb-0 flex flex-row items-center justify-between space-y-0">
                                 <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
                                     <TrendingDown className="h-4 w-4" />
                                     在庫推移シミュレーション
                                 </CardTitle>
+                                
+                                <Tabs 
+                                    value={String(displayPeriod)} 
+                                    onValueChange={(val) => setDisplayPeriod(Number(val))}
+                                    className="scale-90 origin-right"
+                                >
+                                    <TabsList className="h-8 bg-slate-100/80">
+                                        <TabsTrigger value="60" className="text-[11px] px-3">2ヶ月</TabsTrigger>
+                                        <TabsTrigger value="90" className="text-[11px] px-3">3ヶ月</TabsTrigger>
+                                        <TabsTrigger value="180" className="text-[11px] px-3">半年</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
                             </CardHeader>
                             <CardContent className="p-4">
                                 <div className="h-[250px] w-full">
@@ -294,37 +292,37 @@ export function StockPredictionDialog({
                         </Card>
 
                         {/* もしもシミュレーション */}
-                        <Card className="border-blue-100 bg-blue-50/30">
-                            <CardHeader className="p-4 pb-2">
-                                <CardTitle className="text-[13px] font-bold text-blue-800 flex items-center gap-1">
-                                    <TrendingDown className="h-3.5 w-3.5" />
+                        <Card className="border-blue-100 bg-blue-50/30 shadow-none">
+                            <CardHeader className="p-5 pb-3">
+                                <CardTitle className="text-sm font-bold text-blue-800 flex items-center gap-2">
+                                    <TrendingDown className="h-4 w-4" />
                                     「もしも」の入荷テスト
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-4 pt-1 space-y-4">
+                            <CardContent className="px-5 pb-5 pt-0 space-y-5">
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label className="text-[11px] font-semibold text-blue-700">入荷数量 ({unit})</Label>
+                                        <Label className="text-xs font-semibold text-blue-700 ml-0.5">入荷数量 ({unit})</Label>
                                         <Input 
                                             type="number" 
-                                            className="h-9 text-sm bg-white" 
+                                            className="h-10 text-sm bg-white border-blue-200 focus:border-blue-400 focus:ring-blue-100" 
                                             value={newSimQty}
                                             onChange={e => setNewSimQty(e.target.value)}
                                             placeholder="例: 5000"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-[11px] font-semibold text-blue-700">入荷予定日</Label>
+                                        <Label className="text-xs font-semibold text-blue-700 ml-0.5">入荷予定日</Label>
                                         <Input 
                                             type="date" 
-                                            className="h-9 text-sm bg-white" 
+                                            className="h-10 text-sm bg-white border-blue-200 focus:border-blue-400 focus:ring-blue-100" 
                                             value={newSimDate}
                                             onChange={e => setNewSimDate(e.target.value)}
                                         />
                                     </div>
                                 </div>
                                 <Button 
-                                    className="w-full h-9 text-sm gap-1.5 bg-blue-600 hover:bg-blue-700 shadow-sm"
+                                    className="w-full h-10 text-sm font-bold gap-2 bg-blue-600 hover:bg-blue-700 shadow-md transition-all active:scale-[0.98]"
                                     onClick={() => {
                                         if (!newSimQty || isNaN(Number(newSimQty))) {
                                             toast.error("数量を入力してください");
@@ -341,38 +339,46 @@ export function StockPredictionDialog({
                                 </Button>
 
                                 {simArrivals.length > 0 && (
-                                    <div className="mt-6 pt-4 border-t border-blue-200">
-                                        <div className="text-[11px] font-bold text-blue-800 mb-3 flex items-center gap-1.5">
-                                            検証中の入荷予定:
-                                            <span className="text-[10px] bg-blue-100 px-1.5 py-0.5 rounded-full text-blue-700 font-medium">
-                                                {simArrivals.length}件
-                                            </span>
+                                    <div className="mt-6 pt-5 border-t border-blue-200">
+                                        <div className="text-xs font-bold text-blue-800 mb-4 flex items-center justify-between">
+                                            <div className="flex items-center gap-1.5">
+                                                検証中の入荷予定
+                                                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                                                    {simArrivals.length}
+                                                </span>
+                                            </div>
+                                            <Button 
+                                                variant="ghost" 
+                                                className="h-auto p-0 text-[10px] text-slate-400 hover:text-red-600 hover:bg-transparent"
+                                                onClick={() => setSimArrivals([])}
+                                            >
+                                                リセット
+                                            </Button>
                                         </div>
-                                        <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+                                        <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
                                             {simArrivals.map((sim, i) => (
-                                                <div key={i} className="flex items-center justify-between bg-white px-3 py-2.5 rounded-lg border border-blue-100 text-[11px] group">
-                                                    <div>
-                                                        <div className="font-bold text-blue-900">{format(sim.expectedDate, "M/d")}</div>
-                                                        <div className="text-slate-500">+{sim.quantity.toLocaleString()}{unit}</div>
+                                                <div key={i} className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-blue-100 shadow-sm text-xs group transition-all hover:border-blue-300">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex flex-col items-center justify-center text-blue-700">
+                                                            <span className="text-[10px] leading-tight font-medium uppercase">{format(sim.expectedDate, "MMM")}</span>
+                                                            <span className="text-base leading-tight font-bold">{format(sim.expectedDate, "d")}</span>
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-bold text-slate-900">+{sim.quantity.toLocaleString()}{unit}</div>
+                                                            <div className="text-[10px] text-slate-400">{format(sim.expectedDate, "yyyy/MM/dd")}</div>
+                                                        </div>
                                                     </div>
                                                     <Button 
                                                         variant="ghost" 
                                                         size="icon" 
-                                                        className="h-6 w-6 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                                                        className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                                                         onClick={() => setSimArrivals(simArrivals.filter((_, idx) => idx !== i))}
                                                     >
-                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                        <Trash2 className="h-4 w-4" />
                                                     </Button>
                                                 </div>
                                             ))}
                                         </div>
-                                        <Button 
-                                            variant="ghost" 
-                                            className="w-full h-8 text-[11px] text-slate-500 hover:text-red-600 mt-2"
-                                            onClick={() => setSimArrivals([])}
-                                        >
-                                            リセット
-                                        </Button>
                                     </div>
                                 )}
                             </CardContent>
