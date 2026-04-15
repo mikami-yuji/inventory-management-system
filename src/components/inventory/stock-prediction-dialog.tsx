@@ -8,7 +8,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import {
     Card,
     CardContent,
@@ -20,9 +19,17 @@ import {
     TrendingDown,
     Info,
     ArrowUpCircle,
-    ArrowDownCircle
+    ArrowDownCircle,
+    Plus,
+    Trash2,
+    AlertTriangle
 } from "lucide-react";
-import { isRollBag, bagsToMeters } from "@/lib/services";
+import { isRollBag, bagsToMeters, calculateStockPrediction } from "@/lib/services";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { toast } from "react-hot-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Product } from "@/types";
 import {
     Chart as ChartJS,
@@ -51,17 +58,53 @@ ChartJS.register(
 type StockPredictionDialogProps = {
     product: Product;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    prediction: any; // Result of calculateStockPrediction
+    prediction: any; // Result of calculateStockPrediction (base)
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    // シミュレーション再計算用の元データ
+    availableStock: number;
+    supplierStock: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    saleItems: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    wipItems: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    incomingItems: any[];
 };
 
 export function StockPredictionDialog({
     product,
-    prediction,
+    prediction: basePrediction,
     open,
     onOpenChange,
+    availableStock,
+    supplierStock,
+    saleItems,
+    wipItems,
+    incomingItems
 }: StockPredictionDialogProps): React.ReactElement {
+    // シミュレーション用のステート
+    const [simArrivals, setSimArrivals] = React.useState<Array<{ quantity: number; expectedDate: Date }>>([]);
+    const [newSimQty, setNewSimQty] = React.useState<string>("");
+    const [newSimDate, setNewSimDate] = React.useState<string>(format(new Date(), "yyyy-MM-dd"));
+
+    // シミュレーション実行
+    const prediction = useMemo(() => {
+        if (simArrivals.length === 0) return basePrediction;
+        
+        return calculateStockPrediction(
+            availableStock,
+            product.dailyShipmentRate || 0,
+            product.productionLeadDays || 0,
+            product,
+            saleItems,
+            wipItems,
+            incomingItems,
+            supplierStock,
+            simArrivals
+        );
+    }, [basePrediction, simArrivals, availableStock, product, saleItems, wipItems, incomingItems, supplierStock]);
+
     const isRoll = isRollBag(product.shape || "", product.category, product.metersPerRoll);
     const unit = isRoll ? "m" : "枚";
 
@@ -139,6 +182,35 @@ export function StockPredictionDialog({
                     </DialogDescription>
                 </DialogHeader>
 
+                {/* 解析アラート */}
+                <div className="space-y-3 mt-4">
+                    {prediction?.analysis?.alerts?.length > 0 && (
+                        <Alert variant="destructive" className="bg-red-50 border-red-200">
+                            <AlertTriangle className="h-4 w-4 text-red-600" />
+                            <AlertTitle className="text-red-800 font-bold">入荷タイミング警告</AlertTitle>
+                            <AlertDescription className="text-red-700 text-xs">
+                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                {prediction.analysis.alerts.map((alert: any, i: number) => (
+                                    <div key={i}>
+                                        ・{format(alert.date, "M/d")} 到着予定の入荷 ({alert.quantity.toLocaleString()}{unit}) は、在庫切れ後の到着となります。
+                                    </div>
+                                ))}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
+                    {prediction?.analysis?.pendingIncomingTotal > 0 && prediction.estimatedDate && (
+                        <Alert className="bg-blue-50 border-blue-200">
+                            <Info className="h-4 w-4 text-blue-600" />
+                            <AlertTitle className="text-blue-800 font-bold">納期確認中のアイテム</AlertTitle>
+                            <AlertDescription className="text-blue-700 text-xs">
+                                納期未定分（合計 {prediction.analysis.pendingIncomingTotal.toLocaleString()}{unit}）は、
+                                欠品を防ぐため <strong>{format(prediction.estimatedDate, "yyyy/MM/dd")}</strong> までに到着させる必要があります。
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                </div>
+
                 <div className="grid gap-6 py-4">
                     {/* 予測サマリー */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -185,20 +257,101 @@ export function StockPredictionDialog({
                         </Card>
                     </div>
 
-                    {/* 予測グラフ */}
-                    <Card className="border-slate-100">
-                        <CardHeader className="p-4 pb-0">
-                            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
-                                <TrendingDown className="h-4 w-4" />
-                                在庫推移シミュレーション
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4">
-                            <div className="h-[250px] w-full">
-                                {chartData && <Line data={chartData} options={chartOptions} />}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* 予測グラフ & シミュレーション入力 */}
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                        <Card className="lg:col-span-3 border-slate-100">
+                            <CardHeader className="p-4 pb-0">
+                                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
+                                    <TrendingDown className="h-4 w-4" />
+                                    在庫推移シミュレーション
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4">
+                                <div className="h-[250px] w-full">
+                                    {chartData && <Line data={chartData} options={chartOptions} />}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* もしもシミュレーション */}
+                        <Card className="border-blue-100 bg-blue-50/30">
+                            <CardHeader className="p-4 pb-2">
+                                <CardTitle className="text-xs font-bold text-blue-800 flex items-center gap-1">
+                                    <TrendingDown className="h-3 w-3" />
+                                    「もしも」の入荷テスト
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-3 space-y-3">
+                                <div className="space-y-1">
+                                    <Label className="text-[10px]">入荷数量 ({unit})</Label>
+                                    <Input 
+                                        type="number" 
+                                        size={1} 
+                                        className="h-8 text-xs" 
+                                        value={newSimQty}
+                                        onChange={e => setNewSimQty(e.target.value)}
+                                        placeholder="例: 5000"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-[10px]">入荷日</Label>
+                                    <Input 
+                                        type="date" 
+                                        className="h-8 text-xs" 
+                                        value={newSimDate}
+                                        onChange={e => setNewSimDate(e.target.value)}
+                                    />
+                                </div>
+                                <Button 
+                                    className="w-full h-8 text-xs gap-1 bg-blue-600 hover:bg-blue-700"
+                                    onClick={() => {
+                                        if (!newSimQty || isNaN(Number(newSimQty))) {
+                                            toast.error("数量を入力してください");
+                                            return;
+                                        }
+                                        setSimArrivals([...simArrivals, { 
+                                            quantity: Number(newSimQty), 
+                                            expectedDate: new Date(newSimDate) 
+                                        }]);
+                                        setNewSimQty("");
+                                    }}
+                                >
+                                    <Plus className="h-3 w-3" /> 行を追加
+                                </Button>
+
+                                {simArrivals.length > 0 && (
+                                    <div className="mt-4 pt-3 border-t border-blue-200">
+                                        <div className="text-[10px] font-bold text-blue-800 mb-2">検証中の予定:</div>
+                                        <div className="space-y-2 max-h-[100px] overflow-y-auto pr-1">
+                                            {simArrivals.map((sim, i) => (
+                                                <div key={i} className="flex items-center justify-between bg-white p-2 rounded border border-blue-100 text-[10px]">
+                                                    <div>
+                                                        <div className="font-bold">{format(sim.expectedDate, "M/d")}</div>
+                                                        <div>+{sim.quantity.toLocaleString()}{unit}</div>
+                                                    </div>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        className="h-5 w-5 text-red-500"
+                                                        onClick={() => setSimArrivals(simArrivals.filter((_, idx) => idx !== i))}
+                                                    >
+                                                        <Trash2 className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <Button 
+                                            variant="link" 
+                                            className="h-auto p-0 text-[10px] text-blue-600 mt-2"
+                                            onClick={() => setSimArrivals([])}
+                                        >
+                                            シミュレーションをリセット
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
 
                     {/* 主要な変動イベント */}
                     <div className="space-y-3">

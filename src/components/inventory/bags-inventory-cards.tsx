@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, ImageIcon, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isRollBag, calculateStockPrediction, calculateStockStatus } from "@/lib/services";
+import { calculateStockPrediction, calculateStockStatus } from "@/lib/services";
 import { SaleEvent } from "@/hooks/use-sale-events";
 import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
@@ -104,14 +104,41 @@ export function BagsInventoryCards({
                     onViewPrediction={(p) => setViewPrediction(p)}
                 />
             ))}
-            {viewPrediction && (
-                <StockPredictionDialog
-                    product={viewPrediction}
-                    prediction={predictionMap.get(viewPrediction.id)}
-                    open={!!viewPrediction}
-                    onOpenChange={() => setViewPrediction(null)}
-                />
-            )}
+            {viewPrediction && (() => {
+                const product = viewPrediction;
+                const currentStock = inventoryMap.get(product.id)?.quantity || 0;
+                const wipList = wipMap.get(product.id) || [];
+                const incoming = incomingMap.get(product.id);
+                const supplierLots = supplierStockLotsMap?.get(product.id) || [];
+                const supplier = supplierLots.length > 0
+                    ? supplierLots.reduce((sum, lot) => sum + lot.quantity, 0)
+                    : (supplierStockMap.get(product.id) || 0);
+
+                const relevantSaleItems = saleEvents
+                    .filter(event => (event.status === 'active' || event.status === 'upcoming'))
+                    .flatMap(event => {
+                        const item = event.items.find(i => i.productId === product.id);
+                        return item && !item.isProduced ? [{ dates: event.dates, quantity: item.allocatedQuantity }] : [];
+                    });
+
+                return (
+                    <StockPredictionDialog
+                        product={product}
+                        prediction={predictionMap.get(product.id)}
+                        open={!!viewPrediction}
+                        onOpenChange={() => setViewPrediction(null)}
+                        availableStock={currentStock}
+                        supplierStock={supplier}
+                        saleItems={relevantSaleItems}
+                        wipItems={wipList.filter(item => item.status === 'in_progress').map(item => ({ 
+                            quantity: item.quantity, 
+                            expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null,
+                            termType: item.termType
+                        }))}
+                        incomingItems={incoming?.items.map(item => ({ quantity: item.quantity, expectedDate: item.expectedDate ? new Date(item.expectedDate) : null })) || []}
+                    />
+                );
+            })()}
         </div>
     );
 }

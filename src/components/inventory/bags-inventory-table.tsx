@@ -105,14 +105,41 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
 
     return (
         <Card>
-            {viewPrediction && (
-                <StockPredictionDialog
-                    product={viewPrediction}
-                    prediction={predictionMap.get(viewPrediction.id)}
-                    open={!!viewPrediction}
-                    onOpenChange={(open) => !open && setViewPrediction(null)}
-                />
-            )}
+            {viewPrediction && (() => {
+                const product = viewPrediction;
+                const currentStock = inventoryMap.get(product.id)?.quantity || 0;
+                const wipList = wipMap.get(product.id) || [];
+                const incoming = incomingMap.get(product.id);
+                const supplierStockLots = supplierStockLotsMap?.get(product.id) || [];
+                const supplierStock = supplierStockLots.length > 0
+                    ? supplierStockLots.reduce((sum, lot) => sum + lot.quantity, 0)
+                    : (supplierStockMap.get(product.id) || 0);
+
+                const relevantSaleItems = saleEvents
+                    .filter(event => (event.status === 'active' || event.status === 'upcoming'))
+                    .flatMap(event => {
+                        const item = event.items.find(i => i.productId === product.id);
+                        return item && !item.isProduced ? [{ dates: event.dates, quantity: item.allocatedQuantity, eventName: event.clientName }] : [];
+                    });
+
+                return (
+                    <StockPredictionDialog
+                        product={product}
+                        prediction={predictionMap.get(product.id)}
+                        open={!!viewPrediction}
+                        onOpenChange={(open) => !open && setViewPrediction(null)}
+                        availableStock={currentStock}
+                        supplierStock={supplierStock}
+                        saleItems={relevantSaleItems}
+                        wipItems={wipList.filter(item => item.status === 'in_progress').map(item => ({
+                            quantity: item.quantity,
+                            expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null,
+                            termType: item.termType
+                        }))}
+                        incomingItems={incoming?.items.map(item => ({ quantity: item.quantity, expectedDate: item.expectedDate ? new Date(item.expectedDate) : null })) || []}
+                    />
+                );
+            })()}
             <CardHeader>
                 <CardTitle>米袋在庫状況 ({products.length}件)</CardTitle>
             </CardHeader>

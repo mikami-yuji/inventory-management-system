@@ -168,6 +168,9 @@ export const calculateStockStatus = (
  * @param incomingItems 入荷予定アイテムのリスト
  * @param supplierStock メーカー在庫数
  */
+/**
+ * 在庫切れ予測の計算
+ */
 export const calculateStockPrediction = (
     availableStock: number,
     dailyRate: number,
@@ -175,25 +178,18 @@ export const calculateStockPrediction = (
     product: Product,
     saleItems: Array<{ dates: string[]; quantity: number; eventName?: string }> = [],
     wipItems: Array<{ quantity: number; expectedDate: Date | null; termType?: string }> = [],
-    incomingItems: Array<{ quantity: number; expectedDate: Date }> = [],
-    supplierStock: number = 0
+    incomingItems: Array<{ quantity: number; expectedDate: Date | null }> = [],
+    supplierStock: number = 0,
+    simulationArrivals: Array<{ quantity: number; expectedDate: Date }> = []
 ) => {
     // 初期在庫にメーカー在庫を加算（即時利用可能とみなす）
     let currentStock = availableStock + supplierStock;
     let unconfirmedWIPTotal = 0;
-
-    if (currentStock <= 0 && wipItems.length === 0 && incomingItems.length === 0) {
-        return { 
-            remainingDays: 0, 
-            estimatedDate: null, 
-            wipStartAlert: false, 
-            hasUnconfirmedWIP: false,
-            simulation: []
-        };
-    }
+    
+    // 納期確認中（TBD）の合計
+    let pendingIncomingTotal = 0;
 
     const isRoll = isRollBag(product.shape || "", product.category, product.metersPerRoll);
-    let days = 0;
     const maxDays = 365; // 最大1年分計算
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -219,34 +215,44 @@ export const calculateStockPrediction = (
         });
     });
 
-    // 入荷・仕掛マップ: 日付キー -> 数量（単位は商品に合わせる：m または 枚）
+    // 入荷・仕掛マップ: 日付キー -> 数量
     const arrivalMap = new Map<string, number>();
-    incomingItems.forEach(item => {
-        if (!item.expectedDate) return;
-        const date = new Date(item.expectedDate);
-        if (isNaN(date.getTime())) return;
-        
-        const key = formatDateKey(date);
-        arrivalMap.set(key, (arrivalMap.get(key) || 0) + item.quantity);
-    });
-    wipItems.forEach(item => {
-        if (!item.expectedDate) return;
-        
-        // specific 以外（上中下旬）は予測計算の在庫加算には入れない
-        // 代わりに合計数量を記録しておく
-        if (item.termType && item.termType !== 'specific') {
-            unconfirmedWIPTotal += item.quantity;
+    
+    const processItem = (quantity: number, expectedDate: Date | null, termType?: string) => {
+        if (!expectedDate) {
+            if (!termType || termType === 'specific') {
+                pendingIncomingTotal += quantity;
+            } else {
+                unconfirmedWIPTotal += quantity;
+            }
             return;
         }
 
+        const date = new Date(expectedDate);
+        if (isNaN(date.getTime())) return;
+        
         // 仕掛の完成予定日＝発送日のため、在庫に反映されるのは翌日とする
-        const arrivalDate = new Date(item.expectedDate);
-        arrivalDate.setDate(arrivalDate.getDate() + 1);
+        // 入荷予定（incoming）の場合は当日とする
+        const arrivalDate = new Date(date);
+        if (termType) { // wipItems have termType
+            if (termType !== 'specific') {
+                unconfirmedWIPTotal += quantity;
+                return;
+            }
+            arrivalDate.setDate(arrivalDate.getDate() + 1);
+        }
+
         const key = formatDateKey(arrivalDate);
-        arrivalMap.set(key, (arrivalMap.get(key) || 0) + item.quantity);
-    });
+        arrivalMap.set(key, (arrivalMap.get(key) || 0) + quantity);
+    };
+
+    incomingItems.forEach(item => processItem(item.quantity, item.expectedDate));
+    wipItems.forEach(item => processItem(item.quantity, item.expectedDate, item.termType || 'specific'));
+    simulationArrivals.forEach(item => processItem(item.quantity, item.expectedDate));
 
     const simulation = [];
+    let stockoutDate: Date | null = null;
+    let remainingDays = maxDays;
     
     // Day 0 (本日) の入荷・仕掛完了を加算
     const todayKey = formatDateKey(today);
@@ -262,6 +268,12 @@ export const calculateStockPrediction = (
         outNames: []
     });
 
+    if (currentStock <= 0 && stockoutDate === null) {
+        stockoutDate = new Date(today);
+        remainingDays = 0;
+    }
+
+    let days = 0;
     while (days < maxDays) {
         days++;
         const targetDate = new Date(today);
@@ -277,42 +289,54 @@ export const calculateStockPrediction = (
         const dailySaleQty = saleData.quantity;
         const totalDailyOutQty = dailyRate + dailySaleQty;
 
-        // 在庫消費量の算出
         const consumption = isRoll 
             ? bagsToMeters(totalDailyOutQty, product.weight || 5)
             : totalDailyOutQty;
 
         currentStock -= consumption;
 
+        // 在庫切れ判定
+        if (currentStock <= 0 && stockoutDate === null) {
+            stockoutDate = new Date(targetDate);
+            remainingDays = days;
+        }
+
         // 履歴を記録
         simulation.push({
             date: targetDate,
-            stock: Math.max(0, currentStock),
+            stock: currentStock, // マイナスも許容して記録
             arrivals: arrivals,
             out: consumption,
-            outNames: saleData.names
+            outNames: saleData.names,
+            // 到着時、すでに在庫が0以下だった場合は遅延フラグ
+            isLate: arrivals > 0 && (currentStock - arrivals) <= 0
         });
 
-        // 在庫が切れたら終了
-        if (currentStock <= 0) break;
+        // 在庫が極端にマイナスになり、かつ今後の入荷もない場合は早めに切り上げる
+        // (ただし、一応 maxDays までは計算を続けるのが安全)
     }
 
-    const estimatedDate = new Date(today);
-    estimatedDate.setDate(today.getDate() + days);
-
-    // 仕掛開始アラート: 残り日数 <= (リードタイム + 7日) かつ 在庫がある場合
-    // ※在庫が既に切れている（days=0）場合はアラート不要（欠品扱い）
-    const wipStartAlert = days <= (leadDays + 7) && days > 0 && leadDays > 0;
-
-    // 納期確定警告: 在庫切れが予測される場合のみ、かつ未確定仕掛品が入れば在庫が持つ可能性がある場合
-    // 条件: (1) 未確定仕掛品がある (2) 在庫切れが予測範囲内 (3) 未確定分を含めれば在庫が改善しうる
-    const hasUnconfirmedWIP = unconfirmedWIPTotal > 0 && days < maxDays;
+    // 仕掛開始アラート
+    const wipStartAlert = remainingDays <= (leadDays + 7) && remainingDays > 0 && leadDays > 0;
+    const hasUnconfirmedWIP = (unconfirmedWIPTotal > 0 || pendingIncomingTotal > 0) && remainingDays < maxDays;
 
     return {
-        remainingDays: days,
-        estimatedDate: days < maxDays ? estimatedDate : null,
+        remainingDays,
+        estimatedDate: stockoutDate,
         wipStartAlert,
         hasUnconfirmedWIP,
-        simulation
+        simulation,
+        analysis: {
+            latestTBDDeadline: stockoutDate, // 在庫切れ日までに届けばOK
+            pendingIncomingTotal,
+            unconfirmedWIPTotal,
+            alerts: simulation
+                .filter(s => s.isLate)
+                .map(s => ({
+                    type: 'late_arrival' as const,
+                    date: s.date,
+                    quantity: s.arrivals
+                }))
+        }
     };
 };
