@@ -232,7 +232,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 return NextResponse.json({ data: null, error: '対象の仕掛品データが見つかりません' }, { status: 404 })
             }
 
-            const product = Array.isArray(wipItem.products) ? wipItem.products[0] : wipItem.products;
+
             const insertData = schedules.map(s => ({
                 product_id: (wipItem as Record<string, unknown>).product_id,
                 expected_date: s.expectedDate || null,

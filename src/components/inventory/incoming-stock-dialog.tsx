@@ -39,9 +39,7 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
-    // setLoadingAddressesは将来のローディング表示用に保持。現在はアドレス読み込み
-    // の内部状態としてのみ使用する（UIに直接出力しない）
-    const [loadingAddresses, setLoadingAddresses] = useState(false);
+
     const [isTBD, setIsTBD] = useState(false);
 
     // 商品ごとの入荷予定データ

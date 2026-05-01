@@ -82,16 +82,7 @@ type SimulationPoint = {
     outNames: string[];
 };
 
-type PredictionData = {
-    simulation: SimulationPoint[];
-    estimatedDate: Date | null;
-    remainingDays: number | null;
-    analysis: {
-        alerts: Array<{ date: Date; quantity: number }>;
-        pendingIncomingTotal: number;
-    };
-    hasUnconfirmedWIP: boolean;
-};
+
 
 export function StockPredictionDialog({
     product,
@@ -172,7 +163,7 @@ export function StockPredictionDialog({
             legend: { display: false },
             tooltip: {
                 callbacks: {
-                    label: (context: any) => `在庫: ${context.parsed.y !== null ? context.parsed.y.toLocaleString() : 0}${unit}`
+                    label: (context: import('chart.js').TooltipItem<'line'>) => `在庫: ${context.parsed.y !== null ? context.parsed.y.toLocaleString() : 0}${unit}`
                 }
             }
         },

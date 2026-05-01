@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useUpdateSaleEvent, type SaleEvent } from "@/hooks/use-sale-events";
 import { cn } from "@/lib/utils";
-import { bagsToMeters, isRollBag, metersToBags, calculateStockPrediction } from "@/lib/services/inventory-service";
+import { bagsToMeters, calculateStockPrediction } from "@/lib/services/inventory-service";
 import type { Product, WorkInProgress, IncomingStock } from "@/types";
 import { toast } from "react-hot-toast";
 
@@ -81,7 +81,7 @@ export function StockAllocationDialog({
     });
 
     // 現在庫（枚数ベース）を準備
-    const isRoll = product.shape ? isRollBag(product.shape) : false;
+
     
     // 在庫予測シミュレーションを実行
     const prediction = calculateStockPrediction(
@@ -109,9 +109,6 @@ export function StockAllocationDialog({
     // 有効在庫（最終的な予測値）
     const finalSimulation = prediction.simulation[prediction.simulation.length - 1];
     const effectiveStockMeters = finalSimulation ? finalSimulation.stock : 0;
-    const effectiveStockPieces = isRoll && product.weight 
-        ? metersToBags(effectiveStockMeters, product.weight)
-        : effectiveStockMeters;
     
     // 合計引当数（計算用）
     const totalAllocated = allocations

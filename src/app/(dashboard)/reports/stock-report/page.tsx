@@ -193,7 +193,7 @@ function StockReportContent(): React.ReactElement {
                 trend: analysis.trend,
             };
         }).filter(item => item.currentStock > 0 || item.monthlyUsage > 0 || item.incomingStock > 0 || item.wipStock > 0 || item.supplierStock > 0);
-    }, [filteredProducts, inventoryMap, historyByProduct]);
+    }, [filteredProducts, inventoryMap, historyByProduct, incomingMap, wipMap]);
 
     const summary = useMemo(() => {
         const totalProducts = reportData.length;

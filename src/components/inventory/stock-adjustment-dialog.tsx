@@ -59,7 +59,7 @@ export function StockAdjustmentDialog({
             setOldPriceQty(oldPriceQuantity.toString());
             setNote("");
         }
-    }, [open, product, currentStock]);
+    }, [open, product, currentStock, oldPriceQuantity]);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
