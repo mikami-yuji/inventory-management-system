@@ -26,9 +26,11 @@ import {
 } from "lucide-react";
 import { useNotification } from "@/contexts/notification-context";
 import { useInventory } from "@/hooks/use-inventory";
+import { PriceRevisionImportDialog } from "@/components/inventory/price-revision-import-dialog";
 
 export default function SettingsPage(): React.ReactElement {
     const { settings, updateSettings, resetSettings, testNotification } = useNotification();
+    const [priceRevisionOpen, setPriceRevisionOpen] = useState(false);
 
     // データ管理用の状態
     const [isExporting, setIsExporting] = useState(false);
@@ -169,6 +171,34 @@ export default function SettingsPage(): React.ReactElement {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* 価格改定データ取り込み */}
+            <Card className="border-orange-200">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-orange-800">
+                        <Upload className="h-5 w-5" />
+                        価格改定データ取り込み
+                    </CardTitle>
+                    <CardDescription>
+                        値上げツールで作成した見積書Excelを読み込み、商品単価を一括更新します。
+                        材質ごとに値上げ適用の手配日を設定できます。
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button
+                        onClick={() => setPriceRevisionOpen(true)}
+                        className="gap-2 bg-orange-600 hover:bg-orange-700"
+                    >
+                        <Upload className="h-4 w-4" />
+                        見積書Excelを取り込む
+                    </Button>
+                </CardContent>
+            </Card>
+
+            <PriceRevisionImportDialog
+                open={priceRevisionOpen}
+                onOpenChange={setPriceRevisionOpen}
+            />
 
             {/* 現在のステータス */}
             <Card className="bg-gradient-to-r from-amber-50 to-white border-amber-200">
