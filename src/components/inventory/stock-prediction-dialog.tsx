@@ -172,7 +172,7 @@ export function StockPredictionDialog({
             legend: { display: false },
             tooltip: {
                 callbacks: {
-                    label: (context: { parsed: { y: number } }) => `在庫: ${context.parsed.y.toLocaleString()}${unit}`
+                    label: (context: any) => `在庫: ${context.parsed.y !== null ? context.parsed.y.toLocaleString() : 0}${unit}`
                 }
             }
         },

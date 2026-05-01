@@ -9,6 +9,7 @@ import { apiFetch } from '@/lib/api-client';
 export type InventoryWithProduct = {
     productId: string;
     quantity: number;
+    oldPriceQuantity: number;
     updatedAt: string;
     product: Product;
 };
@@ -58,6 +59,8 @@ export function useInventory(options?: {
                 product_id?: string;
                 productId?: string;
                 quantity: number;
+                old_price_quantity?: number;
+                oldPriceQuantity?: number;
                 updated_at?: string;
                 updatedAt?: string;
                 product: Product;
@@ -71,6 +74,7 @@ export function useInventory(options?: {
                     return {
                         productId: i.product_id || i.productId || '',
                         quantity: i.quantity,
+                        oldPriceQuantity: i.old_price_quantity ?? i.oldPriceQuantity ?? 0,
                         updatedAt: i.updated_at || i.updatedAt || '',
                         product: i.product
                     };

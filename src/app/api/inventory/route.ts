@@ -33,6 +33,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             .select(`
         product_id,
         quantity,
+        old_price_quantity,
         updated_at,
         product:products (
           id,
@@ -125,7 +126,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         // 現在の在庫を取得
         const { data: currentInventoryData, error: fetchError } = await supabase
             .from('inventory')
-            .select('quantity')
+            .select('quantity, old_price_quantity')
             .eq('product_id', productId)
             .single()
 
@@ -134,10 +135,12 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             return NextResponse.json({ data: null, error: fetchError.message }, { status: 500 })
         }
 
-        const currentInventory = currentInventoryData as { quantity: number } | null;
+        const currentInventory = currentInventoryData as { quantity: number; old_price_quantity: number } | null;
 
         // 新しい在庫数を計算
         let newQuantity = currentInventory?.quantity ?? 0
+        let newOldPriceQuantity = currentInventory?.old_price_quantity ?? 0
+
         if (type === 'incoming') {
             newQuantity += quantity
         } else if (type === 'outgoing') {
@@ -148,8 +151,18 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     { status: 400 }
                 )
             }
+            // FIFO: 旧価格在庫から優先的に減らす
+            if (newOldPriceQuantity > 0) {
+                const oldReduction = Math.min(newOldPriceQuantity, quantity)
+                newOldPriceQuantity -= oldReduction
+            }
         } else {
             newQuantity = quantity // 調整の場合は直接設定
+        }
+
+        // 旧価格在庫が総在庫を超えないように補正
+        if (newOldPriceQuantity > newQuantity) {
+            newOldPriceQuantity = newQuantity
         }
 
         // 在庫を更新
@@ -158,6 +171,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             .upsert({
                 product_id: productId,
                 quantity: newQuantity,
+                old_price_quantity: newOldPriceQuantity,
                 updated_at: new Date().toISOString()
             }, { onConflict: 'product_id' })
             .select();

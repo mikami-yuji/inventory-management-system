@@ -51,6 +51,10 @@ export type Product = {
   metersPerRoll?: number; // 1巻あたりのメートル数 (300 or 400、デフォルト400)
   dailyShipmentRate?: number; // 1日あたりの通常出荷数
   productionLeadDays?: number; // 仕掛リードタイム（日数）
+  // 価格改定関連
+  oldUnitPrice?: number; // 旧単価
+  oldPrintingCost?: number; // 旧印刷代
+  priceIncreaseEffectiveDate?: string; // 値上げ適用手配日 (YYYY-MM-DD)
 };
 
 // 仕入先マスタ
@@ -79,6 +83,7 @@ export type SupplierStockLot = {
 export type Inventory = {
   productId: string;
   quantity: number; // 通常在庫（フリー在庫）
+  oldPriceQuantity: number; // 旧価格在庫数
   updatedAt?: string;
 };
 
@@ -217,6 +222,7 @@ export type WorkInProgress = {
   status: 'in_progress' | 'completed' | 'cancelled';
   termType: 'specific' | 'early' | 'mid' | 'late';
   confirmationStatus: 'unconfirmed' | 'confirmed' | 'scheduled' | 'shipping_arranged';
+  isNewPrice: boolean; // 新価格適用の手配かどうか
   createdAt: string;
 };
 
