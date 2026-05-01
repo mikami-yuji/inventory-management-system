@@ -147,9 +147,9 @@ export default function BagsInventoryPage(): React.ReactElement {
 
     // 在庫マップを作成
     const inventoryMap = useMemo(() => {
-        const map = new Map<string, { quantity: number; updatedAt?: string }>();
+        const map = new Map<string, { quantity: number; oldPriceQuantity: number; updatedAt?: string }>();
         inventoryData?.forEach(item => {
-            map.set(item.productId, { quantity: item.quantity, updatedAt: item.updatedAt });
+            map.set(item.productId, { quantity: item.quantity, oldPriceQuantity: item.oldPriceQuantity || 0, updatedAt: item.updatedAt });
         });
         return map;
     }, [inventoryData]);

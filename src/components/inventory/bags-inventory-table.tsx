@@ -38,7 +38,7 @@ import { StockPredictionDialog } from "@/components/inventory/stock-prediction-d
 
 export type BagsInventoryTableProps = {
     products: Product[];
-    inventoryMap: Map<string, { quantity: number; updatedAt?: string }>;
+    inventoryMap: Map<string, { quantity: number; oldPriceQuantity: number; updatedAt?: string }>;
     saleAllocationMap: Map<string, { bags: number; meters: number }>;
     wipMap: Map<string, WorkInProgress[]>;
     supplierStockMap: Map<string, number>;
@@ -172,8 +172,9 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                         </TableHeader>
                         <TableBody>
                             {products.map((product) => {
-                                const inventoryItem = inventoryMap.get(product.id) || { quantity: 0 };
+                                const inventoryItem = inventoryMap.get(product.id) || { quantity: 0, oldPriceQuantity: 0 };
                                 const currentStock = inventoryItem.quantity;
+                                const oldPriceQty = inventoryItem.oldPriceQuantity || 0;
                                 const updatedAt = inventoryItem.updatedAt;
 
                                 const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
@@ -271,6 +272,11 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                                 <div className="text-[10px] text-gray-400 clear-both pt-1">
                                                     {new Date(updatedAt).toLocaleDateString()}{" "}
                                                     {new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                            )}
+                                            {oldPriceQty > 0 && (
+                                                <div className="text-[10px] text-orange-600 clear-both mt-0.5" title="旧価格在庫の内訳">
+                                                    旧価格: {oldPriceQty.toLocaleString()}枚
                                                 </div>
                                             )}
                                         </TableCell>
@@ -562,6 +568,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                 open={!!adjustStock}
                 onOpenChange={(open) => !open && setAdjustStock(null)}
                 currentStock={adjustStock ? (inventoryMap.get(adjustStock.id)?.quantity || 0) : 0}
+                oldPriceQuantity={adjustStock ? (inventoryMap.get(adjustStock.id)?.oldPriceQuantity || 0) : 0}
                 supplierStock={adjustStock ? (supplierStockMap.get(adjustStock.id) || 0) : 0}
                 wipItems={adjustStock ? (wipMap.get(adjustStock.id) || []) : []}
                 saleAllocations={adjustStock ? saleAllocationMap.get(adjustStock.id) : undefined}

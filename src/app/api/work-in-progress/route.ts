@@ -140,6 +140,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         
         const validData = validated.data;
 
+        // 商品の値上げ適用手配日を取得してisNewPriceを自動判定
+        let isNewPrice = true; // デフォルトは新価格
+        const { data: productData } = await supabase
+            .from('products')
+            .select('price_increase_effective_date')
+            .eq('id', validData.productId)
+            .single<{ price_increase_effective_date: string | null }>()
+
+        if (productData?.price_increase_effective_date) {
+            // 手配日が適用日以降なら新価格、それ以前なら旧価格
+            isNewPrice = validData.startedAt >= productData.price_increase_effective_date;
+        }
+
         const { data, error } = await supabase
             .from('work_in_progress')
             .insert({
@@ -149,7 +162,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                 expected_completion: validData.expectedCompletion || null,
                 note: validData.note || null,
                 status: 'in_progress',
-                term_type: validData.termType || 'specific'
+                term_type: validData.termType || 'specific',
+                is_new_price: isNewPrice
             })
             .select()
             .single()
