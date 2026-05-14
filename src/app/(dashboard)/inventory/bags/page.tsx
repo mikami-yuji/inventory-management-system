@@ -172,7 +172,8 @@ export default function BagsInventoryPage(): React.ReactElement {
                     });
                 });
             });
-        }, [saleEvents, allProducts]);
+        return map;
+    }, [saleEvents, allProducts]);
 
     // 特売引当の詳細マップを作成 (Client Name, Dates, Qty)
     const detailedSaleAllocationMap = useMemo(() => {

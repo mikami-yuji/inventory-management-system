@@ -39,6 +39,7 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
+    const [loadingAddresses, setLoadingAddresses] = useState(false);
 
     const [isTBD, setIsTBD] = useState(false);
 
