@@ -35,7 +35,6 @@ export const CalculableInput = React.forwardRef<HTMLInputElement, CalculableInpu
                 // Extremely safe evaluation of math expressions using Function
                 // Using `Function` instead of `eval` avoids some scope issues, but it's still restricted
                 // Since we already regex validated to only numbers and math operators, this is safe.
-                // eslint-disable-next-line no-new-func
                 const result = new Function(`return ${sanitized}`)();
 
                 if (typeof result === "number" && !isNaN(result) && isFinite(result)) {

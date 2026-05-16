@@ -15,7 +15,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-// import { format } from "date-fns"; // Unused
 import { useWIPActions } from "@/hooks/use-work-in-progress";
 import { Package, ArrowRight, Loader2, Plus, Trash2, Save, X, Edit2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -33,25 +32,22 @@ export function SupplierStockDialog({
     product,
     open,
     onOpenChange,
-    currentStock, // この値も参考にしますが、最新のロット合算値を使用します
+    currentStock,
     onSuccess,
 }: SupplierStockDialogProps) {
     const [lots, setLots] = useState<SupplierStockLot[]>([]);
     const [isLoadingLots, setIsLoadingLots] = useState(false);
 
-    // 新規ロット追加フォーム
     const [newLotQuantity, setNewLotQuantity] = useState<number>(0);
     const [newLotDate, setNewLotDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [newLotNote, setNewLotNote] = useState<string>('');
     const [isAddingLot, setIsAddingLot] = useState(false);
 
-    // 編集用ステート
     const [editingLotId, setEditingLotId] = useState<string | null>(null);
     const [editLotQuantity, setEditLotQuantity] = useState<number>(0);
     const [editLotDate, setEditLotDate] = useState<string>('');
     const [editLotNote, setEditLotNote] = useState<string>('');
 
-    // 入荷予定の複数スケジュール管理
     type ArrivalSchedule = {
         id: string;
         expectedDate: string;
@@ -60,43 +56,24 @@ export function SupplierStockDialog({
     };
     const [arrivalSchedules, setArrivalSchedules] = useState<ArrivalSchedule[]>([]);
 
-    // 納品先リスト
     const [deliveryAddresses, setDeliveryAddresses] = useState<DeliveryAddress[]>([]);
     const [defaultAddressName, setDefaultAddressName] = useState<string>('');
 
-    const fetchDeliveryAddresses = async () => {
+    const fetchDeliveryAddresses = useCallback(async () => {
         try {
             const res = await fetch('/api/delivery-addresses');
             const result = await res.json();
-            if (Array.isArray(result)) {
-                setDeliveryAddresses(result);
-                const defaultAddr = result.find(a => a.isDefault);
-                if (defaultAddr) {
-                    setDefaultAddressName(defaultAddr.name);
-                    // 最初の一行目のnoteが空ならデフォルトをセット
-                    setArrivalSchedules((prev: ArrivalSchedule[]) => prev.map((s, i) => i === 0 && !s.note ? { ...s, note: defaultAddr.name } : s));
-                }
-            } else if (result && result.data && Array.isArray(result.data)) {
-                setDeliveryAddresses(result.data);
-                const defaultAddr = result.data.find((a: DeliveryAddress) => a.isDefault);
-                if (defaultAddr) {
-                    setDefaultAddressName(defaultAddr.name);
-                    setArrivalSchedules((prev: ArrivalSchedule[]) => prev.map((s, i) => i === 0 && !s.note ? { ...s, note: defaultAddr.name } : s));
-                }
+            const addresses = Array.isArray(result) ? result : (result?.data || []);
+            setDeliveryAddresses(addresses);
+            const defaultAddr = addresses.find((a: DeliveryAddress) => a.isDefault);
+            if (defaultAddr) {
+                setDefaultAddressName(defaultAddr.name);
+                setArrivalSchedules((prev: ArrivalSchedule[]) => prev.map((s, i) => i === 0 && !s.note ? { ...s, note: defaultAddr.name } : s));
             }
         } catch (e) {
             console.error("納品先取得エラー", e);
         }
-    };
-
-    useEffect(() => {
-        if (open) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            fetchDeliveryAddresses().then(() => {
-                // If we need to do something after fetch
-            });
-        }
-    }, [open]);
+    }, []);
 
     const {
         getSupplierStockLots,
@@ -107,6 +84,44 @@ export function SupplierStockDialog({
         syncSupplierStock,
         loading
     } = useWIPActions();
+
+    const fetchLots = useCallback(async () => {
+        if (!product) return;
+        setIsLoadingLots(true);
+        const data = await getSupplierStockLots(product.id);
+        setLots(data);
+        setIsLoadingLots(false);
+    }, [product, getSupplierStockLots]);
+
+    useEffect(() => {
+        if (open) {
+            const timer = setTimeout(() => {
+                fetchDeliveryAddresses();
+            }, 0);
+            return () => clearTimeout(timer);
+        }
+    }, [open, fetchDeliveryAddresses]);
+
+    useEffect(() => {
+        if (open && product) {
+            const timer = setTimeout(() => {
+                fetchLots();
+                setArrivalSchedules([
+                    { id: crypto.randomUUID(), expectedDate: new Date().toISOString().split('T')[0], quantity: 0, note: defaultAddressName }
+                ]);
+
+                setNewLotQuantity(0);
+                setNewLotDate(new Date().toISOString().split('T')[0]);
+                setNewLotNote('');
+                setIsAddingLot(false);
+                setEditingLotId(null);
+            }, 0);
+            return () => clearTimeout(timer);
+        }
+    }, [open, product, fetchLots, defaultAddressName]);
+
+    const totalStock = lots.reduce((sum, lot) => sum + lot.quantity, 0);
+    const displayStock = lots.length > 0 ? totalStock : currentStock;
 
     const handleSync = async () => {
         if (!confirm("すべての商品のメーカー在庫を、ロットの合計値に合わせる再計算（同期）を行ってもよろしいですか？")) return;
@@ -120,36 +135,6 @@ export function SupplierStockDialog({
             toast.error("再計算に失敗しました");
         }
     };
-
-    const fetchLots = useCallback(async () => {
-        if (!product) return;
-        setIsLoadingLots(true);
-        const data = await getSupplierStockLots(product.id);
-        setLots(data);
-        setIsLoadingLots(false);
-    }, [product, getSupplierStockLots]);
-
-    // ダイアログが開くたびに初期値をセット
-    useEffect(() => {
-        if (open && product) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setArrivalSchedules([
-                { id: crypto.randomUUID(), expectedDate: new Date().toISOString().split('T')[0], quantity: 0, note: defaultAddressName }
-            ]);
-
-            // フォームのリセット
-            setNewLotQuantity(0);
-            setNewLotDate(new Date().toISOString().split('T')[0]);
-            setNewLotNote('');
-            setIsAddingLot(false);
-            setEditingLotId(null);
-
-            fetchLots();
-        }
-    }, [open, product, fetchLots]);
-
-    const totalStock = lots.reduce((sum, lot) => sum + lot.quantity, 0);
-    const displayStock = lots.length > 0 ? totalStock : currentStock;
 
     const handleAddLot = async () => {
         if (!product || newLotQuantity <= 0 || !newLotDate) return;

@@ -147,9 +147,9 @@ export default function BagsInventoryPage(): React.ReactElement {
 
     // 在庫マップを作成
     const inventoryMap = useMemo(() => {
-        const map = new Map<string, { quantity: number; updatedAt?: string }>();
+        const map = new Map<string, { quantity: number; oldPriceQuantity: number; updatedAt?: string }>();
         inventoryData?.forEach(item => {
-            map.set(item.productId, { quantity: item.quantity, updatedAt: item.updatedAt });
+            map.set(item.productId, { quantity: item.quantity, oldPriceQuantity: item.oldPriceQuantity || 0, updatedAt: item.updatedAt });
         });
         return map;
     }, [inventoryData]);
@@ -329,7 +329,7 @@ export default function BagsInventoryPage(): React.ReactElement {
     }, [bagProducts]);
 
     // ステータスの表示名マップ（ProductStatusDialog と内容を統一）
-    const statusLabels: Record<string, string> = {
+    const statusLabels: Record<string, string> = useMemo(() => ({
         active: "有効/正常",
         wip_check: "仕掛確認",
         spot: "スポット",
@@ -339,7 +339,7 @@ export default function BagsInventoryPage(): React.ReactElement {
         direct_delivery: "直送先在庫",
         on_sale_break: "販売中断",
         inactive: "無効 (非表示)",
-    };
+    }), []);
 
     // フィルタリングされた商品
     const filteredProducts = useMemo(() => {
@@ -476,7 +476,7 @@ export default function BagsInventoryPage(): React.ReactElement {
         } catch (error) {
             console.error("Excel export error:", error);
         }
-    }, [filteredProducts, inventoryMap, saleAllocationMap, wipMap, incomingMap]);
+    }, [filteredProducts, inventoryMap, saleAllocationMap, wipMap, incomingMap, statusLabels]);
 
     // サマリー計算
     const summary = useMemo(() => {

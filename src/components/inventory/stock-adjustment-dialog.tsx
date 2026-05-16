@@ -18,6 +18,7 @@ type StockAdjustmentDialogProps = {
     onOpenChange: (open: boolean) => void;
     product: Product | null;
     currentStock: number;
+    oldPriceQuantity?: number; // 旧価格在庫数
     supplierStock?: number;
     wipItems?: WorkInProgress[];
     saleAllocations?: { bags: number; meters: number };
@@ -29,12 +30,14 @@ export function StockAdjustmentDialog({
     onOpenChange,
     product,
     currentStock,
+    oldPriceQuantity = 0,
     supplierStock = 0,
     wipItems = [],
     saleAllocations,
     onSuccess
 }: StockAdjustmentDialogProps): React.ReactElement {
     const [quantity, setQuantity] = useState<string>(currentStock.toString());
+    const [oldPriceQty, setOldPriceQty] = useState<string>(oldPriceQuantity.toString());
     const [note, setNote] = useState<string>("");
     const { updateStock, loading, error } = useUpdateInventory();
 
@@ -53,9 +56,10 @@ export function StockAdjustmentDialog({
         if (open && product) {
             const currentStockStr = currentStock.toString();
             setQuantity(prev => (prev !== currentStockStr) ? currentStockStr : prev);
+            setOldPriceQty(oldPriceQuantity.toString());
             setNote("");
         }
-    }, [open, product, currentStock]);
+    }, [open, product, currentStock, oldPriceQuantity]);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -131,6 +135,25 @@ export function StockAdjustmentDialog({
                             {currentStock.toLocaleString()}
                         </div>
                     </div>
+                    {oldPriceQuantity > 0 && (
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right text-orange-600 text-xs">
+                                旧価格在庫
+                            </Label>
+                            <div className="col-span-3">
+                                <CalculableInput
+                                    value={oldPriceQty === "0" ? "" : oldPriceQty}
+                                    onChange={(value) => setOldPriceQty(value === null ? "" : String(value))}
+                                    className="flex-1"
+                                    placeholder="旧価格在庫数"
+                                    stringifyOnComplete
+                                />
+                                <p className="text-[10px] text-muted-foreground mt-1">
+                                    新価格在庫: {Math.max(0, parseInt(quantity || "0", 10) - parseInt(oldPriceQty || "0", 10)).toLocaleString()}枚
+                                </p>
+                            </div>
+                        </div>
+                    )}
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="quantity" className="text-right">
                             変更後

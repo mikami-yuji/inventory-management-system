@@ -17,7 +17,7 @@ import { StockPredictionDialog } from "@/components/inventory/stock-prediction-d
 
 type BagsInventoryCardsProps = {
     products: Product[];
-    inventoryMap: Map<string, { quantity: number; updatedAt?: string }>;
+    inventoryMap: Map<string, { quantity: number; oldPriceQuantity: number; updatedAt?: string }>;
     saleAllocationMap: Map<string, { bags: number; meters: number }>;
     wipMap: Map<string, WorkInProgress[]>;
     supplierStockMap: Map<string, number>;

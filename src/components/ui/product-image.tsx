@@ -30,9 +30,7 @@ type ProductImageProps = {
     height?: number;
 };
 
-// 小さい透明ピクセルのblurDataURL（プレースホルダー用）
-const BLUR_PLACEHOLDER =
-    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YxZjVmOSIvPjwvc3ZnPg==";
+
 
 export function ProductImage({
     src,
@@ -103,12 +101,7 @@ export function ProductImage({
         );
     }
 
-    // サイズヒントの決定（ブラウザの最適化を支援）
-    const sizes = variant === "thumbnail"
-        ? "48px"
-        : variant === "card"
-            ? "(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-            : "400px";
+
 
     // リトライ用のキャッシュバスター付きURL
     const imageSrc = retryCount > 0

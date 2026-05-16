@@ -52,15 +52,12 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
     
     // フックを使用してデータを取得
     const { 
-        items: hookedWipList, 
-        loading: fetchLoading, 
+        items: hookedWipList,
+        loading: fetchLoading,
         error: fetchError, 
         refetch: remoteRefetch 
     } = useWorkInProgress("in_progress", product?.id || undefined);
 
-    const [loading, setLoading] = useState(false);
-
-    // フォーム用
     const [quantity, setQuantity] = useState<number>(0);
     const [startedAt, setStartedAt] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
     const [expectedCompletion, setExpectedCompletion] = useState<string>("");
@@ -77,7 +74,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
     const [defaultAddressName, setDefaultAddressName] = useState<string>('');
 
     // アクション
-    const { createWIP, updateWIP, arrangeShipping, transferToIncoming, transferToSupplier, deleteWIP, loading: actionLoading } = useWIPActions();
+    const { createWIP, updateWIP, transferToIncoming, transferToSupplier, deleteWIP, loading: actionLoading } = useWIPActions();
 
     // フォーム状態
     const [editingWIPId, setEditingWIPId] = useState<string | null>(null);

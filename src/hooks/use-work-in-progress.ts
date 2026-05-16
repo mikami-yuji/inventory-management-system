@@ -277,7 +277,7 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    }, [setLoading]);
+    }, []);
 
     // ---------- ロット管理メソッド ----------
     const getSupplierStockLots = useCallback(async (productId: string): Promise<import('@/types').SupplierStockLot[]> => {
@@ -288,7 +288,7 @@ export function useWIPActions(): {
         } catch {
             return [];
         }
-    }, [setLoading]);
+    }, []);
 
     const addSupplierStockLot = useCallback(async (productId: string, quantity: number, stockDate: string, note?: string): Promise<boolean> => {
         setLoading(true);
@@ -305,7 +305,7 @@ export function useWIPActions(): {
         } finally {
             setLoading(false);
         }
-    }, [setLoading]);
+    }, []);
 
     const updateSupplierStockLot = useCallback(async (lotId: string, quantity: number, stockDate: string, note?: string): Promise<boolean> => {
         setLoading(true);
