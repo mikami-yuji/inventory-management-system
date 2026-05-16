@@ -50,7 +50,8 @@ export function InventoryPrintView({
                 bags += currentStock;
             }
             
-            price += currentStock * (p.unitPrice || 0);
+            const activePrice = p.currentUnitPrice !== undefined ? p.currentUnitPrice : (p.unitPrice || 0);
+            price += currentStock * activePrice;
         });
         
         return { meters, bags, price };

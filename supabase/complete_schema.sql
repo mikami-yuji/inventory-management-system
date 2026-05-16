@@ -105,7 +105,9 @@ CREATE TABLE IF NOT EXISTS order_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     product_id UUID NOT NULL REFERENCES products(id),
-    quantity INTEGER NOT NULL
+    quantity INTEGER NOT NULL,
+    unit_price DECIMAL NOT NULL DEFAULT 0,
+    printing_cost DECIMAL NOT NULL DEFAULT 0
 );
 
 -- ================================================
@@ -161,6 +163,18 @@ CREATE TABLE IF NOT EXISTS work_in_progress (
 -- Row Level Security (RLS)
 -- ================================================
 
+-- 価格改定予約テーブル
+CREATE TABLE IF NOT EXISTS price_revisions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    unit_price DECIMAL NOT NULL DEFAULT 0,
+    printing_cost DECIMAL NOT NULL DEFAULT 0,
+    effective_date DATE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(product_id, effective_date)
+);
+
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE inventory ENABLE ROW LEVEL SECURITY;
@@ -173,6 +187,7 @@ ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sale_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sale_event_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE work_in_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE price_revisions ENABLE ROW LEVEL SECURITY;
 
 -- ================================================
 -- RLS Policies（全テーブル共通：認証済みユーザーはすべてアクセス可能）
@@ -190,6 +205,7 @@ CREATE POLICY "Allow all for order_items" ON order_items FOR ALL USING (true);
 CREATE POLICY "Allow all for sale_events" ON sale_events FOR ALL USING (true);
 CREATE POLICY "Allow all for sale_event_items" ON sale_event_items FOR ALL USING (true);
 CREATE POLICY "Allow all for work_in_progress" ON work_in_progress FOR ALL USING (true);
+CREATE POLICY "Allow all for price_revisions" ON price_revisions FOR ALL USING (true);
 
 -- ================================================
 -- インデックス
@@ -204,6 +220,8 @@ CREATE INDEX IF NOT EXISTS idx_sale_events_status ON sale_events(status);
 CREATE INDEX IF NOT EXISTS idx_sale_event_items_event_id ON sale_event_items(event_id);
 CREATE INDEX IF NOT EXISTS idx_wip_product_id ON work_in_progress(product_id);
 CREATE INDEX IF NOT EXISTS idx_wip_status ON work_in_progress(status);
+CREATE INDEX IF NOT EXISTS idx_price_revisions_product_id ON price_revisions(product_id);
+CREATE INDEX IF NOT EXISTS idx_price_revisions_effective_date ON price_revisions(effective_date);
 
 -- ================================================
 -- 更新日時自動更新トリガー
@@ -232,4 +250,6 @@ CREATE TRIGGER update_sale_events_updated_at BEFORE UPDATE ON sale_events
 CREATE TRIGGER update_sale_event_items_updated_at BEFORE UPDATE ON sale_event_items
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER update_work_in_progress_updated_at BEFORE UPDATE ON work_in_progress
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER update_price_revisions_updated_at BEFORE UPDATE ON price_revisions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();

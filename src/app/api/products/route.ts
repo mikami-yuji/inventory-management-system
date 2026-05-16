@@ -40,6 +40,14 @@ type RawProductData = {
     daily_shipment_rate: string | number | null;
     production_lead_days: number | null;
     suppliers: { name: string | null } | { name: string | null }[] | null;
+    price_revisions?: {
+        id: string;
+        product_id: string;
+        unit_price: number;
+        printing_cost: number;
+        effective_date: string;
+        created_at: string;
+    }[];
 };
 
 export async function GET(): Promise<NextResponse> {
@@ -52,7 +60,7 @@ export async function GET(): Promise<NextResponse> {
         const supabaseClient = createServerClient();
         const { data, error } = await supabaseClient
             .from('products')
-            .select('*, suppliers(name)')
+            .select('*, suppliers(name), price_revisions(*)')
             .neq('status', 'inactive') // inactive以外をすべて取得
             .order('name');
 
@@ -62,10 +70,32 @@ export async function GET(): Promise<NextResponse> {
         }
 
         // TypeScript型に変換
+        const todayStr = new Date().toISOString().split('T')[0];
+
         const products = (data as unknown as RawProductData[]).map((item) => {
             // suppliersが配列で返ってくるケースやnullのケースに対応
             const supplierData = Array.isArray(item.suppliers) ? item.suppliers[0] : item.suppliers;
             const supplierName = (supplierData as { name: string | null })?.name || "朝日パピルス株式会社";
+
+            // 価格改定の計算（今日以前で最も新しい effective_date を探す）
+            const revisions = item.price_revisions || [];
+            revisions.sort((a, b) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime()); // 降順
+            
+            const activeRevision = revisions.find(r => r.effective_date <= todayStr);
+            const baseUnitPrice = Number(item.unit_price) || 0;
+            const basePrintingCost = Number(item.printing_cost) || 0;
+
+            const currentUnitPrice = activeRevision ? Number(activeRevision.unit_price) : baseUnitPrice;
+            const currentPrintingCost = activeRevision ? Number(activeRevision.printing_cost) : basePrintingCost;
+
+            const mappedRevisions = revisions.map(r => ({
+                id: r.id,
+                productId: r.product_id,
+                unitPrice: Number(r.unit_price),
+                printingCost: Number(r.printing_cost),
+                effectiveDate: r.effective_date,
+                createdAt: r.created_at
+            }));
 
             return {
                 id: item.id,
@@ -97,6 +127,9 @@ export async function GET(): Promise<NextResponse> {
                 metersPerRoll: item.meters_per_roll !== null && item.meters_per_roll !== undefined ? Number(item.meters_per_roll) : 400,
                 dailyShipmentRate: item.daily_shipment_rate !== null && item.daily_shipment_rate !== undefined ? Number(item.daily_shipment_rate) : 0,
                 productionLeadDays: item.production_lead_days !== null && item.production_lead_days !== undefined ? Number(item.production_lead_days) : 0,
+                currentUnitPrice,
+                currentPrintingCost,
+                priceRevisions: mappedRevisions,
             };
         });
 

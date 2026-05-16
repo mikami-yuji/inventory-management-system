@@ -16,6 +16,16 @@ export type ProductCategory = 'bag' | 'sticker' | 'other' | 'new_rice';
 // 商品ステータス
 export type ProductStatus = 'active' | 'inactive' | 'plate_removal_scheduled' | 'plate_removed' | 'direct_delivery' | 'on_sale_break' | 'discontinued' | 'spot' | 'wip_check';
 
+// 価格改定
+export type PriceRevision = {
+  id: string;
+  productId: string;
+  unitPrice: number;
+  printingCost: number;
+  effectiveDate: string; // YYYY-MM-DD
+  createdAt: string;
+};
+
 // 商品マスタ
 export type Product = {
   id: string;
@@ -51,6 +61,10 @@ export type Product = {
   metersPerRoll?: number; // 1巻あたりのメートル数 (300 or 400、デフォルト400)
   dailyShipmentRate?: number; // 1日あたりの通常出荷数
   productionLeadDays?: number; // 仕掛リードタイム（日数）
+  // 拡張: 現在有効な価格（動的計算用）
+  currentUnitPrice?: number;
+  currentPrintingCost?: number;
+  priceRevisions?: PriceRevision[];
 };
 
 // 仕入先マスタ
@@ -147,8 +161,8 @@ export type OrderItem = {
   shape?: string | null;
   category?: string;
   metersPerRoll?: number | null;
-  unitPrice?: number;
-  printingCost?: number;
+  unitPrice?: number; // 商品マスタの単価（または保存時の単価）
+  printingCost?: number; // 商品マスタの印刷代（または保存時の印刷代）
 };
 
 // 発注
