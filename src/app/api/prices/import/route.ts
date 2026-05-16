@@ -33,7 +33,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         const worksheet = workbook.Sheets[firstSheetName];
         
         // ヘッダーを1行目としてJSON化
-        const rawData = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
+        const rawData = XLSX.utils.sheet_to_json<Record<string, string | number | undefined>>(worksheet);
 
         if (rawData.length === 0) {
             return NextResponse.json({ error: 'ファイルにデータが含まれていません' }, { status: 400 });
@@ -58,7 +58,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             }
         });
 
-        const revisionsToUpsert: any[] = [];
+        const revisionsToUpsert: Array<{
+            product_id: string;
+            unit_price: number;
+            printing_cost: number;
+            effective_date: string;
+        }> = [];
         const errors: string[] = [];
         let successCount = 0;
 
@@ -67,8 +72,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             
             // Excelのカラム名。揺らぎに対応するため、いくつか候補を探す
             const sku = row['受注№'] || row['受注番号'] || row['SKU'] || row['sku'];
-            let unitPrice = row['単価'] || row['価格'] || row['unit_price'];
-            let printingCost = row['印刷代'] || row['printing_cost'];
+            const unitPrice = row['単価'] || row['価格'] || row['unit_price'];
+            const printingCost = row['印刷代'] || row['printing_cost'];
 
             if (!sku) {
                 continue; // 受注№がない行は無視（空行など）

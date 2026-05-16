@@ -39,7 +39,6 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
-    const [loadingAddresses, setLoadingAddresses] = useState(false);
 
     const [isTBD, setIsTBD] = useState(false);
 
@@ -47,7 +46,6 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
     const { incomingStocks, loading: loadingStocks, addIncomingStock, updateIncomingStock, deleteIncomingStock, receiveIncomingStock, refetch } = useIncomingStock(product?.id);
 
     const fetchAddresses = useCallback(async () => {
-        setLoadingAddresses(true);
         try {
             const res = await fetch('/api/delivery-addresses');
             const data = await res.json();
@@ -59,7 +57,6 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
         } catch (e) {
             console.error("fetchAddresses error", e);
         } finally {
-            setLoadingAddresses(false);
         }
     }, []);
 

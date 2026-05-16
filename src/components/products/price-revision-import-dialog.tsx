@@ -62,8 +62,8 @@ export function PriceRevisionImportDialog({ onSuccess }: PriceRevisionImportDial
       if (onSuccess && data.successCount > 0) {
         onSuccess()
       }
-    } catch (err: any) {
-      setError(err.message || '予期せぬエラーが発生しました')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : '予期せぬエラーが発生しました')
     } finally {
       setIsLoading(false)
     }
