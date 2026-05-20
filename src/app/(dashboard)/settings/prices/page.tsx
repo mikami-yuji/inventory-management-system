@@ -640,6 +640,9 @@ export default function PriceSettingsPage(): React.ReactElement {
                           <TableCell className="max-w-[280px]">
                             <p className="font-semibold text-slate-800 dark:text-slate-200 truncate" title={item.name}>
                               {item.name}
+                              {item.weight && (
+                                <span className="ml-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">{item.weight}kg</span>
+                              )}
                             </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
                               受注№: <span className="font-mono text-slate-600 dark:text-slate-400">{item.sku}</span>
