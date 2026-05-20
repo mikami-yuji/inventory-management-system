@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Product, Inventory, ApiResponse } from '@/types';
+import type { Product, Inventory, ApiResponse, ProductCategory, ProductStatus } from '@/types';
 import { useAppSettings } from './use-masters';
 import { apiFetch } from '@/lib/api-client';
 
@@ -84,10 +84,10 @@ export function useInventory(options?: {
                         material: rawProd.material ? String(rawProd.material) : undefined,
                         unitPrice: Number(rawProd.unit_price) || 0,
                         printingCost: Number(rawProd.printing_cost) || 0,
-                        category: rawProd.category as any,
+                        category: rawProd.category as ProductCategory,
                         imageUrl: rawProd.image_url ? String(rawProd.image_url) : undefined,
                         description: rawProd.description ? String(rawProd.description) : undefined,
-                        status: rawProd.status as any,
+                        status: rawProd.status as ProductStatus,
                         minStockAlert: rawProd.min_stock_alert !== undefined && rawProd.min_stock_alert !== null ? Number(rawProd.min_stock_alert) : undefined,
                         supplierStock: rawProd.supplier_stock !== undefined && rawProd.supplier_stock !== null ? Number(rawProd.supplier_stock) : undefined,
                         oldUnitPrice: rawProd.old_unit_price !== undefined && rawProd.old_unit_price !== null ? Number(rawProd.old_unit_price) : undefined,
