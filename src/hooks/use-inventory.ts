@@ -66,12 +66,29 @@ export function useInventory(options?: {
                 product: Product;
             };
 
+            type RawProduct = Product & {
+                old_unit_price?: string | number | null;
+                old_printing_cost?: string | number | null;
+                price_increase_effective_date?: string | null;
+            };
+
             // APIレスポンスのスネークケースをキャメルケースに変換
             const mappedData = dataArray
                 .filter((item: unknown) => (item as RawInventoryItem).product !== undefined)
                 .map((item: unknown) => {
                     const i = item as RawInventoryItem;
-                    const p = i.product as Record<string, unknown>;
+                    const p = i.product as unknown as RawProduct;
+
+                    const oldUnitPrice = p.old_unit_price !== undefined && p.old_unit_price !== null 
+                        ? Number(p.old_unit_price) 
+                        : p.oldUnitPrice;
+
+                    const oldPrintingCost = p.old_printing_cost !== undefined && p.old_printing_cost !== null 
+                        ? Number(p.old_printing_cost) 
+                        : p.oldPrintingCost;
+
+                    const priceIncreaseEffectiveDate = p.price_increase_effective_date || p.priceIncreaseEffectiveDate;
+
                     return {
                         productId: i.product_id || i.productId || '',
                         quantity: i.quantity,
@@ -79,9 +96,9 @@ export function useInventory(options?: {
                         updatedAt: i.updated_at || i.updatedAt || '',
                         product: {
                             ...i.product,
-                            oldUnitPrice: p.old_unit_price !== undefined ? (p.old_unit_price !== null ? Number(p.old_unit_price) : undefined) : p.oldUnitPrice,
-                            oldPrintingCost: p.old_printing_cost !== undefined ? (p.old_printing_cost !== null ? Number(p.old_printing_cost) : undefined) : p.oldPrintingCost,
-                            priceIncreaseEffectiveDate: p.price_increase_effective_date || p.priceIncreaseEffectiveDate,
+                            oldUnitPrice: oldUnitPrice !== undefined && !isNaN(Number(oldUnitPrice)) ? Number(oldUnitPrice) : undefined,
+                            oldPrintingCost: oldPrintingCost !== undefined && !isNaN(Number(oldPrintingCost)) ? Number(oldPrintingCost) : undefined,
+                            priceIncreaseEffectiveDate: priceIncreaseEffectiveDate || undefined,
                         }
                     };
                 });
