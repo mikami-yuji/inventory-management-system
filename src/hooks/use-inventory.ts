@@ -71,12 +71,18 @@ export function useInventory(options?: {
                 .filter((item: unknown) => (item as RawInventoryItem).product !== undefined)
                 .map((item: unknown) => {
                     const i = item as RawInventoryItem;
+                    const p = i.product as Record<string, unknown>;
                     return {
                         productId: i.product_id || i.productId || '',
                         quantity: i.quantity,
                         oldPriceQuantity: i.old_price_quantity ?? i.oldPriceQuantity ?? 0,
                         updatedAt: i.updated_at || i.updatedAt || '',
-                        product: i.product
+                        product: {
+                            ...i.product,
+                            oldUnitPrice: p.old_unit_price !== undefined ? (p.old_unit_price !== null ? Number(p.old_unit_price) : undefined) : p.oldUnitPrice,
+                            oldPrintingCost: p.old_printing_cost !== undefined ? (p.old_printing_cost !== null ? Number(p.old_printing_cost) : undefined) : p.oldPrintingCost,
+                            priceIncreaseEffectiveDate: p.price_increase_effective_date || p.priceIncreaseEffectiveDate,
+                        }
                     };
                 });
             setInventory(mappedData);

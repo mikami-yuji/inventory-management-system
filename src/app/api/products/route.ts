@@ -39,6 +39,9 @@ type RawProductData = {
     meters_per_roll: number | null;
     daily_shipment_rate: string | number | null;
     production_lead_days: number | null;
+    old_unit_price?: string | number | null;
+    old_printing_cost?: string | number | null;
+    price_increase_effective_date?: string | null;
     suppliers: { name: string | null } | { name: string | null }[] | null;
     price_revisions?: {
         id: string;
@@ -129,6 +132,9 @@ export async function GET(): Promise<NextResponse> {
                 productionLeadDays: item.production_lead_days !== null && item.production_lead_days !== undefined ? Number(item.production_lead_days) : 0,
                 currentUnitPrice,
                 currentPrintingCost,
+                oldUnitPrice: item.old_unit_price !== undefined && item.old_unit_price !== null ? Number(item.old_unit_price) : undefined,
+                oldPrintingCost: item.old_printing_cost !== undefined && item.old_printing_cost !== null ? Number(item.old_printing_cost) : undefined,
+                priceIncreaseEffectiveDate: item.price_increase_effective_date || undefined,
                 priceRevisions: mappedRevisions,
             };
         });
