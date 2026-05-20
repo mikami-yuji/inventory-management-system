@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.9.6] - 2026-05-20
+### Fixed
+- **価格管理画面での単価NaNエラーの解決**:
+  - `useInventory` フックで Supabase からのレスポンスデータから `Product` をマッピングする際、 `unitPrice` や `printingCost` などのキャメルケースプロパティへの変換漏れを修正。
+  - 変換漏れにより価格計算時に `NaN` が発生していた問題を解消し、設定の価格管理画面での `¥NaN` 表示エラーを根本的に解決。
+  - さらに二重防護として、価格管理画面 (`page.tsx`) および集計ユーティリティ (`price-calculator.ts`) においても、単価や印刷代の計算時に `Number() || 0` による堅牢な数値フォールバックを追加し、データの差異やキャッシュの影響による `NaN` の発生を完璧に防止。
+
 ## [0.9.5] - 2026-05-20
 ### Added
 - **新旧在庫金額・商品数の集計と可視化機能**:

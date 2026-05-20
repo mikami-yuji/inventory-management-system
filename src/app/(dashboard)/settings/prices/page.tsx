@@ -139,13 +139,13 @@ export default function PriceSettingsPage(): React.ReactElement {
         const oldQty = item.oldPriceQuantity;
         const newQty = Math.max(0, quantity - oldQty);
 
-        const oldUnit = product.oldUnitPrice ?? product.unitPrice;
-        const oldPrint = product.oldPrintingCost ?? product.printingCost ?? 0;
+        const oldUnit = Number(product.oldUnitPrice ?? product.unitPrice) || 0;
+        const oldPrint = Number(product.oldPrintingCost ?? product.printingCost) || 0;
         const oldPrice = oldUnit + oldPrint;
         const oldAmount = oldQty * oldPrice;
 
-        const newUnit = product.unitPrice;
-        const newPrint = product.printingCost ?? 0;
+        const newUnit = Number(product.unitPrice) || 0;
+        const newPrint = Number(product.printingCost) || 0;
         const newPrice = newUnit + newPrint;
         const newAmount = newQty * newPrice;
 

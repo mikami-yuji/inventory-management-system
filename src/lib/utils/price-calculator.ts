@@ -66,8 +66,8 @@ export function calculateInventorySummary(inventory: InventoryWithProduct[]): Pr
     if (oldQty > 0) {
       oldProducts.add(product.id);
       oldStock += oldQty;
-      const oldUnit = product.oldUnitPrice ?? product.unitPrice;
-      const oldPrint = product.oldPrintingCost ?? product.printingCost ?? 0;
+      const oldUnit = Number(product.oldUnitPrice ?? product.unitPrice) || 0;
+      const oldPrint = Number(product.oldPrintingCost ?? product.printingCost) || 0;
       oldAmount += oldQty * (oldUnit + oldPrint);
     }
 
@@ -75,8 +75,8 @@ export function calculateInventorySummary(inventory: InventoryWithProduct[]): Pr
     if (newQty > 0) {
       newProducts.add(product.id);
       newStock += newQty;
-      const newUnit = product.unitPrice;
-      const newPrint = product.printingCost ?? 0;
+      const newUnit = Number(product.unitPrice) || 0;
+      const newPrint = Number(product.printingCost) || 0;
       newAmount += newQty * (newUnit + newPrint);
     }
   });
