@@ -66,40 +66,41 @@ export function useInventory(options?: {
                 product: Product;
             };
 
-            type RawProduct = Product & {
-                old_unit_price?: string | number | null;
-                old_printing_cost?: string | number | null;
-                price_increase_effective_date?: string | null;
-            };
-
             // APIレスポンスのスネークケースをキャメルケースに変換
             const mappedData = dataArray
                 .filter((item: unknown) => (item as RawInventoryItem).product !== undefined)
                 .map((item: unknown) => {
                     const i = item as RawInventoryItem;
-                    const p = i.product as unknown as RawProduct;
+                    const rawProd = i.product as unknown as Record<string, unknown>;
 
-                    const oldUnitPrice = p.old_unit_price !== undefined && p.old_unit_price !== null 
-                        ? Number(p.old_unit_price) 
-                        : p.oldUnitPrice;
-
-                    const oldPrintingCost = p.old_printing_cost !== undefined && p.old_printing_cost !== null 
-                        ? Number(p.old_printing_cost) 
-                        : p.oldPrintingCost;
-
-                    const priceIncreaseEffectiveDate = p.price_increase_effective_date || p.priceIncreaseEffectiveDate;
+                    const product: Product = {
+                        id: String(rawProd.id || ''),
+                        name: String(rawProd.name || ''),
+                        sku: String(rawProd.sku || ''),
+                        productCode: rawProd.product_code ? String(rawProd.product_code) : undefined,
+                        janCode: rawProd.jan_code ? String(rawProd.jan_code) : undefined,
+                        weight: rawProd.weight !== undefined && rawProd.weight !== null ? Number(rawProd.weight) : undefined,
+                        shape: rawProd.shape ? String(rawProd.shape) : undefined,
+                        material: rawProd.material ? String(rawProd.material) : undefined,
+                        unitPrice: Number(rawProd.unit_price) || 0,
+                        printingCost: Number(rawProd.printing_cost) || 0,
+                        category: rawProd.category as any,
+                        imageUrl: rawProd.image_url ? String(rawProd.image_url) : undefined,
+                        description: rawProd.description ? String(rawProd.description) : undefined,
+                        status: rawProd.status as any,
+                        minStockAlert: rawProd.min_stock_alert !== undefined && rawProd.min_stock_alert !== null ? Number(rawProd.min_stock_alert) : undefined,
+                        supplierStock: rawProd.supplier_stock !== undefined && rawProd.supplier_stock !== null ? Number(rawProd.supplier_stock) : undefined,
+                        oldUnitPrice: rawProd.old_unit_price !== undefined && rawProd.old_unit_price !== null ? Number(rawProd.old_unit_price) : undefined,
+                        oldPrintingCost: rawProd.old_printing_cost !== undefined && rawProd.old_printing_cost !== null ? Number(rawProd.old_printing_cost) : undefined,
+                        priceIncreaseEffectiveDate: rawProd.price_increase_effective_date ? String(rawProd.price_increase_effective_date) : undefined,
+                    };
 
                     return {
                         productId: i.product_id || i.productId || '',
                         quantity: i.quantity,
                         oldPriceQuantity: i.old_price_quantity ?? i.oldPriceQuantity ?? 0,
                         updatedAt: i.updated_at || i.updatedAt || '',
-                        product: {
-                            ...i.product,
-                            oldUnitPrice: oldUnitPrice !== undefined && !isNaN(Number(oldUnitPrice)) ? Number(oldUnitPrice) : undefined,
-                            oldPrintingCost: oldPrintingCost !== undefined && !isNaN(Number(oldPrintingCost)) ? Number(oldPrintingCost) : undefined,
-                            priceIncreaseEffectiveDate: priceIncreaseEffectiveDate || undefined,
-                        }
+                        product
                     };
                 });
             setInventory(mappedData);
