@@ -51,8 +51,8 @@ export function useInventory(options?: {
             const url = `/api/inventory${params.toString() ? `?${params.toString()}` : ''}`;
             const result = await apiFetch<ApiResponse<InventoryWithProduct[]> | InventoryWithProduct[]>(url);
 
-            const dataArray = Array.isArray(result) 
-                ? result 
+            const dataArray = Array.isArray(result)
+                ? result
                 : (result.data && Array.isArray(result.data) ? result.data : []);
 
             type RawInventoryItem = {
@@ -93,6 +93,7 @@ export function useInventory(options?: {
                         oldUnitPrice: rawProd.old_unit_price !== undefined && rawProd.old_unit_price !== null ? Number(rawProd.old_unit_price) : undefined,
                         oldPrintingCost: rawProd.old_printing_cost !== undefined && rawProd.old_printing_cost !== null ? Number(rawProd.old_printing_cost) : undefined,
                         priceIncreaseEffectiveDate: rawProd.price_increase_effective_date ? String(rawProd.price_increase_effective_date) : undefined,
+                        metersPerRoll: rawProd.meters_per_roll !== undefined && rawProd.meters_per_roll !== null ? Number(rawProd.meters_per_roll) : undefined,
                     };
 
                     return {

@@ -35,6 +35,7 @@ import {
   groupPriceRevisions 
 } from "@/lib/utils/price-calculator";
 import type { ProductCategory } from "@/types";
+import { isRollBag, metersToBags } from "@/lib/services";
 
 // Chart.jsのインポートと登録
 import {
@@ -88,9 +89,9 @@ export default function PriceSettingsPage(): React.ReactElement {
     return `¥${amount.toLocaleString()}`;
   };
 
-  // 数量フォーマットのユーティリティ関数
+  // 数量フォーマットのユーティリティ関数（サマリーなどの単位混在用）
   const formatQuantity = (quantity: number): string => {
-    return `${quantity.toLocaleString()} 個`;
+    return quantity.toLocaleString();
   };
 
   // 在庫集計データの計算
@@ -154,6 +155,9 @@ export default function PriceSettingsPage(): React.ReactElement {
           name: product.name,
           sku: product.sku || "-",
           category: product.category,
+          shape: product.shape,
+          weight: product.weight,
+          metersPerRoll: product.metersPerRoll,
           oldPrice: product.oldUnitPrice !== undefined ? oldPrice : null,
           newPrice: newPrice,
           oldQty: oldQty,
@@ -172,6 +176,71 @@ export default function PriceSettingsPage(): React.ReactElement {
       ...prev,
       [date]: !prev[date],
     }));
+  };
+
+  // 数量と単位の表示用ヘルパー関数
+  const renderQuantityDisplay = (
+    quantity: number,
+    category: string,
+    shape?: string | null,
+    metersPerRoll?: number | null,
+    weight?: number | null,
+    prefixText?: string
+  ): React.ReactElement => {
+    const isRoll = isRollBag(shape, category, metersPerRoll);
+    if (isRoll) {
+      const approxBags = metersToBags(quantity, weight || 5);
+      return (
+        <div className="space-y-0.5">
+          <p className="font-semibold text-slate-800 dark:text-slate-200">
+            {prefixText}{quantity.toLocaleString()} m
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            約 {approxBags.toLocaleString()} 枚
+          </p>
+        </div>
+      );
+    }
+
+    const unit = category === "bag" || category === "new_rice" ? "枚" : "個";
+    return (
+      <p className="text-slate-800 dark:text-slate-200 font-semibold">
+        {prefixText}{quantity.toLocaleString()} {unit}
+      </p>
+    );
+  };
+
+  // 数量・単価・合計金額の掛け合わせ表示用ヘルパー関数
+  const renderPriceBreakdown = (
+    quantity: number,
+    price: number,
+    category: string,
+    shape?: string | null,
+    metersPerRoll?: number | null,
+    weight?: number | null,
+    textColorClass?: string
+  ): React.ReactElement => {
+    const isRoll = isRollBag(shape, category, metersPerRoll);
+    if (isRoll) {
+      const approxBags = metersToBags(quantity, weight || 5);
+      return (
+        <div className="space-y-0.5">
+          <p className={textColorClass}>
+            {quantity.toLocaleString()} m × {formatCurrency(price)}
+          </p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+            約 {approxBags.toLocaleString()} 枚
+          </p>
+        </div>
+      );
+    }
+
+    const unit = category === "bag" || category === "new_rice" ? "枚" : "個";
+    return (
+      <p className={textColorClass}>
+        {quantity.toLocaleString()} {unit} × {formatCurrency(price)}
+      </p>
+    );
   };
 
   // ドーナツチャート用データ：在庫金額の構成比率
@@ -240,7 +309,7 @@ export default function PriceSettingsPage(): React.ReactElement {
             if (label.includes('金額')) {
               return ` ${label}: ¥${value.toLocaleString()} (${percentage}%)`;
             }
-            return ` ${label}: ${value.toLocaleString()} 個 (${percentage}%)`;
+            return ` ${label}: ${value.toLocaleString()} (${percentage}%)`;
           }
         }
       }
@@ -555,9 +624,15 @@ export default function PriceSettingsPage(): React.ReactElement {
                                 <p className="font-bold text-amber-700 dark:text-amber-500">
                                   {formatCurrency(item.oldAmount)}
                                 </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {item.oldQty.toLocaleString()} 個 × {formatCurrency(item.oldPrice)}
-                                </p>
+                                {renderPriceBreakdown(
+                                  item.oldQty,
+                                  item.oldPrice,
+                                  item.category,
+                                  item.shape,
+                                  item.metersPerRoll,
+                                  item.weight,
+                                  "text-xs text-muted-foreground"
+                                )}
                               </div>
                             ) : (
                               <span className="text-muted-foreground text-xs">適用なし</span>
@@ -570,21 +645,32 @@ export default function PriceSettingsPage(): React.ReactElement {
                               <p className="font-bold text-emerald-700 dark:text-emerald-500">
                                 {formatCurrency(item.newAmount)}
                               </p>
-                              <p className="text-xs text-muted-foreground">
-                                {item.newQty.toLocaleString()} 個 × {formatCurrency(item.newPrice)}
-                              </p>
+                              {renderPriceBreakdown(
+                                item.newQty,
+                                item.newPrice,
+                                item.category,
+                                item.shape,
+                                item.metersPerRoll,
+                                item.weight,
+                                "text-xs text-muted-foreground"
+                              )}
                             </div>
                           </TableCell>
 
                           {/* 現在庫合計 */}
-                          <TableCell className="border-l text-right font-semibold">
+                          <TableCell className="border-l text-right">
                             <div className="space-y-1">
                               <p className="text-indigo-600 dark:text-indigo-400 font-extrabold">
                                 {formatCurrency(item.totalAmount)}
                               </p>
-                              <p className="text-xs text-muted-foreground">
-                                合計 {item.totalQty.toLocaleString()} 個
-                              </p>
+                              {renderQuantityDisplay(
+                                item.totalQty,
+                                item.category,
+                                item.shape,
+                                item.metersPerRoll,
+                                item.weight,
+                                "合計 "
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>

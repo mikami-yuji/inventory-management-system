@@ -54,7 +54,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
           status,
           min_stock_alert,
           supplier_stock,
-          supplier_stock_updated_at
+          supplier_stock_updated_at,
+          meters_per_roll
         )
       `)
 
