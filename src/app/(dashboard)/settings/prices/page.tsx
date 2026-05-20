@@ -396,9 +396,21 @@ export default function PriceSettingsPage(): React.ReactElement {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">総在庫数</p>
-                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                        {formatQuantity(summary.oldPrice.stockCount)}
-                      </p>
+                      <div className="space-y-0.5 mt-0.5">
+                        {summary.oldPrice.stockCountMeters > 0 && (
+                          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                            {summary.oldPrice.stockCountMeters.toLocaleString()} <span className="text-xs font-medium text-muted-foreground">m</span>
+                          </p>
+                        )}
+                        {summary.oldPrice.stockCountSheets > 0 && (
+                          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                            {summary.oldPrice.stockCountSheets.toLocaleString()} <span className="text-xs font-medium text-muted-foreground">枚</span>
+                          </p>
+                        )}
+                        {summary.oldPrice.stockCount === 0 && (
+                          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">0</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -433,9 +445,21 @@ export default function PriceSettingsPage(): React.ReactElement {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">総在庫数</p>
-                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                        {formatQuantity(summary.newPrice.stockCount)}
-                      </p>
+                      <div className="space-y-0.5 mt-0.5">
+                        {summary.newPrice.stockCountMeters > 0 && (
+                          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                            {summary.newPrice.stockCountMeters.toLocaleString()} <span className="text-xs font-medium text-muted-foreground">m</span>
+                          </p>
+                        )}
+                        {summary.newPrice.stockCountSheets > 0 && (
+                          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                            {summary.newPrice.stockCountSheets.toLocaleString()} <span className="text-xs font-medium text-muted-foreground">枚</span>
+                          </p>
+                        )}
+                        {summary.newPrice.stockCount === 0 && (
+                          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">0</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -470,9 +494,21 @@ export default function PriceSettingsPage(): React.ReactElement {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">総在庫数量</p>
-                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                        {formatQuantity(summary.total.stockCount)}
-                      </p>
+                      <div className="space-y-0.5 mt-0.5">
+                        {summary.total.stockCountMeters > 0 && (
+                          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                            {summary.total.stockCountMeters.toLocaleString()} <span className="text-xs font-medium text-muted-foreground">m</span>
+                          </p>
+                        )}
+                        {summary.total.stockCountSheets > 0 && (
+                          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                            {summary.total.stockCountSheets.toLocaleString()} <span className="text-xs font-medium text-muted-foreground">枚</span>
+                          </p>
+                        )}
+                        {summary.total.stockCount === 0 && (
+                          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">0</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>

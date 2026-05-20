@@ -1,10 +1,13 @@
 import type { Product } from "@/types";
 import type { InventoryWithProduct } from "@/hooks/use-inventory";
+import { isRollBag } from "@/lib/services";
 
 // 在庫集計カードの型定義
 export type InventorySummaryCard = {
   productsCount: number;
   stockCount: number;
+  stockCountMeters: number; // ロール袋（m単位）の在庫数量
+  stockCountSheets: number; // 枚数管理（枚単位）の在庫数量
   amount: number;
 };
 
@@ -44,10 +47,14 @@ export type PriceRevisionGroup = {
 export function calculateInventorySummary(inventory: InventoryWithProduct[]): PriceSummary {
   const oldProducts = new Set<string>();
   let oldStock = 0;
+  let oldStockMeters = 0;
+  let oldStockSheets = 0;
   let oldAmount = 0;
 
   const newProducts = new Set<string>();
   let newStock = 0;
+  let newStockMeters = 0;
+  let newStockSheets = 0;
   let newAmount = 0;
 
   const totalProducts = new Set<string>();
@@ -60,12 +67,20 @@ export function calculateInventorySummary(inventory: InventoryWithProduct[]): Pr
     const oldQty = item.oldPriceQuantity;
     const newQty = Math.max(0, quantity - oldQty);
 
+    // ロール袋かどうかを判定し、m / 枚を分離集計
+    const isRoll = isRollBag(product.shape, product.category, product.metersPerRoll);
+
     totalProducts.add(product.id);
 
     // 旧価格在庫の計算
     if (oldQty > 0) {
       oldProducts.add(product.id);
       oldStock += oldQty;
+      if (isRoll) {
+        oldStockMeters += oldQty;
+      } else {
+        oldStockSheets += oldQty;
+      }
       const oldUnit = Number(product.oldUnitPrice ?? product.unitPrice) || 0;
       const oldPrint = Number(product.oldPrintingCost ?? product.printingCost) || 0;
       oldAmount += oldQty * (oldUnit + oldPrint);
@@ -75,6 +90,11 @@ export function calculateInventorySummary(inventory: InventoryWithProduct[]): Pr
     if (newQty > 0) {
       newProducts.add(product.id);
       newStock += newQty;
+      if (isRoll) {
+        newStockMeters += newQty;
+      } else {
+        newStockSheets += newQty;
+      }
       const newUnit = Number(product.unitPrice) || 0;
       const newPrint = Number(product.printingCost) || 0;
       newAmount += newQty * (newUnit + newPrint);
@@ -85,16 +105,22 @@ export function calculateInventorySummary(inventory: InventoryWithProduct[]): Pr
     oldPrice: {
       productsCount: oldProducts.size,
       stockCount: oldStock,
+      stockCountMeters: oldStockMeters,
+      stockCountSheets: oldStockSheets,
       amount: oldAmount,
     },
     newPrice: {
       productsCount: newProducts.size,
       stockCount: newStock,
+      stockCountMeters: newStockMeters,
+      stockCountSheets: newStockSheets,
       amount: newAmount,
     },
     total: {
       productsCount: totalProducts.size,
       stockCount: oldStock + newStock,
+      stockCountMeters: oldStockMeters + newStockMeters,
+      stockCountSheets: oldStockSheets + newStockSheets,
       amount: oldAmount + newAmount,
     },
   };

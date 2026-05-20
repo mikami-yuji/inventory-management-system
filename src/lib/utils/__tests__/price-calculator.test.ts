@@ -8,12 +8,18 @@ describe("price-calculator", (): void => {
       const result = calculateInventorySummary([]);
       expect(result.oldPrice.productsCount).toBe(0);
       expect(result.oldPrice.stockCount).toBe(0);
+      expect(result.oldPrice.stockCountMeters).toBe(0);
+      expect(result.oldPrice.stockCountSheets).toBe(0);
       expect(result.oldPrice.amount).toBe(0);
       expect(result.newPrice.productsCount).toBe(0);
       expect(result.newPrice.stockCount).toBe(0);
+      expect(result.newPrice.stockCountMeters).toBe(0);
+      expect(result.newPrice.stockCountSheets).toBe(0);
       expect(result.newPrice.amount).toBe(0);
       expect(result.total.productsCount).toBe(0);
       expect(result.total.stockCount).toBe(0);
+      expect(result.total.stockCountMeters).toBe(0);
+      expect(result.total.stockCountSheets).toBe(0);
       expect(result.total.amount).toBe(0);
     });
 
@@ -40,19 +46,25 @@ describe("price-calculator", (): void => {
 
       const result = calculateInventorySummary(mockInventory);
       
-      // 旧在庫: 10個 * (90 + 5) = 950円
+      // 旧在庫: 10枚 × (90 + 5) = 950円（袋カテゴリなので枚数管理）
       expect(result.oldPrice.productsCount).toBe(1);
       expect(result.oldPrice.stockCount).toBe(10);
+      expect(result.oldPrice.stockCountMeters).toBe(0);
+      expect(result.oldPrice.stockCountSheets).toBe(10);
       expect(result.oldPrice.amount).toBe(950);
 
       // 新在庫: 0個
       expect(result.newPrice.productsCount).toBe(0);
       expect(result.newPrice.stockCount).toBe(0);
+      expect(result.newPrice.stockCountMeters).toBe(0);
+      expect(result.newPrice.stockCountSheets).toBe(0);
       expect(result.newPrice.amount).toBe(0);
 
       // 合計
       expect(result.total.productsCount).toBe(1);
       expect(result.total.stockCount).toBe(10);
+      expect(result.total.stockCountMeters).toBe(0);
+      expect(result.total.stockCountSheets).toBe(10);
       expect(result.total.amount).toBe(950);
     });
 
@@ -80,16 +92,22 @@ describe("price-calculator", (): void => {
       // 旧在庫: 0個
       expect(result.oldPrice.productsCount).toBe(0);
       expect(result.oldPrice.stockCount).toBe(0);
+      expect(result.oldPrice.stockCountMeters).toBe(0);
+      expect(result.oldPrice.stockCountSheets).toBe(0);
       expect(result.oldPrice.amount).toBe(0);
 
-      // 新在庫: 5個 * (200 + 20) = 1100円
+      // 新在庫: 5個 × (200 + 20) = 1100円（stickerカテゴリなので枚数管理）
       expect(result.newPrice.productsCount).toBe(1);
       expect(result.newPrice.stockCount).toBe(5);
+      expect(result.newPrice.stockCountMeters).toBe(0);
+      expect(result.newPrice.stockCountSheets).toBe(5);
       expect(result.newPrice.amount).toBe(1100);
 
       // 合計
       expect(result.total.productsCount).toBe(1);
       expect(result.total.stockCount).toBe(5);
+      expect(result.total.stockCountMeters).toBe(0);
+      expect(result.total.stockCountSheets).toBe(5);
       expect(result.total.amount).toBe(1100);
     });
 
@@ -116,20 +134,80 @@ describe("price-calculator", (): void => {
 
       const result = calculateInventorySummary(mockInventory);
 
-      // 旧在庫: 5個 * (120 + 10) = 650円
+      // 旧在庫: 5個 × (120 + 10) = 650円（otherカテゴリなので枚数管理）
       expect(result.oldPrice.productsCount).toBe(1);
       expect(result.oldPrice.stockCount).toBe(5);
+      expect(result.oldPrice.stockCountMeters).toBe(0);
+      expect(result.oldPrice.stockCountSheets).toBe(5);
       expect(result.oldPrice.amount).toBe(650);
 
-      // 新在庫: 10個 * (150 + 15) = 1650円
+      // 新在庫: 10個 × (150 + 15) = 1650円
       expect(result.newPrice.productsCount).toBe(1);
       expect(result.newPrice.stockCount).toBe(10);
+      expect(result.newPrice.stockCountMeters).toBe(0);
+      expect(result.newPrice.stockCountSheets).toBe(10);
       expect(result.newPrice.amount).toBe(1650);
 
       // 合計: 650 + 1650 = 2300円
       expect(result.total.productsCount).toBe(1);
       expect(result.total.stockCount).toBe(15);
+      expect(result.total.stockCountMeters).toBe(0);
+      expect(result.total.stockCountSheets).toBe(15);
       expect(result.total.amount).toBe(2300);
+    });
+
+    it("ロール袋と通常袋が混在する場合にmと枚が正しく分離集計されること", (): void => {
+      const mockInventory: InventoryWithProduct[] = [
+        {
+          productId: "prod-roll",
+          quantity: 1200,
+          oldPriceQuantity: 0,
+          updatedAt: "2026-05-20",
+          product: {
+            id: "prod-roll",
+            name: "ロール袋RZ",
+            sku: "SKU-RZ",
+            unitPrice: 50,
+            printingCost: 5,
+            category: "bag",
+            status: "active",
+            shape: "RZ",
+            metersPerRoll: 400,
+          },
+        },
+        {
+          productId: "prod-sheet",
+          quantity: 3000,
+          oldPriceQuantity: 1000,
+          updatedAt: "2026-05-20",
+          product: {
+            id: "prod-sheet",
+            name: "単袋商品",
+            sku: "SKU-TAN",
+            unitPrice: 80,
+            printingCost: 10,
+            oldUnitPrice: 70,
+            oldPrintingCost: 8,
+            category: "bag",
+            status: "active",
+            shape: "単袋",
+          },
+        },
+      ];
+
+      const result = calculateInventorySummary(mockInventory);
+
+      // 旧在庫: 単袋のみ1000枚 × (70 + 8) = 78,000円
+      expect(result.oldPrice.stockCountMeters).toBe(0);
+      expect(result.oldPrice.stockCountSheets).toBe(1000);
+
+      // 新在庫: ロール1200m + 単袋2000枚
+      expect(result.newPrice.stockCountMeters).toBe(1200);
+      expect(result.newPrice.stockCountSheets).toBe(2000);
+
+      // 合計
+      expect(result.total.stockCountMeters).toBe(1200);
+      expect(result.total.stockCountSheets).toBe(3000);
     });
   });
 
