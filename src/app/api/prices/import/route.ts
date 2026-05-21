@@ -118,6 +118,52 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 console.error('Upsert error:', upsertError);
                 throw new Error('価格改定データの保存に失敗しました');
             }
+
+            // 本日以前の適用日（すでに適用済み）であれば、在庫ロックおよび商品マスタの価格更新を連動して実行する
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (effectiveDate <= todayStr) {
+                for (const revision of revisionsToUpsert) {
+                    const productId = revision.product_id;
+
+                    // 1. 既存在庫を「旧価格在庫 (old_price_quantity)」としてロック
+                    const { data: invData, error: invError } = await supabase
+                        .from('inventory')
+                        .select('quantity, old_price_quantity')
+                        .eq('product_id', productId)
+                        .single();
+
+                    if (!invError && invData) {
+                        const currentTotal = invData.quantity || 0;
+                        await supabase
+                            .from('inventory')
+                            .update({
+                                old_price_quantity: currentTotal, // 現在の全在庫を旧価格在庫に
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq('product_id', productId);
+                    }
+
+                    // 2. 商品マスタ（products）を更新して現在単価を正式に新単価に切り替え、元の単価をold_unit_priceに退避
+                    const { data: prodData, error: prodError } = await supabase
+                        .from('products')
+                        .select('unit_price, printing_cost')
+                        .eq('id', productId)
+                        .single();
+
+                    if (!prodError && prodData) {
+                        await supabase
+                            .from('products')
+                            .update({
+                                old_unit_price: prodData.unit_price,
+                                old_printing_cost: prodData.printing_cost,
+                                unit_price: revision.unit_price,
+                                printing_cost: revision.printing_cost,
+                                price_increase_effective_date: effectiveDate
+                            })
+                            .eq('id', productId);
+                    }
+                }
+            }
         }
 
         return NextResponse.json({ 
