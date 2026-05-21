@@ -119,9 +119,36 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 throw new Error('価格改定データの保存に失敗しました');
             }
 
-            // 本日以前の適用日（すでに適用済み）であれば、在庫ロックおよび商品マスタの価格更新を連動して実行する
-            const todayStr = new Date().toISOString().split('T')[0];
-            if (effectiveDate <= todayStr) {
+            // タイムゾーン（日本時間）を考慮して本日以前の適用日（すでに適用済み）であるかを正確に判定する
+            const parseToDate = (dateStr: string): Date | null => {
+                // スラッシュをハイフンに置換し、トリミング
+                const cleanStr = dateStr.replace(/\//g, '-').trim();
+                const parsed = new Date(cleanStr);
+                return isNaN(parsed.getTime()) ? null : parsed;
+            };
+
+            const effectiveDateObj = parseToDate(effectiveDate);
+            let shouldUpdateImmediately = false;
+
+            if (effectiveDateObj) {
+                const now = new Date();
+                // サーバー環境（UTCなど）に関わらず日本時間(JST)の今日（00:00:00.000）を取得
+                const todayJst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+                todayJst.setHours(0, 0, 0, 0);
+
+                // 適用日の日本時間（00:00:00.000）を取得
+                const effectiveDateJst = new Date(effectiveDateObj.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+                effectiveDateJst.setHours(0, 0, 0, 0);
+
+                // 適用日が本日以前（過去または今日）である場合
+                shouldUpdateImmediately = effectiveDateJst <= todayJst;
+            } else {
+                // 万が一パースに失敗した場合は従来の文字列比較でフォールバック
+                const todayStr = new Date().toISOString().split('T')[0];
+                shouldUpdateImmediately = effectiveDate <= todayStr;
+            }
+
+            if (shouldUpdateImmediately) {
                 for (const revision of revisionsToUpsert) {
                     const productId = revision.product_id;
 
