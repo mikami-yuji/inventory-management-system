@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,17 +8,20 @@ import { Label } from '@/components/ui/label'
 import { Upload, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
-interface PriceRevisionImportDialogProps {
+// 価格改定インポートダイアログのprops型定義
+type PriceRevisionImportDialogProps = {
   onSuccess?: () => void
 }
 
-export function PriceRevisionImportDialog({ onSuccess }: PriceRevisionImportDialogProps) {
+export function PriceRevisionImportDialog({ onSuccess }: PriceRevisionImportDialogProps): React.ReactElement {
   const [isOpen, setIsOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [effectiveDate, setEffectiveDate] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<{ message: string; successCount: number; errors: string[] } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // インポートが成功したかどうかを追跡するフラグ
+  const [importSucceeded, setImportSucceeded] = useState(false)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -59,8 +62,9 @@ export function PriceRevisionImportDialog({ onSuccess }: PriceRevisionImportDial
       }
 
       setResult(data)
-      if (onSuccess && data.successCount > 0) {
-        onSuccess()
+      if (data.successCount > 0) {
+        setImportSucceeded(true)
+        onSuccess?.()
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '予期せぬエラーが発生しました')
@@ -69,17 +73,24 @@ export function PriceRevisionImportDialog({ onSuccess }: PriceRevisionImportDial
     }
   }
 
-  const resetForm = () => {
+  const resetForm = (): void => {
     setFile(null)
     setEffectiveDate('')
     setResult(null)
     setError(null)
+    setImportSucceeded(false)
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        // ダイアログを閉じる際、インポート成功済みならデータを再取得
+        if (importSucceeded) {
+          onSuccess?.()
+        }
+        resetForm()
+      }
       setIsOpen(open)
-      if (!open) resetForm()
     }}>
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">

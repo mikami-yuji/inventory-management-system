@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PriceRevisionImportDialog } from "@/components/products/price-revision-import-dialog";
 import { 
@@ -73,8 +73,14 @@ const CATEGORY_MAP: Record<ProductCategory, string> = {
  * 価格管理設定のメイン画面コンポーネント
  */
 export default function PriceSettingsPage(): React.ReactElement {
-  const { inventory, loading: inventoryLoading, error: inventoryError } = useInventory();
-  const { products, loading: productsLoading, error: productsError } = useProducts();
+  const { inventory, loading: inventoryLoading, error: inventoryError, refetch: refetchInventory } = useInventory();
+  const { products, loading: productsLoading, error: productsError, refetch: refetchProducts } = useProducts();
+
+  // インポート成功後にデータを再取得するコールバック
+  const handleImportSuccess = useCallback((): void => {
+    refetchProducts();
+    refetchInventory();
+  }, [refetchProducts, refetchInventory]);
 
   // 在庫管理（米袋在庫状況）に表示されている商品のみに絞り込む (bag, new_rice カテゴリ 且つ 落版で在庫0以外)
   const linkedInventory = useMemo(() => {
@@ -924,7 +930,7 @@ export default function PriceSettingsPage(): React.ReactElement {
                     <p className="font-bold text-slate-800 dark:text-slate-200">一括アップロードを実行する</p>
                     <p className="text-xs text-muted-foreground mt-1">「受注№」と「単価」の列が必要です（「印刷代」や「改定日」も指定可能です）</p>
                   </div>
-                  <PriceRevisionImportDialog />
+                  <PriceRevisionImportDialog onSuccess={handleImportSuccess} />
                 </div>
               </CardContent>
             </Card>
