@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import * as XLSX from 'xlsx';
 import { logError } from '@/lib/logger';
+import { parseNumericValue } from '@/lib/utils/price-calculator';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
@@ -86,13 +87,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             }
 
             // 価格のパースとバリデーション
-            const parsedUnitPrice = Number(unitPrice);
+            const parsedUnitPrice = parseNumericValue(unitPrice);
             if (isNaN(parsedUnitPrice)) {
                 errors.push(`${rowNum}行目: 単価が無効な数値です（受注№ ${sku}）。`);
                 continue;
             }
 
-            const parsedPrintingCost = printingCost ? Number(printingCost) : 0;
+            const parsedPrintingCost = printingCost ? parseNumericValue(printingCost) : 0;
             if (isNaN(parsedPrintingCost)) {
                 errors.push(`${rowNum}行目: 印刷代が無効な数値です（受注№ ${sku}）。`);
                 continue;

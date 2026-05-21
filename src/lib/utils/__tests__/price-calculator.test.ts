@@ -1,4 +1,4 @@
-import { calculateInventorySummary, groupPriceRevisions } from "../price-calculator";
+import { calculateInventorySummary, groupPriceRevisions, parseNumericValue } from "../price-calculator";
 import type { Product } from "@/types";
 import type { InventoryWithProduct } from "@/hooks/use-inventory";
 
@@ -274,4 +274,40 @@ describe("price-calculator", (): void => {
       expect(result[1].revisions[0].ratio).toBeCloseTo(15.79, 2);
     });
   });
+
+  describe("parseNumericValue", (): void => {
+    it("通常の数値や文字列を正しくパースできること", (): void => {
+      expect(parseNumericValue(1000)).toBe(1000);
+      expect(parseNumericValue(0)).toBe(0);
+      expect(parseNumericValue("1000")).toBe(1000);
+      expect(parseNumericValue(" 1000 ")).toBe(1000);
+    });
+
+    it("カンマ区切りの数値を正しくパースできること", (): void => {
+      expect(parseNumericValue("3,000")).toBe(3000);
+      expect(parseNumericValue("1,234,567")).toBe(1234567);
+    });
+
+    it("通貨記号や円表記を正しくパースできること", (): void => {
+      expect(parseNumericValue("¥3,000")).toBe(3000);
+      expect(parseNumericValue("￥2,500")).toBe(2500);
+      expect(parseNumericValue("3000円")).toBe(3000);
+      expect(parseNumericValue("¥3,000円")).toBe(3000);
+    });
+
+    it("全角数字を正しくパースできること", (): void => {
+      expect(parseNumericValue("３０００")).toBe(3000);
+      expect(parseNumericValue("￥３,０００円")).toBe(3000);
+    });
+
+    it("無効な入力に対してNaNを返すこと", (): void => {
+      expect(parseNumericValue(undefined)).toBeNaN();
+      expect(parseNumericValue(null)).toBeNaN();
+      expect(parseNumericValue("")).toBeNaN();
+      expect(parseNumericValue("   ")).toBeNaN();
+      expect(parseNumericValue("abc")).toBeNaN();
+      expect(parseNumericValue("3000.5.5")).toBeNaN();
+    });
+  });
 });
+

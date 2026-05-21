@@ -253,3 +253,34 @@ export function groupPriceRevisions(products: Product[]): PriceRevisionGroup[] {
       };
     });
 }
+
+/**
+ * 文字列または数値から安全に数値（価格や印刷代）を抽出する
+ * 
+ * @param value 変換対象の値
+ * @returns 変換後の数値。無効な値の場合はNaN
+ */
+export function parseNumericValue(value: string | number | undefined | null): number {
+  if (value === undefined || value === null) {
+    return NaN;
+  }
+  if (typeof value === 'number') {
+    return value;
+  }
+  
+  const str = String(value).trim();
+  if (!str) {
+    return NaN;
+  }
+  
+  // 全角数字を半角に変換
+  let normalized = str.replace(/[０-９]/g, (s: string): string => 
+    String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
+  );
+  
+  // カンマ、円、通貨記号、半角・全角スペースを除去
+  normalized = normalized.replace(/[￥¥,円\s]/g, '');
+  
+  return Number(normalized);
+}
+

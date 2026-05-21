@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.9.9] - 2026-05-21
+### Fixed
+- **Excel価格改定インポート時の数値パース堅牢化**:
+  - `src/app/api/prices/import/route.ts` において、アップロードされたExcelファイルから単価および印刷代をパースする際、値に含まれる「カンマ区切り (`,`)」、「通貨記号 (`¥`, `￥`)」、「円表記」、「全角数字」、「余分なスペース」を自動クレンジングする堅牢なパースヘルパー関数 `parseNumericValue` を `price-calculator.ts` から導入。
+  - Excel内の数値書式や手動入力文字列によるパース失敗（`NaN` の発生）を根本的に解消し、多様なフォーマットのExcelファイルからのインポートが可能に。
+  - `parseNumericValue` 関数に対して、カンマ、通貨記号、円、全角数字、異常値等の様々な表記揺れや境界値を含む詳細なユニットテストを `price-calculator.test.ts` に追加し、堅牢性を確認。
+
 ## [0.9.8] - 2026-05-21
 ### Fixed
 - **価格管理と在庫管理（米袋在庫状況）の表示同期**:
