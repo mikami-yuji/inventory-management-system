@@ -36,7 +36,15 @@ npm install
 
 ### 環境変数
 
-現在、環境変数は使用していません。将来的にAPIエンドポイント等を追加予定です。
+ローカルでのビルドおよび実行には、Supabaseの接続情報（環境変数）が必要です。プロジェクトのルートディレクトリに `.env` または `.env.local` ファイルを作成し、以下の変数を設定してください。
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+```
+
+※ ローカル開発環境のビルド検証用には、ダミーの値を指定してビルドを通すことも可能です。
 
 ## 開発コマンド
 

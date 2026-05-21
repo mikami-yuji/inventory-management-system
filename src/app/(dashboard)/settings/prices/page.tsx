@@ -76,6 +76,44 @@ export default function PriceSettingsPage(): React.ReactElement {
   const { inventory, loading: inventoryLoading, error: inventoryError } = useInventory();
   const { products, loading: productsLoading, error: productsError } = useProducts();
 
+  // 在庫管理（米袋在庫状況）に表示されている商品のみに絞り込む (bag, new_rice カテゴリ 且つ 落版で在庫0以外)
+  const linkedInventory = useMemo(() => {
+    return inventory.filter((item) => {
+      const product = item.product;
+      if (!product) return false;
+
+      // カテゴリ制限 (米袋と新米のみ)
+      const isBagOrNewRice = product.category === "bag" || product.category === "new_rice";
+      if (!isBagOrNewRice) return false;
+
+      // 落版かつ現在庫0のものを非表示
+      const isPlateRemoved = product.status === "plate_removed";
+      const hasNoStock = item.quantity === 0;
+      if (isPlateRemoved && hasNoStock) return false;
+
+      return true;
+    });
+  }, [inventory]);
+
+  // 在庫管理（米袋在庫状況）に表示されている商品のみに絞り込む (bag, new_rice カテゴリ 且つ 落版で在庫0以外)
+  const linkedProducts = useMemo(() => {
+    return products.filter((product) => {
+      // カテゴリ制限
+      const isBagOrNewRice = product.category === "bag" || product.category === "new_rice";
+      if (!isBagOrNewRice) return false;
+
+      // 落版かつ現在庫0のものを非表示にするため、inventory情報と紐付け
+      const isPlateRemoved = product.status === "plate_removed";
+      if (isPlateRemoved) {
+        const invItem = inventory.find(item => item.productId === product.id);
+        const hasNoStock = !invItem || invItem.quantity === 0;
+        if (hasNoStock) return false;
+      }
+
+      return true;
+    });
+  }, [products, inventory]);
+
   // 詳細テーブルの検索・フィルタ用状態管理
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -89,20 +127,15 @@ export default function PriceSettingsPage(): React.ReactElement {
     return `¥${amount.toLocaleString()}`;
   };
 
-  // 数量フォーマットのユーティリティ関数（サマリーなどの単位混在用）
-  const formatQuantity = (quantity: number): string => {
-    return quantity.toLocaleString();
-  };
-
   // 在庫集計データの計算
-  const summary = useMemo(() => calculateInventorySummary(inventory), [inventory]);
+  const summary = useMemo(() => calculateInventorySummary(linkedInventory), [linkedInventory]);
 
   // 価格改定履歴・スケジュールの計算
-  const revisionGroups = useMemo(() => groupPriceRevisions(products), [products]);
+  const revisionGroups = useMemo(() => groupPriceRevisions(linkedProducts), [linkedProducts]);
 
   // 詳細比較テーブルのフィルタリングロジック
   const filteredItems = useMemo(() => {
-    return inventory
+    return linkedInventory
       .filter((item) => {
         const product = item.product;
         if (!product) return false;
@@ -168,7 +201,7 @@ export default function PriceSettingsPage(): React.ReactElement {
           totalAmount: oldAmount + newAmount,
         };
       });
-  }, [inventory, searchQuery, selectedCategory, selectedStockFilter]);
+  }, [linkedInventory, searchQuery, selectedCategory, selectedStockFilter]);
 
   // アコーディオン開閉トグルの処理
   const toggleDate = (date: string): void => {
@@ -600,9 +633,7 @@ export default function PriceSettingsPage(): React.ReactElement {
                   >
                     <option value="all">カテゴリ: すべて</option>
                     <option value="bag">袋</option>
-                    <option value="sticker">シール</option>
                     <option value="new_rice">新米</option>
-                    <option value="other">その他</option>
                   </select>
 
                   {/* 在庫状態選択 */}
