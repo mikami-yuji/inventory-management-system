@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Excelヘッダー列名（「新単価」など）のミスマッチ解消**:
   - 実際の見積書Excelファイルのヘッダー行を解析した結果、単価を表す列名が `「新単価」` になっているケースに対応。
   - APIでのカラム読み込み候補に `「新単価」`、`「改定単価」`、`「改定後単価」` を追加。また、印刷代の候補にも `「改定印刷代」`、`「新印刷代」`、`「改定印刷代単価」` を追加し、多様なフォーマットの見積書Excelをシームレスに処理できるように改善。
+- **価格データ同期とインポート後更新処理の最適化**:
+  - `PriceRevisionImportDialog` において、Excelインポート完了時に実行される `onSuccess` コールバックを接続。
+  - インポート成功時に `useProducts` および `useInventory` の `refetch` を呼び出すことで、画面をリロードせずに価格改定予約データが即座に反映されるように改善。
+  - 価格管理設定画面 (`settings/prices/page.tsx`) における商品数・在庫数の集計において、在庫管理（米袋在庫一覧）と全く同一の `inventoryMap` と `useProducts` のデータソースを参照するように統一し、両画面間の集計数値の完全一致を保証。
+- **価格管理の型定義集約によるコード品質改善**:
+  - `src/lib/utils/price-calculator.ts` に局所定義されていた集計カード・価格改定履歴・グループ関連の型定義 (`InventorySummaryCard`, `PriceSummary`, `PriceRevisionHistoryItem`, `PriceRevisionGroup`) を `src/types/index.ts` へ完全移送・集約。
+  - `price-calculator.ts` および価格管理設定画面 (`settings/prices/page.tsx`) からは `@/types` を介してインポートするように修正し、共通定義としての再利用性を向上。
 
 ## [0.9.8] - 2026-05-21
 ### Fixed

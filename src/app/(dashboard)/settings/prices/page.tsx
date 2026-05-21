@@ -33,8 +33,7 @@ import {
 import { 
   groupPriceRevisions 
 } from "@/lib/utils/price-calculator";
-import type { PriceSummary } from "@/lib/utils/price-calculator";
-import type { Product, ProductCategory } from "@/types";
+import type { Product, ProductCategory, PriceSummary } from "@/types";
 import { isRollBag, metersToBags } from "@/lib/services";
 
 // Chart.jsのインポートと登録

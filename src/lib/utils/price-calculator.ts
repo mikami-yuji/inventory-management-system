@@ -1,40 +1,13 @@
-import type { Product } from "@/types";
+import type { 
+  Product, 
+  InventorySummaryCard, 
+  PriceSummary, 
+  PriceRevisionHistoryItem, 
+  PriceRevisionGroup 
+} from "@/types";
 import type { InventoryWithProduct } from "@/hooks/use-inventory";
 import { isRollBag } from "@/lib/services";
 
-// 在庫集計カードの型定義
-export type InventorySummaryCard = {
-  productsCount: number;
-  stockCount: number;
-  stockCountMeters: number; // ロール袋（m単位）の在庫数量
-  stockCountSheets: number; // 枚数管理（枚単位）の在庫数量
-  amount: number;
-};
-
-// 新旧在庫集計全体の型定義
-export type PriceSummary = {
-  oldPrice: InventorySummaryCard;
-  newPrice: InventorySummaryCard;
-  total: InventorySummaryCard;
-};
-
-// 改定履歴アイテムの型定義
-export type PriceRevisionHistoryItem = {
-  id: string;
-  productName: string;
-  sku: string;
-  category: string;
-  oldPrice: number;
-  newPrice: number;
-  diff: number;
-  ratio: number;
-};
-
-// 改定予定・履歴グループの型定義
-export type PriceRevisionGroup = {
-  effectiveDate: string;
-  revisions: PriceRevisionHistoryItem[];
-};
 
 /**
  * 新旧在庫の集計（商品数、在庫数、在庫金額）を計算します。
