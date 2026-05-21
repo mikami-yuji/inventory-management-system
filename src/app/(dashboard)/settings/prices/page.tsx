@@ -31,10 +31,10 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { 
-  calculateInventorySummary, 
   groupPriceRevisions 
 } from "@/lib/utils/price-calculator";
-import type { ProductCategory } from "@/types";
+import type { PriceSummary } from "@/lib/utils/price-calculator";
+import type { Product, ProductCategory } from "@/types";
 import { isRollBag, metersToBags } from "@/lib/services";
 
 // Chart.jsのインポートと登録
@@ -82,43 +82,35 @@ export default function PriceSettingsPage(): React.ReactElement {
     refetchInventory();
   }, [refetchProducts, refetchInventory]);
 
-  // 在庫管理（米袋在庫状況）に表示されている商品のみに絞り込む (bag, new_rice カテゴリ 且つ 落版で在庫0以外)
-  const linkedInventory = useMemo(() => {
-    return inventory.filter((item) => {
-      const product = item.product;
-      if (!product) return false;
+  // 在庫マップを作成（在庫管理ページと同じデータソース）
+  const inventoryMap = useMemo(() => {
+    const map = new Map<string, { quantity: number; oldPriceQuantity: number }>();
+    inventory.forEach(item => {
+      map.set(item.productId, {
+        quantity: item.quantity,
+        oldPriceQuantity: item.oldPriceQuantity || 0,
+      });
+    });
+    return map;
+  }, [inventory]);
 
+  // 在庫管理と同じフィルタ条件で商品を絞り込む (bag, new_rice カテゴリ 且つ 落版で在庫0以外)
+  const linkedProducts = useMemo(() => {
+    return products.filter((product) => {
       // カテゴリ制限 (米袋と新米のみ)
       const isBagOrNewRice = product.category === "bag" || product.category === "new_rice";
       if (!isBagOrNewRice) return false;
 
-      // 落版かつ現在庫0のものを非表示
-      const isPlateRemoved = product.status === "plate_removed";
-      const hasNoStock = item.quantity === 0;
-      if (isPlateRemoved && hasNoStock) return false;
-
-      return true;
-    });
-  }, [inventory]);
-
-  // 在庫管理（米袋在庫状況）に表示されている商品のみに絞り込む (bag, new_rice カテゴリ 且つ 落版で在庫0以外)
-  const linkedProducts = useMemo(() => {
-    return products.filter((product) => {
-      // カテゴリ制限
-      const isBagOrNewRice = product.category === "bag" || product.category === "new_rice";
-      if (!isBagOrNewRice) return false;
-
-      // 落版かつ現在庫0のものを非表示にするため、inventory情報と紐付け
+      // 落版かつ現在庫0のものを非表示にする
       const isPlateRemoved = product.status === "plate_removed";
       if (isPlateRemoved) {
-        const invItem = inventory.find(item => item.productId === product.id);
-        const hasNoStock = !invItem || invItem.quantity === 0;
-        if (hasNoStock) return false;
+        const currentStock = inventoryMap.get(product.id)?.quantity || 0;
+        if (currentStock === 0) return false;
       }
 
       return true;
     });
-  }, [products, inventory]);
+  }, [products, inventoryMap]);
 
   // 詳細テーブルの検索・フィルタ用状態管理
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -133,19 +125,95 @@ export default function PriceSettingsPage(): React.ReactElement {
     return `¥${amount.toLocaleString()}`;
   };
 
-  // 在庫集計データの計算
-  const summary = useMemo(() => calculateInventorySummary(linkedInventory), [linkedInventory]);
+  // 在庫集計データの計算（useProducts の商品情報 + inventoryMap の在庫数ベース）
+  // ※ 在庫管理ページと同じデータソースを使用して数値を一致させる
+  const summary = useMemo((): PriceSummary => {
+    const oldProducts = new Set<string>();
+    let oldStock = 0;
+    let oldStockMeters = 0;
+    let oldStockSheets = 0;
+    let oldAmount = 0;
+
+    const newProducts = new Set<string>();
+    let newStock = 0;
+    let newStockMeters = 0;
+    let newStockSheets = 0;
+    let newAmount = 0;
+
+    const totalProducts = new Set<string>();
+
+    linkedProducts.forEach((product: Product) => {
+      const inv = inventoryMap.get(product.id);
+      const quantity = inv?.quantity || 0;
+      const oldQty = inv?.oldPriceQuantity || 0;
+      const newQty = Math.max(0, quantity - oldQty);
+
+      // ロール袋かどうかを判定し、m / 枚を分離集計
+      const isRoll = isRollBag(product.shape, product.category, product.metersPerRoll);
+
+      totalProducts.add(product.id);
+
+      // 旧価格在庫の計算
+      if (oldQty > 0) {
+        oldProducts.add(product.id);
+        oldStock += oldQty;
+        if (isRoll) {
+          oldStockMeters += oldQty;
+        } else {
+          oldStockSheets += oldQty;
+        }
+        const oldUnit = Number(product.oldUnitPrice ?? product.unitPrice) || 0;
+        const oldPrint = Number(product.oldPrintingCost ?? product.printingCost) || 0;
+        oldAmount += oldQty * (oldUnit + oldPrint);
+      }
+
+      // 新価格在庫の計算
+      if (newQty > 0) {
+        newProducts.add(product.id);
+        newStock += newQty;
+        if (isRoll) {
+          newStockMeters += newQty;
+        } else {
+          newStockSheets += newQty;
+        }
+        const newUnit = Number(product.unitPrice) || 0;
+        const newPrint = Number(product.printingCost) || 0;
+        newAmount += newQty * (newUnit + newPrint);
+      }
+    });
+
+    return {
+      oldPrice: {
+        productsCount: oldProducts.size,
+        stockCount: oldStock,
+        stockCountMeters: oldStockMeters,
+        stockCountSheets: oldStockSheets,
+        amount: oldAmount,
+      },
+      newPrice: {
+        productsCount: newProducts.size,
+        stockCount: newStock,
+        stockCountMeters: newStockMeters,
+        stockCountSheets: newStockSheets,
+        amount: newAmount,
+      },
+      total: {
+        productsCount: totalProducts.size,
+        stockCount: oldStock + newStock,
+        stockCountMeters: oldStockMeters + newStockMeters,
+        stockCountSheets: oldStockSheets + newStockSheets,
+        amount: oldAmount + newAmount,
+      },
+    };
+  }, [linkedProducts, inventoryMap]);
 
   // 価格改定履歴・スケジュールの計算
   const revisionGroups = useMemo(() => groupPriceRevisions(linkedProducts), [linkedProducts]);
 
-  // 詳細比較テーブルのフィルタリングロジック
+  // 詳細比較テーブルのフィルタリングロジック（useProducts + inventoryMap ベース）
   const filteredItems = useMemo(() => {
-    return linkedInventory
-      .filter((item) => {
-        const product = item.product;
-        if (!product) return false;
-
+    return linkedProducts
+      .filter((product) => {
         // 検索キーワードフィルタ（商品名または受注№）
         const matchSearch =
           product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -156,8 +224,9 @@ export default function PriceSettingsPage(): React.ReactElement {
           selectedCategory === "all" || product.category === selectedCategory;
 
         // 在庫状態フィルタ
-        const quantity = item.quantity;
-        const oldQty = item.oldPriceQuantity;
+        const inv = inventoryMap.get(product.id);
+        const quantity = inv?.quantity || 0;
+        const oldQty = inv?.oldPriceQuantity || 0;
         const newQty = Math.max(0, quantity - oldQty);
 
         let matchStock = true;
@@ -173,10 +242,10 @@ export default function PriceSettingsPage(): React.ReactElement {
 
         return matchSearch && matchCategory && matchStock;
       })
-      .map((item) => {
-        const product = item.product;
-        const quantity = item.quantity;
-        const oldQty = item.oldPriceQuantity;
+      .map((product) => {
+        const inv = inventoryMap.get(product.id);
+        const quantity = inv?.quantity || 0;
+        const oldQty = inv?.oldPriceQuantity || 0;
         const newQty = Math.max(0, quantity - oldQty);
 
         const oldUnit = Number(product.oldUnitPrice ?? product.unitPrice) || 0;
@@ -207,7 +276,7 @@ export default function PriceSettingsPage(): React.ReactElement {
           totalAmount: oldAmount + newAmount,
         };
       });
-  }, [linkedInventory, searchQuery, selectedCategory, selectedStockFilter]);
+  }, [linkedProducts, inventoryMap, searchQuery, selectedCategory, selectedStockFilter]);
 
   // アコーディオン開閉トグルの処理
   const toggleDate = (date: string): void => {
