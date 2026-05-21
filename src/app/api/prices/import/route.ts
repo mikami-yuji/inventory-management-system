@@ -119,34 +119,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 throw new Error('価格改定データの保存に失敗しました');
             }
 
-            // タイムゾーン（日本時間）を考慮して本日以前の適用日（すでに適用済み）であるかを正確に判定する
-            const parseToDate = (dateStr: string): Date | null => {
-                // スラッシュをハイフンに置換し、トリミング
-                const cleanStr = dateStr.replace(/\//g, '-').trim();
-                const parsed = new Date(cleanStr);
-                return isNaN(parsed.getTime()) ? null : parsed;
+            // タイムゾーン（日本時間 JST = UTC+9）を考慮して本日以前の適用日（すでに適用済み）であるかを正確に判定する
+            // サーバーの環境やOSタイムゾーン設定に影響されない、最も確実な文字列日付比較
+            const getJstTodayStr = (): string => {
+                const now = new Date();
+                // UTC時間に9時間を足して、JSTの日付をISO形式で取得
+                const jstTime = now.getTime() + (9 * 60 * 60 * 1000);
+                const jstDate = new Date(jstTime);
+                return jstDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
             };
 
-            const effectiveDateObj = parseToDate(effectiveDate);
-            let shouldUpdateImmediately = false;
+            const todayJstStr = getJstTodayStr();
+            // スラッシュをハイフンに変換し、前後の空白を除去して YYYY-MM-DD 形式に揃える
+            const effectiveDateJstStr = effectiveDate.replace(/\//g, '-').trim();
 
-            if (effectiveDateObj) {
-                const now = new Date();
-                // サーバー環境（UTCなど）に関わらず日本時間(JST)の今日（00:00:00.000）を取得
-                const todayJst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
-                todayJst.setHours(0, 0, 0, 0);
-
-                // 適用日の日本時間（00:00:00.000）を取得
-                const effectiveDateJst = new Date(effectiveDateObj.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
-                effectiveDateJst.setHours(0, 0, 0, 0);
-
-                // 適用日が本日以前（過去または今日）である場合
-                shouldUpdateImmediately = effectiveDateJst <= todayJst;
-            } else {
-                // 万が一パースに失敗した場合は従来の文字列比較でフォールバック
-                const todayStr = new Date().toISOString().split('T')[0];
-                shouldUpdateImmediately = effectiveDate <= todayStr;
-            }
+            // "YYYY-MM-DD" の文字列比較（同じ長さであれば、文字列比較は絶対的に正確）
+            const shouldUpdateImmediately = effectiveDateJstStr <= todayJstStr;
 
             if (shouldUpdateImmediately) {
                 for (const revision of revisionsToUpsert) {
