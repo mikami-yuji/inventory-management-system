@@ -73,8 +73,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             
             // Excelのカラム名。揺らぎに対応するため、いくつか候補を探す
             const sku = row['受注№'] || row['受注番号'] || row['SKU'] || row['sku'];
-            const unitPrice = row['単価'] || row['価格'] || row['unit_price'];
-            const printingCost = row['印刷代'] || row['printing_cost'];
+            const unitPrice = row['単価'] || row['価格'] || row['unit_price'] || row['新単価'] || row['改定単価'] || row['改定後単価'];
+            const printingCost = row['印刷代'] || row['printing_cost'] || row['改定印刷代'] || row['新印刷代'] || row['改定印刷代単価'];
 
             if (!sku) {
                 continue; // 受注№がない行は無視（空行など）
