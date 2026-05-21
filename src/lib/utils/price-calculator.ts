@@ -1,8 +1,6 @@
 import type { 
   Product, 
-  InventorySummaryCard, 
   PriceSummary, 
-  PriceRevisionHistoryItem, 
   PriceRevisionGroup 
 } from "@/types";
 import type { InventoryWithProduct } from "@/hooks/use-inventory";

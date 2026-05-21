@@ -140,41 +140,58 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 for (const revision of revisionsToUpsert) {
                     const productId = revision.product_id;
 
-                    // 1. 既存在庫を「旧価格在庫 (old_price_quantity)」としてロック
-                    const { data: invData, error: invError } = await supabase
-                        .from('inventory')
-                        .select('quantity, old_price_quantity')
-                        .eq('product_id', productId)
-                        .single();
-
-                    if (!invError && invData) {
-                        const currentTotal = invData.quantity || 0;
-                        await supabase
-                            .from('inventory')
-                            .update({
-                                old_price_quantity: currentTotal, // 現在の全在庫を旧価格在庫に
-                                updated_at: new Date().toISOString()
-                            })
-                            .eq('product_id', productId);
-                    }
-
-                    // 2. 商品マスタ（products）を更新して現在単価を正式に新単価に切り替え、元の単価をold_unit_priceに退避
+                    // 1. 商品マスタ（products）情報を取得
                     const { data: prodData, error: prodError } = await supabase
                         .from('products')
-                        .select('unit_price, printing_cost')
+                        .select('unit_price, printing_cost, old_unit_price, old_printing_cost, price_increase_effective_date')
                         .eq('id', productId)
                         .single();
 
                     if (!prodError && prodData) {
+                        const isSameEffectiveDate = prodData.price_increase_effective_date === effectiveDate;
+                        const isAlreadyUpdated = 
+                            prodData.unit_price === revision.unit_price && 
+                            prodData.printing_cost === revision.printing_cost;
+
+                        // 同一の適用日での再実行、またはすでに新価格が適用されている場合は
+                        // 在庫ロック（old_price_quantity の更新）をスキップする
+                        if (!isSameEffectiveDate) {
+                            // 既存在庫を「旧価格在庫 (old_price_quantity)」としてロック
+                            const { data: invData, error: invError } = await supabase
+                                .from('inventory')
+                                .select('quantity, old_price_quantity')
+                                .eq('product_id', productId)
+                                .single();
+
+                            if (!invError && invData) {
+                                const currentTotal = invData.quantity || 0;
+                                await supabase
+                                    .from('inventory')
+                                    .update({
+                                        old_price_quantity: currentTotal, // 現在の全在庫を旧価格在庫に
+                                        updated_at: new Date().toISOString()
+                                    })
+                                    .eq('product_id', productId);
+                            }
+                        }
+
+                        // 商品マスタの更新用ペイロードを組み立てる
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const updatePayload: Record<string, any> = {
+                            unit_price: revision.unit_price,
+                            printing_cost: revision.printing_cost,
+                            price_increase_effective_date: effectiveDate
+                        };
+
+                        // 同一の改定日での上書き、またはすでに新価格に更新されている場合は旧価格を上書きしない
+                        if (!isSameEffectiveDate && !isAlreadyUpdated) {
+                            updatePayload.old_unit_price = prodData.unit_price;
+                            updatePayload.old_printing_cost = prodData.printing_cost;
+                        }
+
                         await supabase
                             .from('products')
-                            .update({
-                                old_unit_price: prodData.unit_price,
-                                old_printing_cost: prodData.printing_cost,
-                                unit_price: revision.unit_price,
-                                printing_cost: revision.printing_cost,
-                                price_increase_effective_date: effectiveDate
-                            })
+                            .update(updatePayload)
                             .eq('id', productId);
                     }
                 }
