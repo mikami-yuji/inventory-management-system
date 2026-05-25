@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.8.7] - 2026-05-25
+### Changed
+- **旧価格在庫の自動優先削減（FIFO）対応**:
+  - 在庫数調整（棚卸し）時における「旧価格在庫」の手動入力欄を廃止し、全体数量の調整に合わせて自動的に旧価格在庫から優先削減（FIFO）されるようロジックを統合。
+  - フロントエンド UI（在庫調整モーダル）において、全体数量の変更後に連動して自動計算された旧価格および新価格在庫数がリアルタイムに表示されるように改善。
+  - バックエンド API（`/api/inventory` (PATCH)）の調整ロジックにて、在庫の減少量に応じて旧価格在庫数を自動で差し引く処理を追加。
+
 ## [0.8.6] - 2026-04-15
 ### Added
 - **在庫予測シミュレーション解析機能**:

@@ -37,7 +37,6 @@ export function StockAdjustmentDialog({
     onSuccess
 }: StockAdjustmentDialogProps): React.ReactElement {
     const [quantity, setQuantity] = useState<string>(currentStock.toString());
-    const [oldPriceQty, setOldPriceQty] = useState<string>(oldPriceQuantity.toString());
     const [note, setNote] = useState<string>("");
     const { updateStock, loading, error } = useUpdateInventory();
 
@@ -56,10 +55,15 @@ export function StockAdjustmentDialog({
         if (open && product) {
             const currentStockStr = currentStock.toString();
             setQuantity(prev => (prev !== currentStockStr) ? currentStockStr : prev);
-            setOldPriceQty(oldPriceQuantity.toString());
             setNote("");
         }
     }, [open, product, currentStock, oldPriceQuantity]);
+
+    // 調整後の数量（手動入力）に基づいて、旧価格・新価格在庫を自動計算する (FIFO)
+    const newQty = parseInt(quantity, 10);
+    const diff = isNaN(newQty) ? 0 : currentStock - newQty;
+    const calculatedOldPriceQty = diff > 0 ? Math.max(0, oldPriceQuantity - diff) : oldPriceQuantity;
+    const calculatedNewPriceQty = isNaN(newQty) ? 0 : Math.max(0, newQty - calculatedOldPriceQty);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -140,17 +144,11 @@ export function StockAdjustmentDialog({
                             <Label className="text-right text-orange-600 text-xs">
                                 旧価格在庫
                             </Label>
-                            <div className="col-span-3">
-                                <CalculableInput
-                                    value={oldPriceQty === "0" ? "" : oldPriceQty}
-                                    onChange={(value) => setOldPriceQty(value === null ? "" : String(value))}
-                                    className="flex-1"
-                                    placeholder="旧価格在庫数"
-                                    stringifyOnComplete
-                                />
-                                <p className="text-[10px] text-muted-foreground mt-1">
-                                    新価格在庫: {Math.max(0, parseInt(quantity || "0", 10) - parseInt(oldPriceQty || "0", 10)).toLocaleString()}枚
-                                </p>
+                            <div className="col-span-3 text-sm font-medium">
+                                {calculatedOldPriceQty.toLocaleString()}枚
+                                <span className="text-[10px] text-muted-foreground ml-3">
+                                    (新価格在庫: {calculatedNewPriceQty.toLocaleString()}枚)
+                                </span>
                             </div>
                         </div>
                     )}

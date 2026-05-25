@@ -158,6 +158,14 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             }
         } else {
             newQuantity = quantity // 調整の場合は直接設定
+
+            // 調整（棚卸し）により在庫が減少した場合、減少分を旧価格在庫から優先的に削減する
+            const currentQty = currentInventory?.quantity ?? 0;
+            const diff = currentQty - newQuantity;
+            if (diff > 0) {
+                const currentOldQty = currentInventory?.old_price_quantity ?? 0;
+                newOldPriceQuantity = Math.max(0, currentOldQty - diff);
+            }
         }
 
         // 旧価格在庫が総在庫を超えないように補正

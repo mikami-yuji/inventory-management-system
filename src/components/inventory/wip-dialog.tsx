@@ -52,6 +52,8 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
     
     // フックを使用してデータを取得
     const { 
+        items: hookedWipList = [],
+        loading: fetchLoading,
         error: fetchError, 
         refetch: remoteRefetch 
     } = useWorkInProgress("in_progress", product?.id || undefined);
