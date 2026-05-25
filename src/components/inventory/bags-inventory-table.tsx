@@ -276,7 +276,7 @@ export function BagsInventoryTable({ products, inventoryMap, saleAllocationMap, 
                                             )}
                                             {oldPriceQty > 0 && (
                                                 <div className="text-[10px] text-orange-600 clear-both mt-0.5" title="旧価格在庫の内訳">
-                                                    旧価格: {oldPriceQty.toLocaleString()}枚
+                                                    旧価格: {oldPriceQty.toLocaleString()}{isRoll ? 'm' : '枚'}
                                                 </div>
                                             )}
                                         </TableCell>

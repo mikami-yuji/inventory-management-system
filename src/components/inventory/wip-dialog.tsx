@@ -31,6 +31,7 @@ import { toast } from "react-hot-toast";
 import type { WorkInProgress, DeliveryAddress } from "@/types";
 import { X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { isRollBag } from "@/lib/services";
 
 type WIPDialogProps = {
     product: Product | null;
@@ -48,6 +49,9 @@ type ArrivalSchedule = {
 };
 
 export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogProps) {
+    const isRoll: boolean = isRollBag(product?.shape || "", product?.category);
+    const unit: string = isRoll ? "m" : "枚";
+
     const [activeTab, setActiveTab] = useState<string>("list");
     
     // フックを使用してデータを取得
@@ -302,7 +306,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
                         <div className="bg-muted/50 p-4 rounded-lg">
                             <h3 className="text-sm font-medium mb-2">移動元の仕掛</h3>
                             <div className="text-sm flex justify-between">
-                                <span>数量: {confirmingItem?.quantity.toLocaleString()} {product?.shape?.includes('枚') ? '枚' : 'm'}</span>
+                                <span>数量: {confirmingItem?.quantity.toLocaleString()} {unit}</span>
                                 <Badge variant="outline">{confirmingItem?.termType ? displayDate(confirmingItem.expectedCompletion, confirmingItem.termType) : '未設定'}</Badge>
                             </div>
                         </div>
@@ -320,7 +324,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
                                         className="h-9"
                                     />
                                     <span className="text-sm text-muted-foreground w-12 text-center">
-                                        {product?.shape?.includes('枚') ? '枚' : 'm'}
+                                        {unit}
                                     </span>
                                 </div>
                             </div>
@@ -359,7 +363,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
                                                 </div>
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-[10px] text-muted-foreground">数量 ({product?.shape?.includes('枚') ? '枚' : 'm'})</Label>
+                                                <Label className="text-[10px] text-muted-foreground">数量 ({unit})</Label>
                                                 <Input 
                                                     type="number" 
                                                     value={schedule.quantity || ""}
@@ -527,7 +531,7 @@ export function WIPDialog({ product, open, onOpenChange, onSuccess }: WIPDialogP
                                                 required
                                             />
                                             <span className="text-sm text-muted-foreground">
-                                                {product?.shape?.includes('枚') ? '枚' : 'm'}
+                                                {unit}
                                             </span>
                                         </div>
                                     </div>

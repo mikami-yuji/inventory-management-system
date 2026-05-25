@@ -86,6 +86,9 @@ export function StockAdjustmentDialog({
 
     if (!product) return <></>;
 
+    const isRoll: boolean = product.shape?.toLowerCase().includes("roll") || product.shape === "原反";
+    const unit: string = isRoll ? "m" : "枚";
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
@@ -145,9 +148,9 @@ export function StockAdjustmentDialog({
                                 旧価格在庫
                             </Label>
                             <div className="col-span-3 text-sm font-medium">
-                                {calculatedOldPriceQty.toLocaleString()}枚
+                                {calculatedOldPriceQty.toLocaleString()}{unit}
                                 <span className="text-[10px] text-muted-foreground ml-3">
-                                    (新価格在庫: {calculatedNewPriceQty.toLocaleString()}枚)
+                                    (新価格在庫: {calculatedNewPriceQty.toLocaleString()}{unit})
                                 </span>
                             </div>
                         </div>
