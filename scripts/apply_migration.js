@@ -17,7 +17,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 async function applyMigration() {
-  const migrationPath = path.join(process.cwd(), 'supabase/migrations/20260317_add_delivery_postal_code_to_orders.sql')
+  const migrationPath = path.join(process.cwd(), 'supabase/migrations/20260516_add_price_revisions.sql')
   const sql = fs.readFileSync(migrationPath, 'utf8')
 
   console.log('Applying migration...')

@@ -258,6 +258,7 @@ export default function DashboardPage(): React.ReactElement {
             return {
                 ...lot,
                 productName: product?.name || '不明な商品',
+                productWeight: product?.weight || null,
                 sku: product?.sku || ''
             };
         })
@@ -661,8 +662,8 @@ export default function DashboardPage(): React.ReactElement {
                             {longTermLots.map((lot) => (
                                 <div key={lot.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white rounded border border-red-100 shadow-sm gap-2">
                                     <div className="flex-1 min-w-0">
-                                        <div className="font-medium text-sm truncate" title={lot.productName}>
-                                            {lot.productName}
+                                        <div className="font-medium text-sm truncate" title={lot.productWeight ? `${lot.productName} (${lot.productWeight}kg)` : lot.productName}>
+                                            {lot.productName} {lot.productWeight ? `(${lot.productWeight}kg)` : ''}
                                         </div>
                                         <div className="text-[10px] text-muted-foreground flex gap-2 mt-0.5">
                                             <span>SKU: {lot.sku}</span>

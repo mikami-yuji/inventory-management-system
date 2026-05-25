@@ -119,8 +119,8 @@ export function ProductFormDialog({
                 weight: product.weight?.toString() || "",
                 shape: product.shape || "",
                 material: product.material || "",
-                unitPrice: product.unitPrice?.toString() || "",
-                printingCost: product.printingCost?.toString() || "",
+                unitPrice: product.currentUnitPrice !== undefined ? product.currentUnitPrice.toString() : (product.unitPrice?.toString() || ""),
+                printingCost: product.currentPrintingCost !== undefined ? product.currentPrintingCost.toString() : (product.printingCost?.toString() || ""),
                 category: product.category || "bag",
                 description: product.description || "",
                 minStockAlert: product.minStockAlert !== null && product.minStockAlert !== undefined ? product.minStockAlert.toString() : "",
@@ -420,6 +420,11 @@ export function ProductFormDialog({
                                 stringifyOnComplete
                                 inputMode="numeric"
                             />
+                            {product?.priceRevisions && product.priceRevisions.length > 0 && (
+                                <p className="text-[10px] text-blue-600 mt-1">
+                                    ※Excelから予約された価格改定が存在します。
+                                </p>
+                            )}
                         </div>
                     </div>
 

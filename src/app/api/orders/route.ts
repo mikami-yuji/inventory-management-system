@@ -27,6 +27,8 @@ type RawOrderData = {
         id: string;
         product_id: string;
         quantity: number;
+        unit_price: number;
+        printing_cost: number;
         products: {
             id: string;
             name: string;
@@ -59,6 +61,8 @@ export async function GET(): Promise<NextResponse> {
                     id,
                     product_id,
                     quantity,
+                    unit_price,
+                    printing_cost,
                     products (
                         id,
                         name,
@@ -108,8 +112,8 @@ export async function GET(): Promise<NextResponse> {
                     sku: (item.products as Record<string, unknown>)?.sku || '-',
                     weight: (item.products as Record<string, unknown>)?.weight || null,
                     shape: (item.products as Record<string, unknown>)?.shape || '-',
-                    unitPrice: (item.products as Record<string, unknown>)?.unit_price || 0,
-                    printingCost: (item.products as Record<string, unknown>)?.printing_cost || 0,
+                    unitPrice: item.unit_price !== undefined ? item.unit_price : ((item.products as Record<string, unknown>)?.unit_price || 0),
+                    printingCost: item.printing_cost !== undefined ? item.printing_cost : ((item.products as Record<string, unknown>)?.printing_cost || 0),
                     category: (item.products as Record<string, unknown>)?.category || 'other',
                     metersPerRoll: (item.products as Record<string, unknown>)?.meters_per_roll || null,
                 })),
@@ -193,12 +197,40 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
         const orderId = orderData.id
 
-        // 2. 発注明細作成
-        const orderItems = items.map(item => ({
-            order_id: orderId,
-            product_id: item.productId,
-            quantity: item.quantity
-        }))
+        // 2. 発注明細作成 (各商品の現在有効な価格を取得して保存)
+        const productIds = items.map(item => item.productId);
+        
+        // 現在の価格情報と価格改定情報を取得
+        const { data: productsInfo } = await supabase
+            .from('products')
+            .select('id, unit_price, printing_cost, price_revisions(unit_price, printing_cost, effective_date)')
+            .in('id', productIds);
+
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        const orderItems = items.map(item => {
+            const product = productsInfo?.find(p => p.id === item.productId);
+            let activeUnitPrice = product?.unit_price || 0;
+            let activePrintingCost = product?.printing_cost || 0;
+
+            if (product && product.price_revisions && product.price_revisions.length > 0) {
+                const revisions = product.price_revisions;
+                revisions.sort((a, b) => new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime());
+                const activeRevision = revisions.find(r => r.effective_date <= todayStr);
+                if (activeRevision) {
+                    activeUnitPrice = activeRevision.unit_price;
+                    activePrintingCost = activeRevision.printing_cost;
+                }
+            }
+
+            return {
+                order_id: orderId,
+                product_id: item.productId,
+                quantity: item.quantity,
+                unit_price: activeUnitPrice,
+                printing_cost: activePrintingCost
+            };
+        });
 
         const { error: itemsError } = await supabase
             .from('order_items')

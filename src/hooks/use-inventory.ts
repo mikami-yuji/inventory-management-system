@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Product, Inventory, ApiResponse } from '@/types';
+import type { Product, Inventory, ApiResponse, ProductCategory, ProductStatus } from '@/types';
 import { useAppSettings } from './use-masters';
 import { apiFetch } from '@/lib/api-client';
 
@@ -51,8 +51,8 @@ export function useInventory(options?: {
             const url = `/api/inventory${params.toString() ? `?${params.toString()}` : ''}`;
             const result = await apiFetch<ApiResponse<InventoryWithProduct[]> | InventoryWithProduct[]>(url);
 
-            const dataArray = Array.isArray(result) 
-                ? result 
+            const dataArray = Array.isArray(result)
+                ? result
                 : (result.data && Array.isArray(result.data) ? result.data : []);
 
             type RawInventoryItem = {
@@ -71,12 +71,37 @@ export function useInventory(options?: {
                 .filter((item: unknown) => (item as RawInventoryItem).product !== undefined)
                 .map((item: unknown) => {
                     const i = item as RawInventoryItem;
+                    const rawProd = i.product as unknown as Record<string, unknown>;
+
+                    const product: Product = {
+                        id: String(rawProd.id || ''),
+                        name: String(rawProd.name || ''),
+                        sku: String(rawProd.sku || ''),
+                        productCode: rawProd.product_code ? String(rawProd.product_code) : undefined,
+                        janCode: rawProd.jan_code ? String(rawProd.jan_code) : undefined,
+                        weight: rawProd.weight !== undefined && rawProd.weight !== null ? Number(rawProd.weight) : undefined,
+                        shape: rawProd.shape ? String(rawProd.shape) : undefined,
+                        material: rawProd.material ? String(rawProd.material) : undefined,
+                        unitPrice: Number(rawProd.unit_price) || 0,
+                        printingCost: Number(rawProd.printing_cost) || 0,
+                        category: rawProd.category as ProductCategory,
+                        imageUrl: rawProd.image_url ? String(rawProd.image_url) : undefined,
+                        description: rawProd.description ? String(rawProd.description) : undefined,
+                        status: rawProd.status as ProductStatus,
+                        minStockAlert: rawProd.min_stock_alert !== undefined && rawProd.min_stock_alert !== null ? Number(rawProd.min_stock_alert) : undefined,
+                        supplierStock: rawProd.supplier_stock !== undefined && rawProd.supplier_stock !== null ? Number(rawProd.supplier_stock) : undefined,
+                        oldUnitPrice: rawProd.old_unit_price !== undefined && rawProd.old_unit_price !== null ? Number(rawProd.old_unit_price) : undefined,
+                        oldPrintingCost: rawProd.old_printing_cost !== undefined && rawProd.old_printing_cost !== null ? Number(rawProd.old_printing_cost) : undefined,
+                        priceIncreaseEffectiveDate: rawProd.price_increase_effective_date ? String(rawProd.price_increase_effective_date) : undefined,
+                        metersPerRoll: rawProd.meters_per_roll !== undefined && rawProd.meters_per_roll !== null ? Number(rawProd.meters_per_roll) : undefined,
+                    };
+
                     return {
                         productId: i.product_id || i.productId || '',
                         quantity: i.quantity,
                         oldPriceQuantity: i.old_price_quantity ?? i.oldPriceQuantity ?? 0,
                         updatedAt: i.updated_at || i.updatedAt || '',
-                        product: i.product
+                        product
                     };
                 });
             setInventory(mappedData);

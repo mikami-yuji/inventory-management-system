@@ -45,13 +45,17 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
           material,
           unit_price,
           printing_cost,
+          old_unit_price,
+          old_printing_cost,
+          price_increase_effective_date,
           category,
           image_url,
           description,
           status,
           min_stock_alert,
           supplier_stock,
-          supplier_stock_updated_at
+          supplier_stock_updated_at,
+          meters_per_roll
         )
       `)
 
