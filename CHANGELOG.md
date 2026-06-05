@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.9.11] - 2026-06-05
+### Changed
+- **ダッシュボードの在庫総額・総商品数集計ロジックの修正**:
+  - ダッシュボード上の「在庫総額」と「総商品数」の集計基準を、設定の価格管理（在庫管理）と完全に統一。
+  - 「袋」および「新米」カテゴリの商品のみを集計対象とし、「シール」や「その他」等の別カテゴリを除外するよう修正。
+  - 現在庫に単価（`unitPrice`）のみを掛け合わせていた簡易ロジックを廃止し、移行中の旧単価（`oldUnitPrice`）と新単価の適用在庫ごとの分離計算、および印刷代（`printingCost` / `oldPrintingCost`）の加算を考慮した正確な「現在庫総価値（印刷代込み）」を算出するようにロジックをアップデート。
+
 ## [0.9.10] - 2026-05-25
 ### Changed
 - **旧価格在庫および仕掛管理（WIP）の表示単位の適正化**:

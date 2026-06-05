@@ -233,16 +233,64 @@ export default function DashboardPage(): React.ReactElement {
     const negativeStockItems = urgentItems.filter((i) => i.isNegativeStock);
     const outOfStockItems = urgentItems.filter((i) => i.isOutOfStock && !i.isNegativeStock);
     const lowStockItems = urgentItems.filter((i) => i.isLowStock);
-    const totalProducts = products.length;
+    // 在庫マップを作成 (在庫管理・価格管理ページと同様の定義)
+    const inventoryMap = useMemo((): Map<string, { quantity: number; oldPriceQuantity: number }> => {
+        const map = new Map<string, { quantity: number; oldPriceQuantity: number }>();
+        inventory.forEach(item => {
+            const productId = item.product?.id || item.productId;
+            map.set(productId, {
+                quantity: item.quantity,
+                oldPriceQuantity: item.oldPriceQuantity || 0,
+            });
+        });
+        return map;
+    }, [inventory]);
 
-    // 商品IDから単価を取得するマップを作成
-    const productPriceMap = new Map(products.map(p => [p.id, p.unitPrice]));
+    // 在庫管理と同じフィルタ条件で商品を絞り込む (bag, new_rice カテゴリ 且つ 落版で在庫0以外)
+    const linkedProducts = useMemo((): typeof products => {
+        return products.filter((product) => {
+            // カテゴリ制限 (米袋と新米のみ)
+            const isBagOrNewRice = product.category === "bag" || product.category === "new_rice";
+            if (!isBagOrNewRice) return false;
 
-    const totalStockValue = inventory.reduce((sum, item) => {
-        const productId = item.product?.id || item.productId;
-        const unitPrice = productPriceMap.get(productId) || 0;
-        return sum + (item.quantity * unitPrice);
-    }, 0);
+            // 落版かつ現在庫0のものを非表示にする
+            const isPlateRemoved = product.status === "plate_removed";
+            if (isPlateRemoved) {
+                const currentStock = inventoryMap.get(product.id)?.quantity || 0;
+                if (currentStock === 0) return false;
+            }
+
+            return true;
+        });
+    }, [products, inventoryMap]);
+
+    const totalProducts = linkedProducts.length;
+
+    // 在庫総額の計算 (印刷代込み、新旧単価の切り分けを考慮)
+    const totalStockValue = useMemo((): number => {
+        let totalAmount = 0;
+        linkedProducts.forEach((product) => {
+            const inv = inventoryMap.get(product.id);
+            const quantity = inv?.quantity || 0;
+            const oldQty = inv?.oldPriceQuantity || 0;
+            const newQty = Math.max(0, quantity - oldQty);
+
+            // 旧価格在庫の計算
+            if (oldQty > 0) {
+                const oldUnit = Number(product.oldUnitPrice ?? product.unitPrice) || 0;
+                const oldPrint = Number(product.oldPrintingCost ?? product.printingCost) || 0;
+                totalAmount += oldQty * (oldUnit + oldPrint);
+            }
+
+            // 新価格在庫の計算
+            if (newQty > 0) {
+                const newUnit = Number(product.unitPrice) || 0;
+                const newPrint = Number(product.printingCost) || 0;
+                totalAmount += newQty * (newUnit + newPrint);
+            }
+        });
+        return totalAmount;
+    }, [linkedProducts, inventoryMap]);
 
     // 長期在庫（入荷月から6ヶ月目以降）の抽出
     const longTermLots = lots.filter(lot => {
