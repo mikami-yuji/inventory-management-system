@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.9.12] - 2026-06-05
+### Changed
+- **PDF出力における在庫金額合計の計算ロジック修正**:
+  - `InventoryPrintView` 内の合計金額の算出ロジックを、ダッシュボードと同様に新旧単価の切り分けと印刷代（`printingCost` / `oldPrintingCost`）を加算した計算式に修正。
+  - `InventoryPrintViewProps` 内の `inventoryMap` の型定義に `oldPriceQuantity` を追加。
+
 ## [0.9.11] - 2026-06-05
 ### Changed
 - **ダッシュボードの在庫総額・総商品数集計ロジックの修正**:

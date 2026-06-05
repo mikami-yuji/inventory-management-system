@@ -10,7 +10,7 @@ import type { SaleEvent } from "@/hooks/use-sale-events";
 
 type InventoryPrintViewProps = {
     products: Product[];
-    inventoryMap: Map<string, { quantity: number; updatedAt?: string }>;
+    inventoryMap: Map<string, { quantity: number; oldPriceQuantity?: number; updatedAt?: string }>;
     saleAllocationMap: Map<string, { bags: number; meters: number }>;
     detailedSaleAllocationMap?: Map<string, Array<{ eventId: string; clientName: string; quantity: number; dates: string[] }>>;
     wipMap: Map<string, WorkInProgress[]>;
@@ -34,12 +34,12 @@ export function InventoryPrintView({
     saleEvents = [],
     settings
 }: InventoryPrintViewProps): React.ReactElement {
-    const totals = useMemo(() => {
+    const totals = useMemo((): { meters: number; bags: number; price: number } => {
         let meters = 0;
         let bags = 0;
         let price = 0;
         
-        products.forEach(p => {
+        products.forEach((p: Product) => {
             const inv = inventoryMap.get(p.id);
             const currentStock = inv ? inv.quantity : 0;
             const status = calculateStockStatus(p, currentStock, { bags: 0, meters: 0 }, settings);
@@ -50,10 +50,23 @@ export function InventoryPrintView({
                 bags += currentStock;
             }
             
-            const activePrice = p.currentUnitPrice !== undefined ? p.currentUnitPrice : (p.unitPrice || 0);
-            price += currentStock * activePrice;
+            const oldQty: number = inv?.oldPriceQuantity || 0;
+            const newQty: number = Math.max(0, currentStock - oldQty);
+
+            // 旧価格在庫の計算
+            if (oldQty > 0) {
+                const oldUnit: number = Number(p.oldUnitPrice ?? p.unitPrice) || 0;
+                const oldPrint: number = Number(p.oldPrintingCost ?? p.printingCost) || 0;
+                price += oldQty * (oldUnit + oldPrint);
+            }
+
+            // 新価格在庫の計算
+            if (newQty > 0) {
+                const newUnit: number = Number(p.unitPrice) || 0;
+                const newPrint: number = Number(p.printingCost) || 0;
+                price += newQty * (newUnit + newPrint);
+            }
         });
-        
         return { meters, bags, price };
     }, [products, inventoryMap, settings]);
 
