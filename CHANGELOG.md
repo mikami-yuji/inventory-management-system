@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.9.13] - 2026-06-16
+### Fixed
+- **特売イベント登録・編集時の商品検索における量目の表示崩れおよび表示漏れの修正**:
+  - `edit/page.tsx` （特売編集画面）の商品検索結果リストに量目（`weight`）が表示されない不具合を修正。
+  - `new/page.tsx` および `edit/page.tsx` において、商品マスタの量目（`weight`）が未設定のときに空の `| kg` が表示されてしまう表示崩れを防ぐため、量目が存在する場合のみ表示するよう条件分岐を追加。
+
 ## [0.9.12] - 2026-06-05
 ### Changed
 - **PDF出力における在庫金額合計の計算ロジック修正**:

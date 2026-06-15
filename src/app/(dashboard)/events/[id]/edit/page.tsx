@@ -398,7 +398,7 @@ function EditEventContent(): React.ReactElement {
                                                 <div>
                                                     <div className="font-medium">{product.name}</div>
                                                     <div className="text-xs text-gray-500">
-                                                        {product.sku} | 在庫: {stock}
+                                                        {product.sku} {product.weight ? `| ${product.weight}kg` : ""} | 在庫: {stock}
                                                     </div>
                                                 </div>
                                                 {isAdded && <Badge variant="outline">追加済</Badge>}
