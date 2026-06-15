@@ -410,20 +410,23 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             for (const item of items) {
                 const existing = existingItemMap.get(item.productId);
                 if (existing) {
-                    // 更新
+                    // 更新 (計画数の変更に合わせて引当数も更新する)
                     await supabase
                         .from('sale_event_items')
-                        .update({ planned_quantity: item.plannedQuantity })
+                        .update({ 
+                            planned_quantity: item.plannedQuantity,
+                            allocated_quantity: item.plannedQuantity
+                        })
                         .eq('id', existing.id);
                 } else {
-                    // 新規追加
+                    // 新規追加 (初期引当数を計画数と同じにする)
                     await supabase
                         .from('sale_event_items')
                         .insert({
                             event_id: eventId,
                             product_id: item.productId,
                             planned_quantity: item.plannedQuantity,
-                            allocated_quantity: 0
+                            allocated_quantity: item.plannedQuantity
                         })
                 }
             }
