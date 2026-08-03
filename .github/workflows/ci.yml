@@ -1,37 +1,43 @@
-name: CI
+name: CI / Quality Check
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
 
 jobs:
-  build:
+  verify:
+    name: Verify Codebase (TSC, Lint, Test, Build)
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Build
-      run: npm run build
-      env:
-        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      - name: Run TypeScript type check
+        run: npx tsc --noEmit
 
-    - name: Lint
-      run: npm run lint
+      - name: Run ESLint
+        run: npm run lint
 
-    - name: Test
-      run: npm test
+      - name: Run Jest unit tests
+        run: npm run test
+
+      - name: Run Next.js production build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder-anon-key"
+          SUPABASE_SERVICE_ROLE_KEY: "placeholder-service-key"
+          NEXTAUTH_SECRET: "placeholder-secret"
+          NEXTAUTH_URL: "http://localhost:3000"
+        run: npm run build
