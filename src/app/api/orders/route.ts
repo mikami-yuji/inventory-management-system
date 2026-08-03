@@ -159,7 +159,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
         const supabase = createServerClient()
         const body = await request.json()
-        console.log('Order Request Body:', JSON.stringify(body, null, 2));
 
         const validated = createOrderSchema.safeParse(body);
         if (!validated.success) {

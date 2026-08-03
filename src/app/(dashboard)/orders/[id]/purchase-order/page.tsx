@@ -31,7 +31,6 @@ export default function PurchaseOrderPage() {
                 if (!orderRes.ok) throw new Error("発注データの取得に失敗しました");
                 
                 const orders = await orderRes.json() as Order[];
-                console.log('Orders from API:', orders.slice(0, 1)); // Debug if needed
                 const foundOrder = orders.find((o) => o.id === id);
                 
                 if (!foundOrder) {

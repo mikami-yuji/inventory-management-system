@@ -56,9 +56,7 @@ export function ImageUpload({
 
         try {
             // 1. 画像を圧縮
-            console.log("元のサイズ:", (file.size / 1024).toFixed(2), "KB");
             const compressedFile = await imageCompression(file, compressionOptions);
-            console.log("圧縮後のサイズ:", (compressedFile.size / 1024).toFixed(2), "KB");
 
             // プレビュー表示
             const previewUrl = URL.createObjectURL(compressedFile);

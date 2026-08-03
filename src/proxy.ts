@@ -9,7 +9,6 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
     const { pathname } = request.nextUrl
-    console.log(`[Proxy] Request: ${pathname}`);
 
     try {
         // getTokenがハングする場合があるため、タイムアウトを設ける
@@ -29,7 +28,6 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
     // APIルートの場合は401 JSONを返す（リダイレクトしない）
     if (pathname.startsWith('/api/')) {
-        console.log(`[Proxy] Blocking API request: ${pathname}`);
         return NextResponse.json(
             { error: '認証が必要です' },
             { status: 401 }
@@ -37,7 +35,6 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     }
 
     // ページルートの場合はログインページにリダイレクト
-    console.log(`[Proxy] Redirecting to login: ${pathname}`);
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(loginUrl)

@@ -15,8 +15,9 @@ describe('use-inventory hooks', () => {
     });
 
     describe('useInventory', () => {
-        test('初期状態はloading=trueで、inventoryは空配列', () => {
+        test('初期状態はloading=trueで、inventoryは空配列', async () => {
             mockUseAppSettings.mockReturnValue({ settings: null });
+            (global.fetch as jest.Mock).mockImplementationOnce(() => new Promise(() => {}));
             
             const { result } = renderHook(() => useInventory());
             

@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.9.14] - 2026-08-03
+### Fixed
+- **ビルド時のSupabase環境変数未設定によるクラッシュの修正**:
+  - `src/lib/supabase.ts` において、トップレベルでの即時初期化を安全なフォールバック付き遅延評価に変更し、環境変数が未設定のビルド環境（`next build`）でもプロダクションビルドが正常に完了するよう修正。
+- **デバッグログの全面除去**:
+  - 規約に準拠し、`src/proxy.ts`, `src/hooks/use-work-in-progress.ts`, `src/components/ui/image-upload.tsx` などの各ファイルからデバッグ目的の `console.log` を削除。
+- **ユニットテストでの React `act(...)` 警告の解消**:
+  - `use-inventory.test.tsx` の非同期ライフサイクルモックを修正し、テスト実行時のコンソール警告を消去。
+
+### Refactored
+- **開発規約への適合強化**:
+  - `src/lib/logger.ts` 内の `interface` を `type` に変更し、関数の戻り値型 (`Promise<void>`) を明示。
+  - ルートディレクトリの不要な一時デバッグログファイルを整理。
+
+
 ## [0.9.13] - 2026-06-16
 ### Fixed
 - **特売イベント登録・編集時の商品検索における量目の表示崩れおよび表示漏れの修正**:

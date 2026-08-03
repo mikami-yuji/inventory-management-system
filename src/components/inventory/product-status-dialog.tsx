@@ -74,7 +74,6 @@ export function ProductStatusDialog({
                 body: JSON.stringify(payload),
             });
 
-            console.log("Response status:", response.status);
             const result = await response.json();
 
             if (!response.ok) {

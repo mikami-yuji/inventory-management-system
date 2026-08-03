@@ -1,6 +1,6 @@
 import { createServerClient } from './supabase';
 
-interface LogErrorParams {
+type LogErrorParams = {
     route: string;
     method: string;
     error: unknown;
@@ -11,7 +11,7 @@ interface LogErrorParams {
  * サーバー側で発生したエラーを一元的に `error_logs` テーブルに記録する。
  * @param params エラー情報（利用ルート、メソッド、エラーオブジェクト、ユーザーID）
  */
-export async function logError({ route, method, error, userId }: LogErrorParams) {
+export async function logError({ route, method, error, userId }: LogErrorParams): Promise<void> {
     try {
         const supabase = createServerClient();
         

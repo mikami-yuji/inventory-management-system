@@ -66,7 +66,6 @@ export function useWorkInProgress(status?: string, productId?: string): {
         } catch (err) {
             // 自発的なキャンセル（AbortError）の場合はエラーとしてセットしない
             if (err instanceof Error && err.name === 'AbortError') {
-                console.log('WIP取得リクエストがキャンセルされました');
                 // 前のリクエストがキャンセルされただけなので、ローディング状態は新しいリクエストに引き継がれる
                 return;
             }
