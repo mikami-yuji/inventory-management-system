@@ -54,7 +54,9 @@ export type Product = {
   totalColorCount?: number; // 総色数
   productType?: string; // Excel Column Type (種別) 例: 既製品, 別注
   supplierStock?: number; // メーカー在庫
+  supplierStockUpdatedAt?: string; // メーカー在庫更新日時
   statusOverride?: 'normal' | 'low_stock' | 'out_of_stock'; // ステータス手動上書き
+
   supplierId?: string; // 仕入先ID
   supplierName?: string; // 仕入先名
   discontinuedDate?: string; // 落版日/廃盤日 (YYYY-MM-DD)

@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "jest",
     "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
     "migrate-data": "node scripts/migrate-to-supabase.js",
     "sync-products": "node scripts/sync_product_codes.js",
     "sync-types": "node scripts/sync_product_types.js",
@@ -62,6 +63,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
