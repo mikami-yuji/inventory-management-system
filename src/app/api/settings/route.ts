@@ -1,8 +1,14 @@
 
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
+import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 
 export async function GET() {
+    const auth = await requireAuth();
+    if (!auth.success) {
+        return auth.response;
+    }
+
     const supabase = createServerClient();
 
     const { data: settings, error } = await supabase.from('app_settings').select('*');
@@ -21,6 +27,11 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+    const auth = await requireAdmin();
+    if (!auth.success) {
+        return auth.response;
+    }
+
     const supabase = createServerClient();
     const body = await request.json();
 
@@ -29,13 +40,6 @@ export async function PUT(request: Request) {
     if (!key || value === undefined) {
         return NextResponse.json({ error: 'Key and Value are required' }, { status: 400 });
     }
-
-    // Authenticated user check is handled by RLS, but serverside client bypasses RLS if Service Role is used.
-    // However, createServerClient in lib/supabase uses Service Role Key? Yes.
-    // So we should verify user.
-
-    // const { data: { user } } = await supabase.auth.getUser();
-    // if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { data, error } = await supabase.from('app_settings').upsert({
         key,
@@ -51,3 +55,4 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ data });
 }
+

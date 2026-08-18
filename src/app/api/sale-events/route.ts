@@ -236,24 +236,37 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             .from('sale_event_items')
             .insert(eventItems)
 
-        if (itemsError) {
-            console.error('イベント商品追加エラー:', itemsError)
-            // イベントを削除してロールバック
-            await supabase.from('sale_events').delete().eq('id', eventData.id)
-            return NextResponse.json({ data: null, error: itemsError.message }, { status: 500 })
-        }
+        const mappedEvent: SaleEvent = {
+            id: eventData.id,
+            clientName: eventData.client_name,
+            scheduleType: eventData.schedule_type as 'single' | 'monthly',
+            dates: eventData.dates,
+            status: eventData.status as SaleEvent['status'],
+            description: eventData.description,
+            createdAt: eventData.created_at,
+            items: items.map(item => ({
+                id: '',
+                productId: item.productId,
+                productName: '',
+                productSku: null,
+                plannedQuantity: item.quantity,
+                allocatedQuantity: item.quantity,
+                actualQuantity: null,
+                currentStock: 0,
+                isProduced: false
+            }))
+        };
 
-
-
-        return NextResponse.json({ data: eventData, error: null })
+        return NextResponse.json({ data: mappedEvent, error: null });
     } catch (error) {
-        console.error('サーバーエラー:', error)
+        console.error('サーバーエラー:', error);
         return NextResponse.json(
             { data: null, error: 'サーバーエラーが発生しました' },
             { status: 500 }
-        )
+        );
     }
 }
+
 
 // PATCH: イベント更新（実績入力など）
 export async function PATCH(request: NextRequest): Promise<NextResponse<ApiResponse<{ success: boolean }>>> {
@@ -318,7 +331,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                 .eq('event_id', eventId)
 
             for (const item of eventItems || []) {
-                if (item.actual_quantity > 0) continue;
+                if ((item.actual_quantity || 0) > 0) continue;
 
                 // 引当数量（有効在庫引当用）を計画数に更新
                 await supabase

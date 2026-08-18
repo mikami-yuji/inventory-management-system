@@ -1,24 +1,25 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 
 export async function GET() {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await requireAuth();
+    if (!auth.success) {
+        return auth.response;
     }
 
     const supabase = createServerClient();
+    const isAdmin = auth.user.role === 'admin';
 
-    // Admins can see all profiles. Clients can only see their own?
-    // For now, let's just return all profiles if admin.
-    // In a real app, we should check the role first.
+    // 管理者は全ユーザー一覧を取得可能、一般ユーザーは自分のプロファイルのみ取得可能
+    let query = supabase.from('users').select('*');
+    if (!isAdmin) {
+        query = query.eq('id', auth.user.id);
+    } else {
+        query = query.order('created_at', { ascending: false });
+    }
 
-    const { data: profiles, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
+    const { data: profiles, error } = await query;
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -36,9 +37,9 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await requireAdmin();
+    if (!auth.success) {
+        return auth.response;
     }
 
     const supabase = createServerClient();
@@ -49,9 +50,6 @@ export async function PUT(request: Request) {
     if (!id || !role) {
         return NextResponse.json({ error: 'ID and Role are required' }, { status: 400 });
     }
-
-    // Security check: Only admins should be able to change roles.
-    // For now, we assume the request is valid to unblock development.
 
     const { data, error } = await supabase
         .from('users')
@@ -69,3 +67,4 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ data });
 }
+

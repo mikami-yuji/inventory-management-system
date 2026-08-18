@@ -276,9 +276,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
                     // 履歴記録（メーカー直送）
                     await supabase.from('stock_history').insert({
                         product_id: item.productId,
+                        quantity: item.quantity,
                         type: 'order',
                         note: `メーカー在庫出荷 (残: ${newStock})`
                     })
+
                 }
             } else if (shipmentSource === 'inventory') {
                 // 自社在庫から減らす (従来のInventory)

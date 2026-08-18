@@ -1,28 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase'
-import type { ApiResponse } from '@/types'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
-import { z } from 'zod'
+import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@/lib/supabase';
+import type { ApiResponse, WorkInProgress } from '@/types';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { z } from 'zod';
 
-// 仕掛中アイテムの型
-type WorkInProgress = {
-    id: string
-    productId: string
-    productName?: string
-    productSku?: string
-    quantity: number
-    startedAt: string
-    expectedCompletion: string | null
-    completedAt: string | null
-    note: string | null
-    status: 'in_progress' | 'completed' | 'cancelled'
-    termType?: string
-    confirmationStatus?: string
-    createdAt: string
-}
-
-// WIPRecord is removed
 
 // GET: 仕掛中一覧を取得
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<WorkInProgress[]>>> {
@@ -94,8 +76,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
                 completedAt: item.completed_at as string | null,
                 note: item.note as string | null,
                 status: item.status as WorkInProgress['status'],
-                termType: (item.term_type as string) || undefined,
-                confirmationStatus: (item.confirmation_status as string) || undefined,
+                termType: (item.term_type as WorkInProgress['termType']) || 'specific',
+                confirmationStatus: (item.confirmation_status as WorkInProgress['confirmationStatus']) || 'unconfirmed',
+                isNewPrice: (item.is_new_price as boolean) ?? false,
                 createdAt: item.created_at as string
             };
         });
@@ -168,18 +151,34 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             .select()
             .single()
 
-        if (error) {
+        if (error || !data) {
             console.error('仕掛中登録エラー:', error)
-            return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+            return NextResponse.json({ data: null, error: error?.message || '仕掛中登録に失敗しました' }, { status: 500 })
         }
 
-        return NextResponse.json({ data, error: null })
+        const mappedResult: WorkInProgress = {
+            id: data.id,
+            productId: data.product_id,
+            quantity: data.quantity,
+            startedAt: data.started_at,
+            expectedCompletion: data.expected_completion,
+            completedAt: data.completed_at,
+            status: data.status as WorkInProgress['status'],
+            confirmationStatus: data.confirmation_status as WorkInProgress['confirmationStatus'],
+            termType: data.term_type as WorkInProgress['termType'],
+            isNewPrice: data.is_new_price ?? false,
+            note: data.note || null,
+            createdAt: data.created_at
+        };
+
+
+        return NextResponse.json({ data: mappedResult, error: null })
     } catch (error) {
         console.error('サーバーエラー:', error)
         return NextResponse.json(
             { data: null, error: 'サーバーエラーが発生しました' },
             { status: 500 }
-        )
+        );
     }
 }
 
@@ -224,17 +223,16 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
 
             const { data: wipItem } = await supabase
                 .from('work_in_progress')
-                .select('product_id, products(name)')
+                .select('product_id')
                 .eq('id', id)
-                .single<Record<string, unknown>>()
+                .single()
 
             if (!wipItem) {
                 return NextResponse.json({ data: null, error: '対象の仕掛品データが見つかりません' }, { status: 404 })
             }
 
-
             const insertData = schedules.map(s => ({
-                product_id: (wipItem as Record<string, unknown>).product_id,
+                product_id: wipItem.product_id,
                 expected_date: s.expectedDate || null,
                 quantity: s.quantity,
                 note: s.note || '仕掛品からの予定'
@@ -242,20 +240,12 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
 
             const { error: insertError } = await supabase
                 .from('incoming_stock')
-                .insert(insertData as Record<string, unknown>[])
+                .insert(insertData)
 
             if (insertError) {
                 console.error('入荷予定登録エラー:', insertError)
                 return NextResponse.json({ data: null, error: insertError.message }, { status: 500 })
             }
-
-            /* 自動メール送信を一時停止（手動コピー方式へ移行）
-            try {
-                // ... (既存のメール送信ロジック)
-            } catch (emailError) {
-                console.error('WIP通知メール送信失敗:', emailError);
-            }
-            */
         } else if (action === 'to_supplier') {
             // 仕掛品をメーカー在庫へ移動（部分移動対応・WIPレコードは削除しない）
             if (!quantity) {
@@ -263,9 +253,9 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             }
             const { data: wipItem } = await supabase
                 .from('work_in_progress')
-                .select('product_id, products(name)')
+                .select('product_id')
                 .eq('id', id)
-                .single<Record<string, unknown>>()
+                .single()
 
             if (!wipItem) {
                 return NextResponse.json({ data: null, error: '対象の仕掛品データが見つかりません' }, { status: 404 })
@@ -275,11 +265,11 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             const { error: lotInsertError } = await supabase
                 .from('supplier_stock_lots')
                 .insert({
-                    product_id: (wipItem as Record<string, unknown>).product_id,
+                    product_id: wipItem.product_id,
                     stock_date: new Date().toISOString().split('T')[0],
                     quantity: quantity,
                     note: '仕掛品からの移動'
-                } as Record<string, unknown>)
+                })
 
             if (lotInsertError) {
                 console.error('ロット登録エラー:', lotInsertError)
@@ -353,7 +343,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
                     expected_date: confirmedDate,
                     quantity: quantity,
                     note: '仕掛中からの自動登録'
-                } as Record<string, unknown>)
+                })
 
             // 3. メーカー在庫の更新 (指定がある場合)
             if (typeof supplierStock === 'number') {
