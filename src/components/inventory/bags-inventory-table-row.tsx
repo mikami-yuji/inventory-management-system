@@ -273,14 +273,13 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                                         const monthsElapsed = (now.getFullYear() - arrival.getFullYear()) * 12 + now.getMonth() - arrival.getMonth();
                                         const isLongTerm = monthsElapsed >= 5 && lot.quantity > 0;
                                         return (
-                                            <div key={lot.id} className="text-[10px] text-purple-600 flex items-center justify-end gap-1 whitespace-nowrap">
+                                            <div key={lot.id} className="text-[10px] text-purple-600 flex items-center justify-end gap-1 whitespace-nowrap" title={lot.note || undefined}>
                                                 {isLongTerm && (
                                                     <Badge variant="destructive" className="h-3 px-1 text-[7px] leading-none">長期在庫</Badge>
                                                 )}
                                                 <span>
                                                     {new Date(lot.stockDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {lot.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}
                                                 </span>
-                                                {lot.note && <span className="text-gray-400 text-[9px]">({lot.note})</span>}
                                             </div>
                                         );
                                     })}
@@ -345,9 +344,6 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                         <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300">少在庫</Badge>
                     ) : (
                         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">適正</Badge>
-                    )}
-                    {product.statusOverride && (
-                        <span className="text-[9px] text-muted-foreground">(手動設定)</span>
                     )}
                 </div>
             </TableCell>
