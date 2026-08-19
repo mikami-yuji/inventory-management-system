@@ -114,7 +114,7 @@ export function BagsInventoryTable({
                                 <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">在庫状況</TableHead>
                                 <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">全体状況</TableHead>
                                 <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">在庫予測</TableHead>
-                                <TableHead className="w-[140px] sticky top-0 z-40 bg-background bg-clip-padding shadow-sm text-left pl-5">発注</TableHead>
+                                <TableHead className="w-[100px] sticky top-0 z-40 bg-background bg-clip-padding shadow-sm text-center">発注</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

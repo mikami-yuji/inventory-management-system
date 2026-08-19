@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import {
     Plus,
     Pencil,
-    LineChart,
     Package,
     Check,
 } from "lucide-react";
@@ -424,9 +423,6 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                         className="h-8 w-8"
                     >
                         {isInCart ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setViewPrediction(product); }} title="在庫予測・分析" className="h-8 w-8">
-                        <LineChart className="h-4 w-4 text-blue-600" />
                     </Button>
                     <Button size="icon" variant="outline" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(product); }} title="編集" className="h-8 w-8">
                         <Pencil className="h-4 w-4" />
