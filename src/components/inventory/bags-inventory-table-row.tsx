@@ -311,7 +311,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                         </div>
                         <div className="flex flex-col gap-0.5 mt-0.5">
                             {wipList.map((item) => (
-                                <div key={item.id} className="text-[10px] text-slate-500 truncate" title={`${item.quantity}${isRoll ? 'm' : '枚'}`}>
+                                <div key={item.id} className="text-[10px] text-slate-500 truncate" title={item.note || undefined}>
                                     {item.expectedCompletion ?
                                         (() => {
                                             const d = new Date(item.expectedCompletion);
@@ -323,6 +323,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                                         })()
                                         : '未定: '}
                                     {item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                    {item.note && <span className="text-amber-700 ml-1">({item.note})</span>}
                                 </div>
                             ))}
                         </div>
