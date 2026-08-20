@@ -228,10 +228,9 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                                     }
                                     return [];
                                 })
-                                .slice(0, 1)
                                 .map((evt, idx) => (
-                                    <div key={idx} className="text-[9px] text-blue-500/80 truncate max-w-[100px] ml-auto" title={`${evt.client}: ${evt.qty.toLocaleString()}枚`}>
-                                        {evt.client}
+                                    <div key={idx} className="text-[9px] text-blue-600/90 truncate max-w-[120px] ml-auto" title={`${evt.client}: ${evt.qty.toLocaleString()}枚`}>
+                                        {evt.client}: {evt.qty.toLocaleString()}枚
                                     </div>
                                 ))}
                         </div>
@@ -267,8 +266,14 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                             {incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}
                         </div>
                         {incoming.items.length > 0 && (
-                            <div className="text-[9px] text-slate-500 truncate max-w-[100px] ml-auto mt-0.5">
-                                {incoming.items[0].expectedDate ? `${new Date(incoming.items[0].expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}着` : '納期確認中'}
+                            <div className="flex flex-col gap-0.5 mt-0.5">
+                                {incoming.items.map((item, idx) => (
+                                    <div key={idx} className="text-[9px] text-slate-600 truncate max-w-[130px] ml-auto" title={item.note || undefined}>
+                                        {item.expectedDate ? `${new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: ` : '納期確認中: '}
+                                        {item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                        {item.note && ` (${item.note})`}
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>
@@ -277,7 +282,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                 )}
             </TableCell>
 
-            {/* 8. メーカー在庫 */}
+            {/* 8. メーカー在庫 (すべてのロットを表示) */}
             <TableCell
                 className="text-right cursor-pointer hover:bg-amber-100/50 transition-colors group relative tabular-nums bg-amber-50/15 p-2"
                 onClick={() => setEditSupplierStock(product)}
@@ -288,9 +293,30 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                             {supplierStock.toLocaleString()}{isRoll ? 'm' : '枚'}
                             <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100" />
                         </div>
-                        {supplierStockLots.length > 0 && (
-                            <div className="text-[9px] text-purple-600 truncate max-w-[100px] ml-auto mt-0.5">
-                                {supplierStockLots.length}ロット保管
+                        {supplierStockLots.length > 0 ? (
+                            <div className="flex flex-col gap-0.5 mt-1">
+                                {[...supplierStockLots]
+                                    .sort((a, b) => new Date(a.stockDate).getTime() - new Date(b.stockDate).getTime())
+                                    .map((lot) => {
+                                        const now = new Date();
+                                        const arrival = new Date(lot.stockDate);
+                                        const monthsElapsed = (now.getFullYear() - arrival.getFullYear()) * 12 + now.getMonth() - arrival.getMonth();
+                                        const isLongTerm = monthsElapsed >= 5 && lot.quantity > 0;
+                                        return (
+                                            <div key={lot.id} className="text-[10px] text-purple-700 flex items-center justify-end gap-1 whitespace-nowrap" title={lot.note || undefined}>
+                                                {isLongTerm && (
+                                                    <Badge variant="destructive" className="h-3 px-1 text-[7px] leading-none">長期</Badge>
+                                                )}
+                                                <span>
+                                                    {new Date(lot.stockDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {lot.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        ) : product.supplierStockUpdatedAt && (
+                            <div className="text-[9px] text-gray-400">
+                                {new Date(product.supplierStockUpdatedAt).toLocaleDateString()}
                             </div>
                         )}
                     </div>
@@ -302,7 +328,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                 )}
             </TableCell>
 
-            {/* 9. 仕掛中 */}
+            {/* 9. 仕掛中 (すべての仕掛品を表示) */}
             <TableCell
                 className="text-right cursor-pointer hover:bg-amber-100/50 transition-colors group relative tabular-nums bg-amber-50/35 border-r border-slate-200 p-2"
                 onClick={() => setEditWIP(product)}
@@ -313,8 +339,23 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                             {wipList.reduce((sum, item) => sum + item.quantity, 0).toLocaleString()}{isRoll ? 'm' : '枚'}
                             <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100" />
                         </div>
-                        <div className="text-[9px] text-amber-800/80 truncate max-w-[100px] ml-auto mt-0.5">
-                            {wipList[0].expectedCompletion ? `${new Date(wipList[0].expectedCompletion).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}完成` : '進行中'}
+                        <div className="flex flex-col gap-0.5 mt-0.5">
+                            {wipList.map((item) => (
+                                <div key={item.id} className="text-[10px] text-slate-600 truncate max-w-[130px] ml-auto" title={item.note || undefined}>
+                                    {item.expectedCompletion ?
+                                        (() => {
+                                            const d = new Date(item.expectedCompletion);
+                                            const month = d.getMonth() + 1;
+                                            if (item.termType === 'early') return `${month}月上旬: `;
+                                            if (item.termType === 'mid') return `${month}月中旬: `;
+                                            if (item.termType === 'late') return `${month}月下旬: `;
+                                            return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: `;
+                                        })()
+                                        : '未定: '}
+                                    {item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                    {item.note && <span className="text-amber-700 ml-1">({item.note})</span>}
+                                </div>
+                            ))}
                         </div>
                     </div>
                 ) : (
