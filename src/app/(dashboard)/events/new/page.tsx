@@ -424,75 +424,98 @@ function NewEventContent(): React.ReactElement {
                                         <TableRow>
                                             <TableHead>商品名</TableHead>
                                             <TableHead className="text-right">現在庫</TableHead>
-                                            <TableHead className="text-right w-[150px]">数量 *(枚)</TableHead>
+                                            <TableHead className="text-right w-[150px]">特売数量 *(枚)</TableHead>
+                                            <TableHead className="text-right w-[130px]">引当後残数</TableHead>
                                             <TableHead className="w-[50px]"></TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {saleItems.map(item => (
-                                            <TableRow key={item.id}>
-                                                <TableCell>
-                                                    <div className="font-medium">
-                                                        {item.product.name} {item.product.weight ? `${item.product.weight}kg` : ''}
-                                                    </div>
-                                                    <div className="text-xs text-gray-500 flex items-center gap-2">
-                                                        <span>{item.product.sku}</span>
-                                                        {isRollBag(item.product.shape || "") && (
-                                                            <Badge variant="outline" className="text-[10px] h-4 px-1 font-normal border-blue-200 text-blue-700 bg-blue-50">
-                                                                1巻: {item.product.metersPerRoll || 400}m
+                                        {saleItems.map(item => {
+                                            const isRoll = isRollBag(item.product.shape || "");
+                                            const weight = item.product.weight || 5;
+                                            const requiredBags = item.quantity;
+                                            const stockInBags = isRoll ? metersToBags(item.currentStock, weight) : item.currentStock;
+                                            const remainingBags = stockInBags - requiredBags;
+                                            const isDeficit = remainingBags < 0;
+
+                                            return (
+                                                <TableRow key={item.id}>
+                                                    <TableCell>
+                                                        <div className="font-medium">
+                                                            {item.product.name} {item.product.weight ? `${item.product.weight}kg` : ''}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500 flex items-center gap-2">
+                                                            <span>{item.product.sku}</span>
+                                                            {isRoll && (
+                                                                <Badge variant="outline" className="text-[10px] h-4 px-1 font-normal border-blue-200 text-blue-700 bg-blue-50">
+                                                                    1巻: {item.product.metersPerRoll || 400}m
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-right tabular-nums">
+                                                        <span className={cn(
+                                                            "font-medium tracking-tight",
+                                                            item.currentStock === 0 && "text-red-600",
+                                                            item.currentStock < item.quantity && item.currentStock > 0 && "text-amber-600"
+                                                        )}>
+                                                            {item.currentStock.toLocaleString()}
+                                                            {isRoll && <span className="text-[10px] ml-0.5">m</span>}
+                                                        </span>
+                                                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                                                            {isRoll ? (
+                                                                <>約 {metersToBags(item.currentStock, weight).toLocaleString()} 枚</>
+                                                            ) : (
+                                                                <>約 {Math.round(bagsToMeters(item.currentStock, weight)).toLocaleString()} m</>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Input
+                                                            type="number"
+                                                            min={1}
+                                                            value={item.quantity === 0 ? "" : item.quantity}
+                                                            onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
+                                                            className="w-[120px] text-right ml-auto tabular-nums"
+                                                            placeholder="数量を入力"
+                                                            inputMode="numeric"
+                                                        />
+                                                        <div className="text-[10px] text-muted-foreground mt-1 text-right flex flex-col items-end">
+                                                            <span>約 {Math.round(bagsToMeters(item.quantity, weight)).toLocaleString()} m</span>
+                                                            {isRoll && (
+                                                                <span className="text-blue-600 font-medium">
+                                                                    約 {(item.quantity / getApproxBagCount(weight, item.product.metersPerRoll)).toFixed(1)} 巻
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-right tabular-nums">
+                                                        <div className={cn(
+                                                            "font-bold text-sm",
+                                                            isDeficit ? "text-red-600" : remainingBags === 0 ? "text-amber-600" : "text-emerald-600"
+                                                        )}>
+                                                            {Math.round(remainingBags).toLocaleString()} 枚
+                                                        </div>
+                                                        {isDeficit && (
+                                                            <Badge variant="destructive" className="mt-1 text-[9px] px-1 py-0 h-4 leading-none">
+                                                                {Math.abs(Math.round(remainingBags)).toLocaleString()}枚不足
                                                             </Badge>
                                                         )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <span className={cn(
-                                                        "font-medium tracking-tight",
-                                                        item.currentStock === 0 && "text-red-600",
-                                                        item.currentStock < item.quantity && item.currentStock > 0 && "text-amber-600"
-                                                    )}>
-                                                        {item.currentStock.toLocaleString()}
-                                                        {isRollBag(item.product.shape || "") && <span className="text-[10px] ml-0.5">m</span>}
-                                                    </span>
-                                                    <div className="text-[10px] text-muted-foreground mt-0.5">
-                                                        {isRollBag(item.product.shape || "") ? (
-                                                            <>約 {metersToBags(item.currentStock, item.product.weight || 5).toLocaleString()} 枚</>
-                                                        ) : (
-                                                            <>約 {Math.round(bagsToMeters(item.currentStock, item.product.weight || 5)).toLocaleString()} m</>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Input
-                                                        type="number"
-                                                        min={1}
-                                                        value={item.quantity === 0 ? "" : item.quantity}
-                                                        onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
-                                                        className="w-[120px] text-right"
-                                                        placeholder="数量を入力"
-                                                        inputMode="numeric"
-                                                    />
-                                                    <div className="text-[10px] text-muted-foreground mt-1 text-right flex flex-col items-end">
-                                                        <span>約 {Math.round(bagsToMeters(item.quantity, item.product.weight || 5)).toLocaleString()} m</span>
-                                                        {isRollBag(item.product.shape || "") && (
-                                                            <span className="text-blue-600 font-medium">
-                                                                約 {(item.quantity / getApproxBagCount(item.product.weight || 5, item.product.metersPerRoll)).toFixed(1)} 巻
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => removeSaleItem(item.id)}
-                                                        className="text-red-500 hover:text-red-600"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => removeSaleItem(item.id)}
+                                                            className="text-red-500 hover:text-red-600"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
                                     </TableBody>
                                 </Table>
 

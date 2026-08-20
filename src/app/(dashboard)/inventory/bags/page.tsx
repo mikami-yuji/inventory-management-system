@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { format } from "date-fns";
+import toast from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ import {
     Calendar,
     Printer,
     Download,
+    ShoppingCart,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import {
@@ -36,6 +38,7 @@ import { useSaleEvents } from "@/hooks/use-sale-events";
 import { useSupplierStockLots } from "@/hooks/use-supplier-stock-lots";
 import { useAppSettings } from "@/hooks/use-masters";
 import { useWorkInProgress, calculateWIPByProduct } from "@/hooks/use-work-in-progress";
+import { useCart } from "@/contexts/cart-context";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import { IncomingStockDialog } from "@/components/inventory/incoming-stock-dialog";
 import type { Product, IncomingStock } from "@/types";
@@ -117,6 +120,27 @@ export default function BagsInventoryPage(): React.ReactElement {
         checkHeight();
         window.addEventListener('resize', checkHeight);
         return () => window.removeEventListener('resize', checkHeight);
+    }, []);
+
+    const searchInputRef = useRef<HTMLInputElement>(null);
+    const { addToCart } = useCart();
+
+    // / キーで検索バーにフォーカスするショートカット
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // 入力要素にフォーカスがある場合や修飾キー押下時は無視
+            const target = e.target as HTMLElement;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                return;
+            }
+            if (e.key === '/') {
+                e.preventDefault();
+                searchInputRef.current?.focus();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
     const [searchQuery, setSearchQuery] = useState("");
@@ -386,6 +410,13 @@ export default function BagsInventoryPage(): React.ReactElement {
                 const { isOutOfStock } = calculateStockStatus(p, qty, allocation, settings);
                 return isOutOfStock;
             });
+        } else if (stockFilter === "need_order") {
+            products = products.filter(p => {
+                const qty = inventoryMap.get(p.id)?.quantity || 0;
+                const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
+                const { isLowStock, isOutOfStock } = calculateStockStatus(p, qty, allocation, settings);
+                return isLowStock || isOutOfStock;
+            });
         } else if (stockFilter === "reserved") {
             products = products.filter(p => (saleAllocationMap.get(p.id)?.bags || 0) > 0);
         }
@@ -487,15 +518,42 @@ export default function BagsInventoryPage(): React.ReactElement {
         bagProducts.forEach(p => {
             const qty = inventoryMap.get(p.id)?.quantity || 0;
             const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
-            const { isOutOfStock, isLowStock } = calculateStockStatus(p, qty, allocation);
+            const { isOutOfStock, isLowStock } = calculateStockStatus(p, qty, allocation, settings);
 
             if (isOutOfStock) outOfStock++;
             else if (isLowStock) lowStock++;
             if (allocation.bags > 0) hasReservation++;
         });
 
-        return { total: bagProducts.length, lowStock, outOfStock, hasReservation };
-    }, [bagProducts, inventoryMap, saleAllocationMap]);
+        const needOrder = lowStock + outOfStock;
+        return { total: bagProducts.length, lowStock, outOfStock, hasReservation, needOrder };
+    }, [bagProducts, inventoryMap, saleAllocationMap, settings]);
+
+    // 発注点割れ・欠品商品を推奨発注数で一括カート追加
+    const handleAddAllLowStockToCart = useCallback(() => {
+        const needOrderProducts = bagProducts.filter(p => {
+            const qty = inventoryMap.get(p.id)?.quantity || 0;
+            const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
+            const { isLowStock, isOutOfStock } = calculateStockStatus(p, qty, allocation, settings);
+            return isLowStock || isOutOfStock;
+        });
+
+        if (needOrderProducts.length === 0) {
+            toast("発注が必要な商品はありません", { icon: "ℹ️" });
+            return;
+        }
+
+        let addedCount = 0;
+        needOrderProducts.forEach(p => {
+            const currentQty = inventoryMap.get(p.id)?.quantity || 0;
+            const targetStock = p.optimalStock || (p.safetyStock ? p.safetyStock * 2 : 1000);
+            const orderQty = Math.max(100, targetStock - currentQty);
+            addToCart(p, orderQty);
+            addedCount++;
+        });
+
+        toast.success(`${addedCount}件の商品を推奨数量でカートに追加しました`);
+    }, [bagProducts, inventoryMap, saleAllocationMap, settings, addToCart]);
 
     const hasActiveFilters = searchQuery || weightFilter !== "all" || stockFilter !== "all" || originFilter !== "all" || varietyFilter !== "all" || statusFilter !== "all";
 
@@ -582,23 +640,35 @@ export default function BagsInventoryPage(): React.ReactElement {
                 </div>
             </div>
 
-            {/* サマリーカード (縦幅が狭い場合、またはフィルター表示時はスマホで非表示) */}
+            {/* サマリーカード & クイック発注バー */}
             <div className={cn(
-                "grid grid-cols-4 gap-1.5 md:gap-4 transition-all print:hidden",
-                (isSmallHeight || !showFilters) ? "hidden" : "hidden md:grid"
+                "grid grid-cols-2 md:grid-cols-5 gap-1.5 md:gap-3 transition-all print:hidden",
+                (isSmallHeight || !showFilters) ? "hidden" : "grid"
             )}>
-                <Card className="shadow-none sm:shadow-sm">
+                <Card 
+                    className={cn(
+                        "shadow-none sm:shadow-sm cursor-pointer transition hover:border-slate-400",
+                        stockFilter === "all" && !hasActiveFilters && "ring-2 ring-primary/20 bg-slate-50/50"
+                    )}
+                    onClick={() => setStockFilter("all")}
+                >
                     <CardHeader className="p-1.5 sm:p-3 pb-0 sm:pb-0">
                         <CardTitle className="text-[9px] sm:text-xs md:text-sm font-medium flex items-center gap-1 text-muted-foreground">
                             <Package className="h-3 w-3 hidden sm:inline" />
-                            総数
+                            全商品
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-1.5 pt-0.5 sm:p-3 sm:pt-1">
-                        <div className="text-sm sm:text-lg md:text-xl font-bold">{summary.total}</div>
+                        <div className="text-sm sm:text-lg md:text-xl font-bold tabular-nums">{summary.total}</div>
                     </CardContent>
                 </Card>
-                <Card className="border-red-100 shadow-none sm:shadow-sm">
+                <Card 
+                    className={cn(
+                        "border-red-100 shadow-none sm:shadow-sm cursor-pointer transition hover:border-red-400",
+                        stockFilter === "out" && "ring-2 ring-red-500/30 bg-red-50/30"
+                    )}
+                    onClick={() => setStockFilter(stockFilter === "out" ? "all" : "out")}
+                >
                     <CardHeader className="p-1.5 sm:p-3 pb-0 sm:pb-0">
                         <CardTitle className="text-[9px] sm:text-xs md:text-sm font-medium text-red-600 flex items-center gap-1">
                             <TrendingDown className="h-3 w-3 hidden sm:inline" />
@@ -606,10 +676,16 @@ export default function BagsInventoryPage(): React.ReactElement {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-1.5 pt-0.5 sm:p-3 sm:pt-1">
-                        <div className="text-sm sm:text-lg md:text-xl font-bold text-red-600">{summary.outOfStock}</div>
+                        <div className="text-sm sm:text-lg md:text-xl font-bold text-red-600 tabular-nums">{summary.outOfStock}</div>
                     </CardContent>
                 </Card>
-                <Card className="border-amber-100 shadow-none sm:shadow-sm">
+                <Card 
+                    className={cn(
+                        "border-amber-100 shadow-none sm:shadow-sm cursor-pointer transition hover:border-amber-400",
+                        stockFilter === "low" && "ring-2 ring-amber-500/30 bg-amber-50/30"
+                    )}
+                    onClick={() => setStockFilter(stockFilter === "low" ? "all" : "low")}
+                >
                     <CardHeader className="p-1.5 sm:p-3 pb-0 sm:pb-0">
                         <CardTitle className="text-[9px] sm:text-xs md:text-sm font-medium text-amber-600 flex items-center gap-1">
                             <AlertTriangle className="h-3 w-3 hidden sm:inline" />
@@ -617,19 +693,51 @@ export default function BagsInventoryPage(): React.ReactElement {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-1.5 pt-0.5 sm:p-3 sm:pt-1">
-                        <div className="text-sm sm:text-lg md:text-xl font-bold text-amber-600">{summary.lowStock}</div>
+                        <div className="text-sm sm:text-lg md:text-xl font-bold text-amber-600 tabular-nums">{summary.lowStock}</div>
                     </CardContent>
                 </Card>
-                <Card className="border-blue-100 shadow-none sm:shadow-sm">
+                <Card 
+                    className={cn(
+                        "border-blue-100 shadow-none sm:shadow-sm cursor-pointer transition hover:border-blue-400",
+                        stockFilter === "reserved" && "ring-2 ring-blue-500/30 bg-blue-50/30"
+                    )}
+                    onClick={() => setStockFilter(stockFilter === "reserved" ? "all" : "reserved")}
+                >
                     <CardHeader className="p-1.5 sm:p-3 pb-0 sm:pb-0">
                         <CardTitle className="text-[9px] sm:text-xs md:text-sm font-medium text-blue-600 flex items-center gap-1">
                             <Calendar className="h-3 w-3 hidden sm:inline" />
-                            引当
+                            特売引当
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-1.5 pt-0.5 sm:p-3 sm:pt-1">
-                        <div className="text-sm sm:text-lg md:text-xl font-bold text-blue-600">{summary.hasReservation}</div>
+                        <div className="text-sm sm:text-lg md:text-xl font-bold text-blue-600 tabular-nums">{summary.hasReservation}</div>
                     </CardContent>
+                </Card>
+                <Card className="col-span-2 md:col-span-1 border-orange-200 bg-orange-50/40 shadow-none sm:shadow-sm flex flex-col justify-between p-2 md:p-3">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] md:text-xs font-semibold text-orange-800 flex items-center gap-1">
+                            <ShoppingCart className="h-3 w-3 text-orange-600" />
+                            要発注: <span className="font-bold tabular-nums">{summary.needOrder}</span>件
+                        </span>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 px-1.5 text-[10px] text-orange-700 hover:text-orange-900 hover:bg-orange-100"
+                            onClick={() => setStockFilter(stockFilter === "need_order" ? "all" : "need_order")}
+                        >
+                            {stockFilter === "need_order" ? "解除" : "絞込"}
+                        </Button>
+                    </div>
+                    <Button
+                        size="sm"
+                        variant="default"
+                        disabled={summary.needOrder === 0}
+                        onClick={handleAddAllLowStockToCart}
+                        className="mt-1 h-7 text-[10px] md:text-xs bg-orange-600 hover:bg-orange-700 text-white w-full gap-1 shadow-xs"
+                    >
+                        <ShoppingCart className="h-3 w-3" />
+                        推奨数を一括カート追加
+                    </Button>
                 </Card>
             </div>
 
@@ -641,11 +749,15 @@ export default function BagsInventoryPage(): React.ReactElement {
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                                 <Input
-                                    placeholder="商品名、JAN、商品ID..."
+                                    ref={searchInputRef}
+                                    placeholder="商品名、JAN、商品ID... (「 / 」キーでフォーカス)"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-9 h-8 md:h-9 text-xs md:text-sm"
+                                    className="pl-9 pr-10 h-8 md:h-9 text-xs md:text-sm"
                                 />
+                                <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                                    /
+                                </kbd>
                             </div>
                         </div>
 
@@ -705,6 +817,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">すべて</SelectItem>
+                                        <SelectItem value="need_order">要発注 (欠品+低在庫)</SelectItem>
                                         <SelectItem value="low">低在庫</SelectItem>
                                         <SelectItem value="out">欠品</SelectItem>
                                         <SelectItem value="reserved">引当あり</SelectItem>
@@ -744,7 +857,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                             {weightFilter !== "all" && <Badge variant="secondary">{weightFilter}kg</Badge>}
                             {stockFilter !== "all" && (
                                 <Badge variant="secondary">
-                                    {stockFilter === "low" ? "低在庫" : stockFilter === "out" ? "欠品" : "特売引当あり"}
+                                    {stockFilter === "need_order" ? "要発注" : stockFilter === "low" ? "低在庫" : stockFilter === "out" ? "欠品" : "特売引当あり"}
                                 </Badge>
                             )}
                             {originFilter !== "all" && <Badge variant="secondary">産地: {originFilter}</Badge>}
@@ -787,6 +900,7 @@ export default function BagsInventoryPage(): React.ReactElement {
                     supplierStockLotsMap={supplierStockLotsMap}
                     incomingMap={incomingMap}
                     saleEvents={saleEvents || []}
+                    loading={loading}
                     onEdit={handleEditProduct}
                     onIncomingStockClick={(product) => {
                         setIncomingStockProduct(product);

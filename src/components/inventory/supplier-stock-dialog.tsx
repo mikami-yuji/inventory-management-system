@@ -19,6 +19,7 @@ import { useWIPActions } from "@/hooks/use-work-in-progress";
 import { Package, ArrowRight, Loader2, Plus, Trash2, Save, X, Edit2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { isRollBag } from "@/lib/services/inventory-service";
+import { cn } from "@/lib/utils";
 
 type SupplierStockDialogProps = {
     product: Product | null;
@@ -324,39 +325,61 @@ export function SupplierStockDialog({
                                     登録されているロットはありません。
                                 </div>
                             ) : (
-                                lots.map(lot => (
-                                    <div key={lot.id} className="p-3 bg-white flex flex-col gap-2">
-                                        {editingLotId === lot.id ? (
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <Input type="date" value={editLotDate} onChange={e => setEditLotDate(e.target.value)} className="h-8 text-sm" />
-                                                <CalculableInput value={editLotQuantity === 0 ? "" : editLotQuantity} onChange={value => setEditLotQuantity(Number(value) || 0)} className="h-8 text-sm" placeholder="数量" />
-                                                <Input value={editLotNote} onChange={e => setEditLotNote(e.target.value)} placeholder="メモ" className="col-span-2 h-8 text-sm" />
-                                                <div className="col-span-2 flex justify-end gap-2 mt-1">
-                                                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditingLotId(null)}>キャンセル</Button>
-                                                    <Button size="sm" className="h-7 text-xs" onClick={handleSaveEdit} disabled={loading}>保存</Button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-semibold text-lg">{lot.quantity.toLocaleString()}<span className="text-sm ml-0.5 font-normal">{unit}</span></span>
-                                                        <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded border">{lot.stockDate}</span>
+                                lots.map(lot => {
+                                    const lotRatio = displayStock > 0 ? Math.min(100, Math.round((lot.quantity / displayStock) * 100)) : 0;
+                                    const lotDate = new Date(lot.stockDate);
+                                    const now = new Date();
+                                    const monthsElapsed = (now.getFullYear() - lotDate.getFullYear()) * 12 + now.getMonth() - lotDate.getMonth();
+                                    const isLongTerm = monthsElapsed >= 5 && lot.quantity > 0;
+
+                                    return (
+                                        <div key={lot.id} className="p-3 bg-white flex flex-col gap-2">
+                                            {editingLotId === lot.id ? (
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <Input type="date" value={editLotDate} onChange={e => setEditLotDate(e.target.value)} className="h-8 text-sm" />
+                                                    <CalculableInput value={editLotQuantity === 0 ? "" : editLotQuantity} onChange={value => setEditLotQuantity(Number(value) || 0)} className="h-8 text-sm" placeholder="数量" />
+                                                    <Input value={editLotNote} onChange={e => setEditLotNote(e.target.value)} placeholder="メモ" className="col-span-2 h-8 text-sm" />
+                                                    <div className="col-span-2 flex justify-end gap-2 mt-1">
+                                                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditingLotId(null)}>キャンセル</Button>
+                                                        <Button size="sm" className="h-7 text-xs" onClick={handleSaveEdit} disabled={loading}>保存</Button>
                                                     </div>
-                                                    {lot.note && <div className="text-xs text-gray-500 mt-0.5">{lot.note}</div>}
                                                 </div>
-                                                <div className="flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStartEdit(lot)}>
-                                                        <Edit2 className="h-4 w-4 text-blue-600" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteLot(lot.id)}>
-                                                        <Trash2 className="h-4 w-4 text-red-600" />
-                                                    </Button>
+                                            ) : (
+                                                <div className="space-y-1.5">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-semibold text-lg tabular-nums">{lot.quantity.toLocaleString()}<span className="text-sm ml-0.5 font-normal">{unit}</span></span>
+                                                                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded border">{lot.stockDate}</span>
+                                                                {isLongTerm && (
+                                                                    <span className="text-[10px] bg-red-100 text-red-700 font-semibold px-1.5 py-0.5 rounded border border-red-200">
+                                                                        長期在庫 ({monthsElapsed}ヶ月経過)
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {lot.note && <div className="text-xs text-gray-500 mt-0.5">{lot.note}</div>}
+                                                        </div>
+                                                        <div className="flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStartEdit(lot)}>
+                                                                <Edit2 className="h-4 w-4 text-blue-600" />
+                                                            </Button>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteLot(lot.id)}>
+                                                                <Trash2 className="h-4 w-4 text-red-600" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                    {/* ミニプログレスバー */}
+                                                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                                        <div
+                                                            className={cn("h-full rounded-full transition-all", isLongTerm ? "bg-red-400" : "bg-purple-500")}
+                                                            style={{ width: `${lotRatio}%` }}
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
+                                            )}
+                                        </div>
+                                    );
+                                })
                             )}
                         </div>
                     </div>

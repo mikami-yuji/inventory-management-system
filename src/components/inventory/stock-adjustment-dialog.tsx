@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateInventory } from "@/hooks/use-inventory";
 import { useVoiceInput } from "@/hooks/use-voice-input";
-import { Loader2, Mic, MicOff, Package, Clock, CalendarDays } from "lucide-react";
+import { useUndoToast } from "@/hooks/use-undo-toast";
+import { Loader2, Mic, MicOff, Package, Clock, CalendarDays, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Product, WorkInProgress } from "@/types";
 
@@ -38,7 +39,9 @@ export function StockAdjustmentDialog({
 }: StockAdjustmentDialogProps): React.ReactElement {
     const [quantity, setQuantity] = useState<string>(currentStock.toString());
     const [note, setNote] = useState<string>("");
+    const [showConfirmLargeChange, setShowConfirmLargeChange] = useState<boolean>(false);
     const { updateStock, loading, error } = useUpdateInventory();
+    const { showUndoToast } = useUndoToast();
 
     const { isListening, startListening, stopListening, hasSupport } = useVoiceInput({
         onResult: (text) => {
@@ -56,6 +59,7 @@ export function StockAdjustmentDialog({
             const currentStockStr = currentStock.toString();
             setQuantity(prev => (prev !== currentStockStr) ? currentStockStr : prev);
             setNote("");
+            setShowConfirmLargeChange(false);
         }
     }, [open, product, currentStock, oldPriceQuantity]);
 
@@ -64,6 +68,35 @@ export function StockAdjustmentDialog({
     const diff = isNaN(newQty) ? 0 : currentStock - newQty;
     const calculatedOldPriceQty = diff > 0 ? Math.max(0, oldPriceQuantity - diff) : oldPriceQuantity;
     const calculatedNewPriceQty = isNaN(newQty) ? 0 : Math.max(0, newQty - calculatedOldPriceQty);
+
+    // 大幅な変動（300%以上または5000以上の乖離）の判定
+    const absoluteDiff = Math.abs(currentStock - (isNaN(newQty) ? currentStock : newQty));
+    const isLargeVariance = currentStock > 0
+        ? (absoluteDiff >= 5000 || absoluteDiff >= currentStock * 3)
+        : absoluteDiff >= 5000;
+
+    const executeSave = async () => {
+        if (!product) return;
+        const newQuantity = parseInt(quantity, 10);
+        const previousStock = currentStock;
+
+        // 調整タイプとして実行
+        const success = await updateStock(product.id, newQuantity, "adjustment", note);
+
+        if (success) {
+            onSuccess();
+            onOpenChange(false);
+
+            // Undoトーストを表示
+            showUndoToast({
+                message: `${product.name} の在庫を ${previousStock.toLocaleString()} → ${newQuantity.toLocaleString()} に変更しました`,
+                onUndo: async () => {
+                    await updateStock(product.id, previousStock, "adjustment", "Undo: 在庫調整の取り消し");
+                    onSuccess();
+                }
+            });
+        }
+    };
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -75,13 +108,13 @@ export function StockAdjustmentDialog({
             return;
         }
 
-        // 調整タイプとして実行（APIは adjustment タイプの場合、quantity を新しい在庫数として扱う）
-        const success = await updateStock(product.id, newQuantity, "adjustment", note);
-
-        if (success) {
-            onSuccess();
-            onOpenChange(false);
+        // 大幅な変動がある場合は二重確認を表示
+        if (isLargeVariance && !showConfirmLargeChange) {
+            setShowConfirmLargeChange(true);
+            return;
         }
+
+        await executeSave();
     };
 
     if (!product) return <></>;
@@ -214,18 +247,45 @@ export function StockAdjustmentDialog({
                         />
                     </div>
 
+                    {/* 大幅変動の確認警告 */}
+                    {showConfirmLargeChange && (
+                        <div className="bg-amber-50 border border-amber-300 rounded-md p-3 text-amber-900 text-xs flex flex-col gap-2">
+                            <div className="flex items-center gap-2 font-semibold text-amber-800">
+                                <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+                                <span>在庫の変動幅が非常に大きくなっています</span>
+                            </div>
+                            <p className="text-[11px] text-amber-700 leading-relaxed">
+                                現在庫 {currentStock.toLocaleString()}{unit} に対し、{newQty.toLocaleString()}{unit}（差分: {Math.abs(currentStock - newQty).toLocaleString()}{unit}）への更新です。入力ミスがないかご確認ください。
+                            </p>
+                        </div>
+                    )}
+
                     {error && (
                         <p className="text-sm text-red-500 text-center">{error}</p>
                     )}
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-                            キャンセル
-                        </Button>
-                        <Button type="submit" disabled={loading}>
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            更新
-                        </Button>
+                        {showConfirmLargeChange ? (
+                            <>
+                                <Button type="button" variant="outline" onClick={() => setShowConfirmLargeChange(false)} disabled={loading}>
+                                    数量を再確認する
+                                </Button>
+                                <Button type="button" variant="destructive" onClick={executeSave} disabled={loading}>
+                                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    この数量で確定する
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+                                    キャンセル
+                                </Button>
+                                <Button type="submit" disabled={loading}>
+                                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    更新
+                                </Button>
+                            </>
+                        )}
                     </DialogFooter>
                 </form>
             </DialogContent>

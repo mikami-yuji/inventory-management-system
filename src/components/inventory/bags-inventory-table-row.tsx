@@ -138,7 +138,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
             {/* 4. 現在庫 */}
             <TableCell
-                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative"
+                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative tabular-nums"
                 onClick={() => setAdjustStock(product)}
             >
                 {isRoll ? (
@@ -170,7 +170,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
             {/* 5. 特売引当 */}
             <TableCell
-                className={cn("text-right", hasAllocation && "cursor-pointer hover:bg-blue-50 transition-colors")}
+                className={cn("text-right tabular-nums", hasAllocation && "cursor-pointer hover:bg-blue-50 transition-colors")}
                 onClick={() => hasAllocation && setViewAllocation(product)}
             >
                 {hasAllocation ? (
@@ -189,9 +189,9 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                                     const item = event.items.find(i => i.productId === product.id);
                                     if (item && item.allocatedQuantity > 0 && (event.status === 'active' || event.status === 'upcoming')) {
                                         return [{
-                                            date: event.dates[0],
-                                            client: event.clientName,
-                                            qty: item.allocatedQuantity
+                                             date: event.dates[0],
+                                             client: event.clientName,
+                                             qty: item.allocatedQuantity
                                         }];
                                     }
                                     return [];
@@ -210,7 +210,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
             </TableCell>
 
             {/* 6. 有効在庫 */}
-            <TableCell className="text-right">
+            <TableCell className="text-right tabular-nums">
                 <div className={cn(
                     "font-bold text-lg",
                     availableStock < 0 ? "text-red-600" : availableStock === 0 ? "text-orange-500" : ""
@@ -226,7 +226,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
             {/* 7. 入荷予定 */}
             <TableCell
-                className="text-right cursor-pointer hover:bg-muted/50 transition-colors"
+                className="text-right cursor-pointer hover:bg-muted/50 transition-colors tabular-nums"
                 onClick={() => onIncomingStockClick(product)}
             >
                 {incoming && incoming.total > 0 ? (
@@ -253,7 +253,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
             {/* 8. メーカー在庫 */}
             <TableCell
-                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative"
+                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative tabular-nums"
                 onClick={() => setEditSupplierStock(product)}
             >
                 {supplierStock > 0 ? (
@@ -299,7 +299,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
             {/* 9. 仕掛中 */}
             <TableCell
-                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative"
+                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative tabular-nums"
                 onClick={() => setEditWIP(product)}
             >
                 {wipList.length > 0 ? (

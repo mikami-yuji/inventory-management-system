@@ -1,12 +1,13 @@
 import React, { useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { calculateStockPrediction } from "@/lib/services";
 import { useCart } from "@/contexts/cart-context";
 import type { Product, WorkInProgress, IncomingStock, SupplierStockLot } from "@/types";
 import type { SaleEvent } from "@/hooks/use-sale-events";
 import { useAppSettings } from "@/hooks/use-masters";
 import { useInventoryDialogs } from "./use-inventory-dialogs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { BagsInventoryTableRow } from "./bags-inventory-table-row";
 import { InventoryDialogContainers } from "./inventory-dialog-containers";
 
@@ -19,6 +20,7 @@ export type BagsInventoryTableProps = {
     supplierStockLotsMap: Map<string, SupplierStockLot[]>;
     incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
     saleEvents: SaleEvent[];
+    loading?: boolean;
     onEdit: (product: Product) => void;
     onIncomingStockClick: (product: Product) => void;
     onAnalyze?: (product: Product) => void;
@@ -34,6 +36,7 @@ export function BagsInventoryTable({
     supplierStockLotsMap,
     incomingMap,
     saleEvents,
+    loading = false,
     onEdit,
     onIncomingStockClick,
     onAnalyze,
@@ -94,31 +97,57 @@ export function BagsInventoryTable({
                 <CardTitle>米袋在庫状況 ({products.length}件)</CardTitle>
             </CardHeader>
             <CardContent>
-                {products.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                        該当する商品がありません
-                    </div>
-                ) : (
-                    <Table wrapperClassName="h-[calc(100vh-280px)] overflow-auto border rounded-md">
-                        <TableHeader className="bg-background shadow-[0_1px_3px_rgba(0,0,0,0.1)]">
+                <Table wrapperClassName="h-[calc(100vh-280px)] overflow-auto border rounded-md">
+                    <TableHeader className="bg-background shadow-[0_1px_3px_rgba(0,0,0,0.1)]">
+                        <TableRow>
+                            <TableHead className="w-[60px] sticky top-0 left-0 z-50 bg-background bg-clip-padding border-r shadow-sm">画像</TableHead>
+                            <TableHead className="w-[180px] sticky top-0 md:left-[60px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-sm">商品情報</TableHead>
+                            <TableHead className="w-[120px] sticky top-0 md:left-[240px] z-40 md:z-50 bg-background bg-clip-padding md:border-l md:shadow-[2px_2px_5px_-1px_rgba(0,0,0,0.1)]">スペック</TableHead>
+                            <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">現在庫</TableHead>
+                            <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">特売引当</TableHead>
+                            <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">有効在庫</TableHead>
+                            <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">入荷予定</TableHead>
+                            <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">メーカー在庫</TableHead>
+                            <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">仕掛中</TableHead>
+                            <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">在庫状況</TableHead>
+                            <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">全体状況</TableHead>
+                            <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">在庫予測</TableHead>
+                            <TableHead className="w-[100px] sticky top-0 z-40 bg-background bg-clip-padding shadow-sm text-center">発注</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading ? (
+                            Array.from({ length: 8 }).map((_, index) => (
+                                <TableRow key={`skeleton-${index}`} className="animate-pulse">
+                                    <TableCell className="border-r"><Skeleton className="h-10 w-10 rounded" /></TableCell>
+                                    <TableCell className="md:border-r">
+                                        <Skeleton className="h-4 w-28 mb-1" />
+                                        <Skeleton className="h-3 w-16" />
+                                    </TableCell>
+                                    <TableCell className="md:border-l">
+                                        <Skeleton className="h-4 w-20 mb-1" />
+                                        <Skeleton className="h-3 w-12" />
+                                    </TableCell>
+                                    <TableCell className="text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
+                                    <TableCell className="text-right"><Skeleton className="h-5 w-14 ml-auto" /></TableCell>
+                                    <TableCell className="text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
+                                    <TableCell className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+                                    <TableCell className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+                                    <TableCell className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+                                    <TableCell className="text-center"><Skeleton className="h-5 w-14 mx-auto rounded-full" /></TableCell>
+                                    <TableCell className="text-center"><Skeleton className="h-5 w-14 mx-auto rounded-full" /></TableCell>
+                                    <TableCell className="text-center"><Skeleton className="h-4 w-16 mx-auto" /></TableCell>
+                                    <TableCell className="text-center"><Skeleton className="h-8 w-8 mx-auto rounded" /></TableCell>
+                                </TableRow>
+                            ))
+                        ) : products.length === 0 ? (
                             <TableRow>
-                                <TableHead className="w-[60px] sticky top-0 left-0 z-50 bg-background bg-clip-padding border-r shadow-sm">画像</TableHead>
-                                <TableHead className="w-[180px] sticky top-0 md:left-[60px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-sm">商品情報</TableHead>
-                                <TableHead className="w-[120px] sticky top-0 md:left-[240px] z-40 md:z-50 bg-background bg-clip-padding md:border-l md:shadow-[2px_2px_5px_-1px_rgba(0,0,0,0.1)]">スペック</TableHead>
-                                <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">現在庫</TableHead>
-                                <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">特売引当</TableHead>
-                                <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">有効在庫</TableHead>
-                                <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">入荷予定</TableHead>
-                                <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">メーカー在庫</TableHead>
-                                <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">仕掛中</TableHead>
-                                <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">在庫状況</TableHead>
-                                <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">全体状況</TableHead>
-                                <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">在庫予測</TableHead>
-                                <TableHead className="w-[100px] sticky top-0 z-40 bg-background bg-clip-padding shadow-sm text-center">発注</TableHead>
+                                <TableCell colSpan={13} className="text-center py-8 text-muted-foreground">
+                                    該当する商品がありません
+                                </TableCell>
                             </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {products.map((product) => (
+                        ) : (
+                            products.map((product) => (
                                 <BagsInventoryTableRow
                                     key={product.id}
                                     product={product}
@@ -138,10 +167,10 @@ export function BagsInventoryTable({
                                     onAnalyze={onAnalyze}
                                     onAddToCart={handleAddToCart}
                                 />
-                            ))}
-                        </TableBody>
-                    </Table>
-                )}
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
             </CardContent>
 
             <InventoryDialogContainers
