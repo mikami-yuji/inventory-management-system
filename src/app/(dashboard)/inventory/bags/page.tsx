@@ -546,7 +546,7 @@ export default function BagsInventoryPage(): React.ReactElement {
         let addedCount = 0;
         needOrderProducts.forEach(p => {
             const currentQty = inventoryMap.get(p.id)?.quantity || 0;
-            const targetStock = p.optimalStock || (p.safetyStock ? p.safetyStock * 2 : 1000);
+            const targetStock = p.minStockAlert ? p.minStockAlert * 2 : 1000;
             const orderQty = Math.max(100, targetStock - currentQty);
             addToCart(p, orderQty);
             addedCount++;
