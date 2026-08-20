@@ -114,7 +114,7 @@ export function BagsInventoryTable({
                             <TableHead className="w-[54px] sticky top-0 left-0 z-50 bg-background bg-clip-padding border-r shadow-sm text-center">画像</TableHead>
                             <TableHead className="w-[180px] sticky top-0 md:left-[54px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-sm">商品情報</TableHead>
                             <TableHead className="w-[110px] sticky top-0 md:left-[234px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.08)]">量目 / 規格</TableHead>
-                            <TableHead className="text-right sticky top-0 z-40 bg-blue-50/30 bg-clip-padding shadow-sm">現在庫</TableHead>
+                            <TableHead className="text-right sticky top-0 z-40 bg-blue-50/40 font-bold text-slate-900 bg-clip-padding shadow-sm">現在庫</TableHead>
                             <TableHead className="text-right sticky top-0 z-40 bg-blue-50/30 bg-clip-padding shadow-sm">特売引当</TableHead>
                             <TableHead className="text-right sticky top-0 z-40 bg-blue-50/50 font-bold text-blue-950 bg-clip-padding border-r shadow-sm">有効在庫</TableHead>
                             <TableHead className="text-right sticky top-0 z-40 bg-amber-50/30 bg-clip-padding shadow-sm">入荷予定</TableHead>

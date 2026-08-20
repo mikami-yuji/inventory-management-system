@@ -173,28 +173,38 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                 </div>
             </TableCell>
 
-            {/* 4. 現在庫 */}
+            {/* 4. 現在庫 (最重要項目として大きく目立たせる) */}
             <TableCell
-                className="text-right cursor-pointer hover:bg-blue-100/50 transition-colors group relative tabular-nums bg-blue-50/15 p-2"
+                className="text-right cursor-pointer hover:bg-blue-100/60 transition-colors group relative tabular-nums bg-blue-50/25 p-2"
                 onClick={() => setAdjustStock(product)}
-                title={updatedAt ? `最終更新: ${new Date(updatedAt).toLocaleString('ja-JP')}` : undefined}
+                title={updatedAt ? `最終更新: ${new Date(updatedAt).toLocaleString('ja-JP')} (クリックで調整)` : 'クリックで在庫数を調整'}
             >
                 {isRoll ? (
                     <div>
-                        <div className="font-bold text-sm md:text-base flex items-center justify-end gap-1 text-slate-800">
-                            {currentStock.toLocaleString()}m
-                            <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                        <div className={cn(
+                            "font-black text-base md:text-lg tracking-tight flex items-center justify-end gap-1",
+                            currentStock === 0 ? "text-red-600" : "text-slate-950"
+                        )}>
+                            {currentStock.toLocaleString()}<span className="text-xs font-bold text-slate-600">m</span>
+                            <Pencil className="h-3 w-3 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
-                        <div className="text-[10px] text-slate-400">約{currentBags.toLocaleString()}枚</div>
+                        <div className="text-[11px] font-semibold text-slate-500">
+                            約{currentBags.toLocaleString()}枚
+                        </div>
                     </div>
                 ) : (
-                    <div className="font-bold text-sm md:text-base flex items-center justify-end gap-1 text-slate-800">
-                        {currentStock.toLocaleString()}枚
-                        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                    <div>
+                        <div className={cn(
+                            "font-black text-base md:text-lg tracking-tight flex items-center justify-end gap-1",
+                            currentStock === 0 ? "text-red-600" : "text-slate-950"
+                        )}>
+                            {currentStock.toLocaleString()}<span className="text-xs font-bold text-slate-600">枚</span>
+                            <Pencil className="h-3 w-3 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
                     </div>
                 )}
                 {oldPriceQty > 0 && (
-                    <div className="text-[9px] text-orange-600 font-medium mt-0.5" title="旧価格在庫の内訳">
+                    <div className="text-[9px] text-orange-600 font-bold mt-0.5" title="旧価格在庫の内訳">
                         旧価格: {oldPriceQty.toLocaleString()}{isRoll ? 'm' : '枚'}
                     </div>
                 )}
