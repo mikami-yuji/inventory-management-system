@@ -166,7 +166,18 @@ export function StockAdjustmentDialog({
                     </div>
                 </div>
 
-                <form onSubmit={handleSave} className="grid gap-4 py-4">
+                <form
+                    onSubmit={handleSave}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            const target = e.target as HTMLElement;
+                            if (target.tagName !== "TEXTAREA" && target.tagName !== "BUTTON") {
+                                e.preventDefault();
+                            }
+                        }
+                    }}
+                    className="grid gap-4 py-4"
+                >
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="current" className="text-right">
                             現在庫

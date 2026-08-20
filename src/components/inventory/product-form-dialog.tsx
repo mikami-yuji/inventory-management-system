@@ -207,6 +207,16 @@ export function ProductFormDialog({
         }
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>): void => {
+        if (e.key === "Enter") {
+            const target = e.target as HTMLElement;
+            // textarea や button 以外での Enter による誤送信を防止
+            if (target.tagName !== "TEXTAREA" && target.tagName !== "BUTTON") {
+                e.preventDefault();
+            }
+        }
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -221,7 +231,7 @@ export function ProductFormDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-4">
                     {error && (
                         <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
                             {error}

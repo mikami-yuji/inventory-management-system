@@ -211,7 +211,18 @@ export function ProductDetailDialog({
                             )}
 
                             {/* 調整フォーム (Moved to top for accessibility) */}
-                            <form onSubmit={handleSave} className="space-y-3 mb-6 p-4 bg-slate-50/50 rounded-xl border border-slate-100">
+                            <form
+                                onSubmit={handleSave}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        const target = e.target as HTMLElement;
+                                        if (target.tagName !== "TEXTAREA" && target.tagName !== "BUTTON") {
+                                            e.preventDefault();
+                                        }
+                                    }
+                                }}
+                                className="space-y-3 mb-6 p-4 bg-slate-50/50 rounded-xl border border-slate-100"
+                            >
                                 <div className="flex items-center justify-between mb-1">
                                     <Label htmlFor="quantity" className="text-xs font-bold flex items-center gap-1.5 text-slate-700">
                                         <Info className="h-3.5 w-3.5 text-primary" />
