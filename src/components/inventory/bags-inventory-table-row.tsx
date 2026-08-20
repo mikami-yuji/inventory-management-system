@@ -36,6 +36,24 @@ export interface BagsInventoryTableRowProps {
     onAddToCart: (product: Product) => void;
 }
 
+// 量目バッジのカラーリングヘルパー
+const renderWeightBadge = (weight?: number | null) => {
+    if (!weight) return <span className="text-[10px] text-muted-foreground font-medium">-</span>;
+
+    let badgeClass = "bg-blue-600 text-white"; // 5kg 標準
+    if (weight === 10) badgeClass = "bg-indigo-950 text-white ring-1 ring-indigo-400/30"; // 10kg
+    else if (weight === 5) badgeClass = "bg-blue-600 text-white shadow-xs"; // 5kg
+    else if (weight === 2 || weight === 3) badgeClass = "bg-emerald-700 text-white shadow-xs"; // 2kg, 3kg
+    else if (weight === 1.4) badgeClass = "bg-amber-600 text-white shadow-xs"; // 1.4kg
+    else if (weight < 1) badgeClass = "bg-purple-800 text-white shadow-xs"; // 0.75kg等小袋
+
+    return (
+        <span className={cn("inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-black tracking-tight", badgeClass)}>
+            {weight}kg
+        </span>
+    );
+};
+
 export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
     product,
     inventoryItem,
@@ -82,12 +100,23 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
     const hasAllocation = allocation.bags > 0 || (isRoll && allocation.meters > 0);
 
+    // 左端のステータスカラーボーダー
+    const statusBorderColor = isOutOfStock
+        ? "border-l-red-500"
+        : isLowStock
+            ? "border-l-amber-400"
+            : "border-l-emerald-500";
+
     return (
-        <TableRow className={cn("group", isOutOfStock && "bg-red-50 bg-opacity-50")}>
+        <TableRow className={cn(
+            "group transition-colors border-b odd:bg-white even:bg-slate-50/40 hover:bg-sky-50/60",
+            isOutOfStock && "!bg-red-50/50 hover:!bg-red-100/50"
+        )}>
             {/* 1. 画像 */}
             <TableCell className={cn(
-                "sticky left-0 z-10 transition-colors border-r",
-                isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
+                "sticky left-0 z-10 transition-colors border-r border-l-4 p-1.5 text-center",
+                statusBorderColor,
+                isOutOfStock ? "bg-red-50/90" : "bg-background group-hover:bg-sky-50/90"
             )}>
                 {product.imageUrl ? (
                     <ProductImage
@@ -97,72 +126,75 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                         onClick={() => setSelectedImage({ url: product.imageUrl!, alt: product.name, name: product.name })}
                     />
                 ) : (
-                    <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
-                        <Package className="h-5 w-5 text-gray-400" />
+                    <div className="w-10 h-10 mx-auto bg-gray-100 rounded border flex items-center justify-center">
+                        <Package className="h-4 w-4 text-gray-400" />
                     </div>
                 )}
             </TableCell>
 
             {/* 2. 商品情報 */}
             <TableCell className={cn(
-                "md:sticky md:left-[60px] z-0 md:z-10 transition-colors md:border-r",
-                isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
+                "md:sticky md:left-[54px] z-0 md:z-10 transition-colors md:border-r p-2",
+                isOutOfStock ? "bg-red-50/90" : "bg-background group-hover:bg-sky-50/90"
             )}>
                 <div className="max-w-[180px]">
-                    <div className="font-medium truncate" title={product.name}>{product.name}</div>
-                    <div className="text-sm text-gray-500 truncate">受注№: {product.sku || '-'}</div>
-                    {product.productCode && <div className="text-sm text-gray-500 truncate">商品コード: {product.productCode}</div>}
-                    <div className="text-xs text-gray-400 truncate">JAN: {product.janCode || '-'}</div>
+                    <div className="font-bold text-xs md:text-sm truncate leading-snug" title={product.name}>
+                        {product.name}
+                    </div>
+                    <div className="text-[11px] text-slate-500 truncate mt-0.5">
+                        受注№: <span className="font-mono text-slate-700">{product.sku || '-'}</span>
+                    </div>
+                    {product.janCode && (
+                        <div className="text-[10px] text-slate-400 font-mono truncate">
+                            JAN: {product.janCode}
+                        </div>
+                    )}
                 </div>
             </TableCell>
 
-            {/* 3. スペック */}
+            {/* 3. スペック (量目を最前面に強調) */}
             <TableCell className={cn(
-                "md:sticky md:left-[240px] z-0 md:z-10 md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.1)] transition-colors",
-                isOutOfStock ? "bg-red-50" : "bg-background group-hover:bg-muted/50"
+                "md:sticky md:left-[234px] z-0 md:z-10 md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.06)] md:border-r transition-colors p-2",
+                isOutOfStock ? "bg-red-50/90" : "bg-background group-hover:bg-sky-50/90"
             )}>
-                <div className="text-sm">
-                    <span className="font-medium">{product.weight}kg</span> / {product.shape}
-                    {isRoll && (
-                        <>
-                            <div className="text-xs text-blue-600 mt-1">
-                                ピッチ: {getPitch(product.weight || 0)}mm
-                            </div>
-                            <div className="text-xs text-green-600">
-                                1巻: {product.metersPerRoll || 400}m
-                            </div>
-                        </>
+                <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-1.5">
+                        {renderWeightBadge(product.weight)}
+                        <span className="text-xs font-semibold text-slate-700">{product.shape || "-"}</span>
+                    </div>
+                    {isRoll ? (
+                        <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                            <span className="bg-slate-100 px-1 py-0.5 rounded text-[9px] font-mono">P:{getPitch(product.weight || 0)}</span>
+                            <span className="bg-slate-100 px-1 py-0.5 rounded text-[9px] font-mono">{product.metersPerRoll || 400}m</span>
+                        </div>
+                    ) : (
+                        product.material && <div className="text-[10px] text-slate-400 truncate max-w-[90px]">{product.material}</div>
                     )}
                 </div>
             </TableCell>
 
             {/* 4. 現在庫 */}
             <TableCell
-                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative tabular-nums"
+                className="text-right cursor-pointer hover:bg-blue-100/50 transition-colors group relative tabular-nums bg-blue-50/15 p-2"
                 onClick={() => setAdjustStock(product)}
+                title={updatedAt ? `最終更新: ${new Date(updatedAt).toLocaleString('ja-JP')}` : undefined}
             >
                 {isRoll ? (
-                    <>
-                        <div className="font-bold text-lg flex items-center justify-end gap-1">
+                    <div>
+                        <div className="font-bold text-sm md:text-base flex items-center justify-end gap-1 text-slate-800">
                             {currentStock.toLocaleString()}m
                             <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
                         </div>
-                        <div className="text-xs text-muted-foreground float-right">約{currentBags.toLocaleString()}枚</div>
-                    </>
+                        <div className="text-[10px] text-slate-400">約{currentBags.toLocaleString()}枚</div>
+                    </div>
                 ) : (
-                    <div className="font-bold text-lg flex items-center justify-end gap-1">
+                    <div className="font-bold text-sm md:text-base flex items-center justify-end gap-1 text-slate-800">
                         {currentStock.toLocaleString()}枚
                         <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
                     </div>
                 )}
-                {updatedAt && (
-                    <div className="text-[10px] text-gray-400 clear-both pt-1">
-                        {new Date(updatedAt).toLocaleDateString()}{" "}
-                        {new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                )}
                 {oldPriceQty > 0 && (
-                    <div className="text-[10px] text-orange-600 clear-both mt-0.5" title="旧価格在庫の内訳">
+                    <div className="text-[9px] text-orange-600 font-medium mt-0.5" title="旧価格在庫の内訳">
                         旧価格: {oldPriceQty.toLocaleString()}{isRoll ? 'm' : '枚'}
                     </div>
                 )}
@@ -170,16 +202,16 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
             {/* 5. 特売引当 */}
             <TableCell
-                className={cn("text-right tabular-nums", hasAllocation && "cursor-pointer hover:bg-blue-50 transition-colors")}
+                className={cn("text-right tabular-nums bg-blue-50/15 p-2", hasAllocation && "cursor-pointer hover:bg-blue-100/50 transition-colors")}
                 onClick={() => hasAllocation && setViewAllocation(product)}
             >
                 {hasAllocation ? (
                     <div className="text-blue-600">
-                        <div className="font-medium underline decoration-dotted underline-offset-4">
+                        <div className="font-bold text-xs md:text-sm underline decoration-dotted underline-offset-2">
                             {isRoll ? `${allocation.meters.toLocaleString()}m` : `${allocation.bags.toLocaleString()}枚`}
                         </div>
                         {isRoll && (
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-[10px] text-slate-400">
                                 約{allocation.bags.toLocaleString()}枚
                             </div>
                         )}
@@ -196,29 +228,29 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                                     }
                                     return [];
                                 })
-                                .slice(0, 2)
+                                .slice(0, 1)
                                 .map((evt, idx) => (
-                                    <div key={idx} className="text-[10px] text-slate-500 truncate" title={`${evt.client}: ${evt.qty.toLocaleString()}枚`}>
-                                        {evt.client}: {evt.qty.toLocaleString()}枚
+                                    <div key={idx} className="text-[9px] text-blue-500/80 truncate max-w-[100px] ml-auto" title={`${evt.client}: ${evt.qty.toLocaleString()}枚`}>
+                                        {evt.client}
                                     </div>
                                 ))}
                         </div>
                     </div>
                 ) : (
-                    <span className="text-muted-foreground">-</span>
+                    <span className="text-slate-300 text-xs">-</span>
                 )}
             </TableCell>
 
-            {/* 6. 有効在庫 */}
-            <TableCell className="text-right tabular-nums">
+            {/* 6. 有効在庫 (手元の実質在庫: 最重要) */}
+            <TableCell className="text-right tabular-nums bg-blue-50/40 border-r border-slate-200 p-2">
                 <div className={cn(
-                    "font-bold text-lg",
-                    availableStock < 0 ? "text-red-600" : availableStock === 0 ? "text-orange-500" : ""
+                    "font-black text-base md:text-lg tracking-tight",
+                    availableStock < 0 ? "text-red-600" : availableStock === 0 ? "text-orange-500" : "text-emerald-700"
                 )}>
                     {isRoll ? `${availableStock.toLocaleString()}m` : `${availableStock.toLocaleString()}枚`}
                 </div>
                 {isRoll && (
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-[10px] text-slate-500 font-medium">
                         約{availableBags.toLocaleString()}枚
                     </div>
                 )}
@@ -226,206 +258,154 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
             {/* 7. 入荷予定 */}
             <TableCell
-                className="text-right cursor-pointer hover:bg-muted/50 transition-colors tabular-nums"
+                className="text-right cursor-pointer hover:bg-amber-100/50 transition-colors tabular-nums bg-amber-50/15 p-2"
                 onClick={() => onIncomingStockClick(product)}
             >
                 {incoming && incoming.total > 0 ? (
                     <div>
-                        <div className="font-medium text-blue-600 underline decoration-dotted underline-offset-4">
+                        <div className="font-bold text-xs md:text-sm text-blue-700 underline decoration-dotted underline-offset-2">
                             {incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}
                         </div>
                         {incoming.items.length > 0 && (
-                            <div className="flex flex-col gap-0.5 mt-0.5">
-                                {incoming.items.map((item, idx) => (
-                                    <div key={idx} className="text-[10px] text-gray-500 truncate" title={`${item.note || ''}`}>
-                                        {item.expectedDate ? `${new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}予定: ` : '納期確認中: '}
-                                        {item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}
-                                        {item.note && ` (${item.note})`}
-                                    </div>
-                                ))}
+                            <div className="text-[9px] text-slate-500 truncate max-w-[100px] ml-auto mt-0.5">
+                                {incoming.items[0].expectedDate ? `${new Date(incoming.items[0].expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}着` : '納期確認中'}
                             </div>
                         )}
                     </div>
                 ) : (
-                    <span className="text-muted-foreground">-</span>
+                    <span className="text-slate-300 text-xs">-</span>
                 )}
             </TableCell>
 
             {/* 8. メーカー在庫 */}
             <TableCell
-                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative tabular-nums"
+                className="text-right cursor-pointer hover:bg-amber-100/50 transition-colors group relative tabular-nums bg-amber-50/15 p-2"
                 onClick={() => setEditSupplierStock(product)}
             >
                 {supplierStock > 0 ? (
                     <div>
-                        <div className="font-medium text-purple-700 flex items-center justify-end gap-1">
+                        <div className="font-bold text-xs md:text-sm text-purple-800 flex items-center justify-end gap-0.5">
                             {supplierStock.toLocaleString()}{isRoll ? 'm' : '枚'}
-                            <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                            <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100" />
                         </div>
-                        {supplierStockLots.length > 0 ? (
-                            <div className="flex flex-col gap-0.5 mt-1">
-                                {[...supplierStockLots]
-                                    .sort((a, b) => new Date(a.stockDate).getTime() - new Date(b.stockDate).getTime())
-                                    .map((lot) => {
-                                        const now = new Date();
-                                        const arrival = new Date(lot.stockDate);
-                                        const monthsElapsed = (now.getFullYear() - arrival.getFullYear()) * 12 + now.getMonth() - arrival.getMonth();
-                                        const isLongTerm = monthsElapsed >= 5 && lot.quantity > 0;
-                                        return (
-                                            <div key={lot.id} className="text-[10px] text-purple-600 flex items-center justify-end gap-1 whitespace-nowrap" title={lot.note || undefined}>
-                                                {isLongTerm && (
-                                                    <Badge variant="destructive" className="h-3 px-1 text-[7px] leading-none">長期在庫</Badge>
-                                                )}
-                                                <span>
-                                                    {new Date(lot.stockDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: {lot.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                            </div>
-                        ) : product.supplierStockUpdatedAt && (
-                            <div className="text-[10px] text-gray-400">
-                                {new Date(product.supplierStockUpdatedAt).toLocaleDateString()}
+                        {supplierStockLots.length > 0 && (
+                            <div className="text-[9px] text-purple-600 truncate max-w-[100px] ml-auto mt-0.5">
+                                {supplierStockLots.length}ロット保管
                             </div>
                         )}
                     </div>
                 ) : (
-                    <span className="text-muted-foreground group-hover:text-foreground flex items-center justify-end gap-1">
+                    <span className="text-slate-300 text-xs flex items-center justify-end gap-1">
                         -
-                        <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-100" />
+                        <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100" />
                     </span>
                 )}
             </TableCell>
 
             {/* 9. 仕掛中 */}
             <TableCell
-                className="text-right cursor-pointer hover:bg-muted/50 transition-colors group relative tabular-nums"
+                className="text-right cursor-pointer hover:bg-amber-100/50 transition-colors group relative tabular-nums bg-amber-50/35 border-r border-slate-200 p-2"
                 onClick={() => setEditWIP(product)}
             >
                 {wipList.length > 0 ? (
                     <div>
-                        <div className="font-medium text-amber-600 flex items-center justify-end gap-1">
+                        <div className="font-bold text-xs md:text-sm text-amber-700 flex items-center justify-end gap-0.5">
                             {wipList.reduce((sum, item) => sum + item.quantity, 0).toLocaleString()}{isRoll ? 'm' : '枚'}
-                            <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                            <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100" />
                         </div>
-                        <div className="flex flex-col gap-0.5 mt-0.5">
-                            {wipList.map((item) => (
-                                <div key={item.id} className="text-[10px] text-slate-500 truncate" title={item.note || undefined}>
-                                    {item.expectedCompletion ?
-                                        (() => {
-                                            const d = new Date(item.expectedCompletion);
-                                            const month = d.getMonth() + 1;
-                                            if (item.termType === 'early') return `${month}月上旬: `;
-                                            if (item.termType === 'mid') return `${month}月中旬: `;
-                                            if (item.termType === 'late') return `${month}月下旬: `;
-                                            return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: `;
-                                        })()
-                                        : '未定: '}
-                                    {item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}
-                                    {item.note && <span className="text-amber-700 ml-1">({item.note})</span>}
-                                </div>
-                            ))}
+                        <div className="text-[9px] text-amber-800/80 truncate max-w-[100px] ml-auto mt-0.5">
+                            {wipList[0].expectedCompletion ? `${new Date(wipList[0].expectedCompletion).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}完成` : '進行中'}
                         </div>
                     </div>
                 ) : (
-                    <span className="text-muted-foreground group-hover:text-foreground flex items-center justify-end gap-1">
+                    <span className="text-slate-300 text-xs flex items-center justify-end gap-1">
                         -
-                        <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-100" />
+                        <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100" />
                     </span>
                 )}
             </TableCell>
 
             {/* 10. 在庫状況 */}
-            <TableCell className="text-center cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setEditStatusProduct(product)}>
-                <div className="flex flex-col items-center gap-1">
+            <TableCell className="text-center cursor-pointer hover:bg-muted/50 transition-colors p-1" onClick={() => setEditStatusProduct(product)}>
+                <div className="flex flex-col items-center">
                     {isOutOfStock ? (
-                        <Badge variant="destructive">在庫なし</Badge>
+                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-5 font-bold">欠品</Badge>
                     ) : isLowStock ? (
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300">少在庫</Badge>
+                        <Badge variant="secondary" className="bg-amber-100 text-amber-900 border-amber-300 text-[10px] px-1.5 py-0 h-5 font-bold">少在庫</Badge>
                     ) : (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">適正</Badge>
+                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px] px-1.5 py-0 h-5 font-bold">適正</Badge>
                     )}
                 </div>
             </TableCell>
 
             {/* 11. 全体状況 */}
-            <TableCell className="text-center">
-                <div className="flex flex-col items-center gap-1">
+            <TableCell className="text-center p-1">
+                <div className="flex flex-col items-center">
                     {product.status === 'plate_removal_scheduled' && (
-                        <Badge variant="destructive" className="bg-purple-600 hover:bg-purple-700">落版予定</Badge>
+                        <Badge variant="destructive" className="bg-purple-600 text-[9px] px-1 py-0 h-4">落版予定</Badge>
                     )}
                     {product.status === 'plate_removed' && (
-                        <Badge variant="destructive" className="bg-gray-600 hover:bg-gray-700">落版済</Badge>
+                        <Badge variant="destructive" className="bg-gray-600 text-[9px] px-1 py-0 h-4">落版済</Badge>
                     )}
                     {product.status === 'direct_delivery' && (
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300">直送先在庫</Badge>
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-[9px] px-1 py-0 h-4">直送先</Badge>
                     )}
                     {product.status === 'on_sale_break' && (
-                        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">販売中断</Badge>
+                        <Badge variant="outline" className="bg-orange-50 text-orange-700 text-[9px] px-1 py-0 h-4">中断</Badge>
                     )}
                     {product.status === 'discontinued' && (
-                        <Badge variant="destructive" className="bg-red-800 hover:bg-red-900">廃盤</Badge>
+                        <Badge variant="destructive" className="bg-red-800 text-[9px] px-1 py-0 h-4">廃盤</Badge>
                     )}
                     {product.status === 'spot' && (
-                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300">スポット</Badge>
+                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 text-[9px] px-1 py-0 h-4">スポット</Badge>
                     )}
                     {product.status === 'wip_check' && (
-                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-800 border-indigo-300">仕掛中確認</Badge>
+                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-800 text-[9px] px-1 py-0 h-4">仕掛確認</Badge>
+                    )}
+                    {product.status === 'active' && (
+                        <span className="text-slate-300 text-xs">-</span>
                     )}
                 </div>
             </TableCell>
 
             {/* 12. 在庫予測 */}
             <TableCell 
-                className="text-center max-w-[120px] bg-slate-50/50 border-x cursor-pointer hover:bg-slate-100 transition-colors"
+                className="text-center bg-slate-50/50 border-x cursor-pointer hover:bg-slate-100 transition-colors p-1"
                 onClick={() => setViewPrediction(product)}
             >
                 <div className="flex flex-col items-center">
                     {prediction.estimatedDate ? (
                         <>
                             <div className={cn(
-                                "font-bold text-sm",
-                                prediction.wipStartAlert ? "text-red-600 animate-pulse" : "text-slate-700"
+                                "font-bold text-xs md:text-sm tabular-nums",
+                                prediction.wipStartAlert ? "text-red-600 animate-pulse font-black" : "text-slate-700"
                             )}>
-                                残り{prediction.remainingDays}日
+                                残{prediction.remainingDays}日
                             </div>
-                            <div className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                {format(prediction.estimatedDate, "M/d")}頃 終了
+                            <div className="text-[9px] text-muted-foreground whitespace-nowrap">
+                                {format(prediction.estimatedDate, "M/d")}頃終了
                             </div>
-                            <div className="text-[9px] text-slate-500 mt-1 whitespace-nowrap opacity-80">
-                                通常: {product.dailyShipmentRate?.toLocaleString() || 0}枚/日
-                            </div>
-                            {prediction.wipStartAlert && (
-                                <Badge className="mt-1 h-3.5 text-[8px] bg-red-600 hover:bg-red-700 px-1 border-none leading-none">
-                                    仕掛開始!
-                                </Badge>
-                            )}
                         </>
                     ) : (
-                        <span className="text-muted-foreground">-</span>
-                    )}
-                    {prediction.hasUnconfirmedWIP && (
-                        <div className="text-[10px] text-red-600 font-bold mt-1 animate-pulse leading-tight">
-                            納期を確定してください
-                        </div>
+                        <span className="text-slate-300 text-xs">-</span>
                     )}
                 </div>
             </TableCell>
 
-            {/* 13. アクション（発注・分析・編集） */}
-            <TableCell>
-                <div className="flex items-center gap-1">
+            {/* 13. アクション（発注・編集） */}
+            <TableCell className="p-1 text-center">
+                <div className="flex items-center justify-center gap-1">
                     <Button
                         size="icon"
                         variant={isInCart ? "secondary" : "outline"}
                         onClick={() => onAddToCart(product)}
                         disabled={isOutOfStock}
-                        className="h-8 w-8"
+                        className="h-7 w-7"
                     >
-                        {isInCart ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                        {isInCart ? <Check className="h-3 w-3 text-emerald-600" /> : <Plus className="h-3 w-3" />}
                     </Button>
-                    <Button size="icon" variant="outline" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(product); }} title="編集" className="h-8 w-8">
-                        <Pencil className="h-4 w-4" />
+                    <Button size="icon" variant="ghost" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(product); }} title="編集" className="h-7 w-7 text-slate-500 hover:text-slate-900">
+                        <Pencil className="h-3.5 w-3.5" />
                     </Button>
                 </div>
             </TableCell>

@@ -99,20 +99,31 @@ export function BagsInventoryTable({
             <CardContent>
                 <Table wrapperClassName="h-[calc(100vh-280px)] overflow-auto border rounded-md">
                     <TableHeader className="bg-background shadow-[0_1px_3px_rgba(0,0,0,0.1)]">
-                        <TableRow>
-                            <TableHead className="w-[60px] sticky top-0 left-0 z-50 bg-background bg-clip-padding border-r shadow-sm">画像</TableHead>
-                            <TableHead className="w-[180px] sticky top-0 md:left-[60px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-sm">商品情報</TableHead>
-                            <TableHead className="w-[120px] sticky top-0 md:left-[240px] z-40 md:z-50 bg-background bg-clip-padding md:border-l md:shadow-[2px_2px_5px_-1px_rgba(0,0,0,0.1)]">スペック</TableHead>
-                            <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">現在庫</TableHead>
-                            <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">特売引当</TableHead>
-                            <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">有効在庫</TableHead>
-                            <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">入荷予定</TableHead>
-                            <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">メーカー在庫</TableHead>
-                            <TableHead className="text-right sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">仕掛中</TableHead>
-                            <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">在庫状況</TableHead>
-                            <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">全体状況</TableHead>
-                            <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm">在庫予測</TableHead>
-                            <TableHead className="w-[100px] sticky top-0 z-40 bg-background bg-clip-padding shadow-sm text-center">発注</TableHead>
+                        {/* ゾーン区分ヘッダー (右から左への流れ) */}
+                        <TableRow className="border-b bg-muted/40 text-[11px] font-semibold">
+                            <TableHead colSpan={3} className="border-r py-1 text-slate-600 bg-slate-100/50">商品情報</TableHead>
+                            <TableHead colSpan={3} className="text-center bg-blue-50/70 text-blue-900 border-r py-1">
+                                手元・有効在庫エリア（◀ 出荷・引当）
+                            </TableHead>
+                            <TableHead colSpan={3} className="text-center bg-amber-50/70 text-amber-900 border-r py-1">
+                                供給・仕入先エリア（◀ 製造・輸送）
+                            </TableHead>
+                            <TableHead colSpan={4} className="text-center py-1 text-slate-600 bg-slate-100/50">判定・発注</TableHead>
+                        </TableRow>
+                        <TableRow className="border-b">
+                            <TableHead className="w-[54px] sticky top-0 left-0 z-50 bg-background bg-clip-padding border-r shadow-sm text-center">画像</TableHead>
+                            <TableHead className="w-[180px] sticky top-0 md:left-[54px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-sm">商品情報</TableHead>
+                            <TableHead className="w-[110px] sticky top-0 md:left-[234px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.08)]">量目 / 規格</TableHead>
+                            <TableHead className="text-right sticky top-0 z-40 bg-blue-50/30 bg-clip-padding shadow-sm">現在庫</TableHead>
+                            <TableHead className="text-right sticky top-0 z-40 bg-blue-50/30 bg-clip-padding shadow-sm">特売引当</TableHead>
+                            <TableHead className="text-right sticky top-0 z-40 bg-blue-50/50 font-bold text-blue-950 bg-clip-padding border-r shadow-sm">有効在庫</TableHead>
+                            <TableHead className="text-right sticky top-0 z-40 bg-amber-50/30 bg-clip-padding shadow-sm">入荷予定</TableHead>
+                            <TableHead className="text-right sticky top-0 z-40 bg-amber-50/30 bg-clip-padding shadow-sm">メーカー在庫</TableHead>
+                            <TableHead className="text-right sticky top-0 z-40 bg-amber-50/50 bg-clip-padding border-r shadow-sm">仕掛中</TableHead>
+                            <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm w-[75px]">在庫状況</TableHead>
+                            <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm w-[75px]">全体状況</TableHead>
+                            <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm w-[90px]">在庫予測</TableHead>
+                            <TableHead className="w-[80px] sticky top-0 z-40 bg-background bg-clip-padding shadow-sm text-center">発注</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
