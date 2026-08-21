@@ -162,21 +162,21 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
             {/* 2. 商品情報 */}
             <TableCell className={cn(
                 "md:sticky md:left-[50px] z-0 md:z-10 transition-colors md:border-r",
-                isCompact ? "p-1 max-w-[170px]" : "p-2 max-w-[180px]",
+                isCompact ? "p-1.5 min-w-[180px] max-w-[240px]" : "p-2 min-w-[200px] max-w-[280px]",
                 isOutOfStock ? "bg-red-50/90" : "bg-background group-hover:bg-sky-50/90"
             )}>
-                <div>
+                <div className="space-y-0.5">
                     <div className={cn(
-                        "font-bold truncate leading-snug",
+                        "font-bold leading-snug break-words",
                         isCompact ? "text-xs" : "text-xs md:text-sm"
                     )} title={product.name}>
                         {product.name}
                     </div>
-                    <div className={cn("text-slate-500 truncate", isCompact ? "text-[10px]" : "text-[11px] mt-0.5")}>
-                        №: <span className="font-mono text-slate-700">{product.sku || '-'}</span>
+                    <div className={cn("text-slate-500", isCompact ? "text-[10px]" : "text-[11px]")}>
+                        №: <span className="font-mono font-medium text-slate-700 select-all">{product.sku || '-'}</span>
                     </div>
                     {!isCompact && product.janCode && (
-                        <div className="text-[10px] text-slate-400 font-mono truncate">
+                        <div className="text-[10px] text-slate-400 font-mono select-all">
                             JAN: {product.janCode}
                         </div>
                     )}
@@ -185,7 +185,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
             {/* 3. スペック */}
             <TableCell className={cn(
-                "md:sticky md:left-[230px] z-0 md:z-10 md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.06)] md:border-r transition-colors",
+                "md:sticky md:left-[270px] z-0 md:z-10 md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.06)] md:border-r transition-colors",
                 isCompact ? "p-1" : "p-2",
                 isOutOfStock ? "bg-red-50/90" : "bg-background group-hover:bg-sky-50/90"
             )}>
