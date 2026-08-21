@@ -287,18 +287,30 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
                             </div>
                         ) : (
                             <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
-                                {incomingStocks.map((stock) => (
-                                    <div key={stock.id} className="flex items-center justify-between p-3 border rounded-lg bg-card">
-                                        <div>
-                                            <div className="text-sm text-muted-foreground">
-                                                納品: {stock.expectedDate ? format(new Date(stock.expectedDate), "M/d") : <span className="text-orange-600 font-bold italic">納期確認中</span>}
+                                {incomingStocks.map((stock) => {
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    const isOverdue = stock.expectedDate
+                                        ? new Date(stock.expectedDate).setHours(0, 0, 0, 0) < today.getTime()
+                                        : false;
+
+                                    return (
+                                        <div key={stock.id} className={cn("flex items-center justify-between p-3 border rounded-lg", isOverdue ? "bg-red-50/50 border-red-200" : "bg-card")}>
+                                            <div>
+                                                <div className="text-sm flex items-center gap-1.5">
+                                                    <span className={cn(isOverdue ? "text-red-600 font-bold" : "text-muted-foreground")}>
+                                                        納品: {stock.expectedDate ? format(new Date(stock.expectedDate), "M/d") : <span className="text-orange-600 font-bold italic">納期確認中</span>}
+                                                    </span>
+                                                    {isOverdue && (
+                                                        <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.2 rounded font-bold">超過</span>
+                                                    )}
+                                                </div>
+                                                <div className="text-sm text-muted-foreground">
+                                                    {stock.quantity.toLocaleString()}
+                                                    {unit}
+                                                    {stock.note && ` · ${stock.note}`}
+                                                </div>
                                             </div>
-                                            <div className="text-sm text-muted-foreground">
-                                                {stock.quantity.toLocaleString()}
-                                                {unit}
-                                                {stock.note && ` · ${stock.note}`}
-                                            </div>
-                                        </div>
                                         <div className="flex items-center gap-1">
                                             <Button
                                                 variant="outline"
@@ -331,7 +343,8 @@ export function IncomingStockDialog({ open, onOpenChange, product, onSuccess }: 
                                             </Button>
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>

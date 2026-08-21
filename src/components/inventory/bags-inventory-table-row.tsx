@@ -403,20 +403,54 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
             >
                 {incoming && incoming.total > 0 ? (
                     <div>
-                        <div className={cn("font-bold text-xs md:text-sm underline decoration-dotted underline-offset-2", isPlateRemoved ? "text-slate-600" : "text-blue-700")}>
-                            {incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}
-                        </div>
-                        {incoming.items.length > 0 && (
-                            <div className="flex flex-col gap-0.5 mt-0.5">
-                                {incoming.items.map((item, idx) => (
-                                    <div key={idx} className="text-[9px] text-slate-600 truncate max-w-[130px] ml-auto" title={item.note || undefined}>
-                                        {item.expectedDate ? `${new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: ` : '納期確認中: '}
-                                        {item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}
-                                        {item.note && ` (${item.note})`}
+                        {(() => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const hasOverdue = incoming.items.some(item => {
+                                if (!item.expectedDate) return false;
+                                const itemDate = new Date(item.expectedDate);
+                                return itemDate.setHours(0, 0, 0, 0) < today.getTime();
+                            });
+
+                            return (
+                                <>
+                                    <div className={cn(
+                                        "font-bold text-xs md:text-sm underline decoration-dotted underline-offset-2 flex items-center justify-end gap-1",
+                                        isPlateRemoved ? "text-slate-600" : hasOverdue ? "text-red-600" : "text-blue-700"
+                                    )}>
+                                        {hasOverdue && !isPlateRemoved && (
+                                            <span className="text-[10px] px-1 py-0.2 rounded bg-red-100 text-red-700 font-normal no-underline">超過</span>
+                                        )}
+                                        <span>{incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
                                     </div>
-                                ))}
-                            </div>
-                        )}
+                                    {incoming.items.length > 0 && (
+                                        <div className="flex flex-col gap-0.5 mt-0.5">
+                                            {incoming.items.map((item, idx) => {
+                                                const itemDate = item.expectedDate ? new Date(item.expectedDate) : null;
+                                                const isOverdue = itemDate ? itemDate.setHours(0, 0, 0, 0) < today.getTime() : false;
+
+                                                return (
+                                                    <div
+                                                        key={idx}
+                                                        className={cn(
+                                                            "text-[9px] truncate max-w-[140px] ml-auto",
+                                                            isOverdue && !isPlateRemoved
+                                                                ? "text-red-600 font-bold bg-red-50/60 px-1 py-0.2 rounded"
+                                                                : "text-slate-600"
+                                                        )}
+                                                        title={`${item.expectedDate ? new Date(item.expectedDate).toLocaleDateString('ja-JP') : '納期確認中'}: ${item.quantity.toLocaleString()}${isRoll ? 'm' : '枚'}${item.note ? ` (${item.note})` : ''}${isOverdue ? ' [入荷予定日超過]' : ''}`}
+                                                    >
+                                                        {item.expectedDate ? `${new Date(item.expectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: ` : '納期確認中: '}
+                                                        {item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                                        {item.note && ` (${item.note})`}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </>
+                            );
+                        })()}
                     </div>
                 ) : (
                     <span className="text-slate-300 text-xs">-</span>
