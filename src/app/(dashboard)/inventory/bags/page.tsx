@@ -103,7 +103,7 @@ const getProductGroup = (p: Product): number => {
 
 import type { SortKey, SortOrder, TableDensity } from "@/components/inventory/bags-inventory-table";
 
-export type QuickFilterType = 'all' | 'need_order' | 'urgent_prediction' | 'reserved' | 'supply';
+export type QuickFilterType = 'all' | 'need_order' | 'urgent_prediction' | 'reserved' | 'supply' | 'wip_check';
 
 export default function BagsInventoryPage(): React.ReactElement {
     // 表示モード (grid | table)
@@ -500,6 +500,8 @@ export default function BagsInventoryPage(): React.ReactElement {
                 const sup = lots.length > 0 ? lots.reduce((sum, lot) => sum + lot.quantity, 0) : (supplierStockMap.get(p.id) || 0);
                 return inc > 0 || wip > 0 || sup > 0;
             });
+        } else if (quickFilter === 'wip_check') {
+            products = products.filter(p => p.status === 'wip_check');
         }
 
         // 検索フィルター
@@ -698,6 +700,7 @@ export default function BagsInventoryPage(): React.ReactElement {
         let hasReservation = 0;
         let urgentPrediction = 0;
         let inSupply = 0;
+        let wipCheck = 0;
 
         bagProducts.forEach(p => {
             const qty = inventoryMap.get(p.id)?.quantity || 0;
@@ -707,6 +710,7 @@ export default function BagsInventoryPage(): React.ReactElement {
             if (isOutOfStock) outOfStock++;
             else if (isLowStock) lowStock++;
             if (allocation.bags > 0) hasReservation++;
+            if (p.status === 'wip_check') wipCheck++;
 
             const pred = predictionMap.get(p.id);
             if (pred && (pred.wipStartAlert || (pred.remainingDays !== null && pred.remainingDays <= (p.productionLeadDays || 30)))) {
@@ -723,7 +727,7 @@ export default function BagsInventoryPage(): React.ReactElement {
         });
 
         const needOrder = lowStock + outOfStock;
-        return { total: bagProducts.length, lowStock, outOfStock, hasReservation, needOrder, urgentPrediction, inSupply };
+        return { total: bagProducts.length, lowStock, outOfStock, hasReservation, needOrder, urgentPrediction, inSupply, wipCheck };
     }, [bagProducts, inventoryMap, saleAllocationMap, predictionMap, incomingMap, wipMap, supplierStockLotsMap, supplierStockMap, settings]);
 
     // 発注点割れ・欠品商品を推奨発注数で一括カート追加
@@ -907,6 +911,28 @@ export default function BagsInventoryPage(): React.ReactElement {
                                     quickFilter === 'supply' ? "bg-emerald-700 text-white" : "bg-emerald-100 text-emerald-800"
                                 )}>
                                     {summary.inSupply}
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                className={cn(
+                                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all shadow-2xs border cursor-pointer",
+                                    quickFilter === 'wip_check'
+                                        ? "bg-indigo-600 text-white border-indigo-600"
+                                        : "bg-indigo-50/80 text-indigo-700 border-indigo-200/80 hover:bg-indigo-100/70"
+                                )}
+                                onClick={() => {
+                                    setQuickFilter(quickFilter === 'wip_check' ? 'all' : 'wip_check');
+                                    setStockFilter('all');
+                                }}
+                            >
+                                <span>📋 仕掛確認</span>
+                                <span className={cn(
+                                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold",
+                                    quickFilter === 'wip_check' ? "bg-indigo-700 text-white" : "bg-indigo-100 text-indigo-800"
+                                )}>
+                                    {summary.wipCheck}
                                 </span>
                             </button>
 
