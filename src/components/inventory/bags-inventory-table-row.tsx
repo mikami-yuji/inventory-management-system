@@ -376,9 +376,14 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                 )}
             </TableCell>
 
-            {/* 10. 在庫状況 */}
-            <TableCell className="text-center cursor-pointer hover:bg-muted/50 transition-colors p-1" onClick={() => setEditStatusProduct(product)}>
-                <div className="flex flex-col items-center">
+            {/* 10. 状況 (在庫状況 + 全体状況) */}
+            <TableCell
+                className="text-center cursor-pointer hover:bg-muted/50 transition-colors p-1"
+                onClick={() => setEditStatusProduct(product)}
+                title="クリックで状況を変更"
+            >
+                <div className="flex flex-col items-center justify-center gap-1">
+                    {/* 在庫状況 */}
                     {isOutOfStock ? (
                         <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-5 font-bold">欠品</Badge>
                     ) : isLowStock ? (
@@ -386,12 +391,8 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                     ) : (
                         <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px] px-1.5 py-0 h-5 font-bold">適正</Badge>
                     )}
-                </div>
-            </TableCell>
 
-            {/* 11. 全体状況 */}
-            <TableCell className="text-center p-1">
-                <div className="flex flex-col items-center">
+                    {/* 全体状況 */}
                     {product.status === 'plate_removal_scheduled' && (
                         <Badge variant="destructive" className="bg-purple-600 text-[9px] px-1 py-0 h-4">落版予定</Badge>
                     )}
@@ -412,9 +413,6 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                     )}
                     {product.status === 'wip_check' && (
                         <Badge variant="secondary" className="bg-indigo-100 text-indigo-800 text-[9px] px-1 py-0 h-4">仕掛確認</Badge>
-                    )}
-                    {product.status === 'active' && (
-                        <span className="text-slate-300 text-xs">-</span>
                     )}
                 </div>
             </TableCell>
