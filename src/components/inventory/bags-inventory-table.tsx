@@ -162,22 +162,22 @@ export function BagsInventoryTable({
             </CardHeader>
             <CardContent className="p-0 sm:p-2 sm:pt-0">
                 <Table wrapperClassName="h-[calc(100vh-290px)] overflow-auto border rounded-md">
-                    <TableHeader className="bg-background shadow-[0_1px_3px_rgba(0,0,0,0.1)] select-none">
+                    <TableHeader className="bg-white shadow-[0_1px_3px_rgba(0,0,0,0.1)] select-none">
                         {/* ゾーン区分ヘッダー (右から左への流れ) */}
-                        <TableRow className="border-b bg-muted/40 text-[11px] font-semibold">
-                            <TableHead colSpan={3} className="border-r py-1 text-slate-600 bg-slate-100/50">商品情報</TableHead>
-                            <TableHead colSpan={3} className="text-center bg-blue-50/70 text-blue-900 border-r py-1">
+                        <TableRow className="border-b bg-slate-100 text-[11px] font-semibold">
+                            <TableHead colSpan={3} className="border-r py-1 text-slate-700 bg-slate-100">商品情報</TableHead>
+                            <TableHead colSpan={3} className="text-center bg-blue-100 text-blue-900 border-r py-1">
                                 手元・有効在庫エリア（◀ 出荷・引当）
                             </TableHead>
-                            <TableHead colSpan={3} className="text-center bg-amber-50/70 text-amber-900 border-r py-1">
+                            <TableHead colSpan={3} className="text-center bg-amber-100 text-amber-900 border-r py-1">
                                 供給・仕入先エリア（◀ 製造・輸送）
                             </TableHead>
-                            <TableHead colSpan={3} className="text-center py-1 text-slate-600 bg-slate-100/50">判定・発注</TableHead>
+                            <TableHead colSpan={3} className="text-center py-1 text-slate-700 bg-slate-100">判定・発注</TableHead>
                         </TableRow>
-                        <TableRow className="border-b text-[12px]">
-                            <TableHead className="w-[50px] sticky top-0 left-0 z-50 bg-background bg-clip-padding border-r shadow-sm text-center">画像</TableHead>
+                        <TableRow className="border-b text-[12px] bg-white">
+                            <TableHead className="w-[50px] sticky top-0 left-0 z-50 bg-white border-r shadow-sm text-center">画像</TableHead>
                             <TableHead 
-                                className="min-w-[180px] w-[220px] sticky top-0 md:left-[50px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-sm cursor-pointer hover:bg-slate-100 transition-colors group"
+                                className="min-w-[180px] w-[220px] sticky top-0 md:left-[50px] z-40 md:z-50 bg-white md:border-r md:shadow-sm cursor-pointer hover:bg-slate-100 transition-colors group"
                                 onClick={() => onSort?.('name')}
                             >
                                 <div className="flex items-center justify-between">
@@ -186,7 +186,7 @@ export function BagsInventoryTable({
                                 </div>
                             </TableHead>
                             <TableHead 
-                                className="w-[105px] sticky top-0 md:left-[270px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.08)] cursor-pointer hover:bg-slate-100 transition-colors group"
+                                className="w-[105px] sticky top-0 md:left-[270px] z-40 md:z-50 bg-white md:border-r md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.08)] cursor-pointer hover:bg-slate-100 transition-colors group"
                                 onClick={() => onSort?.('weight')}
                             >
                                 <div className="flex items-center justify-between">
@@ -195,7 +195,7 @@ export function BagsInventoryTable({
                                 </div>
                             </TableHead>
                             <TableHead 
-                                className="text-right sticky top-0 z-40 bg-blue-50/40 font-bold text-slate-900 bg-clip-padding shadow-sm cursor-pointer hover:bg-blue-100/60 transition-colors group"
+                                className="text-right sticky top-0 z-40 bg-blue-50 font-bold text-slate-900 shadow-sm cursor-pointer hover:bg-blue-100 transition-colors group"
                                 onClick={() => onSort?.('currentStock')}
                             >
                                 <div className="flex items-center justify-end">
@@ -204,7 +204,7 @@ export function BagsInventoryTable({
                                 </div>
                             </TableHead>
                             <TableHead 
-                                className="text-right sticky top-0 z-40 bg-blue-50/30 bg-clip-padding shadow-sm cursor-pointer hover:bg-blue-100/60 transition-colors group"
+                                className="text-right sticky top-0 z-40 bg-blue-50 shadow-sm cursor-pointer hover:bg-blue-100 transition-colors group"
                                 onClick={() => onSort?.('allocation')}
                             >
                                 <div className="flex items-center justify-end">
@@ -213,7 +213,7 @@ export function BagsInventoryTable({
                                 </div>
                             </TableHead>
                             <TableHead 
-                                className="text-right sticky top-0 z-40 bg-blue-50/50 font-bold text-blue-950 bg-clip-padding border-r shadow-sm cursor-pointer hover:bg-blue-100/60 transition-colors group"
+                                className="text-right sticky top-0 z-40 bg-blue-50 font-bold text-blue-950 border-r shadow-sm cursor-pointer hover:bg-blue-100 transition-colors group"
                                 onClick={() => onSort?.('availableStock')}
                             >
                                 <div className="flex items-center justify-end">
@@ -222,7 +222,7 @@ export function BagsInventoryTable({
                                 </div>
                             </TableHead>
                             <TableHead 
-                                className="text-right sticky top-0 z-40 bg-amber-50/30 bg-clip-padding shadow-sm cursor-pointer hover:bg-amber-100/60 transition-colors group"
+                                className="text-right sticky top-0 z-40 bg-amber-50 shadow-sm cursor-pointer hover:bg-amber-100 transition-colors group"
                                 onClick={() => onSort?.('incoming')}
                             >
                                 <div className="flex items-center justify-end">
@@ -231,7 +231,7 @@ export function BagsInventoryTable({
                                 </div>
                             </TableHead>
                             <TableHead 
-                                className="text-right sticky top-0 z-40 bg-amber-50/30 bg-clip-padding shadow-sm cursor-pointer hover:bg-amber-100/60 transition-colors group"
+                                className="text-right sticky top-0 z-40 bg-amber-50 shadow-sm cursor-pointer hover:bg-amber-100 transition-colors group"
                                 onClick={() => onSort?.('supplierStock')}
                             >
                                 <div className="flex items-center justify-end">
@@ -240,7 +240,7 @@ export function BagsInventoryTable({
                                 </div>
                             </TableHead>
                             <TableHead 
-                                className="text-right sticky top-0 z-40 bg-amber-50/50 bg-clip-padding border-r shadow-sm cursor-pointer hover:bg-amber-100/60 transition-colors group"
+                                className="text-right sticky top-0 z-40 bg-amber-50 border-r shadow-sm cursor-pointer hover:bg-amber-100 transition-colors group"
                                 onClick={() => onSort?.('wip')}
                             >
                                 <div className="flex items-center justify-end">
@@ -249,7 +249,7 @@ export function BagsInventoryTable({
                                 </div>
                             </TableHead>
                             <TableHead 
-                                className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm w-[85px] cursor-pointer hover:bg-slate-100 transition-colors group"
+                                className="text-center sticky top-0 z-40 bg-white shadow-sm w-[85px] cursor-pointer hover:bg-slate-100 transition-colors group"
                                 onClick={() => onSort?.('status')}
                             >
                                 <div className="flex items-center justify-center">
@@ -258,7 +258,7 @@ export function BagsInventoryTable({
                                 </div>
                             </TableHead>
                             <TableHead 
-                                className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm w-[90px] cursor-pointer hover:bg-slate-100 transition-colors group"
+                                className="text-center sticky top-0 z-40 bg-white shadow-sm w-[90px] cursor-pointer hover:bg-slate-100 transition-colors group"
                                 onClick={() => onSort?.('remainingDays')}
                             >
                                 <div className="flex items-center justify-center">
@@ -266,7 +266,7 @@ export function BagsInventoryTable({
                                     {renderSortIcon('remainingDays')}
                                 </div>
                             </TableHead>
-                            <TableHead className="w-[80px] sticky top-0 z-40 bg-background bg-clip-padding shadow-sm text-center">発注</TableHead>
+                            <TableHead className="w-[80px] sticky top-0 z-40 bg-white shadow-sm text-center">発注</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

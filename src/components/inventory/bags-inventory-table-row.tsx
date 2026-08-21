@@ -139,7 +139,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                 "sticky left-0 z-10 transition-colors border-r border-l-4 text-center",
                 isCompact ? "p-1" : "p-1.5",
                 statusBorderColor,
-                isOutOfStock ? "bg-red-50/90" : "bg-background group-hover:bg-sky-50/90"
+                isOutOfStock ? "bg-red-50" : "bg-white group-hover:bg-sky-50"
             )}>
                 {product.imageUrl ? (
                     <ProductImage
@@ -163,7 +163,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
             <TableCell className={cn(
                 "md:sticky md:left-[50px] z-0 md:z-10 transition-colors md:border-r",
                 isCompact ? "p-1.5 min-w-[180px] max-w-[240px]" : "p-2 min-w-[200px] max-w-[280px]",
-                isOutOfStock ? "bg-red-50/90" : "bg-background group-hover:bg-sky-50/90"
+                isOutOfStock ? "bg-red-50" : "bg-white group-hover:bg-sky-50"
             )}>
                 <div className="space-y-0.5">
                     <div className={cn(
@@ -187,7 +187,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
             <TableCell className={cn(
                 "md:sticky md:left-[270px] z-0 md:z-10 md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.06)] md:border-r transition-colors",
                 isCompact ? "p-1" : "p-2",
-                isOutOfStock ? "bg-red-50/90" : "bg-background group-hover:bg-sky-50/90"
+                isOutOfStock ? "bg-red-50" : "bg-white group-hover:bg-sky-50"
             )}>
                 <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-1">
