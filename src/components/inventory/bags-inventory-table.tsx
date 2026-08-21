@@ -11,6 +11,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BagsInventoryTableRow } from "./bags-inventory-table-row";
 import { InventoryDialogContainers } from "./inventory-dialog-containers";
 
+import { ArrowUpDown, ArrowUp, ArrowDown, Sparkles, LayoutList, StretchHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export type SortKey = 'default' | 'name' | 'weight' | 'currentStock' | 'allocation' | 'availableStock' | 'incoming' | 'supplierStock' | 'wip' | 'status' | 'remainingDays';
+export type SortOrder = 'asc' | 'desc';
+export type TableDensity = 'standard' | 'compact';
+
 export type BagsInventoryTableProps = {
     products: Product[];
     inventoryMap: Map<string, { quantity: number; oldPriceQuantity: number; updatedAt?: string }>;
@@ -21,6 +28,11 @@ export type BagsInventoryTableProps = {
     incomingMap: Map<string, { total: number; items: IncomingStock[] }>;
     saleEvents: SaleEvent[];
     loading?: boolean;
+    sortKey?: SortKey;
+    sortOrder?: SortOrder;
+    onSort?: (key: SortKey) => void;
+    density?: TableDensity;
+    onDensityChange?: (density: TableDensity) => void;
     onEdit: (product: Product) => void;
     onIncomingStockClick: (product: Product) => void;
     onAnalyze?: (product: Product) => void;
@@ -37,6 +49,11 @@ export function BagsInventoryTable({
     incomingMap,
     saleEvents,
     loading = false,
+    sortKey = 'default',
+    sortOrder = 'desc',
+    onSort,
+    density = 'standard',
+    onDensityChange,
     onEdit,
     onIncomingStockClick,
     onAnalyze,
@@ -91,14 +108,61 @@ export function BagsInventoryTable({
         addToCart(product, 0);
     }, [addToCart]);
 
+    const renderSortIcon = (key: SortKey) => {
+        if (sortKey !== key) {
+            return <ArrowUpDown className="h-3 w-3 opacity-30 group-hover:opacity-70 transition-opacity ml-1 inline shrink-0" />;
+        }
+        if (sortOrder === 'asc') {
+            return <ArrowUp className="h-3 w-3 text-blue-600 font-bold ml-1 inline shrink-0" />;
+        }
+        return <ArrowDown className="h-3 w-3 text-blue-600 font-bold ml-1 inline shrink-0" />;
+    };
+
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>米袋在庫状況 ({products.length}件)</CardTitle>
+        <Card className="shadow-none sm:shadow-sm">
+            <CardHeader className="py-2.5 px-3 md:px-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm md:text-base font-bold flex items-center gap-2">
+                    <span>米袋在庫状況</span>
+                    <span className="text-xs font-normal text-muted-foreground">({products.length}件)</span>
+                    {sortKey !== 'default' && (
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 px-1.5 text-[11px] text-blue-600 hover:text-blue-800"
+                            onClick={() => onSort?.('default')}
+                        >
+                            ソート解除
+                        </Button>
+                    )}
+                </CardTitle>
+                <div className="flex items-center gap-1">
+                    {onDensityChange && (
+                        <div className="flex items-center bg-slate-100 p-0.5 rounded-md border text-[11px]">
+                            <Button
+                                variant={density === 'standard' ? 'secondary' : 'ghost'}
+                                size="sm"
+                                className="h-6 px-2 text-[11px] rounded-sm"
+                                onClick={() => onDensityChange('standard')}
+                                title="標準表示"
+                            >
+                                標準
+                            </Button>
+                            <Button
+                                variant={density === 'compact' ? 'secondary' : 'ghost'}
+                                size="sm"
+                                className="h-6 px-2 text-[11px] rounded-sm"
+                                onClick={() => onDensityChange('compact')}
+                                title="コンパクト表示（多くの行を一度に表示）"
+                            >
+                                密
+                            </Button>
+                        </div>
+                    )}
+                </div>
             </CardHeader>
-            <CardContent>
-                <Table wrapperClassName="h-[calc(100vh-280px)] overflow-auto border rounded-md">
-                    <TableHeader className="bg-background shadow-[0_1px_3px_rgba(0,0,0,0.1)]">
+            <CardContent className="p-0 sm:p-2 sm:pt-0">
+                <Table wrapperClassName="h-[calc(100vh-290px)] overflow-auto border rounded-md">
+                    <TableHeader className="bg-background shadow-[0_1px_3px_rgba(0,0,0,0.1)] select-none">
                         {/* ゾーン区分ヘッダー (右から左への流れ) */}
                         <TableRow className="border-b bg-muted/40 text-[11px] font-semibold">
                             <TableHead colSpan={3} className="border-r py-1 text-slate-600 bg-slate-100/50">商品情報</TableHead>
@@ -110,18 +174,98 @@ export function BagsInventoryTable({
                             </TableHead>
                             <TableHead colSpan={3} className="text-center py-1 text-slate-600 bg-slate-100/50">判定・発注</TableHead>
                         </TableRow>
-                        <TableRow className="border-b">
-                            <TableHead className="w-[54px] sticky top-0 left-0 z-50 bg-background bg-clip-padding border-r shadow-sm text-center">画像</TableHead>
-                            <TableHead className="w-[180px] sticky top-0 md:left-[54px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-sm">商品情報</TableHead>
-                            <TableHead className="w-[110px] sticky top-0 md:left-[234px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.08)]">量目 / 規格</TableHead>
-                            <TableHead className="text-right sticky top-0 z-40 bg-blue-50/40 font-bold text-slate-900 bg-clip-padding shadow-sm">現在庫</TableHead>
-                            <TableHead className="text-right sticky top-0 z-40 bg-blue-50/30 bg-clip-padding shadow-sm">特売引当</TableHead>
-                            <TableHead className="text-right sticky top-0 z-40 bg-blue-50/50 font-bold text-blue-950 bg-clip-padding border-r shadow-sm">有効在庫</TableHead>
-                            <TableHead className="text-right sticky top-0 z-40 bg-amber-50/30 bg-clip-padding shadow-sm">入荷予定</TableHead>
-                            <TableHead className="text-right sticky top-0 z-40 bg-amber-50/30 bg-clip-padding shadow-sm">メーカー在庫</TableHead>
-                            <TableHead className="text-right sticky top-0 z-40 bg-amber-50/50 bg-clip-padding border-r shadow-sm">仕掛中</TableHead>
-                            <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm w-[85px]">状況</TableHead>
-                            <TableHead className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm w-[90px]">在庫予測</TableHead>
+                        <TableRow className="border-b text-[12px]">
+                            <TableHead className="w-[50px] sticky top-0 left-0 z-50 bg-background bg-clip-padding border-r shadow-sm text-center">画像</TableHead>
+                            <TableHead 
+                                className="w-[180px] sticky top-0 md:left-[50px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-sm cursor-pointer hover:bg-slate-100 transition-colors group"
+                                onClick={() => onSort?.('name')}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <span>商品情報</span>
+                                    {renderSortIcon('name')}
+                                </div>
+                            </TableHead>
+                            <TableHead 
+                                className="w-[105px] sticky top-0 md:left-[230px] z-40 md:z-50 bg-background bg-clip-padding md:border-r md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.08)] cursor-pointer hover:bg-slate-100 transition-colors group"
+                                onClick={() => onSort?.('weight')}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <span>量目 / 規格</span>
+                                    {renderSortIcon('weight')}
+                                </div>
+                            </TableHead>
+                            <TableHead 
+                                className="text-right sticky top-0 z-40 bg-blue-50/40 font-bold text-slate-900 bg-clip-padding shadow-sm cursor-pointer hover:bg-blue-100/60 transition-colors group"
+                                onClick={() => onSort?.('currentStock')}
+                            >
+                                <div className="flex items-center justify-end">
+                                    <span>現在庫</span>
+                                    {renderSortIcon('currentStock')}
+                                </div>
+                            </TableHead>
+                            <TableHead 
+                                className="text-right sticky top-0 z-40 bg-blue-50/30 bg-clip-padding shadow-sm cursor-pointer hover:bg-blue-100/60 transition-colors group"
+                                onClick={() => onSort?.('allocation')}
+                            >
+                                <div className="flex items-center justify-end">
+                                    <span>特売引当</span>
+                                    {renderSortIcon('allocation')}
+                                </div>
+                            </TableHead>
+                            <TableHead 
+                                className="text-right sticky top-0 z-40 bg-blue-50/50 font-bold text-blue-950 bg-clip-padding border-r shadow-sm cursor-pointer hover:bg-blue-100/60 transition-colors group"
+                                onClick={() => onSort?.('availableStock')}
+                            >
+                                <div className="flex items-center justify-end">
+                                    <span>有効在庫</span>
+                                    {renderSortIcon('availableStock')}
+                                </div>
+                            </TableHead>
+                            <TableHead 
+                                className="text-right sticky top-0 z-40 bg-amber-50/30 bg-clip-padding shadow-sm cursor-pointer hover:bg-amber-100/60 transition-colors group"
+                                onClick={() => onSort?.('incoming')}
+                            >
+                                <div className="flex items-center justify-end">
+                                    <span>入荷予定</span>
+                                    {renderSortIcon('incoming')}
+                                </div>
+                            </TableHead>
+                            <TableHead 
+                                className="text-right sticky top-0 z-40 bg-amber-50/30 bg-clip-padding shadow-sm cursor-pointer hover:bg-amber-100/60 transition-colors group"
+                                onClick={() => onSort?.('supplierStock')}
+                            >
+                                <div className="flex items-center justify-end">
+                                    <span>メーカー在庫</span>
+                                    {renderSortIcon('supplierStock')}
+                                </div>
+                            </TableHead>
+                            <TableHead 
+                                className="text-right sticky top-0 z-40 bg-amber-50/50 bg-clip-padding border-r shadow-sm cursor-pointer hover:bg-amber-100/60 transition-colors group"
+                                onClick={() => onSort?.('wip')}
+                            >
+                                <div className="flex items-center justify-end">
+                                    <span>仕掛中</span>
+                                    {renderSortIcon('wip')}
+                                </div>
+                            </TableHead>
+                            <TableHead 
+                                className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm w-[85px] cursor-pointer hover:bg-slate-100 transition-colors group"
+                                onClick={() => onSort?.('status')}
+                            >
+                                <div className="flex items-center justify-center">
+                                    <span>状況</span>
+                                    {renderSortIcon('status')}
+                                </div>
+                            </TableHead>
+                            <TableHead 
+                                className="text-center sticky top-0 z-40 bg-background bg-clip-padding shadow-sm w-[90px] cursor-pointer hover:bg-slate-100 transition-colors group"
+                                onClick={() => onSort?.('remainingDays')}
+                            >
+                                <div className="flex items-center justify-center">
+                                    <span>在庫予測</span>
+                                    {renderSortIcon('remainingDays')}
+                                </div>
+                            </TableHead>
                             <TableHead className="w-[80px] sticky top-0 z-40 bg-background bg-clip-padding shadow-sm text-center">発注</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -170,6 +314,7 @@ export function BagsInventoryTable({
                                     saleEvents={saleEvents}
                                     settings={settings}
                                     isInCart={items.some(item => item.product.id === product.id)}
+                                    density={density}
                                     dialogs={dialogs}
                                     onEdit={onEdit}
                                     onIncomingStockClick={onIncomingStockClick}

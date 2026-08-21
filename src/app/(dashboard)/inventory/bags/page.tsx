@@ -29,7 +29,8 @@ import {
 import * as XLSX from "xlsx";
 import {
     bagsToMeters,
-    calculateStockStatus
+    calculateStockStatus,
+    calculateStockPrediction
 } from "@/lib/services";
 import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
@@ -100,12 +101,65 @@ const getProductGroup = (p: Product): number => {
     return 0;
 };
 
+import type { SortKey, SortOrder, TableDensity } from "@/components/inventory/bags-inventory-table";
+
+export type QuickFilterType = 'all' | 'need_order' | 'urgent_prediction' | 'reserved' | 'supply';
+
 export default function BagsInventoryPage(): React.ReactElement {
     // 表示モード (grid | table)
     const [viewMode, setViewMode] = useState<"table" | "grid">("table");
     // フィルターの表示・非表示 (スマホ・風景モード用)
     const [showFilters, setShowFilters] = useState(true);
     const [isSmallHeight, setIsSmallHeight] = useState(false);
+
+    // ソート状態
+    const [sortKey, setSortKey] = useState<SortKey>('default');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+
+    // 表示密度（ローカルストレージ連携）
+    const [density, setDensityState] = useState<TableDensity>('standard');
+
+    useEffect(() => {
+        const savedDensity = localStorage.getItem('bags_table_density') as TableDensity;
+        if (savedDensity === 'standard' || savedDensity === 'compact') {
+            setDensityState(savedDensity);
+        }
+    }, []);
+
+    const setDensity = useCallback((newDensity: TableDensity) => {
+        setDensityState(newDensity);
+        try {
+            localStorage.setItem('bags_table_density', newDensity);
+        } catch {
+            // localStorage not available
+        }
+    }, []);
+
+    // ソート切り替えハンドラー
+    const handleSort = useCallback((key: SortKey) => {
+        if (key === 'default') {
+            setSortKey('default');
+            setSortOrder('desc');
+            return;
+        }
+
+        if (sortKey === key) {
+            if (sortOrder === 'desc') {
+                setSortOrder('asc');
+            } else {
+                setSortKey('default');
+                setSortOrder('desc');
+            }
+        } else {
+            setSortKey(key);
+            // 文字列や名前・重量は昇順デフォルト、在庫数などは降順デフォルト
+            if (key === 'name' || key === 'weight') {
+                setSortOrder('asc');
+            } else {
+                setSortOrder('desc');
+            }
+        }
+    }, [sortKey, sortOrder]);
 
     // 画面の高さが低い場合（横向きなど）は初期状態でフィルターを閉じる
     useEffect(() => {
@@ -143,6 +197,7 @@ export default function BagsInventoryPage(): React.ReactElement {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
+    const [quickFilter, setQuickFilter] = useState<QuickFilterType>('all');
     const [searchQuery, setSearchQuery] = useState("");
     const [weightFilter, setWeightFilter] = useState("all");
     const [stockFilter, setStockFilter] = useState("all");
@@ -365,6 +420,47 @@ export default function BagsInventoryPage(): React.ReactElement {
         inactive: "無効 (非表示)",
     }), []);
 
+    // 予測計算をメモ化
+    const predictionMap = useMemo(() => {
+        const map = new Map<string, ReturnType<typeof calculateStockPrediction>>();
+        bagProducts.forEach(product => {
+            const currentStock = inventoryMap.get(product.id)?.quantity || 0;
+            const wipList = wipMap.get(product.id) || [];
+            const incoming = incomingMap.get(product.id);
+
+            const supplierStockLots = supplierStockLotsMap?.get(product.id) || [];
+            const supplierStock = supplierStockLots.length > 0
+                ? supplierStockLots.reduce((sum, lot) => sum + lot.quantity, 0)
+                : (supplierStockMap.get(product.id) || 0);
+
+            const relevantSaleItems = (saleEvents || [])
+                .filter(event => (event.status === 'active' || event.status === 'upcoming'))
+                .flatMap(event => {
+                    const item = event.items.find(i => i.productId === product.id);
+                    return item && !item.isProduced ? [{ dates: event.dates, quantity: item.allocatedQuantity, eventName: event.clientName }] : [];
+                });
+
+            map.set(product.id, calculateStockPrediction(
+                currentStock,
+                product.dailyShipmentRate || 0,
+                product.productionLeadDays || 0,
+                product,
+                relevantSaleItems,
+                wipList.filter(item => item.status === 'in_progress').map(item => ({
+                    quantity: item.quantity,
+                    expectedDate: item.expectedCompletion ? new Date(item.expectedCompletion) : null,
+                    termType: item.termType
+                })),
+                incoming?.items.map(item => ({ 
+                    quantity: item.quantity, 
+                    expectedDate: item.expectedDate ? new Date(item.expectedDate) : null 
+                })) || [],
+                supplierStock
+            ));
+        });
+        return map;
+    }, [bagProducts, inventoryMap, wipMap, incomingMap, supplierStockLotsMap, supplierStockMap, saleEvents]);
+
     // フィルタリングされた商品
     const filteredProducts = useMemo(() => {
         let products = bagProducts;
@@ -375,6 +471,34 @@ export default function BagsInventoryPage(): React.ReactElement {
                 const isPlateRemoved = p.status === 'plate_removed';
                 const currentStock = inventoryMap.get(p.id)?.quantity || 0;
                 return !(isPlateRemoved && currentStock === 0);
+            });
+        }
+
+        // クイックフィルター
+        if (quickFilter === 'need_order') {
+            products = products.filter(p => {
+                const qty = inventoryMap.get(p.id)?.quantity || 0;
+                const allocation = saleAllocationMap.get(p.id) || { bags: 0, meters: 0 };
+                const { isLowStock, isOutOfStock } = calculateStockStatus(p, qty, allocation, settings);
+                return isLowStock || isOutOfStock;
+            });
+        } else if (quickFilter === 'urgent_prediction') {
+            products = products.filter(p => {
+                const pred = predictionMap.get(p.id);
+                if (!pred) return false;
+                if (pred.wipStartAlert) return true;
+                const leadDays = p.productionLeadDays || 30;
+                return pred.remainingDays !== null && pred.remainingDays <= leadDays;
+            });
+        } else if (quickFilter === 'reserved') {
+            products = products.filter(p => (saleAllocationMap.get(p.id)?.bags || 0) > 0);
+        } else if (quickFilter === 'supply') {
+            products = products.filter(p => {
+                const inc = incomingMap.get(p.id)?.total || 0;
+                const wip = (wipMap.get(p.id) || []).reduce((sum, item) => sum + item.quantity, 0);
+                const lots = supplierStockLotsMap?.get(p.id) || [];
+                const sup = lots.length > 0 ? lots.reduce((sum, lot) => sum + lot.quantity, 0) : (supplierStockMap.get(p.id) || 0);
+                return inc > 0 || wip > 0 || sup > 0;
             });
         }
 
@@ -436,8 +560,66 @@ export default function BagsInventoryPage(): React.ReactElement {
             products = products.filter(p => p.status === statusFilter);
         }
 
-        // ソート実行（filter後の配列をソート）
+        // ソート実行
         return [...products].sort((a, b) => {
+            if (sortKey !== 'default') {
+                const multiplier = sortOrder === 'asc' ? 1 : -1;
+                switch (sortKey) {
+                    case 'name':
+                        return multiplier * (a.name || '').localeCompare(b.name || '', 'ja');
+                    case 'weight':
+                        return multiplier * ((a.weight || 0) - (b.weight || 0));
+                    case 'currentStock': {
+                        const qtyA = inventoryMap.get(a.id)?.quantity || 0;
+                        const qtyB = inventoryMap.get(b.id)?.quantity || 0;
+                        return multiplier * (qtyA - qtyB);
+                    }
+                    case 'allocation': {
+                        const allocA = saleAllocationMap.get(a.id)?.bags || 0;
+                        const allocB = saleAllocationMap.get(b.id)?.bags || 0;
+                        return multiplier * (allocA - allocB);
+                    }
+                    case 'availableStock': {
+                        const qtyA = inventoryMap.get(a.id)?.quantity || 0;
+                        const allocA = saleAllocationMap.get(a.id) || { bags: 0, meters: 0 };
+                        const statA = calculateStockStatus(a, qtyA, allocA, settings);
+                        const qtyB = inventoryMap.get(b.id)?.quantity || 0;
+                        const allocB = saleAllocationMap.get(b.id) || { bags: 0, meters: 0 };
+                        const statB = calculateStockStatus(b, qtyB, allocB, settings);
+                        return multiplier * (statA.availableStock - statB.availableStock);
+                    }
+                    case 'incoming': {
+                        const incA = incomingMap.get(a.id)?.total || 0;
+                        const incB = incomingMap.get(b.id)?.total || 0;
+                        return multiplier * (incA - incB);
+                    }
+                    case 'supplierStock': {
+                        const lotsA = supplierStockLotsMap?.get(a.id) || [];
+                        const supA = lotsA.length > 0 ? lotsA.reduce((sum, lot) => sum + lot.quantity, 0) : (supplierStockMap.get(a.id) || 0);
+                        const lotsB = supplierStockLotsMap?.get(b.id) || [];
+                        const supB = lotsB.length > 0 ? lotsB.reduce((sum, lot) => sum + lot.quantity, 0) : (supplierStockMap.get(b.id) || 0);
+                        return multiplier * (supA - supB);
+                    }
+                    case 'wip': {
+                        const wipA = (wipMap.get(a.id) || []).reduce((sum, item) => sum + item.quantity, 0);
+                        const wipB = (wipMap.get(b.id) || []).reduce((sum, item) => sum + item.quantity, 0);
+                        return multiplier * (wipA - wipB);
+                    }
+                    case 'remainingDays': {
+                        const predA = predictionMap.get(a.id);
+                        const predB = predictionMap.get(b.id);
+                        const daysA = predA?.remainingDays ?? (sortOrder === 'asc' ? 999999 : -999999);
+                        const daysB = predB?.remainingDays ?? (sortOrder === 'asc' ? 999999 : -999999);
+                        return multiplier * (daysA - daysB);
+                    }
+                    case 'status': {
+                        const statusA = a.status || '';
+                        const statusB = b.status || '';
+                        return multiplier * statusA.localeCompare(statusB);
+                    }
+                }
+            }
+
             // 1. グループ順 (通常 -> NB -> 新米)
             const groupA = getProductGroup(a);
             const groupB = getProductGroup(b);
@@ -456,7 +638,7 @@ export default function BagsInventoryPage(): React.ReactElement {
             // 4. 重量順 (小さい順)
             return (a.weight || 0) - (b.weight || 0);
         });
-    }, [bagProducts, searchQuery, weightFilter, stockFilter, originFilter, varietyFilter, statusFilter, showRemovedZeroStock, inventoryMap, saleAllocationMap, settings]);
+    }, [bagProducts, showRemovedZeroStock, quickFilter, searchQuery, weightFilter, stockFilter, originFilter, varietyFilter, statusFilter, sortKey, sortOrder, inventoryMap, saleAllocationMap, settings, predictionMap, incomingMap, wipMap, supplierStockLotsMap, supplierStockMap]);
 
     // Excel出力
     const handleExportExcel = useCallback((): void => {
@@ -514,6 +696,8 @@ export default function BagsInventoryPage(): React.ReactElement {
         let lowStock = 0;
         let outOfStock = 0;
         let hasReservation = 0;
+        let urgentPrediction = 0;
+        let inSupply = 0;
 
         bagProducts.forEach(p => {
             const qty = inventoryMap.get(p.id)?.quantity || 0;
@@ -523,11 +707,24 @@ export default function BagsInventoryPage(): React.ReactElement {
             if (isOutOfStock) outOfStock++;
             else if (isLowStock) lowStock++;
             if (allocation.bags > 0) hasReservation++;
+
+            const pred = predictionMap.get(p.id);
+            if (pred && (pred.wipStartAlert || (pred.remainingDays !== null && pred.remainingDays <= (p.productionLeadDays || 30)))) {
+                urgentPrediction++;
+            }
+
+            const inc = incomingMap.get(p.id)?.total || 0;
+            const wip = (wipMap.get(p.id) || []).reduce((sum, item) => sum + item.quantity, 0);
+            const lots = supplierStockLotsMap?.get(p.id) || [];
+            const sup = lots.length > 0 ? lots.reduce((sum, lot) => sum + lot.quantity, 0) : (supplierStockMap.get(p.id) || 0);
+            if (inc > 0 || wip > 0 || sup > 0) {
+                inSupply++;
+            }
         });
 
         const needOrder = lowStock + outOfStock;
-        return { total: bagProducts.length, lowStock, outOfStock, hasReservation, needOrder };
-    }, [bagProducts, inventoryMap, saleAllocationMap, settings]);
+        return { total: bagProducts.length, lowStock, outOfStock, hasReservation, needOrder, urgentPrediction, inSupply };
+    }, [bagProducts, inventoryMap, saleAllocationMap, predictionMap, incomingMap, wipMap, supplierStockLotsMap, supplierStockMap, settings]);
 
     // 発注点割れ・欠品商品を推奨発注数で一括カート追加
     const handleAddAllLowStockToCart = useCallback(() => {
@@ -640,6 +837,125 @@ export default function BagsInventoryPage(): React.ReactElement {
                 </div>
             </div>
 
+            {/* クイックステータスタブ */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 hide-scrollbar print:hidden">
+                <Button
+                    variant={quickFilter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    className={cn(
+                        "h-8 px-3 text-xs rounded-full gap-1.5 shrink-0 transition-all",
+                        quickFilter === 'all' ? "bg-slate-900 text-white shadow-xs font-semibold" : "bg-white hover:bg-slate-100 text-slate-700"
+                    )}
+                    onClick={() => {
+                        setQuickFilter('all');
+                        setStockFilter('all');
+                    }}
+                >
+                    <Package className="h-3.5 w-3.5" />
+                    すべて
+                    <span className={cn(
+                        "ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono",
+                        quickFilter === 'all' ? "bg-slate-700 text-slate-200" : "bg-slate-100 text-slate-600"
+                    )}>
+                        {summary.total}
+                    </span>
+                </Button>
+
+                <Button
+                    variant={quickFilter === 'need_order' ? 'default' : 'outline'}
+                    size="sm"
+                    className={cn(
+                        "h-8 px-3 text-xs rounded-full gap-1.5 shrink-0 transition-all",
+                        quickFilter === 'need_order' 
+                            ? "bg-red-600 hover:bg-red-700 text-white shadow-xs font-semibold" 
+                            : "border-red-200 text-red-700 hover:bg-red-50 bg-white"
+                    )}
+                    onClick={() => {
+                        setQuickFilter(quickFilter === 'need_order' ? 'all' : 'need_order');
+                        setStockFilter('all');
+                    }}
+                >
+                    <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
+                    🚨 要発注
+                    <span className={cn(
+                        "ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold",
+                        quickFilter === 'need_order' ? "bg-red-800 text-white" : "bg-red-100 text-red-800"
+                    )}>
+                        {summary.needOrder}
+                    </span>
+                </Button>
+
+                <Button
+                    variant={quickFilter === 'urgent_prediction' ? 'default' : 'outline'}
+                    size="sm"
+                    className={cn(
+                        "h-8 px-3 text-xs rounded-full gap-1.5 shrink-0 transition-all",
+                        quickFilter === 'urgent_prediction' 
+                            ? "bg-amber-600 hover:bg-amber-700 text-white shadow-xs font-semibold" 
+                            : "border-amber-200 text-amber-700 hover:bg-amber-50 bg-white"
+                    )}
+                    onClick={() => {
+                        setQuickFilter(quickFilter === 'urgent_prediction' ? 'all' : 'urgent_prediction');
+                        setStockFilter('all');
+                    }}
+                >
+                    ⏳ 予測切迫
+                    <span className={cn(
+                        "ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold",
+                        quickFilter === 'urgent_prediction' ? "bg-amber-800 text-white" : "bg-amber-100 text-amber-800"
+                    )}>
+                        {summary.urgentPrediction}
+                    </span>
+                </Button>
+
+                <Button
+                    variant={quickFilter === 'reserved' ? 'default' : 'outline'}
+                    size="sm"
+                    className={cn(
+                        "h-8 px-3 text-xs rounded-full gap-1.5 shrink-0 transition-all",
+                        quickFilter === 'reserved' 
+                            ? "bg-blue-600 hover:bg-blue-700 text-white shadow-xs font-semibold" 
+                            : "border-blue-200 text-blue-700 hover:bg-blue-50 bg-white"
+                    )}
+                    onClick={() => {
+                        setQuickFilter(quickFilter === 'reserved' ? 'all' : 'reserved');
+                        setStockFilter('all');
+                    }}
+                >
+                    <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                    特売引当
+                    <span className={cn(
+                        "ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold",
+                        quickFilter === 'reserved' ? "bg-blue-800 text-white" : "bg-blue-100 text-blue-800"
+                    )}>
+                        {summary.hasReservation}
+                    </span>
+                </Button>
+
+                <Button
+                    variant={quickFilter === 'supply' ? 'default' : 'outline'}
+                    size="sm"
+                    className={cn(
+                        "h-8 px-3 text-xs rounded-full gap-1.5 shrink-0 transition-all",
+                        quickFilter === 'supply' 
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs font-semibold" 
+                            : "border-emerald-200 text-emerald-700 hover:bg-emerald-50 bg-white"
+                    )}
+                    onClick={() => {
+                        setQuickFilter(quickFilter === 'supply' ? 'all' : 'supply');
+                        setStockFilter('all');
+                    }}
+                >
+                    🏭 供給中 (入荷・仕掛)
+                    <span className={cn(
+                        "ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold",
+                        quickFilter === 'supply' ? "bg-emerald-800 text-white" : "bg-emerald-100 text-emerald-800"
+                    )}>
+                        {summary.inSupply}
+                    </span>
+                </Button>
+            </div>
+
             {/* サマリーカード & クイック発注バー */}
             <div className={cn(
                 "grid grid-cols-2 md:grid-cols-5 gap-1.5 md:gap-3 transition-all print:hidden",
@@ -648,9 +964,12 @@ export default function BagsInventoryPage(): React.ReactElement {
                 <Card 
                     className={cn(
                         "shadow-none sm:shadow-sm cursor-pointer transition hover:border-slate-400",
-                        stockFilter === "all" && !hasActiveFilters && "ring-2 ring-primary/20 bg-slate-50/50"
+                        quickFilter === "all" && stockFilter === "all" && !hasActiveFilters && "ring-2 ring-primary/20 bg-slate-50/50"
                     )}
-                    onClick={() => setStockFilter("all")}
+                    onClick={() => {
+                        setQuickFilter("all");
+                        setStockFilter("all");
+                    }}
                 >
                     <CardHeader className="p-1.5 sm:p-3 pb-0 sm:pb-0">
                         <CardTitle className="text-[9px] sm:text-xs md:text-sm font-medium flex items-center gap-1 text-muted-foreground">
@@ -699,9 +1018,11 @@ export default function BagsInventoryPage(): React.ReactElement {
                 <Card 
                     className={cn(
                         "border-blue-100 shadow-none sm:shadow-sm cursor-pointer transition hover:border-blue-400",
-                        stockFilter === "reserved" && "ring-2 ring-blue-500/30 bg-blue-50/30"
+                        (quickFilter === "reserved" || stockFilter === "reserved") && "ring-2 ring-blue-500/30 bg-blue-50/30"
                     )}
-                    onClick={() => setStockFilter(stockFilter === "reserved" ? "all" : "reserved")}
+                    onClick={() => {
+                        setQuickFilter(quickFilter === "reserved" ? "all" : "reserved");
+                    }}
                 >
                     <CardHeader className="p-1.5 sm:p-3 pb-0 sm:pb-0">
                         <CardTitle className="text-[9px] sm:text-xs md:text-sm font-medium text-blue-600 flex items-center gap-1">
@@ -723,9 +1044,11 @@ export default function BagsInventoryPage(): React.ReactElement {
                             variant="ghost"
                             size="sm"
                             className="h-5 px-1.5 text-[10px] text-orange-700 hover:text-orange-900 hover:bg-orange-100"
-                            onClick={() => setStockFilter(stockFilter === "need_order" ? "all" : "need_order")}
+                            onClick={() => {
+                                setQuickFilter(quickFilter === 'need_order' ? 'all' : 'need_order');
+                            }}
                         >
-                            {stockFilter === "need_order" ? "解除" : "絞込"}
+                            {quickFilter === "need_order" ? "解除" : "絞込"}
                         </Button>
                     </div>
                     <Button
@@ -901,6 +1224,11 @@ export default function BagsInventoryPage(): React.ReactElement {
                     incomingMap={incomingMap}
                     saleEvents={saleEvents || []}
                     loading={loading}
+                    sortKey={sortKey}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    density={density}
+                    onDensityChange={setDensity}
                     onEdit={handleEditProduct}
                     onIncomingStockClick={(product) => {
                         setIncomingStockProduct(product);

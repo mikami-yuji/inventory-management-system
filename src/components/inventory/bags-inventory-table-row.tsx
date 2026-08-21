@@ -9,6 +9,11 @@ import {
     Pencil,
     Package,
     Check,
+    Info,
+    Calendar,
+    Clock,
+    Truck,
+    Layers,
 } from "lucide-react";
 import { getPitch, calculateStockStatus } from "@/lib/services";
 import { format } from "date-fns";
@@ -16,6 +21,13 @@ import type { Product, WorkInProgress, IncomingStock, SupplierStockLot } from "@
 import type { SaleEvent } from "@/hooks/use-sale-events";
 import type { calculateStockPrediction } from "@/lib/services";
 import type { InventoryDialogsState } from "./use-inventory-dialogs";
+import type { TableDensity } from "./bags-inventory-table";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface BagsInventoryTableRowProps {
     product: Product;
@@ -29,6 +41,7 @@ export interface BagsInventoryTableRowProps {
     saleEvents: SaleEvent[];
     settings?: Record<string, unknown>;
     isInCart: boolean;
+    density?: TableDensity;
     dialogs: InventoryDialogsState;
     onEdit: (product: Product) => void;
     onIncomingStockClick: (product: Product) => void;
@@ -37,7 +50,7 @@ export interface BagsInventoryTableRowProps {
 }
 
 // 量目バッジのカラーリングヘルパー
-const renderWeightBadge = (weight?: number | null) => {
+const renderWeightBadge = (weight?: number | null, isCompact?: boolean) => {
     if (!weight) return <span className="text-[10px] text-muted-foreground font-medium">-</span>;
 
     let badgeClass = "bg-blue-600 text-white"; // 5kg 標準
@@ -48,7 +61,11 @@ const renderWeightBadge = (weight?: number | null) => {
     else if (weight < 1) badgeClass = "bg-purple-800 text-white shadow-xs"; // 0.75kg等小袋
 
     return (
-        <span className={cn("inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-black tracking-tight", badgeClass)}>
+        <span className={cn(
+            "inline-flex items-center justify-center rounded font-black tracking-tight",
+            isCompact ? "px-1.5 py-0 text-[10px]" : "px-2 py-0.5 text-xs",
+            badgeClass
+        )}>
             {weight}kg
         </span>
     );
@@ -66,6 +83,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
     saleEvents,
     settings,
     isInCart,
+    density = 'standard',
     dialogs,
     onEdit,
     onIncomingStockClick,
@@ -82,8 +100,11 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
         setSelectedImage
     } = dialogs;
 
+    const isCompact = density === 'compact';
+
     const currentStock = inventoryItem.quantity;
     const oldPriceQty = inventoryItem.oldPriceQuantity || 0;
+    const regularQty = Math.max(0, currentStock - oldPriceQty);
     const updatedAt = inventoryItem.updatedAt;
 
     const supplierStock = supplierStockLots.length > 0
@@ -110,11 +131,13 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
     return (
         <TableRow className={cn(
             "group transition-colors border-b odd:bg-white even:bg-slate-50/40 hover:bg-sky-50/60",
-            isOutOfStock && "!bg-red-50/50 hover:!bg-red-100/50"
+            isOutOfStock && "!bg-red-50/50 hover:!bg-red-100/50",
+            isCompact ? "h-9" : ""
         )}>
             {/* 1. 画像 */}
             <TableCell className={cn(
-                "sticky left-0 z-10 transition-colors border-r border-l-4 p-1.5 text-center",
+                "sticky left-0 z-10 transition-colors border-r border-l-4 text-center",
+                isCompact ? "p-1" : "p-1.5",
                 statusBorderColor,
                 isOutOfStock ? "bg-red-50/90" : "bg-background group-hover:bg-sky-50/90"
             )}>
@@ -123,28 +146,36 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                         src={product.imageUrl}
                         alt={product.name}
                         variant="thumbnail"
+                        className={isCompact ? "w-7 h-7" : "w-10 h-10"}
                         onClick={() => setSelectedImage({ url: product.imageUrl!, alt: product.name, name: product.name })}
                     />
                 ) : (
-                    <div className="w-10 h-10 mx-auto bg-gray-100 rounded border flex items-center justify-center">
-                        <Package className="h-4 w-4 text-gray-400" />
+                    <div className={cn(
+                        "mx-auto bg-gray-100 rounded border flex items-center justify-center",
+                        isCompact ? "w-7 h-7" : "w-10 h-10"
+                    )}>
+                        <Package className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", "text-gray-400")} />
                     </div>
                 )}
             </TableCell>
 
             {/* 2. 商品情報 */}
             <TableCell className={cn(
-                "md:sticky md:left-[54px] z-0 md:z-10 transition-colors md:border-r p-2",
+                "md:sticky md:left-[50px] z-0 md:z-10 transition-colors md:border-r",
+                isCompact ? "p-1 max-w-[170px]" : "p-2 max-w-[180px]",
                 isOutOfStock ? "bg-red-50/90" : "bg-background group-hover:bg-sky-50/90"
             )}>
-                <div className="max-w-[180px]">
-                    <div className="font-bold text-xs md:text-sm truncate leading-snug" title={product.name}>
+                <div>
+                    <div className={cn(
+                        "font-bold truncate leading-snug",
+                        isCompact ? "text-xs" : "text-xs md:text-sm"
+                    )} title={product.name}>
                         {product.name}
                     </div>
-                    <div className="text-[11px] text-slate-500 truncate mt-0.5">
-                        受注№: <span className="font-mono text-slate-700">{product.sku || '-'}</span>
+                    <div className={cn("text-slate-500 truncate", isCompact ? "text-[10px]" : "text-[11px] mt-0.5")}>
+                        №: <span className="font-mono text-slate-700">{product.sku || '-'}</span>
                     </div>
-                    {product.janCode && (
+                    {!isCompact && product.janCode && (
                         <div className="text-[10px] text-slate-400 font-mono truncate">
                             JAN: {product.janCode}
                         </div>
@@ -152,63 +183,130 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                 </div>
             </TableCell>
 
-            {/* 3. スペック (量目を最前面に強調) */}
+            {/* 3. スペック */}
             <TableCell className={cn(
-                "md:sticky md:left-[234px] z-0 md:z-10 md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.06)] md:border-r transition-colors p-2",
+                "md:sticky md:left-[230px] z-0 md:z-10 md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.06)] md:border-r transition-colors",
+                isCompact ? "p-1" : "p-2",
                 isOutOfStock ? "bg-red-50/90" : "bg-background group-hover:bg-sky-50/90"
             )}>
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1.5">
-                        {renderWeightBadge(product.weight)}
-                        <span className="text-xs font-semibold text-slate-700">{product.shape || "-"}</span>
+                <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1">
+                        {renderWeightBadge(product.weight, isCompact)}
+                        <span className={cn("font-semibold text-slate-700", isCompact ? "text-[11px]" : "text-xs")}>
+                            {product.shape || "-"}
+                        </span>
                     </div>
                     {isRoll ? (
-                        <div className="flex items-center gap-1 text-[10px] text-slate-500">
-                            <span className="bg-slate-100 px-1 py-0.5 rounded text-[9px] font-mono">P:{getPitch(product.weight || 0)}</span>
-                            <span className="bg-slate-100 px-1 py-0.5 rounded text-[9px] font-mono">{product.metersPerRoll || 400}m</span>
+                        <div className="flex items-center gap-1 text-[9px] text-slate-500">
+                            <span className="bg-slate-100 px-1 py-0.2 rounded font-mono">P:{getPitch(product.weight || 0)}</span>
+                            <span className="bg-slate-100 px-1 py-0.2 rounded font-mono">{product.metersPerRoll || 400}m</span>
                         </div>
                     ) : (
-                        product.material && <div className="text-[10px] text-slate-400 truncate max-w-[90px]">{product.material}</div>
+                        product.material && !isCompact && <div className="text-[10px] text-slate-400 truncate max-w-[90px]">{product.material}</div>
                     )}
                 </div>
             </TableCell>
 
-            {/* 4. 現在庫 (最重要項目として大きく目立たせる) */}
-            <TableCell
-                className="text-right cursor-pointer hover:bg-blue-100/60 transition-colors group relative tabular-nums bg-blue-50/25 p-2"
-                onClick={() => setAdjustStock(product)}
-                title={updatedAt ? `最終更新: ${new Date(updatedAt).toLocaleString('ja-JP')} (クリックで調整)` : 'クリックで在庫数を調整'}
-            >
-                {isRoll ? (
-                    <div>
-                        <div className={cn(
-                            "font-black text-base md:text-lg tracking-tight flex items-center justify-end gap-1",
-                            currentStock === 0 ? "text-red-600" : "text-slate-950"
-                        )}>
-                            {currentStock.toLocaleString()}<span className="text-xs font-bold text-slate-600">m</span>
-                            <Pencil className="h-3 w-3 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+            {/* 4. 現在庫 (内訳プレビュー Tooltip 連携) */}
+            <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <TableCell
+                            className={cn(
+                                "text-right cursor-pointer hover:bg-blue-100/70 transition-colors group relative tabular-nums bg-blue-50/25",
+                                isCompact ? "p-1" : "p-2"
+                            )}
+                            onClick={() => setAdjustStock(product)}
+                        >
+                            {isRoll ? (
+                                <div>
+                                    <div className={cn(
+                                        "tracking-tight flex items-center justify-end gap-0.5",
+                                        isCompact ? "font-bold text-xs md:text-sm" : "font-black text-base md:text-lg",
+                                        currentStock === 0 ? "text-red-600" : "text-slate-950"
+                                    )}>
+                                        {currentStock.toLocaleString()}<span className="text-[10px] font-bold text-slate-600">m</span>
+                                        <Pencil className="h-2.5 w-2.5 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
+                                    </div>
+                                    <div className={cn("text-slate-500 font-semibold", isCompact ? "text-[9px]" : "text-[11px]")}>
+                                        約{currentBags.toLocaleString()}枚
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    <div className={cn(
+                                        "tracking-tight flex items-center justify-end gap-0.5",
+                                        isCompact ? "font-bold text-xs md:text-sm" : "font-black text-base md:text-lg",
+                                        currentStock === 0 ? "text-red-600" : "text-slate-950"
+                                    )}>
+                                        {currentStock.toLocaleString()}<span className="text-[10px] font-bold text-slate-600">枚</span>
+                                        <Pencil className="h-2.5 w-2.5 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
+                                    </div>
+                                </div>
+                            )}
+                            {oldPriceQty > 0 && (
+                                <div className="text-[8px] text-orange-600 font-bold leading-none mt-0.5" title="旧価格在庫">
+                                    旧:{oldPriceQty.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                </div>
+                            )}
+                        </TableCell>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="end" className="p-2.5 max-w-[260px] text-xs bg-slate-900 text-white shadow-xl border-slate-700">
+                        <div className="space-y-1.5">
+                            <div className="font-bold border-b border-slate-700 pb-1 flex items-center justify-between text-slate-200">
+                                <span>{product.name}</span>
+                                <span className="text-[10px] text-blue-400 font-normal">クリックで調整</span>
+                            </div>
+                            <div className="space-y-0.5 text-[11px]">
+                                <div className="flex justify-between">
+                                    <span className="text-slate-400">現在庫:</span>
+                                    <span className="font-bold font-mono">{currentStock.toLocaleString()} {isRoll ? 'm' : '枚'}</span>
+                                </div>
+                                {oldPriceQty > 0 && (
+                                    <>
+                                        <div className="flex justify-between text-slate-300 pl-2 text-[10px]">
+                                            <span>└ 通常価格:</span>
+                                            <span className="font-mono">{regularQty.toLocaleString()} {isRoll ? 'm' : '枚'}</span>
+                                        </div>
+                                        <div className="flex justify-between text-amber-400 pl-2 text-[10px]">
+                                            <span>└ 旧価格在庫:</span>
+                                            <span className="font-mono font-bold">{oldPriceQty.toLocaleString()} {isRoll ? 'm' : '枚'}</span>
+                                        </div>
+                                    </>
+                                )}
+                                <div className="flex justify-between text-blue-300 border-t border-slate-800 pt-0.5">
+                                    <span>有効在庫 (引当差引後):</span>
+                                    <span className="font-bold font-mono">{availableStock.toLocaleString()} {isRoll ? 'm' : '枚'}</span>
+                                </div>
+                                {allocation.bags > 0 && (
+                                    <div className="flex justify-between text-slate-300">
+                                        <span className="text-slate-400">特売引当:</span>
+                                        <span className="font-mono">{allocation.bags.toLocaleString()} 枚</span>
+                                    </div>
+                                )}
+                                {incoming && incoming.total > 0 && (
+                                    <div className="flex justify-between text-emerald-400">
+                                        <span>入荷予定:</span>
+                                        <span className="font-mono">{incoming.total.toLocaleString()} {isRoll ? 'm' : '枚'}</span>
+                                    </div>
+                                )}
+                                {wipList.length > 0 && (
+                                    <div className="flex justify-between text-amber-300">
+                                        <span>仕掛中:</span>
+                                        <span className="font-mono">{wipList.reduce((s, i) => s + i.quantity, 0).toLocaleString()} {isRoll ? 'm' : '枚'}</span>
+                                    </div>
+                                )}
+                            </div>
+                            {updatedAt && (
+                                <div className="text-[9px] text-slate-400 pt-1 border-t border-slate-800 flex items-center gap-1">
+                                    <Clock className="h-2.5 w-2.5 text-slate-500" />
+                                    <span>最終更新: {new Date(updatedAt).toLocaleString('ja-JP')}</span>
+                                </div>
+                            )}
                         </div>
-                        <div className="text-[11px] font-semibold text-slate-500">
-                            約{currentBags.toLocaleString()}枚
-                        </div>
-                    </div>
-                ) : (
-                    <div>
-                        <div className={cn(
-                            "font-black text-base md:text-lg tracking-tight flex items-center justify-end gap-1",
-                            currentStock === 0 ? "text-red-600" : "text-slate-950"
-                        )}>
-                            {currentStock.toLocaleString()}<span className="text-xs font-bold text-slate-600">枚</span>
-                            <Pencil className="h-3 w-3 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                    </div>
-                )}
-                {oldPriceQty > 0 && (
-                    <div className="text-[9px] text-orange-600 font-bold mt-0.5" title="旧価格在庫の内訳">
-                        旧価格: {oldPriceQty.toLocaleString()}{isRoll ? 'm' : '枚'}
-                    </div>
-                )}
-            </TableCell>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
 
             {/* 5. 特売引当 */}
             <TableCell
