@@ -782,241 +782,342 @@ export default function BagsInventoryPage(): React.ReactElement {
     }
 
     return (
-        <div className={cn("space-y-2 sm:space-y-4 md:space-y-6", isSmallHeight && "space-y-0.5")}>
-            {/* 1. ヘッダー & クイックタブ */}
-            <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
-                <div className="flex items-center gap-2.5 flex-wrap">
-                    <h1 className="text-base md:text-xl font-bold tracking-tight whitespace-nowrap">
-                        在庫状況 <span className="text-xs font-normal text-muted-foreground">({filteredProducts.length})</span>
-                    </h1>
+        <div className="space-y-2.5 print:space-y-0">
+            {/* 統合ヘッダー＆コントロールエリア */}
+            <div className="space-y-2 print:hidden">
+                {/* 1. タイトル、クイックステータスタブ、主要アクション */}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    {/* 左側: タイトル & クイックステータスタブ */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 mr-1">
+                            <h1 className="text-base md:text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap">
+                                在庫状況
+                            </h1>
+                            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                                {filteredProducts.length}
+                            </span>
+                        </div>
 
-                    {/* クイックタブ */}
-                    <div className="flex items-center gap-1 overflow-x-auto hide-scrollbar">
-                        <Button
-                            variant={quickFilter === 'all' ? 'default' : 'outline'}
-                            size="sm"
-                            className={cn(
-                                "h-7 px-2.5 text-xs rounded-full gap-1 shrink-0 transition-all",
-                                quickFilter === 'all' ? "bg-slate-900 text-white font-medium" : "bg-white text-slate-700 hover:bg-slate-50"
-                            )}
-                            onClick={() => {
-                                setQuickFilter('all');
-                                setStockFilter('all');
-                            }}
-                        >
-                            すべて
-                            <span className={cn("text-[10px] font-mono", quickFilter === 'all' ? "text-slate-300" : "text-muted-foreground")}>{summary.total}</span>
-                        </Button>
-
-                        <Button
-                            variant={quickFilter === 'need_order' ? 'default' : 'outline'}
-                            size="sm"
-                            className={cn(
-                                "h-7 px-2.5 text-xs rounded-full gap-1 shrink-0 transition-all",
-                                quickFilter === 'need_order' ? "bg-red-600 hover:bg-red-700 text-white font-medium" : "border-red-200 text-red-700 bg-red-50/50 hover:bg-red-100/60"
-                            )}
-                            onClick={() => {
-                                setQuickFilter(quickFilter === 'need_order' ? 'all' : 'need_order');
-                                setStockFilter('all');
-                            }}
-                        >
-                            🚨 要発注
-                            <span className="text-[10px] font-mono font-bold">{summary.needOrder}</span>
-                        </Button>
-
-                        <Button
-                            variant={quickFilter === 'urgent_prediction' ? 'default' : 'outline'}
-                            size="sm"
-                            className={cn(
-                                "h-7 px-2.5 text-xs rounded-full gap-1 shrink-0 transition-all",
-                                quickFilter === 'urgent_prediction' ? "bg-amber-600 hover:bg-amber-700 text-white font-medium" : "border-amber-200 text-amber-800 bg-amber-50/50 hover:bg-amber-100/60"
-                            )}
-                            onClick={() => {
-                                setQuickFilter(quickFilter === 'urgent_prediction' ? 'all' : 'urgent_prediction');
-                                setStockFilter('all');
-                            }}
-                        >
-                            ⏳ 予測切迫
-                            <span className="text-[10px] font-mono font-bold">{summary.urgentPrediction}</span>
-                        </Button>
-
-                        <Button
-                            variant={quickFilter === 'reserved' ? 'default' : 'outline'}
-                            size="sm"
-                            className={cn(
-                                "h-7 px-2.5 text-xs rounded-full gap-1 shrink-0 transition-all",
-                                quickFilter === 'reserved' ? "bg-blue-600 hover:bg-blue-700 text-white font-medium" : "border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-100/60"
-                            )}
-                            onClick={() => {
-                                setQuickFilter(quickFilter === 'reserved' ? 'all' : 'reserved');
-                                setStockFilter('all');
-                            }}
-                        >
-                            📅 特売引当
-                            <span className="text-[10px] font-mono font-bold">{summary.hasReservation}</span>
-                        </Button>
-
-                        <Button
-                            variant={quickFilter === 'supply' ? 'default' : 'outline'}
-                            size="sm"
-                            className={cn(
-                                "h-7 px-2.5 text-xs rounded-full gap-1 shrink-0 transition-all",
-                                quickFilter === 'supply' ? "bg-emerald-600 hover:bg-emerald-700 text-white font-medium" : "border-emerald-200 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100/60"
-                            )}
-                            onClick={() => {
-                                setQuickFilter(quickFilter === 'supply' ? 'all' : 'supply');
-                                setStockFilter('all');
-                            }}
-                        >
-                            🏭 供給中
-                            <span className="text-[10px] font-mono font-bold">{summary.inSupply}</span>
-                        </Button>
-
-                        {summary.needOrder > 0 && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={handleAddAllLowStockToCart}
-                                className="h-7 px-2 text-[11px] border-orange-300 text-orange-700 hover:bg-orange-50 gap-1 ml-1"
-                                title="要発注商品を推奨数量で一括カート追加"
+                        {/* クイックステータスタブ */}
+                        <div className="flex items-center gap-1 overflow-x-auto hide-scrollbar py-0.5">
+                            <button
+                                type="button"
+                                className={cn(
+                                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all shadow-2xs border cursor-pointer",
+                                    quickFilter === 'all'
+                                        ? "bg-slate-900 text-white border-slate-900"
+                                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                                )}
+                                onClick={() => {
+                                    setQuickFilter('all');
+                                    setStockFilter('all');
+                                }}
                             >
-                                <ShoppingCart className="h-3 w-3" />
-                                一括カート
+                                <span>すべて</span>
+                                <span className={cn(
+                                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono font-semibold",
+                                    quickFilter === 'all' ? "bg-slate-700 text-white" : "bg-slate-100 text-slate-600"
+                                )}>
+                                    {summary.total}
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                className={cn(
+                                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all shadow-2xs border cursor-pointer",
+                                    quickFilter === 'need_order'
+                                        ? "bg-red-600 text-white border-red-600"
+                                        : "bg-red-50/80 text-red-700 border-red-200/80 hover:bg-red-100/70"
+                                )}
+                                onClick={() => {
+                                    setQuickFilter(quickFilter === 'need_order' ? 'all' : 'need_order');
+                                    setStockFilter('all');
+                                }}
+                            >
+                                <span>🚨 要発注</span>
+                                <span className={cn(
+                                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold",
+                                    quickFilter === 'need_order' ? "bg-red-700 text-white" : "bg-red-100 text-red-800"
+                                )}>
+                                    {summary.needOrder}
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                className={cn(
+                                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all shadow-2xs border cursor-pointer",
+                                    quickFilter === 'urgent_prediction'
+                                        ? "bg-amber-600 text-white border-amber-600"
+                                        : "bg-amber-50/80 text-amber-800 border-amber-200/80 hover:bg-amber-100/70"
+                                )}
+                                onClick={() => {
+                                    setQuickFilter(quickFilter === 'urgent_prediction' ? 'all' : 'urgent_prediction');
+                                    setStockFilter('all');
+                                }}
+                            >
+                                <span>⏳ 予測切迫</span>
+                                <span className={cn(
+                                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold",
+                                    quickFilter === 'urgent_prediction' ? "bg-amber-700 text-white" : "bg-amber-100 text-amber-900"
+                                )}>
+                                    {summary.urgentPrediction}
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                className={cn(
+                                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all shadow-2xs border cursor-pointer",
+                                    quickFilter === 'reserved'
+                                        ? "bg-blue-600 text-white border-blue-600"
+                                        : "bg-blue-50/80 text-blue-700 border-blue-200/80 hover:bg-blue-100/70"
+                                )}
+                                onClick={() => {
+                                    setQuickFilter(quickFilter === 'reserved' ? 'all' : 'reserved');
+                                    setStockFilter('all');
+                                }}
+                            >
+                                <span>📅 特売引当</span>
+                                <span className={cn(
+                                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold",
+                                    quickFilter === 'reserved' ? "bg-blue-700 text-white" : "bg-blue-100 text-blue-800"
+                                )}>
+                                    {summary.hasReservation}
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                className={cn(
+                                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all shadow-2xs border cursor-pointer",
+                                    quickFilter === 'supply'
+                                        ? "bg-emerald-600 text-white border-emerald-600"
+                                        : "bg-emerald-50/80 text-emerald-700 border-emerald-200/80 hover:bg-emerald-100/70"
+                                )}
+                                onClick={() => {
+                                    setQuickFilter(quickFilter === 'supply' ? 'all' : 'supply');
+                                    setStockFilter('all');
+                                }}
+                            >
+                                <span>🏭 供給中</span>
+                                <span className={cn(
+                                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold",
+                                    quickFilter === 'supply' ? "bg-emerald-700 text-white" : "bg-emerald-100 text-emerald-800"
+                                )}>
+                                    {summary.inSupply}
+                                </span>
+                            </button>
+
+                            {summary.needOrder > 0 && (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={handleAddAllLowStockToCart}
+                                    className="h-6.5 px-2 text-[11px] border-orange-300 text-orange-700 hover:bg-orange-50 gap-1 rounded-full shrink-0"
+                                    title="要発注商品を推奨数量で一括カート追加"
+                                >
+                                    <ShoppingCart className="h-3 w-3" />
+                                    一括カート
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 右側: アクションボタン群 */}
+                    <div className="flex items-center gap-1.5 ml-auto">
+                        <div className="bg-slate-100 p-0.5 rounded-md border flex items-center shrink-0">
+                            <Button
+                                variant={viewMode === "table" ? "secondary" : "ghost"}
+                                size="sm"
+                                className={cn("px-2 h-7 text-xs", viewMode === "table" && "bg-white shadow-2xs text-slate-900 font-medium")}
+                                onClick={() => setViewMode("table")}
+                            >
+                                <List className="h-3.5 w-3.5 mr-1" />
+                                リスト
                             </Button>
-                        )}
+                            <Button
+                                variant={viewMode === "grid" ? "secondary" : "ghost"}
+                                size="sm"
+                                className={cn("px-2 h-7 text-xs", viewMode === "grid" && "bg-white shadow-2xs text-slate-900 font-medium")}
+                                onClick={() => setViewMode("grid")}
+                            >
+                                <LayoutGrid className="h-3.5 w-3.5 mr-1" />
+                                カード
+                            </Button>
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={handleExportExcel} 
+                            className="gap-1 h-7 px-2.5 text-xs border-emerald-600 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                        >
+                            <Download className="h-3.5 w-3.5 text-emerald-600" />
+                            Excel
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={handlePrint} 
+                            className="gap-1 h-7 px-2.5 text-xs border-slate-300 text-slate-700 hover:bg-slate-50"
+                        >
+                            <Printer className="h-3.5 w-3.5 text-slate-600" />
+                            PDF
+                        </Button>
+                        <Button 
+                            size="sm"
+                            onClick={handleAddProduct} 
+                            className="gap-1 h-7 px-3 text-xs bg-slate-900 text-white hover:bg-slate-800"
+                        >
+                            <Plus className="h-3.5 w-3.5" />
+                            商品追加
+                        </Button>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 ml-auto">
-                    <div className="bg-slate-100 p-0.5 rounded border flex items-center shrink-0">
-                        <Button
-                            variant={viewMode === "table" ? "secondary" : "ghost"}
-                            size="sm"
-                            className={cn("px-2 h-7 text-xs", viewMode === "table" && "bg-white shadow-xs")}
-                            onClick={() => setViewMode("table")}
-                        >
-                            <List className="h-3.5 w-3.5 mr-1" />
-                            リスト
-                        </Button>
-                        <Button
-                            variant={viewMode === "grid" ? "secondary" : "ghost"}
-                            size="sm"
-                            className={cn("px-2 h-7 text-xs", viewMode === "grid" && "bg-white shadow-xs")}
-                            onClick={() => setViewMode("grid")}
-                        >
-                            <LayoutGrid className="h-3.5 w-3.5 mr-1" />
-                            カード
-                        </Button>
+                {/* 2. 統合検索＆フィルターバー（1枚のコンパクトなカード） */}
+                <div className="bg-white px-2.5 py-2 rounded-lg border border-slate-200 shadow-2xs">
+                    <div className="flex flex-wrap items-center gap-2">
+                        {/* 検索入力 */}
+                        <div className="relative flex-1 min-w-[180px] max-w-xs sm:max-w-sm">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                            <Input
+                                ref={searchInputRef}
+                                placeholder="商品名、JAN、商品ID... (「/」でフォーカス)"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-8 pr-7 h-7.5 text-xs bg-slate-50/50 border-slate-200 focus:bg-white transition-colors"
+                            />
+                            {searchQuery ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearchQuery("")}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            ) : (
+                                <kbd className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none hidden sm:inline-flex h-4.5 select-none items-center rounded border border-slate-200 bg-slate-100 px-1 font-mono text-[9px] text-slate-500">
+                                    /
+                                </kbd>
+                            )}
+                        </div>
+
+                        {/* ドロップダウンフィルター群 */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            {/* 重量 */}
+                            <Select value={weightFilter} onValueChange={setWeightFilter}>
+                                <SelectTrigger className={cn("h-7.5 text-xs w-[88px] bg-slate-50/50 border-slate-200", weightFilter !== "all" && "bg-blue-50/80 border-blue-300 text-blue-900 font-medium")}>
+                                    <SelectValue placeholder="重量" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">重量: 全て</SelectItem>
+                                    {availableWeights.map(w => (
+                                        <SelectItem key={w} value={w.toString()}>{w}kg</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            {/* 産地 */}
+                            <Select value={originFilter} onValueChange={setOriginFilter}>
+                                <SelectTrigger className={cn("h-7.5 text-xs w-[94px] bg-slate-50/50 border-slate-200", originFilter !== "all" && "bg-blue-50/80 border-blue-300 text-blue-900 font-medium")}>
+                                    <SelectValue placeholder="産地" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">産地: 全て</SelectItem>
+                                    {availableOrigins.map(o => (
+                                        <SelectItem key={o} value={o}>{o}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            {/* 品種 */}
+                            <Select value={varietyFilter} onValueChange={setVarietyFilter}>
+                                <SelectTrigger className={cn("h-7.5 text-xs w-[96px] bg-slate-50/50 border-slate-200", varietyFilter !== "all" && "bg-blue-50/80 border-blue-300 text-blue-900 font-medium")}>
+                                    <SelectValue placeholder="品種" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">品種: 全て</SelectItem>
+                                    {availableVarieties.map(v => (
+                                        <SelectItem key={v} value={v}>{v}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            {/* 状態 */}
+                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                <SelectTrigger className={cn("h-7.5 text-xs w-[100px] bg-slate-50/50 border-slate-200", statusFilter !== "all" && "bg-blue-50/80 border-blue-300 text-blue-900 font-medium")}>
+                                    <SelectValue placeholder="状態" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">状態: 全て</SelectItem>
+                                    {Object.entries(statusLabels).map(([value, label]) => (
+                                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            {/* 全体状況 (在庫状況) */}
+                            <Select value={stockFilter} onValueChange={setStockFilter}>
+                                <SelectTrigger className={cn("h-7.5 text-xs w-[105px] bg-slate-50/50 border-slate-200", stockFilter !== "all" && "bg-blue-50/80 border-blue-300 text-blue-900 font-medium")}>
+                                    <SelectValue placeholder="全体状況" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">全体状況: 全て</SelectItem>
+                                    <SelectItem value="need_order">要発注 (警告+欠品)</SelectItem>
+                                    <SelectItem value="low">発注点以下</SelectItem>
+                                    <SelectItem value="out">在庫切れ (0)</SelectItem>
+                                    <SelectItem value="reserved">特売引当あり</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* 右側：落版(在庫0)切り替え ＆ クリアボタン */}
+                        <div className="flex items-center gap-2 ml-auto pl-2 border-l border-slate-200">
+                            {/* 落版(在庫0)切り替え */}
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[11px] text-slate-500 font-medium whitespace-nowrap">
+                                    落版(在庫0):
+                                </span>
+                                <div className="inline-flex items-center p-0.5 rounded-md bg-slate-100 border border-slate-200 text-[11px]">
+                                    <button
+                                        type="button"
+                                        className={cn(
+                                            "px-2 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer",
+                                            !showRemovedZeroStock ? "bg-white text-slate-800 shadow-2xs font-semibold" : "text-slate-500 hover:text-slate-700"
+                                        )}
+                                        onClick={() => setShowRemovedZeroStock(false)}
+                                    >
+                                        OFF
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={cn(
+                                            "px-2 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer",
+                                            showRemovedZeroStock ? "bg-slate-800 text-white shadow-2xs font-semibold" : "text-slate-500 hover:text-slate-700"
+                                        )}
+                                        onClick={() => setShowRemovedZeroStock(true)}
+                                    >
+                                        ON
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* フィルタークリアボタン */}
+                            {hasActiveFilters && (
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={clearFilters} 
+                                    className="h-7 px-2 text-[11px] text-slate-500 hover:text-red-600 hover:bg-red-50 gap-1"
+                                >
+                                    <X className="h-3 w-3" />
+                                    リセット
+                                </Button>
+                            )}
+                        </div>
                     </div>
-                    <Button 
-                        variant="outline" 
-                        onClick={handleExportExcel} 
-                        className="gap-1 h-7 px-2 text-xs border-green-600 text-green-600 hover:bg-green-50"
-                    >
-                        <Download className="h-3 w-3" />
-                        Excel
-                    </Button>
-                    <Button 
-                        variant="outline" 
-                        onClick={handlePrint} 
-                        className="gap-1 h-7 px-2 text-xs border-slate-300"
-                    >
-                        <Printer className="h-3 w-3" />
-                        PDF
-                    </Button>
-                    <Button onClick={handleAddProduct} className="gap-1 h-7 px-2.5 text-xs">
-                        <Plus className="h-3 w-3" />
-                        商品追加
-                    </Button>
-                </div>
-            </div>
-
-            {/* 2. 検索＆フィルターバー (1行の超コンパクトツールバー) */}
-            <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-50/80 border rounded-lg print:hidden text-xs">
-                <div className="relative flex-1 min-w-[180px] max-w-sm">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input
-                        ref={searchInputRef}
-                        placeholder="商品名、JAN、ID... (「 / 」でフォーカス)"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-8 pr-7 h-7 text-xs bg-white"
-                    />
-                    <kbd className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none hidden sm:inline-flex h-4 select-none items-center rounded border bg-muted px-1 font-mono text-[9px] text-muted-foreground">
-                        /
-                    </kbd>
-                </div>
-
-                <Select value={weightFilter} onValueChange={setWeightFilter}>
-                    <SelectTrigger className="h-7 text-xs w-[85px] bg-white px-2">
-                        <SelectValue placeholder="重量" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">重量: 全て</SelectItem>
-                        {availableWeights.map(w => (
-                            <SelectItem key={w} value={w.toString()}>{w}kg</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-                <Select value={originFilter} onValueChange={setOriginFilter}>
-                    <SelectTrigger className="h-7 text-xs w-[95px] bg-white px-2">
-                        <SelectValue placeholder="産地" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">産地: 全て</SelectItem>
-                        {availableOrigins.map(o => (
-                            <SelectItem key={o} value={o}>{o}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-                <Select value={varietyFilter} onValueChange={setVarietyFilter}>
-                    <SelectTrigger className="h-7 text-xs w-[95px] bg-white px-2">
-                        <SelectValue placeholder="品種" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">品種: 全て</SelectItem>
-                        {availableVarieties.map(v => (
-                            <SelectItem key={v} value={v}>{v}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="h-7 text-xs w-[105px] bg-white px-2">
-                        <SelectValue placeholder="状況" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">状況: 全て</SelectItem>
-                        {Object.entries(statusLabels).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>{label}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-                <div className="flex items-center gap-1.5 ml-auto pl-2 border-l border-slate-200">
-                    <label htmlFor="removed-switch" className="text-[11px] text-muted-foreground whitespace-nowrap cursor-pointer select-none">
-                        落版(在庫0):
-                    </label>
-                    <button
-                        id="removed-switch"
-                        type="button"
-                        className={cn(
-                            "h-5 px-1.5 text-[10px] font-bold rounded border transition-colors",
-                            showRemovedZeroStock ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-500 border-slate-300"
-                        )}
-                        onClick={() => setShowRemovedZeroStock(!showRemovedZeroStock)}
-                    >
-                        {showRemovedZeroStock ? "表示中" : "非表示"}
-                    </button>
-
-                    {hasActiveFilters && (
-                        <Button variant="ghost" size="sm" onClick={clearFilters} className="h-6 px-1.5 text-[11px] text-muted-foreground hover:text-slate-900 gap-0.5">
-                            <X className="h-3 w-3" />
-                            リセット
-                        </Button>
-                    )}
                 </div>
             </div>
 
