@@ -118,20 +118,25 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
     const availableBags = status.availableBags;
     const isOutOfStock = status.isOutOfStock;
     const isLowStock = status.isLowStock;
+    const isPlateRemoved = product.status === 'plate_removed';
+    const isDiscontinued = product.status === 'discontinued';
 
     const hasAllocation = allocation.bags > 0 || (isRoll && allocation.meters > 0);
 
     // 左端のステータスカラーボーダー
-    const statusBorderColor = isOutOfStock
-        ? "border-l-red-500"
-        : isLowStock
-            ? "border-l-amber-400"
-            : "border-l-emerald-500";
+    const statusBorderColor = isPlateRemoved
+        ? "border-l-slate-400"
+        : isOutOfStock
+            ? "border-l-red-500"
+            : isLowStock
+                ? "border-l-amber-400"
+                : "border-l-emerald-500";
 
     return (
         <TableRow className={cn(
             "group transition-colors border-b odd:bg-white even:bg-slate-50/40 hover:bg-sky-50/60",
-            isOutOfStock && "!bg-red-50/50 hover:!bg-red-100/50",
+            isPlateRemoved && "!bg-slate-100/80 hover:!bg-slate-200/80 text-slate-600",
+            isOutOfStock && !isPlateRemoved && "!bg-red-50/50 hover:!bg-red-100/50",
             isCompact ? "h-9" : ""
         )}>
             {/* 1. 画像 */}
@@ -139,20 +144,28 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                 "sticky left-0 z-10 transition-colors border-r border-l-4 text-center",
                 isCompact ? "p-1" : "p-1.5",
                 statusBorderColor,
-                isOutOfStock ? "bg-red-50" : "bg-white group-hover:bg-sky-50"
+                isPlateRemoved
+                    ? "bg-slate-100 group-hover:bg-slate-200/80"
+                    : isOutOfStock
+                        ? "bg-red-50"
+                        : "bg-white group-hover:bg-sky-50"
             )}>
                 {product.imageUrl ? (
                     <ProductImage
                         src={product.imageUrl}
                         alt={product.name}
                         variant="thumbnail"
-                        className={isCompact ? "w-7 h-7" : "w-10 h-10"}
+                        className={cn(
+                            isCompact ? "w-7 h-7" : "w-10 h-10",
+                            isPlateRemoved && "opacity-80"
+                        )}
                         onClick={() => setSelectedImage({ url: product.imageUrl!, alt: product.name, name: product.name })}
                     />
                 ) : (
                     <div className={cn(
                         "mx-auto bg-gray-100 rounded border flex items-center justify-center",
-                        isCompact ? "w-7 h-7" : "w-10 h-10"
+                        isCompact ? "w-7 h-7" : "w-10 h-10",
+                        isPlateRemoved && "opacity-75"
                     )}>
                         <Package className={cn(isCompact ? "h-3 w-3" : "h-4 w-4", "text-gray-400")} />
                     </div>
@@ -163,12 +176,17 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
             <TableCell className={cn(
                 "md:sticky md:left-[50px] z-0 md:z-10 transition-colors md:border-r",
                 isCompact ? "p-1.5 min-w-[180px] max-w-[240px]" : "p-2 min-w-[200px] max-w-[280px]",
-                isOutOfStock ? "bg-red-50" : "bg-white group-hover:bg-sky-50"
+                isPlateRemoved
+                    ? "bg-slate-100 group-hover:bg-slate-200/80"
+                    : isOutOfStock
+                        ? "bg-red-50"
+                        : "bg-white group-hover:bg-sky-50"
             )}>
                 <div className="space-y-0.5">
                     <div className={cn(
                         "font-bold leading-snug break-words",
-                        isCompact ? "text-xs" : "text-xs md:text-sm"
+                        isCompact ? "text-xs" : "text-xs md:text-sm",
+                        isPlateRemoved ? "text-slate-600" : "text-slate-900"
                     )} title={product.name}>
                         {product.name}
                     </div>
@@ -187,12 +205,16 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
             <TableCell className={cn(
                 "md:sticky md:left-[270px] z-0 md:z-10 md:shadow-[2px_0_5px_-1px_rgba(0,0,0,0.06)] md:border-r transition-colors",
                 isCompact ? "p-1" : "p-2",
-                isOutOfStock ? "bg-red-50" : "bg-white group-hover:bg-sky-50"
+                isPlateRemoved
+                    ? "bg-slate-100 group-hover:bg-slate-200/80"
+                    : isOutOfStock
+                        ? "bg-red-50"
+                        : "bg-white group-hover:bg-sky-50"
             )}>
                 <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-1">
                         {renderWeightBadge(product.weight, isCompact)}
-                        <span className={cn("font-semibold text-slate-700", isCompact ? "text-[11px]" : "text-xs")}>
+                        <span className={cn("font-semibold", isCompact ? "text-[11px]" : "text-xs", isPlateRemoved ? "text-slate-500" : "text-slate-700")}>
                             {product.shape || "-"}
                         </span>
                     </div>
@@ -213,7 +235,8 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                     <TooltipTrigger asChild>
                         <TableCell
                             className={cn(
-                                "text-right cursor-pointer hover:bg-blue-100/70 transition-colors group relative tabular-nums bg-blue-50/25",
+                                "text-right cursor-pointer hover:bg-blue-100/70 transition-colors group relative tabular-nums",
+                                isPlateRemoved ? "bg-slate-100/60" : "bg-blue-50/25",
                                 isCompact ? "p-1" : "p-2"
                             )}
                             onClick={() => setAdjustStock(product)}
@@ -310,11 +333,15 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
             {/* 5. 特売引当 */}
             <TableCell
-                className={cn("text-right tabular-nums bg-blue-50/15 p-2", hasAllocation && "cursor-pointer hover:bg-blue-100/50 transition-colors")}
+                className={cn(
+                    "text-right tabular-nums p-2",
+                    isPlateRemoved ? "bg-slate-100/40" : "bg-blue-50/15",
+                    hasAllocation && "cursor-pointer hover:bg-blue-100/50 transition-colors"
+                )}
                 onClick={() => hasAllocation && setViewAllocation(product)}
             >
                 {hasAllocation ? (
-                    <div className="text-blue-600">
+                    <div className={isPlateRemoved ? "text-slate-600" : "text-blue-600"}>
                         <div className="font-bold text-xs md:text-sm underline decoration-dotted underline-offset-2">
                             {isRoll ? `${allocation.meters.toLocaleString()}m` : `${allocation.bags.toLocaleString()}枚`}
                         </div>
@@ -349,10 +376,13 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
             </TableCell>
 
             {/* 6. 有効在庫 (手元の実質在庫: 最重要) */}
-            <TableCell className="text-right tabular-nums bg-blue-50/40 border-r border-slate-200 p-2">
+            <TableCell className={cn(
+                "text-right tabular-nums border-r border-slate-200 p-2",
+                isPlateRemoved ? "bg-slate-200/40" : "bg-blue-50/40"
+            )}>
                 <div className={cn(
                     "font-black text-base md:text-lg tracking-tight",
-                    availableStock < 0 ? "text-red-600" : availableStock === 0 ? "text-orange-500" : "text-emerald-700"
+                    isPlateRemoved ? "text-slate-600" : availableStock < 0 ? "text-red-600" : availableStock === 0 ? "text-orange-500" : "text-emerald-700"
                 )}>
                     {isRoll ? `${availableStock.toLocaleString()}m` : `${availableStock.toLocaleString()}枚`}
                 </div>
@@ -365,12 +395,15 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
             {/* 7. 入荷予定 */}
             <TableCell
-                className="text-right cursor-pointer hover:bg-amber-100/50 transition-colors tabular-nums bg-amber-50/15 p-2"
+                className={cn(
+                    "text-right cursor-pointer hover:bg-amber-100/50 transition-colors tabular-nums p-2",
+                    isPlateRemoved ? "bg-slate-100/40" : "bg-amber-50/15"
+                )}
                 onClick={() => onIncomingStockClick(product)}
             >
                 {incoming && incoming.total > 0 ? (
                     <div>
-                        <div className="font-bold text-xs md:text-sm text-blue-700 underline decoration-dotted underline-offset-2">
+                        <div className={cn("font-bold text-xs md:text-sm underline decoration-dotted underline-offset-2", isPlateRemoved ? "text-slate-600" : "text-blue-700")}>
                             {incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}
                         </div>
                         {incoming.items.length > 0 && (
@@ -392,12 +425,15 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
             {/* 8. メーカー在庫 (すべてのロットを表示) */}
             <TableCell
-                className="text-right cursor-pointer hover:bg-amber-100/50 transition-colors group relative tabular-nums bg-amber-50/15 p-2"
+                className={cn(
+                    "text-right cursor-pointer hover:bg-amber-100/50 transition-colors group relative tabular-nums p-2",
+                    isPlateRemoved ? "bg-slate-100/40" : "bg-amber-50/15"
+                )}
                 onClick={() => setEditSupplierStock(product)}
             >
                 {supplierStock > 0 ? (
                     <div>
-                        <div className="font-bold text-xs md:text-sm text-purple-800 flex items-center justify-end gap-0.5">
+                        <div className={cn("font-bold text-xs md:text-sm flex items-center justify-end gap-0.5", isPlateRemoved ? "text-slate-600" : "text-purple-800")}>
                             {supplierStock.toLocaleString()}{isRoll ? 'm' : '枚'}
                             <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100" />
                         </div>
@@ -438,7 +474,10 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
             {/* 9. 仕掛中 (すべての仕掛品を表示) */}
             <TableCell
-                className="text-right cursor-pointer hover:bg-amber-100/50 transition-colors group relative tabular-nums bg-amber-50/35 border-r border-slate-200 p-2"
+                className={cn(
+                    "text-right cursor-pointer hover:bg-amber-100/50 transition-colors group relative tabular-nums border-r border-slate-200 p-2",
+                    isPlateRemoved ? "bg-slate-100/60" : "bg-amber-50/35"
+                )}
                 onClick={() => setEditWIP(product)}
             >
                 {wipList.length > 0 ? (
