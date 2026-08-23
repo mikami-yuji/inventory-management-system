@@ -139,16 +139,6 @@ export function InventoryPrintView({
         return { outOfStock, lowStock, wipAlert };
     }, [products, inventoryMap, saleAllocationMap, settings, predictionMap]);
 
-    // 産地・カテゴリごとの件数マップ
-    const regionCounts = useMemo(() => {
-        const counts = new Map<string, number>();
-        products.forEach(p => {
-            const region = extractRegion(p.name);
-            counts.set(region, (counts.get(region) || 0) + 1);
-        });
-        return counts;
-    }, [products]);
-
     const today = format(new Date(), "yyyy年MM月dd日 HH:mm", { locale: ja });
 
     let lastRegion = "";
@@ -268,7 +258,7 @@ export function InventoryPrintView({
                                     <tr className="bg-slate-200/90 border-y border-slate-400 font-bold text-[8.5px] text-slate-800 break-inside-avoid">
                                         <td colSpan={9} className="py-1 px-2">
                                             <div className="flex items-center justify-between">
-                                                <span className="tracking-wide">── {currentRegion} ({regionCounts.get(currentRegion) || 0}点) ──</span>
+                                                <span className="tracking-wide">── {currentRegion} ──</span>
                                             </div>
                                         </td>
                                     </tr>
