@@ -113,12 +113,38 @@ export function InventoryPrintView({
         return map;
     }, [products, inventoryMap, wipMap, incomingMap, supplierStockLotsMap, supplierStockMap, saleEvents]);
 
+    const summaryCounts = useMemo(() => {
+        let outOfStock = 0;
+        let lowStock = 0;
+        let wipAlert = 0;
+
+        products.forEach((product) => {
+            const inventoryItem = inventoryMap.get(product.id) || { quantity: 0 };
+            const currentStock = inventoryItem.quantity;
+            const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
+            const { isOutOfStock, isLowStock } = calculateStockStatus(product, currentStock, allocation, settings);
+            const prediction = predictionMap.get(product.id);
+
+            if (isOutOfStock) {
+                outOfStock++;
+            } else if (isLowStock) {
+                lowStock++;
+            }
+
+            if (prediction?.wipStartAlert) {
+                wipAlert++;
+            }
+        });
+
+        return { outOfStock, lowStock, wipAlert };
+    }, [products, inventoryMap, saleAllocationMap, settings, predictionMap]);
+
     const today = format(new Date(), "yyyy年MM月dd日 HH:mm", { locale: ja });
 
     return (
         <div className="hidden print:block p-4 sm:p-8 bg-white text-black min-h-screen font-sans">
             {/* 印刷用ヘッダー */}
-            <div className="flex justify-between items-end mb-3 border-b border-slate-900 pb-2">
+            <div className="flex justify-between items-end mb-2 border-b-2 border-slate-900 pb-2">
                 <div>
                     <h1 className="text-xl font-bold tracking-tight">米袋 在庫状況一覧</h1>
                     <p className="text-[9px] text-slate-500 uppercase tracking-widest">Inventory Status Report</p>
@@ -129,10 +155,38 @@ export function InventoryPrintView({
                 </div>
             </div>
 
+            {/* サマリーバー（要対応アラート一覧） */}
+            <div className="flex items-center justify-between bg-slate-50 border border-slate-300 rounded px-3 py-1.5 mb-3 text-[9px]">
+                <div className="flex items-center gap-4">
+                    <span className="font-bold text-slate-700">【要対応ステータス】</span>
+                    <span className={cn(
+                        "px-2 py-0.5 rounded font-bold transition-colors",
+                        summaryCounts.outOfStock > 0 ? "bg-red-600 text-white" : "bg-slate-200 text-slate-500"
+                    )}>
+                        欠品: {summaryCounts.outOfStock}件
+                    </span>
+                    <span className={cn(
+                        "px-2 py-0.5 rounded font-bold transition-colors",
+                        summaryCounts.lowStock > 0 ? "bg-amber-100 text-amber-800 border border-amber-300" : "bg-slate-200 text-slate-500"
+                    )}>
+                        低在庫: {summaryCounts.lowStock}件
+                    </span>
+                    <span className={cn(
+                        "px-2 py-0.5 rounded font-bold transition-colors",
+                        summaryCounts.wipAlert > 0 ? "bg-orange-100 text-orange-800 border border-orange-300" : "bg-slate-200 text-slate-500"
+                    )}>
+                        仕掛手配推奨: {summaryCounts.wipAlert}件
+                    </span>
+                </div>
+                <div className="text-slate-500 text-[8px]">
+                    ※ 赤・黄ハイライトの行を優先して確認・発注手配してください
+                </div>
+            </div>
+
             {/* テーブル */}
             <table className="w-full border-collapse table-fixed text-[9px]">
                 <thead>
-                    <tr className="bg-slate-100 border-y border-slate-900">
+                    <tr className="bg-slate-100 border-y-2 border-slate-900">
                         <th className="py-1 px-1 text-left font-bold" style={{ width: '25%' }}>商品情報</th>
                         <th className="py-1 px-1 text-center font-bold" style={{ width: '7%' }}>量目</th>
                         <th className="py-1 px-1 text-right font-bold" style={{ width: '10%' }}>在庫(現/有)</th>
@@ -141,12 +195,12 @@ export function InventoryPrintView({
                         <th className="py-1 px-1 text-right font-bold" style={{ width: '8%' }}>メーカー</th>
                         <th className="py-1 px-1 text-right font-bold" style={{ width: '14%' }}>仕掛</th>
                         {/* 在庫予測列 */}
-                        <th className="py-1 px-1 text-center font-bold bg-blue-50 border-x border-blue-200" style={{ width: '8%' }}>予測</th>
+                        <th className="py-1 px-1 text-center font-bold bg-blue-50 border-x border-blue-200" style={{ width: '8%' }}>予測(残/枯渇)</th>
                         <th className="py-1 px-1 text-center font-bold" style={{ width: '6%' }}>状況</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-300">
-                    {products.map((product) => {
+                    {products.map((product, idx) => {
                         const inventoryItem = inventoryMap.get(product.id) || { quantity: 0 };
                         const currentStock = inventoryItem.quantity;
                         const allocation = saleAllocationMap.get(product.id) || { bags: 0, meters: 0 };
@@ -168,11 +222,21 @@ export function InventoryPrintView({
 
                         // 在庫予測データ
                         const prediction = predictionMap.get(product.id);
+                        const isWipAlert = prediction?.wipStartAlert;
+
+                        // 行の背景色クラス（異常値ハイライト ＆ ゼブラストライプ）
+                        const rowBgClass = isOutOfStock
+                            ? "bg-red-50/90 font-medium"
+                            : isLowStock || isWipAlert
+                            ? "bg-amber-50/70"
+                            : idx % 2 === 1
+                            ? "bg-slate-50/50"
+                            : "bg-white";
 
                         return (
-                            <tr key={product.id} className="break-inside-avoid">
+                            <tr key={product.id} className={cn("break-inside-avoid transition-colors", rowBgClass)}>
                                 {/* 商品情報 */}
-                                <td className="py-1 px-1 align-top">
+                                <td className="py-1.5 px-1 align-top">
                                     <div className="font-bold text-[10px] leading-snug">
                                         {product.name}
                                     </div>
@@ -181,21 +245,21 @@ export function InventoryPrintView({
                                         {product.janCode && <span>JAN:{product.janCode}</span>}
                                     </div>
                                 </td>
-                                <td className="py-1 px-1 text-center align-top leading-tight">
+                                <td className="py-1.5 px-1 text-center align-top leading-tight">
                                     <div className="font-medium text-slate-700 whitespace-nowrap">{product.weight}kg</div>
                                     <div className="text-[7px] text-slate-500 whitespace-nowrap">{getPitch(product.weight || 0)}mm / {product.shape || '-'}</div>
                                 </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums">
+                                <td className="py-1.5 px-1 text-right align-top tabular-nums">
                                     <div className="text-[11px] text-slate-900 border-b border-slate-200 pb-[1px] mb-0.5">
                                         <span className="text-[7px] font-normal mr-0.5 opacity-70">現:</span>
                                         <span className="font-bold">{currentStock.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
                                     </div>
-                                    <div className={cn("text-[8px] leading-tight", availableStock < 0 ? "text-red-700 font-bold" : "text-slate-500")}>
+                                    <div className={cn("text-[8px] leading-tight", availableStock < 0 ? "text-red-700 font-bold bg-red-100/80 px-0.5 rounded" : "text-slate-500")}>
                                         <span className="opacity-70">有:</span>
                                         <span>{availableStock.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
                                     </div>
                                 </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums text-slate-500 text-[9px] pt-1">
+                                <td className="py-1.5 px-1 text-right align-top tabular-nums text-slate-500 text-[9px]">
                                     {hasAllocation(allocation) ? (
                                         <div className="flex flex-col gap-0.5 ml-auto">
                                             <div className="font-bold border-b border-slate-200 pb-[1px] mb-[1px]">
@@ -203,22 +267,22 @@ export function InventoryPrintView({
                                             </div>
                                             {(detailedSaleAllocationMap?.get(product.id) || [])
                                                 .sort((a, b) => {
-                                                    const dateA = a.dates[0] ? new Date(a.dates[0]).getTime() : Infinity;
-                                                    const dateB = b.dates[0] ? new Date(b.dates[0]).getTime() : Infinity;
-                                                    return dateA - dateB;
-                                                })
-                                                .map((alloc, idx) => (
-                                                <div key={idx} className="text-[7px] leading-tight opacity-90 flex flex-col items-end">
-                                                    <div className="flex justify-between w-full gap-1">
-                                                        <span>{alloc.dates[0] ? format(new Date(alloc.dates[0]), "MM/dd") : '未定'}</span>
-                                                        <span className="font-medium text-blue-700">{alloc.quantity.toLocaleString()}枚</span>
-                                                    </div>
-                                                    <span className="text-[6px] truncate max-w-[80px] text-slate-400">{alloc.clientName}</span>
-                                                </div>
-                                            ))}</div>
-                                    ) : '-'}
+                                                     const dateA = a.dates[0] ? new Date(a.dates[0]).getTime() : Infinity;
+                                                     const dateB = b.dates[0] ? new Date(b.dates[0]).getTime() : Infinity;
+                                                     return dateA - dateB;
+                                                 })
+                                                 .map((alloc, i) => (
+                                                 <div key={i} className="text-[7px] leading-tight opacity-90 flex flex-col items-end">
+                                                     <div className="flex justify-between w-full gap-1">
+                                                         <span>{alloc.dates[0] ? format(new Date(alloc.dates[0]), "MM/dd") : '未定'}</span>
+                                                         <span className="font-medium text-blue-700">{alloc.quantity.toLocaleString()}枚</span>
+                                                     </div>
+                                                     <span className="text-[6px] truncate max-w-[80px] text-slate-400">{alloc.clientName}</span>
+                                                 </div>
+                                             ))}</div>
+                                     ) : '-'}
                                 </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums text-emerald-800 pt-1">
+                                <td className="py-1.5 px-1 text-right align-top tabular-nums text-emerald-800">
                                     {incoming && incoming.total > 0 ? (
                                         <>
                                             <div className="font-bold">{incoming.total.toLocaleString()}{isRoll ? 'm' : '枚'}</div>
@@ -231,16 +295,16 @@ export function InventoryPrintView({
                                                 .map((item, i) => (
                                                 <div key={i} className="flex flex-col items-end text-[7px] leading-tight opacity-90 gap-0">
                                                     <div className="flex justify-between w-full gap-1">
-                                                        <span>{item.expectedDate ? format(new Date(item.expectedDate), "M/d") : '未定'}</span>
-                                                        <span className="font-medium">{item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
+                                                         <span>{item.expectedDate ? format(new Date(item.expectedDate), "M/d") : '未定'}</span>
+                                                         <span className="font-medium">{item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}</span>
                                                     </div>
                                                     {item.note && <span className="text-[6px] text-slate-500 truncate max-w-[80px] break-all">{item.note}</span>}
                                                 </div>
-                                            ))}
-                                        </>
-                                    ) : '-'}
+                                             ))}
+                                         </>
+                                     ) : '-'}
                                 </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums text-orange-700 pt-1">
+                                <td className="py-1.5 px-1 text-right align-top tabular-nums text-orange-700">
                                     {supplierStock > 0 ? (
                                         <div className="flex flex-col gap-0.5 max-w-[80px] ml-auto">
                                             <div className="font-bold border-b border-orange-200 pb-[1px] mb-[1px]">
@@ -261,7 +325,7 @@ export function InventoryPrintView({
                                         </div>
                                     ) : '-'}
                                 </td>
-                                <td className="py-1 px-1 text-right align-top tabular-nums text-blue-800 pt-1">
+                                <td className="py-1.5 px-1 text-right align-top tabular-nums text-blue-800">
                                     {wips.length > 0 ? (
                                         <div className="flex flex-col gap-0.5 max-w-[80px] ml-auto">
                                             <div className="font-bold border-b border-blue-200 pb-[1px] mb-[1px]">
@@ -296,21 +360,26 @@ export function InventoryPrintView({
                                 </td>
 
                                 {/* 在庫予測列 */}
-                                <td className="py-1 px-1 text-center align-middle bg-blue-50/40 border-x border-blue-100">
+                                <td className="py-1.5 px-1 text-center align-middle bg-blue-50/30 border-x border-blue-100">
                                     {prediction && prediction.estimatedDate ? (
                                         <div className="flex flex-col items-center gap-0.5">
+                                            {/* 残り日数（危険度に応じたカラーリング） */}
                                             <div className={cn(
-                                                "font-bold text-[9px]",
-                                                prediction.wipStartAlert ? "text-red-700" : "text-slate-800"
+                                                "font-bold text-[9px] px-1 rounded leading-tight",
+                                                prediction.remainingDays <= 14 || prediction.wipStartAlert
+                                                    ? "text-red-700 bg-red-100 font-extrabold"
+                                                    : prediction.remainingDays <= 30
+                                                    ? "text-amber-800 bg-amber-100 font-bold"
+                                                    : "text-slate-800 font-semibold"
                                             )}>
                                                 {prediction.remainingDays}日
                                             </div>
-                                            <div className="text-[7px] text-slate-600 whitespace-nowrap">
+                                            <div className="text-[7px] text-slate-500 whitespace-nowrap">
                                                 {format(prediction.estimatedDate, "M/d")}
                                             </div>
                                             {prediction.wipStartAlert && (
-                                                <div className="text-[6px] font-bold text-red-700 border border-red-400 rounded px-0.5 bg-red-50 leading-tight whitespace-nowrap">
-                                                    仕掛!
+                                                <div className="text-[6px] font-bold text-white bg-red-600 rounded px-1 py-[1px] leading-tight whitespace-nowrap shadow-sm">
+                                                    仕掛開始!
                                                 </div>
                                             )}
                                         </div>
@@ -319,19 +388,25 @@ export function InventoryPrintView({
                                     )}
                                 </td>
 
-                                <td className="py-1 px-1 text-center align-middle">
-                                    <div className="flex flex-col gap-0.5 items-center">
+                                <td className="py-1.5 px-1 text-center align-middle">
+                                    <div className="flex flex-col gap-0.5 items-center justify-center">
                                         {isOutOfStock ? (
-                                            <span className="text-red-700 font-bold border-2 border-red-700 px-1 py-[1px] rounded-[2px] text-[8px] bg-red-50 leading-none">欠品</span>
+                                            <span className="text-white font-bold bg-red-600 px-1.5 py-0.5 rounded-[2px] text-[8px] leading-none shadow-sm">
+                                                欠品
+                                            </span>
                                         ) : isLowStock ? (
-                                            <span className="text-amber-700 font-bold border-2 border-amber-500 px-1 py-[1px] rounded-[2px] text-[8px] bg-amber-50 leading-none">低在庫</span>
+                                            <span className="text-amber-800 font-bold border border-amber-500 bg-amber-100 px-1.5 py-0.5 rounded-[2px] text-[8px] leading-none">
+                                                低在庫
+                                            </span>
                                         ) : (
-                                            <span className="text-emerald-700 font-medium border border-emerald-500 px-1 py-[1px] rounded-[2px] text-[8px] bg-emerald-50 leading-none">正常</span>
+                                            <span className="text-slate-400 font-normal border border-slate-200 px-1 py-[1px] rounded-[2px] text-[8px] bg-slate-50 leading-none">
+                                                正常
+                                            </span>
                                         )}
                                         
                                         {/* 全体状況（スポット、廃盤など） */}
                                         {product.status !== 'active' && (
-                                            <div className="text-[7px] text-slate-500 mt-0.5 scale-90 whitespace-nowrap">
+                                            <div className="text-[7px] text-slate-500 mt-0.5 scale-90 whitespace-nowrap font-medium">
                                                 {getStatusLabel(product.status)}
                                             </div>
                                         )}
@@ -344,7 +419,7 @@ export function InventoryPrintView({
             </table>
 
             {/* 合計欄 */}
-            <div className="flex justify-end mt-1 pt-1 border-t-2 border-slate-700 gap-6 text-[10px] text-slate-800 font-bold mb-4 mr-2">
+            <div className="flex justify-end mt-2 pt-1 border-t-2 border-slate-700 gap-6 text-[10px] text-slate-800 font-bold mb-4 mr-2">
                 <div className="flex items-center gap-2 text-blue-900 px-2 py-1">
                     <span>現在庫合計(ロール):</span>
                     <span className="text-[11px] tabular-nums">{totals.meters.toLocaleString()} <span className="text-[8px] font-normal">m</span></span>
@@ -360,12 +435,19 @@ export function InventoryPrintView({
             </div>
 
             {/* 凡例 */}
-            <div className="flex gap-4 text-[8px] text-slate-500 mb-4 ml-1">
+            <div className="flex flex-wrap gap-4 text-[8px] text-slate-600 mb-4 ml-1">
+                <span className="flex items-center gap-1">
+                    <span className="inline-block w-3 h-3 bg-red-100 border border-red-300 rounded-sm"></span>
+                    赤色行: 欠品中（有効在庫マイナス）
+                </span>
+                <span className="flex items-center gap-1">
+                    <span className="inline-block w-3 h-3 bg-amber-100 border border-amber-300 rounded-sm"></span>
+                    黄色行: 低在庫 / 仕掛開始アラート対象
+                </span>
                 <span className="flex items-center gap-1">
                     <span className="inline-block w-3 h-3 bg-blue-50 border border-blue-200 rounded-sm"></span>
-                    在庫予測列: 出荷速度(枚/日)に基づく在庫枯渇予測
+                    予測列: 残日数14日以下は赤強調、30日以下は黄強調
                 </span>
-                <span className="text-red-600 font-bold">仕掛開始! = 今すぐ製造手配が必要</span>
             </div>
 
             {/* フッター */}
