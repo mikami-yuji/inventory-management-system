@@ -25,10 +25,8 @@ import {
     Printer,
     Download,
     ShoppingCart,
-    FileText,
 } from "lucide-react";
 import * as XLSX from "xlsx";
-import { exportElementToPdf } from "@/lib/pdf/inventory-pdf-generator";
 import {
     bagsToMeters,
     calculateStockStatus,
@@ -351,8 +349,6 @@ export default function BagsInventoryPage(): React.ReactElement {
     const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
     const [analysisProduct, setAnalysisProduct] = useState<Product | null>(null);
 
-    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-
     const handlePrint = useCallback(() => {
         const originalTitle = document.title;
         document.title = `アサヒパック_在庫一覧_${format(new Date(), "yyyyMMdd_HHmm")}`;
@@ -360,32 +356,6 @@ export default function BagsInventoryPage(): React.ReactElement {
         setTimeout(() => {
             document.title = originalTitle;
         }, 100);
-    }, []);
-
-    // PDF直接エクスポート（固定レイアウト生成）
-    const handleDownloadPdf = useCallback(async () => {
-        const container = document.getElementById('inventory-print-report-container');
-        if (!container) {
-            toast.error('帳票データの準備ができていません');
-            return;
-        }
-
-        setIsGeneratingPdf(true);
-        const toastId = toast.loading('高精度PDFを生成中...');
-        try {
-            const filename = `アサヒパック_在庫一覧_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`;
-            await exportElementToPdf(container, {
-                filename,
-                orientation: 'portrait',
-                format: 'a4'
-            });
-            toast.success('PDFをダウンロードしました', { id: toastId });
-        } catch (err) {
-            console.error('PDF export error:', err);
-            toast.error('PDFの生成に失敗しました', { id: toastId });
-        } finally {
-            setIsGeneratingPdf(false);
-        }
     }, []);
 
 
@@ -1037,27 +1007,11 @@ export default function BagsInventoryPage(): React.ReactElement {
                         <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={handleDownloadPdf} 
-                            disabled={isGeneratingPdf}
-                            className="gap-1 h-7 px-2.5 text-xs border-blue-300 text-blue-700 hover:bg-blue-50"
-                            title="ズレのない高精度PDFファイルを直接ダウンロード"
-                        >
-                            {isGeneratingPdf ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
-                            ) : (
-                                <FileText className="h-3.5 w-3.5 text-blue-600" />
-                            )}
-                            PDF保存
-                        </Button>
-                        <Button 
-                            variant="outline" 
-                            size="sm"
                             onClick={handlePrint} 
                             className="gap-1 h-7 px-2.5 text-xs border-slate-300 text-slate-700 hover:bg-slate-50"
-                            title="ブラウザの印刷ダイアログを開く"
                         >
                             <Printer className="h-3.5 w-3.5 text-slate-600" />
-                            印刷
+                            PDF
                         </Button>
                         <Button 
                             size="sm"
