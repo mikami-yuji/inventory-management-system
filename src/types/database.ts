@@ -453,7 +453,6 @@ export interface Database {
             orders: {
                 Row: {
                     id: string;
-                    order_id: string | null;
                     client_id: string;
                     status: string;
                     type: string;
@@ -469,7 +468,6 @@ export interface Database {
                 };
                 Insert: {
                     id?: string;
-                    order_id?: string | null;
                     client_id: string;
                     status?: string;
                     type?: string;
@@ -485,7 +483,6 @@ export interface Database {
                 };
                 Update: {
                     id?: string;
-                    order_id?: string | null;
                     client_id?: string;
                     status?: string;
                     type?: string;

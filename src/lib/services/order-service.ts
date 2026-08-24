@@ -28,7 +28,6 @@ export const orderService = {
             .from('orders')
             .select(`
                 id,
-                order_id,
                 created_at,
                 client_id,
                 status,
