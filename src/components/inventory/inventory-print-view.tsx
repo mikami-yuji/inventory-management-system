@@ -144,7 +144,7 @@ export function InventoryPrintView({
     let lastRegion = "";
 
     return (
-        <div className="hidden print:block p-4 sm:p-8 bg-white text-black min-h-screen font-sans">
+        <div id="inventory-print-report-container" className="hidden print:block p-4 sm:p-8 bg-white text-black min-h-screen font-sans">
             {/* 印刷用CSS定義 */}
             <style dangerouslySetInnerHTML={{ __html: `
                 @media print {
