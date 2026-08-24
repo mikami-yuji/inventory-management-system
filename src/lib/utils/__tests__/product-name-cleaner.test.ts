@@ -32,4 +32,10 @@ describe('normalizeProductName', () => {
         expect(normalizeProductName('福井こしひかり')).toBe('福井県こしひかり');
         expect(normalizeProductName('宮城ひとめぼれ')).toBe('宮城県ひとめぼれ');
     });
+
+    test('ソフトクラフト無地などの正式な商品名が削られずに保持される', () => {
+        expect(normalizeProductName('ソフトクラフト無地')).toBe('ソフトクラフト無地');
+        expect(normalizeProductName('ソフトクラフト無地【R】')).toBe('ソフトクラフト無地【R】');
+        expect(normalizeProductName('クラフト無地')).toBe('クラフト無地');
+    });
 });

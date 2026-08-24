@@ -10,13 +10,13 @@ export function normalizeProductName(rawName: string): string {
     name = name.replace(/^[●△◆▲★☆■□▼▽\s]+/g, '');
 
     // 2. 先頭の「別注〜」などの仕様接頭語を整理
-    const isNewRiceInSpec = /別注.*新米/i.test(name);
-    const isMusenmaiInSpec = /別注.*無洗米/i.test(name);
-    const isGenmaiInSpec = /別注.*玄米/i.test(name);
+    const isNewRiceInSpec = /^別注.*新米/i.test(name);
+    const isMusenmaiInSpec = /^別注.*無洗米/i.test(name);
+    const isGenmaiInSpec = /^別注.*玄米/i.test(name);
 
-    name = name.replace(/^別注[0-9０-９]+[kKＫ]?\s*([^\s　]+[\s　]+)?/g, '');
-    name = name.replace(/^別注[0-9０-９]+[kKＫ]?/g, '');
-    name = name.replace(/^(ＳＦＭ|SFM|ＳＦ|SF|ポリ|ﾎﾟﾘ|マットポリ|ﾏｯﾄﾎﾟﾘ|ｿﾌﾄｸﾗﾌﾄ|ソフトクラフト|和紙|クラフト|ラミ)+[\s　]*/g, '');
+    // 「別注」で始まる接頭仕様のみを除去（「ソフトクラフト無地」などの商品名は保持）
+    name = name.replace(/^別注[0-9０-９]+[kKＫ]?\s*(ＳＦＭ|SFM|ＳＦ|SF|ポリ|ﾎﾟﾘ|マットポリ|ﾏｯﾄﾎﾟﾘ|ｿﾌﾄｸﾗﾌﾄ|ソフトクラフト|和紙|クラフト|ラミ)*[\s　]*/gi, '');
+    name = name.replace(/^別注[0-9０-９]+[kKＫ]?[\s　]*/gi, '');
 
     if (isNewRiceInSpec && !name.includes('新米')) {
         name = `【新米】${name}`;
