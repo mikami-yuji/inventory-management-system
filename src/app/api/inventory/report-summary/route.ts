@@ -377,6 +377,64 @@ export async function GET() {
             };
         });
 
+        // 産地順・ベース商品名順・量目順にソート
+        const PREFECTURES = [
+            "北海道", "青森", "岩手", "宮城", "秋田", "山形", "福島",
+            "茨城", "栃木", "群馬", "埼玉", "千葉", "東京", "神奈川",
+            "新潟", "富山", "石川", "福井", "山梨", "長野", "岐阜", "静岡", "愛知",
+            "三重", "滋賀", "京都", "大阪", "兵庫", "奈良", "和歌山",
+            "鳥取", "島根", "岡山", "広島", "山口",
+            "徳島", "香川", "愛媛", "高知",
+            "福岡", "佐賀", "長崎", "熊本", "大分", "宮崎", "鹿児島", "沖縄",
+            "国内産", "国産"
+        ];
+
+        const getPrefectureIndex = (text: string | undefined): number => {
+            if (!text) return 999;
+            for (let i = 0; i < PREFECTURES.length; i++) {
+                if (text.includes(PREFECTURES[i])) return i;
+            }
+            return 999;
+        };
+
+        const getProductGroup = (name: string): number => {
+            const isNewRice = name.includes("新米") || name.includes("ＮＢ・新米");
+            const isNB = name.includes("NB") || name.includes("ＮＢ");
+            if (isNewRice) return 2;
+            if (isNB) return 1;
+            return 0;
+        };
+
+        const getBaseProductName = (name: string): string => {
+            if (!name) return "";
+            let base = name;
+            base = base.replace(/[0-9０-９]+(\.[0-9０-９]+)?\s*([kKＫgGｇ]|kg|KG|Kg|袋|枚)[^\s)]*/gi, "");
+            base = base.replace(/[\s　]+[rRＲ][zZＺａ-ｚＡ-Ｚ]?$/gi, "");
+            base = base.replace(/[rRＲ]$/g, "");
+            return base.trim();
+        };
+
+        items.sort((a, b) => {
+            const groupA = getProductGroup(a.productName);
+            const groupB = getProductGroup(b.productName);
+            if (groupA !== groupB) return groupA - groupB;
+
+            const prefA = getPrefectureIndex(a.productName);
+            const prefB = getPrefectureIndex(b.productName);
+            if (prefA !== prefB) return prefA - prefB;
+
+            const baseA = getBaseProductName(a.productName);
+            const baseB = getBaseProductName(b.productName);
+            const nameCompare = baseA.localeCompare(baseB, "ja");
+            if (nameCompare !== 0) return nameCompare;
+
+            const weightA = a.weight || 0;
+            const weightB = b.weight || 0;
+            if (weightA !== weightB) return weightA - weightB;
+
+            return (a.sku || "").localeCompare(b.sku || "");
+        });
+
         const responseData: ReportSummaryResponse = {
             generatedAt: new Date().toISOString(),
             totalCount: items.length,

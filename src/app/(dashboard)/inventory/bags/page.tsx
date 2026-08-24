@@ -94,13 +94,25 @@ const getProductGroup = (p: Product): number => {
     const name = p.name || "";
     const prefix = p.prefix || "";
 
-    // カテゴリ判定ロジック強化
     const isNewRice = name.includes("新米") || prefix.includes("新米") || p.category === "new_rice" || name.includes("ＮＢ・新米") || prefix.includes("ＮＢ・新米");
     const isNB = name.includes("NB") || name.includes("ＮＢ") || prefix.includes("NB") || prefix.includes("ＮＢ");
 
     if (isNewRice) return 2;
     if (isNB) return 1;
     return 0;
+};
+
+// 商品のベース名（重量表記などを除いた同一商品グループ用のキー）
+const getBaseProductName = (name: string): string => {
+    if (!name) return "";
+    let base = name;
+    // 重量表記の除去（例: 10kg, 10K, 5kg, 5K, 2kg, 2K, 300g, 1.4K, 1.4kg など）
+    base = base.replace(/[0-9０-９]+(\.[0-9０-９]+)?\s*([kKＫgGｇ]|kg|KG|Kg|袋|枚)[^\s)]*/gi, "");
+    // 末尾のロール記号（R, RZ, RA 等）の除去
+    base = base.replace(/[\s　]+[rRＲ][zZＺａ-ｚＡ-Ｚ]?$/gi, "");
+    // 末尾の単独Rの除去
+    base = base.replace(/[rRＲ]$/g, "");
+    return base.trim();
 };
 
 import type { SortKey, SortOrder, TableDensity } from "@/components/inventory/bags-inventory-table";
@@ -662,13 +674,23 @@ export default function BagsInventoryPage(): React.ReactElement {
             const prefB = getPrefectureIndex(b.origin || b.name);
             if (prefA !== prefB) return prefA - prefB;
 
-            // 3. 品種順 (五十音順)
-            const varA = a.variety || "";
-            const varB = b.variety || "";
-            if (varA !== varB) return varA.localeCompare(varB, "ja");
+            // 3. ベース商品名順 (同一シリーズ・銘柄・補足をひとまとめにする)
+            const baseA = getBaseProductName(a.name);
+            const baseB = getBaseProductName(b.name);
+            const nameCompare = baseA.localeCompare(baseB, "ja");
+            if (nameCompare !== 0) return nameCompare;
 
-            // 4. 重量順 (小さい順)
-            return (a.weight || 0) - (b.weight || 0);
+            // 4. 量目（重量）順 (小さい順: 1kg -> 2kg -> 3kg -> 5kg -> 10kg)
+            const weightA = a.weight || 0;
+            const weightB = b.weight || 0;
+            if (weightA !== weightB) return weightA - weightB;
+
+            // 5. 完全商品名順
+            const fullCompare = (a.name || "").localeCompare(b.name || "", "ja");
+            if (fullCompare !== 0) return fullCompare;
+
+            // 6. SKU順
+            return (a.sku || "").localeCompare(b.sku || "");
         });
     }, [bagProducts, showRemovedZeroStock, quickFilter, searchQuery, weightFilter, stockFilter, originFilter, varietyFilter, statusFilter, sortKey, sortOrder, inventoryMap, saleAllocationMap, settings, predictionMap, incomingMap, wipMap, supplierStockLotsMap, supplierStockMap]);
 
