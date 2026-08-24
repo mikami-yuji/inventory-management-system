@@ -5,6 +5,7 @@ import { logError } from '@/lib/logger';
 import type { Product, WorkInProgress, IncomingStock, SupplierStockLot } from '@/types';
 import { calculateStockStatus, calculateStockPrediction, getPitch } from '@/lib/services';
 import type { SaleEvent } from '@/hooks/use-sale-events';
+import { normalizeProductName } from '@/lib/utils/product-name-cleaner';
 
 export interface ReportItemSummary {
     productId: string;
@@ -94,7 +95,7 @@ export async function GET() {
         ] = await Promise.all([
             supabase.from('products').select('*').order('name'),
             supabase.from('inventory').select('*'),
-            supabase.from('sale_events').select('*').in('status', ['active', 'upcoming']),
+            supabase.from('sale_events').select('*, items:sale_event_items(*)'),
             supabase.from('work_in_progress').select('*').eq('status', 'in_progress'),
             supabase.from('incoming_stock').select('*').eq('is_completed', false),
             supabase.from('supplier_stock_lots').select('*'),
@@ -106,7 +107,7 @@ export async function GET() {
 
         const products: Product[] = ((productsRes.data || []) as Array<Record<string, unknown>>).map((p) => ({
             id: String(p.id || ''),
-            name: String(p.name || ''),
+            name: normalizeProductName(String(p.name || '')),
             sku: String(p.sku || ''),
             janCode: p.jan_code ? String(p.jan_code) : undefined,
             weight: Number(p.weight) || undefined,

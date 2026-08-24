@@ -9,6 +9,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { z } from 'zod';
 import { logError } from '@/lib/logger';
+import { normalizeProductName } from '@/lib/utils/product-name-cleaner';
 
 // GET: 商品一覧を取得
 type RawProductData = {
@@ -102,7 +103,7 @@ export async function GET(): Promise<NextResponse> {
 
             return {
                 id: item.id,
-                name: item.name,
+                name: normalizeProductName(item.name),
                 sku: item.sku, // 受注№ (Col A)
                 productCode: item.product_code, // 商品コード (Col D)
                 janCode: item.jan_code,
@@ -221,7 +222,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         // Supabase用のフォーマットに変換
         const productData = {
-            name: validData.name,
+            name: normalizeProductName(validData.name),
             sku: validData.sku || null, // 受注№
             product_code: validData.productCode || null, // 商品コード
             jan_code: validData.janCode || null,
@@ -317,7 +318,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
 
         // 更新データを準備
         const updateData: Record<string, unknown> = {};
-        if (validData.name !== undefined) updateData.name = validData.name;
+        if (validData.name !== undefined) updateData.name = normalizeProductName(validData.name);
         if (validData.sku !== undefined) updateData.sku = validData.sku;
         if (validData.productCode !== undefined) updateData.product_code = validData.productCode;
         if (validData.janCode !== undefined) updateData.jan_code = validData.janCode;
