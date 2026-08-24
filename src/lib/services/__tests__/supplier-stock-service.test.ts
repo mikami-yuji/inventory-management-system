@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { supplierStockService } from '../supplier-stock-service';
 import { createServerClient } from '@/lib/supabase';
 

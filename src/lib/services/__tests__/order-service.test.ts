@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { orderService } from '../order-service';
 import { createServerClient } from '@/lib/supabase';
 
