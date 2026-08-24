@@ -11,7 +11,6 @@ import {
     Check,
     Info,
     Calendar,
-    Clock,
     Truck,
     Layers,
 } from "lucide-react";
@@ -22,12 +21,6 @@ import type { SaleEvent } from "@/hooks/use-sale-events";
 import type { calculateStockPrediction } from "@/lib/services";
 import type { InventoryDialogsState } from "./use-inventory-dialogs";
 import type { TableDensity } from "./bags-inventory-table";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 export interface BagsInventoryTableRowProps {
     product: Product;
@@ -229,107 +222,47 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                 </div>
             </TableCell>
 
-            {/* 4. 現在庫 (内訳プレビュー Tooltip 連携) */}
-            <TooltipProvider delayDuration={200}>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <TableCell
-                            className={cn(
-                                "text-right cursor-pointer hover:bg-blue-100/70 transition-colors group relative tabular-nums",
-                                isPlateRemoved ? "bg-slate-100/60" : "bg-blue-50/25",
-                                isCompact ? "p-1" : "p-2"
-                            )}
-                            onClick={() => setAdjustStock(product)}
-                        >
-                            {isRoll ? (
-                                <div>
-                                    <div className={cn(
-                                        "tracking-tight flex items-center justify-end gap-0.5",
-                                        isCompact ? "font-bold text-xs md:text-sm" : "font-black text-base md:text-lg",
-                                        currentStock === 0 ? "text-red-600" : "text-slate-950"
-                                    )}>
-                                        {currentStock.toLocaleString()}<span className="text-[10px] font-bold text-slate-600">m</span>
-                                        <Pencil className="h-2.5 w-2.5 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
-                                    </div>
-                                    <div className={cn("text-slate-500 font-semibold", isCompact ? "text-[9px]" : "text-[11px]")}>
-                                        約{currentBags.toLocaleString()}枚
-                                    </div>
-                                </div>
-                            ) : (
-                                <div>
-                                    <div className={cn(
-                                        "tracking-tight flex items-center justify-end gap-0.5",
-                                        isCompact ? "font-bold text-xs md:text-sm" : "font-black text-base md:text-lg",
-                                        currentStock === 0 ? "text-red-600" : "text-slate-950"
-                                    )}>
-                                        {currentStock.toLocaleString()}<span className="text-[10px] font-bold text-slate-600">枚</span>
-                                        <Pencil className="h-2.5 w-2.5 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
-                                    </div>
-                                </div>
-                            )}
-                            {oldPriceQty > 0 && (
-                                <div className="text-[8px] text-orange-600 font-bold leading-none mt-0.5" title="旧価格在庫">
-                                    旧:{oldPriceQty.toLocaleString()}{isRoll ? 'm' : '枚'}
-                                </div>
-                            )}
-                        </TableCell>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" align="end" className="p-2.5 max-w-[260px] text-xs bg-slate-900 text-white shadow-xl border-slate-700">
-                        <div className="space-y-1.5">
-                            <div className="font-bold border-b border-slate-700 pb-1 flex items-center justify-between text-slate-200">
-                                <span>{product.name}</span>
-                                <span className="text-[10px] text-blue-400 font-normal">クリックで調整</span>
-                            </div>
-                            <div className="space-y-0.5 text-[11px]">
-                                <div className="flex justify-between">
-                                    <span className="text-slate-400">現在庫:</span>
-                                    <span className="font-bold font-mono">{currentStock.toLocaleString()} {isRoll ? 'm' : '枚'}</span>
-                                </div>
-                                {oldPriceQty > 0 && (
-                                    <>
-                                        <div className="flex justify-between text-slate-300 pl-2 text-[10px]">
-                                            <span>└ 通常価格:</span>
-                                            <span className="font-mono">{regularQty.toLocaleString()} {isRoll ? 'm' : '枚'}</span>
-                                        </div>
-                                        <div className="flex justify-between text-amber-400 pl-2 text-[10px]">
-                                            <span>└ 旧価格在庫:</span>
-                                            <span className="font-mono font-bold">{oldPriceQty.toLocaleString()} {isRoll ? 'm' : '枚'}</span>
-                                        </div>
-                                    </>
-                                )}
-                                <div className="flex justify-between text-blue-300 border-t border-slate-800 pt-0.5">
-                                    <span>有効在庫 (引当差引後):</span>
-                                    <span className="font-bold font-mono">{availableStock.toLocaleString()} {isRoll ? 'm' : '枚'}</span>
-                                </div>
-                                {allocation.bags > 0 && (
-                                    <div className="flex justify-between text-slate-300">
-                                        <span className="text-slate-400">特売引当:</span>
-                                        <span className="font-mono">{allocation.bags.toLocaleString()} 枚</span>
-                                    </div>
-                                )}
-                                {incoming && incoming.total > 0 && (
-                                    <div className="flex justify-between text-emerald-400">
-                                        <span>入荷予定:</span>
-                                        <span className="font-mono">{incoming.total.toLocaleString()} {isRoll ? 'm' : '枚'}</span>
-                                    </div>
-                                )}
-                                {wipList.length > 0 && (
-                                    <div className="flex justify-between text-amber-300">
-                                        <span>仕掛中:</span>
-                                        <span className="font-mono">{wipList.reduce((s, i) => s + i.quantity, 0).toLocaleString()} {isRoll ? 'm' : '枚'}</span>
-                                    </div>
-                                )}
-                            </div>
-                            {updatedAt && (
-                                <div className="text-[9px] text-slate-400 pt-1 border-t border-slate-800 flex items-center gap-1">
-                                    <Clock className="h-2.5 w-2.5 text-slate-500" />
-                                    <span>最終更新: {new Date(updatedAt).toLocaleString('ja-JP')}</span>
-                                </div>
-                            )}
+            {/* 4. 現在庫 */}
+            <TableCell
+                className={cn(
+                    "text-right cursor-pointer hover:bg-blue-100/70 transition-colors group relative tabular-nums",
+                    isPlateRemoved ? "bg-slate-100/60" : "bg-blue-50/25",
+                    isCompact ? "p-1" : "p-2"
+                )}
+                onClick={() => setAdjustStock(product)}
+            >
+                {isRoll ? (
+                    <div>
+                        <div className={cn(
+                            "tracking-tight flex items-center justify-end gap-0.5",
+                            isCompact ? "font-bold text-xs md:text-sm" : "font-black text-base md:text-lg",
+                            currentStock === 0 ? "text-red-600" : "text-slate-950"
+                        )}>
+                            {currentStock.toLocaleString()}<span className="text-[10px] font-bold text-slate-600">m</span>
+                            <Pencil className="h-2.5 w-2.5 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
                         </div>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+                        <div className={cn("text-slate-500 font-semibold", isCompact ? "text-[9px]" : "text-[11px]")}>
+                            約{currentBags.toLocaleString()}枚
+                        </div>
+                    </div>
+                ) : (
+                    <div>
+                        <div className={cn(
+                            "tracking-tight flex items-center justify-end gap-0.5",
+                            isCompact ? "font-bold text-xs md:text-sm" : "font-black text-base md:text-lg",
+                            currentStock === 0 ? "text-red-600" : "text-slate-950"
+                        )}>
+                            {currentStock.toLocaleString()}<span className="text-[10px] font-bold text-slate-600">枚</span>
+                            <Pencil className="h-2.5 w-2.5 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
+                        </div>
+                    </div>
+                )}
+                {oldPriceQty > 0 && (
+                    <div className="text-[8px] text-orange-600 font-bold leading-none mt-0.5" title="旧価格在庫">
+                        旧:{oldPriceQty.toLocaleString()}{isRoll ? 'm' : '枚'}
+                    </div>
+                )}
+            </TableCell>
 
             {/* 5. 特売引当 */}
             <TableCell
