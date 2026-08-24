@@ -411,6 +411,7 @@ export async function GET() {
             base = base.replace(/[0-9０-９]+(\.[0-9０-９]+)?\s*([kKＫgGｇ]|kg|KG|Kg|袋|枚)[^\s)]*/gi, "");
             base = base.replace(/[\s　]+[rRＲ][zZＺａ-ｚＡ-Ｚ]?$/gi, "");
             base = base.replace(/[rRＲ]$/g, "");
+            base = base.replace(/[\s　]+/g, "");
             return base.trim();
         };
 

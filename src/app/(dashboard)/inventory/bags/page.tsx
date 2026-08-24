@@ -110,6 +110,8 @@ const getBaseProductName = (name: string): string => {
     base = base.replace(/[\s　]+[rRＲ][zZＺａ-ｚＡ-Ｚ]?$/gi, "");
     // 末尾の単独Rの除去
     base = base.replace(/[rRＲ]$/g, "");
+    // 空白文字（全角・半角スペース）の除去（表記ゆれで同一銘柄が別グループにならないようにする）
+    base = base.replace(/[\s　]+/g, "");
     return base.trim();
 };
 
