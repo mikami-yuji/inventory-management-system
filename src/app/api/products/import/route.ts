@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { normalizeProductName } from '@/lib/utils/product-name-cleaner';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -102,7 +103,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             }
 
             const updateData: Record<string, unknown> = {
-                name: row.name || null,
+                name: row.name ? normalizeProductName(row.name) : null,
                 sku: row.sku || null,
                 jan_code: row.jan_code || null,
                 weight: row.weight ? parseFloat(row.weight) : null,

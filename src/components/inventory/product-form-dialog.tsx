@@ -25,10 +25,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { useSuppliers } from "@/hooks/use-masters";
 import type { Product, ProductStatus } from "@/types";
+import { normalizeProductName } from "@/lib/utils/product-name-cleaner";
 
 // フォームデータの型
 type ProductFormData = {
@@ -153,10 +155,11 @@ export function ProductFormDialog({
         setError(null);
 
         try {
-            // 商品名を構造化フィールドから自動生成
-            const generatedName = [formData.prefix, formData.origin, formData.variety, formData.suffix]
+            // 商品名を構造化フィールドから自動生成し正規化
+            const rawName = [formData.prefix, formData.origin, formData.variety, formData.suffix]
                 .filter(Boolean)
                 .join(' ') || formData.name || '無題の商品';
+            const generatedName = normalizeProductName(rawName);
 
             const payload = {
                 id: product?.id,
@@ -240,7 +243,40 @@ export function ProductFormDialog({
 
                     {/* 商品名 構造化フィールド（自動生成） */}
                     <div className="border rounded-lg p-4 space-y-4 bg-slate-50">
-                        <div className="text-sm font-medium">商品名の詳細</div>
+                        <div className="flex items-center justify-between">
+                            <div className="text-sm font-medium flex items-center gap-1.5">
+                                <Sparkles className="w-4 h-4 text-amber-500" />
+                                <span>商品名の詳細・アシスト生成</span>
+                            </div>
+                            <span className="text-[11px] text-slate-500">※表記ルールに沿って自動整形されます</span>
+                        </div>
+
+                        {/* クイックプレフィックス選択 */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs text-slate-600">先頭プレフィックス（ワンクリック挿入）</Label>
+                            <div className="flex flex-wrap gap-1.5">
+                                {["【NB】", "【新米】", "【NB・新米】", "【無洗米】", "【玄米】"].map((pref) => {
+                                    const isSelected = formData.prefix.includes(pref);
+                                    return (
+                                        <Badge
+                                            key={pref}
+                                            variant={isSelected ? "default" : "outline"}
+                                            className="cursor-pointer hover:bg-slate-200 transition-colors text-xs font-mono py-1 px-2"
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    handleChange("prefix", formData.prefix.replace(pref, "").trim());
+                                                } else {
+                                                    handleChange("prefix", `${pref} ${formData.prefix}`.trim());
+                                                }
+                                            }}
+                                        >
+                                            {pref} {isSelected ? "✓" : "+"}
+                                        </Badge>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="prefix">備考1（先頭注記）</Label>
@@ -248,7 +284,8 @@ export function ProductFormDialog({
                                     id="prefix"
                                     value={formData.prefix}
                                     onChange={(e) => handleChange("prefix", e.target.value)}
-                                    placeholder="（ロゴ無）、【使用禁止】"
+                                    onBlur={(e) => handleChange("prefix", normalizeProductName(e.target.value))}
+                                    placeholder="【NB】、JA加美よつば"
                                     inputMode="text"
                                 />
                             </div>
@@ -258,7 +295,8 @@ export function ProductFormDialog({
                                     id="origin"
                                     value={formData.origin}
                                     onChange={(e) => handleChange("origin", e.target.value)}
-                                    placeholder="JA京都やましろ、魚沼"
+                                    onBlur={(e) => handleChange("origin", normalizeProductName(e.target.value))}
+                                    placeholder="宮城県、新潟県、北海道"
                                     inputMode="text"
                                 />
                             </div>
@@ -268,7 +306,8 @@ export function ProductFormDialog({
                                     id="variety"
                                     value={formData.variety}
                                     onChange={(e) => handleChange("variety", e.target.value)}
-                                    placeholder="ひのひかり、コシヒカリ"
+                                    onBlur={(e) => handleChange("variety", normalizeProductName(e.target.value))}
+                                    placeholder="ひとめぼれ、こしひかり"
                                     inputMode="text"
                                 />
                             </div>
@@ -278,16 +317,17 @@ export function ProductFormDialog({
                                     id="suffix"
                                     value={formData.suffix}
                                     onChange={(e) => handleChange("suffix", e.target.value)}
-                                    placeholder="RASP雲竜柄無地"
+                                    onBlur={(e) => handleChange("suffix", normalizeProductName(e.target.value))}
+                                    placeholder="(万代PB)、(店名)"
                                     inputMode="text"
                                 />
                             </div>
                         </div>
                         {/* 生成される商品名プレビュー */}
-                        <div className="pt-2 border-t">
-                            <div className="text-xs text-muted-foreground mb-1">生成される商品名:</div>
-                            <div className="text-sm font-medium bg-white p-2 rounded border min-h-[32px]">
-                                {[formData.prefix, formData.origin, formData.variety, formData.suffix].filter(Boolean).join(' ') || '（詳細を入力してください）'}
+                        <div className="pt-2 border-t space-y-1">
+                            <div className="text-xs text-muted-foreground">登録される正式商品名（自動整形済み）:</div>
+                            <div className="text-sm font-semibold text-slate-800 bg-white p-2.5 rounded border min-h-[36px] flex items-center">
+                                {normalizeProductName([formData.prefix, formData.origin, formData.variety, formData.suffix].filter(Boolean).join(' ')) || '（詳細を入力してください）'}
                             </div>
                         </div>
                     </div>

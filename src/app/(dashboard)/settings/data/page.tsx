@@ -21,7 +21,25 @@ import {
     XCircle,
     AlertTriangle,
     FileUp,
+    Sparkles,
+    RefreshCw,
+    ShieldCheck,
 } from "lucide-react";
+import toast from "react-hot-toast";
+
+type CleanNamesIssue = {
+    id: string;
+    sku: string | null;
+    category: string;
+    currentName: string;
+    suggestedName: string;
+};
+
+type CleanNamesResult = {
+    totalProducts: number;
+    issuesCount: number;
+    issues: CleanNamesIssue[];
+};
 
 // インポート結果の型
 type ImportResult = {
@@ -91,6 +109,55 @@ export default function DataManagementPage(): React.ReactElement {
     const [importResult, setImportResult] = useState<ImportResult | null>(null);
     const [dragOver, setDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // 表記ゆれスキャン・修復の状態
+    const [scanLoading, setScanLoading] = useState(false);
+    const [fixLoading, setFixLoading] = useState(false);
+    const [cleanResult, setCleanResult] = useState<CleanNamesResult | null>(null);
+
+    // 表記ゆれスキャン処理
+    const handleScanNames = async (): Promise<void> => {
+        setScanLoading(true);
+        try {
+            const res = await fetch("/api/products/clean-names");
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "スキャンに失敗しました");
+            setCleanResult(data);
+            if (data.issuesCount === 0) {
+                toast.success(`全${data.totalProducts}件の商品名はすべて表記ルールに準拠しています！`);
+            } else {
+                toast(`表記ゆれが${data.issuesCount}件見つかりました`, { icon: '⚠️' });
+            }
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : "スキャン中にエラーが発生しました");
+        } finally {
+            setScanLoading(false);
+        }
+    };
+
+    // 表記ゆれ一括修復処理
+    const handleFixNames = async (): Promise<void> => {
+        if (!cleanResult || cleanResult.issuesCount === 0) return;
+        if (!window.confirm(`${cleanResult.issuesCount}件の商品名を一括で正規化・標準化します。実行しますか？`)) {
+            return;
+        }
+
+        setFixLoading(true);
+        const toastId = toast.loading("商品名を一括修復中...");
+        try {
+            const res = await fetch("/api/products/clean-names", { method: "POST" });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "修復に失敗しました");
+
+            toast.success(`${data.updatedCount}件の商品名を正規化・修復しました！`, { id: toastId });
+            // 再スキャンして最新状態に更新
+            handleScanNames();
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : "修復中にエラーが発生しました", { id: toastId });
+        } finally {
+            setFixLoading(false);
+        }
+    };
 
     // エクスポート処理
     const handleExport = async (item: ExportItem): Promise<void> => {
@@ -375,6 +442,96 @@ export default function DataManagementPage(): React.ReactElement {
                                     {importResult.errors.map((err, i) => (
                                         <p key={i} className="text-red-600 ml-2">• {err}</p>
                                     ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* 表記ゆれ点検＆一括修復セクション */}
+            <Card className="border-indigo-100 bg-gradient-to-br from-indigo-50/30 to-white">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle className="flex items-center gap-2 text-indigo-950">
+                                <Sparkles className="h-5 w-5 text-indigo-600" />
+                                商品名 表記ゆれ自動点検＆一括修復
+                            </CardTitle>
+                            <CardDescription>
+                                登録済み商品の全角英数・県名抜け・カッコ・接頭語などの表記ゆれを検知し、一括で標準ルールに修復します
+                            </CardDescription>
+                        </div>
+                        <Button
+                            onClick={handleScanNames}
+                            disabled={scanLoading || fixLoading}
+                            variant="outline"
+                            className="gap-2 border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                        >
+                            {scanLoading ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                            ) : (
+                                <RefreshCw className="h-4 w-4 text-indigo-600" />
+                            )}
+                            表記ゆれをスキャン
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {cleanResult && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between p-3 bg-white border rounded-lg">
+                                <div className="flex items-center gap-3">
+                                    {cleanResult.issuesCount === 0 ? (
+                                        <div className="flex items-center gap-2 text-emerald-700 font-medium text-sm">
+                                            <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                                            すべての商品（全{cleanResult.totalProducts}件）が標準表記ルールに準拠しています
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2 text-amber-800 font-medium text-sm">
+                                            <AlertTriangle className="h-5 w-5 text-amber-600" />
+                                            {cleanResult.issuesCount}件の商品に表記ゆれが検出されました（対象: 全{cleanResult.totalProducts}件）
+                                        </div>
+                                    )}
+                                </div>
+                                {cleanResult.issuesCount > 0 && (
+                                    <Button
+                                        onClick={handleFixNames}
+                                        disabled={fixLoading}
+                                        className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+                                        size="sm"
+                                    >
+                                        {fixLoading ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Sparkles className="h-4 w-4" />
+                                        )}
+                                        {cleanResult.issuesCount}件を一括正規化する
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* 検出された差分リスト */}
+                            {cleanResult.issuesCount > 0 && (
+                                <div className="border rounded-lg bg-white overflow-hidden max-h-72 overflow-y-auto">
+                                    <table className="w-full text-xs text-left">
+                                        <thead className="bg-slate-50 text-slate-700 sticky top-0 border-b font-medium">
+                                            <tr>
+                                                <th className="py-2 px-3">SKU</th>
+                                                <th className="py-2 px-3">現在の名称（Before）</th>
+                                                <th className="py-2 px-3">修復後の名称（After）</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                            {cleanResult.issues.map((issue) => (
+                                                <tr key={issue.id} className="hover:bg-slate-50">
+                                                    <td className="py-2 px-3 font-mono text-slate-500">{issue.sku || '-'}</td>
+                                                    <td className="py-2 px-3 text-red-600 line-through">{issue.currentName}</td>
+                                                    <td className="py-2 px-3 text-emerald-700 font-medium">{issue.suggestedName}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             )}
                         </div>
