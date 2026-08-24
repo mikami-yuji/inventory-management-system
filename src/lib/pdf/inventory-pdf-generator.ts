@@ -61,7 +61,6 @@ export async function exportElementToPdf(
 
         let heightLeft = printHeight;
         let position = margin;
-        let page = 1;
 
         // 1ページ目
         pdf.addImage(imgData, 'JPEG', margin, position, printWidth, printHeight);
@@ -71,7 +70,6 @@ export async function exportElementToPdf(
         while (heightLeft > 0) {
             position = heightLeft - printHeight + margin;
             pdf.addPage();
-            page++;
             pdf.addImage(imgData, 'JPEG', margin, position, printWidth, printHeight);
             heightLeft -= (pageHeight - margin * 2);
         }

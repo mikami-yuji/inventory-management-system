@@ -104,63 +104,67 @@ export async function GET() {
         if (productsRes.error) throw productsRes.error;
         if (inventoryRes.error) throw inventoryRes.error;
 
-        const products: Product[] = (productsRes.data || []).map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            sku: p.sku,
-            janCode: p.jan_code,
-            weight: p.weight,
-            shape: p.shape,
-            material: p.material,
-            unitPrice: p.unit_price,
-            printingCost: p.printing_cost,
-            oldUnitPrice: p.old_unit_price,
-            oldPrintingCost: p.old_printing_cost,
-            priceIncreaseEffectiveDate: p.price_increase_effective_date,
-            category: p.category,
-            imageUrl: p.image_url,
-            description: p.description,
-            status: p.status,
-            minStockAlert: p.min_stock_alert,
-            supplierStock: p.supplier_stock,
-            supplierStockUpdatedAt: p.supplier_stock_updated_at,
-            metersPerRoll: p.meters_per_roll,
-            dailyShipmentRate: p.daily_shipment_rate,
-            productionLeadDays: p.production_lead_days,
-            statusOverride: p.status_override
+        const products: Product[] = ((productsRes.data || []) as Array<Record<string, unknown>>).map((p) => ({
+            id: String(p.id || ''),
+            name: String(p.name || ''),
+            sku: String(p.sku || ''),
+            janCode: p.jan_code ? String(p.jan_code) : undefined,
+            weight: Number(p.weight) || undefined,
+            shape: p.shape ? String(p.shape) : undefined,
+            material: p.material ? String(p.material) : undefined,
+            unitPrice: Number(p.unit_price) || 0,
+            printingCost: Number(p.printing_cost) || 0,
+            oldUnitPrice: p.old_unit_price !== null && p.old_unit_price !== undefined ? Number(p.old_unit_price) : undefined,
+            oldPrintingCost: p.old_printing_cost !== null && p.old_printing_cost !== undefined ? Number(p.old_printing_cost) : undefined,
+            priceIncreaseEffectiveDate: p.price_increase_effective_date ? String(p.price_increase_effective_date) : undefined,
+            category: (p.category as Product['category']) || 'bag',
+            imageUrl: p.image_url ? String(p.image_url) : undefined,
+            description: p.description ? String(p.description) : undefined,
+            status: String(p.status || 'active') as Product['status'],
+            minStockAlert: p.min_stock_alert !== null && p.min_stock_alert !== undefined ? Number(p.min_stock_alert) : undefined,
+            supplierStock: p.supplier_stock !== null && p.supplier_stock !== undefined ? Number(p.supplier_stock) : undefined,
+            supplierStockUpdatedAt: p.supplier_stock_updated_at ? String(p.supplier_stock_updated_at) : undefined,
+            metersPerRoll: p.meters_per_roll !== null && p.meters_per_roll !== undefined ? Number(p.meters_per_roll) : undefined,
+            dailyShipmentRate: p.daily_shipment_rate !== null && p.daily_shipment_rate !== undefined ? Number(p.daily_shipment_rate) : undefined,
+            productionLeadDays: p.production_lead_days !== null && p.production_lead_days !== undefined ? Number(p.production_lead_days) : undefined,
+            statusOverride: p.status_override ? (String(p.status_override) as Product['statusOverride']) : undefined
         }));
 
         // インベントリ Map 構築
         const inventoryMap = new Map<string, { quantity: number; oldPriceQuantity: number; updatedAt?: string }>();
-        (inventoryRes.data || []).forEach((inv: any) => {
-            inventoryMap.set(inv.product_id, {
+        ((inventoryRes.data || []) as Array<Record<string, unknown>>).forEach((inv) => {
+            const productId = String(inv.product_id || '');
+            inventoryMap.set(productId, {
                 quantity: Number(inv.quantity) || 0,
                 oldPriceQuantity: Number(inv.old_price_quantity) || 0,
-                updatedAt: inv.updated_at
+                updatedAt: inv.updated_at ? String(inv.updated_at) : undefined
             });
         });
 
         // 特売引当 Map 構築
-        const saleEvents: SaleEvent[] = (saleEventsRes.data || []).map((e: any) => ({
-            id: e.id,
-            clientName: e.client_name,
-            scheduleType: e.schedule_type || 'single',
-            dates: e.dates || [],
-            status: e.status,
-            description: e.description || null,
-            createdAt: e.created_at || new Date().toISOString(),
-            items: (e.items || []).map((item: any) => ({
-                id: item.id || '',
-                productId: item.product_id,
-                productName: '',
-                productSku: null,
-                plannedQuantity: Number(item.planned_quantity) || Number(item.allocated_quantity) || 0,
-                allocatedQuantity: Number(item.allocated_quantity) || 0,
-                actualQuantity: null,
-                currentStock: 0,
-                isProduced: item.is_produced || false
-            }))
-        }));
+        const saleEvents: SaleEvent[] = ((saleEventsRes.data || []) as Array<Record<string, unknown>>).map((e) => {
+            const rawItems = (e.items || []) as Array<Record<string, unknown>>;
+            return {
+                id: String(e.id || ''),
+                clientName: String(e.client_name || ''),
+                scheduleType: (e.schedule_type as 'single' | 'monthly') || 'single',
+                dates: (e.dates as string[]) || [],
+                status: String(e.status || 'active') as SaleEvent['status'],
+                description: e.description ? String(e.description) : null,
+                createdAt: String(e.created_at || new Date().toISOString()),
+                items: rawItems.map((item) => ({
+                    id: String(item.id || ''),
+                    productId: String(item.product_id || ''),
+                    productName: '',
+                    productSku: null,
+                    plannedQuantity: Number(item.planned_quantity) || Number(item.allocated_quantity) || 0,
+                    allocatedQuantity: Number(item.allocated_quantity) || 0,
+                    actualQuantity: null,
+                    currentStock: 0,
+                    isProduced: Boolean(item.is_produced)
+                }))
+            };
+        });
 
         const saleAllocationMap = new Map<string, { bags: number; meters: number }>();
         const detailedSaleAllocationMap = new Map<string, Array<{ eventId: string; clientName: string; quantity: number; dates: string[] }>>();
@@ -186,54 +190,58 @@ export async function GET() {
 
         // 仕掛 Map 構築
         const wipMap = new Map<string, WorkInProgress[]>();
-        (wipRes.data || []).forEach((w: any) => {
-            const list = wipMap.get(w.product_id) || [];
+        ((wipRes.data || []) as Array<Record<string, unknown>>).forEach((w) => {
+            const productId = String(w.product_id || '');
+            const list = wipMap.get(productId) || [];
             list.push({
-                id: w.id,
-                productId: w.product_id,
+                id: String(w.id || ''),
+                productId,
                 quantity: Number(w.quantity) || 0,
-                status: w.status,
-                expectedCompletion: w.expected_completion,
-                termType: w.term_type,
-                notes: w.notes
+                status: String(w.status || 'in_progress') as WorkInProgress['status'],
+                expectedCompletion: w.expected_completion ? String(w.expected_completion) : null,
+                termType: String(w.term_type || 'specific') as WorkInProgress['termType'],
+                notes: w.notes ? String(w.notes) : null
             } as unknown as WorkInProgress);
-            wipMap.set(w.product_id, list);
+            wipMap.set(productId, list);
         });
 
         // 入荷予定 Map 構築
         const incomingMap = new Map<string, { total: number; items: IncomingStock[] }>();
-        (incomingRes.data || []).forEach((inc: any) => {
-            const current = incomingMap.get(inc.product_id) || { total: 0, items: [] };
+        ((incomingRes.data || []) as Array<Record<string, unknown>>).forEach((inc) => {
+            const productId = String(inc.product_id || '');
+            const current = incomingMap.get(productId) || { total: 0, items: [] };
             const qty = Number(inc.quantity) || 0;
             current.total += qty;
             current.items.push({
-                id: inc.id,
-                productId: inc.product_id,
+                id: String(inc.id || ''),
+                productId,
                 quantity: qty,
-                expectedDate: inc.expected_date,
-                isCompleted: inc.is_completed,
-                note: inc.note
+                expectedDate: inc.expected_date ? String(inc.expected_date) : null,
+                isCompleted: Boolean(inc.is_completed),
+                note: inc.note ? String(inc.note) : null
             } as unknown as IncomingStock);
-            incomingMap.set(inc.product_id, current);
+            incomingMap.set(productId, current);
         });
 
         // サプライヤーロット Map 構築
         const supplierStockLotsMap = new Map<string, SupplierStockLot[]>();
-        (supplierLotsRes.data || []).forEach((lot: any) => {
-            const list = supplierStockLotsMap.get(lot.product_id) || [];
+        ((supplierLotsRes.data || []) as Array<Record<string, unknown>>).forEach((lot) => {
+            const productId = String(lot.product_id || '');
+            const list = supplierStockLotsMap.get(productId) || [];
             list.push({
-                id: lot.id,
-                productId: lot.product_id,
+                id: String(lot.id || ''),
+                productId,
                 quantity: Number(lot.quantity) || 0,
-                stockDate: lot.stock_date
+                stockDate: lot.stock_date ? String(lot.stock_date) : null
             } as unknown as SupplierStockLot);
-            supplierStockLotsMap.set(lot.product_id, list);
+            supplierStockLotsMap.set(productId, list);
         });
 
         // 設定
         const settingsMap: Record<string, unknown> = {};
-        (settingsRes.data || []).forEach((s: any) => {
-            settingsMap[s.key] = s.value;
+        ((settingsRes.data || []) as Array<Record<string, unknown>>).forEach((s) => {
+            const key = String(s.key || '');
+            if (key) settingsMap[key] = s.value;
         });
 
         // 集計計算
