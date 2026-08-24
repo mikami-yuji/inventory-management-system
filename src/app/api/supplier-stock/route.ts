@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
 import type { ApiResponse, SupplierStockLot } from '@/types';
 import { requireAuth } from '@/lib/auth-guard';
+import { z } from 'zod';
+import { logError } from '@/lib/logger';
+import { supplierStockService } from '@/lib/services/supplier-stock-service';
 
 // GET: メーカー在庫ロット一覧の取得
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<SupplierStockLot[]>>> {
@@ -11,41 +13,27 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const supabase = createServerClient();
         const { searchParams } = new URL(request.url);
-        const productId = searchParams.get('productId');
+        const productId = searchParams.get('productId') || undefined;
 
-        let query = supabase
-            .from('supplier_stock_lots')
-            .select('*')
-            .order('stock_date', { ascending: true });
-
-        if (productId) {
-            query = query.eq('product_id', productId);
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-            console.error('ロット取得エラー:', error);
-            return NextResponse.json({ data: null, error: error.message }, { status: 500 });
-        }
-
-        const formattedLots: SupplierStockLot[] = (data || []).map(lot => ({
-            id: lot.id,
-            productId: lot.product_id,
-            stockDate: lot.stock_date,
-            quantity: lot.quantity,
-            note: lot.note || undefined,
-            createdAt: lot.created_at
-        }));
-
-        return NextResponse.json({ data: formattedLots, error: null });
+        const lots = await supplierStockService.getLots(productId);
+        return NextResponse.json({ data: lots, error: null });
     } catch (error) {
-        console.error('サーバーエラー:', error);
+        await logError({
+            route: '/api/supplier-stock',
+            method: 'GET',
+            error
+        });
         return NextResponse.json({ data: null, error: 'サーバーエラーが発生しました' }, { status: 500 });
     }
 }
+
+const createLotSchema = z.object({
+    productId: z.string().min(1, '商品IDは必須です'),
+    quantity: z.number().nonnegative('数量は0以上である必要があります'),
+    stockDate: z.string().min(1, 'ロット日付は必須です'),
+    note: z.string().optional().nullable()
+});
 
 // POST: 新規ロットの追加
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<{ success: boolean }>>> {
@@ -55,41 +43,58 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const supabase = createServerClient();
         const body = await request.json();
-
-        const { productId, quantity, stockDate, note } = body as {
-            productId?: string;
-            quantity?: number;
-            stockDate?: string;
-            note?: string;
-        };
-
-        if (!productId || quantity === undefined || !stockDate) {
-            return NextResponse.json({ data: null, error: '必須項目が不足しています' }, { status: 400 });
+        const validated = createLotSchema.safeParse(body);
+        if (!validated.success) {
+            return NextResponse.json(
+                { data: null, error: '入力値が不正です。', details: validated.error.format() },
+                { status: 400 }
+            );
         }
 
-        const { error } = await supabase
-            .from('supplier_stock_lots')
-            .insert({
-                product_id: productId,
-                quantity,
-                stock_date: stockDate,
-                note: note || null
-            });
-
-        if (error) {
-            return NextResponse.json({ data: null, error: error.message }, { status: 500 });
-        }
-
+        await supplierStockService.createLot(validated.data);
         return NextResponse.json({ data: { success: true }, error: null });
     } catch (error) {
-        console.error('サーバーエラー:', error);
-        return NextResponse.json({ data: null, error: 'サーバーエラーが発生しました' }, { status: 500 });
+        await logError({
+            route: '/api/supplier-stock',
+            method: 'POST',
+            error
+        });
+        return NextResponse.json(
+            { data: null, error: error instanceof Error ? error.message : 'サーバーエラーが発生しました' },
+            { status: 500 }
+        );
     }
 }
 
-// PATCH: ロットの更新 または 入荷予定へ移動 または 旧仕様の全体在庫更新
+const patchLotSchema = z.discriminatedUnion('action', [
+    z.object({
+        action: z.literal('update_lot'),
+        lotId: z.string().min(1, 'ロットIDは必須です'),
+        quantity: z.number().nonnegative('数量は0以上である必要があります'),
+        stockDate: z.string().min(1, 'ロット日付は必須です'),
+        note: z.string().optional().nullable()
+    }),
+    z.object({
+        action: z.literal('move_to_incoming'),
+        productId: z.string().min(1, '商品IDは必須です'),
+        schedules: z.array(z.object({
+            expectedDate: z.string().min(1, '入荷予定日は必須です'),
+            quantity: z.number().positive('数量は1以上である必要があります'),
+            note: z.string().optional().nullable()
+        })).min(1, '少なくとも1つの移動予定を指定してください')
+    }),
+    z.object({
+        action: z.literal('sync_all')
+    }),
+    z.object({
+        action: z.literal('reset_single'),
+        productId: z.string().min(1, '商品IDは必須です'),
+        supplierStock: z.number().nonnegative()
+    })
+]);
+
+// PATCH: ロットの更新 / 入荷予定移動 / 在庫同期
 export async function PATCH(request: NextRequest): Promise<NextResponse<ApiResponse<{ success: boolean }>>> {
     try {
         const auth = await requireAuth();
@@ -97,163 +102,55 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
             return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const supabase = createServerClient();
         const body = await request.json();
 
-        const {
-            productId,
-            supplierStock,
-            action,
-            note,
-            lotId,
-            quantity,
-            stockDate,
-            schedules
-        } = body as {
-            productId?: string;
-            supplierStock?: number;
-            action?: string;
-            note?: string;
-            lotId?: string;
-            quantity?: number;
-            stockDate?: string;
-            schedules?: { expectedDate: string; quantity: number; note?: string }[];
-        };
-
-        // ロットの数量・日付・メモの更新
-        if (action === 'update_lot') {
-            if (!lotId || quantity === undefined || !stockDate) {
-                return NextResponse.json({ data: null, error: '必須項目が不足しています' }, { status: 400 });
-            }
-
-            const { error } = await supabase
-                .from('supplier_stock_lots')
-                .update({
-                    quantity,
-                    stock_date: stockDate,
-                    note: note || null
-                })
-                .eq('id', lotId);
-
-            if (error) {
-                return NextResponse.json({ data: null, error: error.message }, { status: 500 });
-            }
-
-            return NextResponse.json({ data: { success: true }, error: null });
+        // 互換性: actionが明示されていないが supplierStock と productId がある場合は reset_single にマッピング
+        if (!body.action && body.productId && body.supplierStock !== undefined) {
+            body.action = 'reset_single';
         }
 
-        // 入荷予定へ移動 (FIFO方式で古いロットから消費)
-        if (action === 'move_to_incoming') {
-            if (!productId || !schedules || !Array.isArray(schedules) || schedules.length === 0) {
-                return NextResponse.json({ data: null, error: '移動数量と入荷予定日を指定してください' }, { status: 400 });
-            }
-
-            const totalMovementQuantity = schedules.reduce((sum, s) => sum + (s.quantity || 0), 0);
-
-            if (totalMovementQuantity <= 0) {
-                return NextResponse.json({ data: null, error: '正の移動数量を指定してください' }, { status: 400 });
-            }
-
-            // 1. 現在のメーカー在庫（ロット）を古い順に取得
-            const { data: lots, error: lotsError } = await supabase
-                .from('supplier_stock_lots')
-                .select('*')
-                .eq('product_id', productId)
-                .gt('quantity', 0)
-                .order('stock_date', { ascending: true });
-
-            if (lotsError) {
-                return NextResponse.json({ data: null, error: 'ロットの取得に失敗しました' }, { status: 500 });
-            }
-
-            const totalCurrentStock = (lots || []).reduce((sum, lot) => sum + lot.quantity, 0);
-            if (totalCurrentStock < totalMovementQuantity) {
-                return NextResponse.json({ data: null, error: 'メーカー在庫が不足しています' }, { status: 400 });
-            }
-
-            // 2. FIFOでロットを減算
-            let remainingToMove = totalMovementQuantity;
-            for (const lot of (lots || [])) {
-                if (remainingToMove <= 0) break;
-
-                const deductQuantity = Math.min(lot.quantity, remainingToMove);
-                const newLotQuantity = lot.quantity - deductQuantity;
-
-                const { error: updateError } = await supabase
-                    .from('supplier_stock_lots')
-                    .update({ quantity: newLotQuantity })
-                    .eq('id', lot.id);
-
-                if (updateError) {
-                    return NextResponse.json({ data: null, error: 'ロットの更新に失敗しました' }, { status: 500 });
-                }
-
-                remainingToMove -= deductQuantity;
-            }
-
-            // 3. 入荷予定を複数作成する
-            const incomingRecords = schedules.map(s => ({
-                product_id: productId,
-                expected_date: s.expectedDate,
-                quantity: s.quantity,
-                note: s.note || 'メーカー在庫からの移動'
-            }));
-
-            const { error: incomingStockError } = await supabase
-                .from('incoming_stock')
-                .insert(incomingRecords);
-
-            if (incomingStockError) {
-                return NextResponse.json({ data: null, error: '入荷予定の作成に失敗しました' }, { status: 500 });
-            }
-
-            return NextResponse.json({ data: { success: true }, error: null });
+        const validated = patchLotSchema.safeParse(body);
+        if (!validated.success) {
+            return NextResponse.json(
+                { data: null, error: '入力値が不正です。', details: validated.error.format() },
+                { status: 400 }
+            );
         }
 
-        // 旧仕様: 互換性のための単一更新
-        if (supplierStock !== undefined && productId) {
-            await supabase.from('supplier_stock_lots').delete().eq('product_id', productId);
-            if (typeof supplierStock === 'number' && supplierStock > 0) {
-                await supabase.from('supplier_stock_lots').insert({
-                    product_id: productId,
-                    quantity: supplierStock,
-                    stock_date: new Date().toISOString().split('T')[0],
-                    note: '一括調整'
-                });
-            }
-            return NextResponse.json({ data: { success: true }, error: null });
+        const data = validated.data;
+        if (data.action === 'update_lot') {
+            await supplierStockService.updateLot({
+                lotId: data.lotId,
+                quantity: data.quantity,
+                stockDate: data.stockDate,
+                note: data.note
+            });
+        } else if (data.action === 'move_to_incoming') {
+            await supplierStockService.moveToIncoming({
+                productId: data.productId,
+                schedules: data.schedules.map(s => ({
+                    expectedDate: s.expectedDate,
+                    quantity: s.quantity,
+                    note: s.note || undefined
+                }))
+            });
+        } else if (data.action === 'sync_all') {
+            await supplierStockService.syncAllStock();
+        } else if (data.action === 'reset_single') {
+            await supplierStockService.resetSingleStock(data.productId, data.supplierStock);
         }
 
-        // 在庫数の同期（ロットの合計値をproducts.supplier_stockへ反映）
-        if (action === 'sync_all') {
-            const { data: products } = await supabase
-                .from('products')
-                .select('id');
-
-            if (products) {
-                for (const p of products) {
-                    const { data: lotSum } = await supabase
-                        .from('supplier_stock_lots')
-                        .select('quantity')
-                        .eq('product_id', p.id);
-
-                    const total = (lotSum || []).reduce((sum, lot) => sum + (lot.quantity || 0), 0);
-
-                    await supabase
-                        .from('products')
-                        .update({ supplier_stock: total })
-                        .eq('id', p.id);
-                }
-            }
-
-            return NextResponse.json({ data: { success: true }, error: null });
-        }
-
-        return NextResponse.json({ data: null, error: '不正なリクエストです' }, { status: 400 });
-
+        return NextResponse.json({ data: { success: true }, error: null });
     } catch (error) {
-        console.error('サーバーエラー:', error);
-        return NextResponse.json({ data: null, error: 'サーバーエラーが発生しました' }, { status: 500 });
+        await logError({
+            route: '/api/supplier-stock',
+            method: 'PATCH',
+            error
+        });
+        return NextResponse.json(
+            { data: null, error: error instanceof Error ? error.message : 'サーバーエラーが発生しました' },
+            { status: 500 }
+        );
     }
 }
 
@@ -265,7 +162,6 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
             return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const supabase = createServerClient();
         const { searchParams } = new URL(request.url);
         const lotId = searchParams.get('id');
 
@@ -273,18 +169,17 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
             return NextResponse.json({ data: null, error: 'ロットIDが必要です' }, { status: 400 });
         }
 
-        const { error } = await supabase
-            .from('supplier_stock_lots')
-            .delete()
-            .eq('id', lotId);
-
-        if (error) {
-            return NextResponse.json({ data: null, error: error.message }, { status: 500 });
-        }
-
+        await supplierStockService.deleteLot(lotId);
         return NextResponse.json({ data: { success: true }, error: null });
     } catch (error) {
-        console.error('サーバーエラー:', error);
-        return NextResponse.json({ data: null, error: 'サーバーエラーが発生しました' }, { status: 500 });
+        await logError({
+            route: '/api/supplier-stock',
+            method: 'DELETE',
+            error
+        });
+        return NextResponse.json(
+            { data: null, error: error instanceof Error ? error.message : 'サーバーエラーが発生しました' },
+            { status: 500 }
+        );
     }
 }

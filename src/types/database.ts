@@ -296,14 +296,16 @@ export interface Database {
                     quantity: number;
                     note: string | null;
                     created_at: string;
+                    updated_at: string;
                 };
                 Insert: {
                     id?: string;
                     product_id: string;
-                    stock_date: string;
-                    quantity: number;
+                    stock_date?: string;
+                    quantity?: number;
                     note?: string | null;
                     created_at?: string;
+                    updated_at?: string;
                 };
                 Update: {
                     id?: string;
@@ -312,6 +314,7 @@ export interface Database {
                     quantity?: number;
                     note?: string | null;
                     created_at?: string;
+                    updated_at?: string;
                 };
                 Relationships: [];
             };
@@ -357,36 +360,33 @@ export interface Database {
             delivery_addresses: {
                 Row: {
                     id: string;
+                    client_id: string;
                     name: string;
                     postal_code: string | null;
                     address: string;
-                    phone: string | null;
-                    contact_person: string | null;
-                    shape: string | null;
+                    phone: string;
                     is_default: boolean;
                     created_at: string;
                     updated_at: string;
                 };
                 Insert: {
                     id?: string;
+                    client_id: string;
                     name: string;
                     postal_code?: string | null;
                     address: string;
-                    phone?: string | null;
-                    contact_person?: string | null;
-                    shape?: string | null;
+                    phone: string;
                     is_default?: boolean;
                     created_at?: string;
                     updated_at?: string;
                 };
                 Update: {
                     id?: string;
+                    client_id?: string;
                     name?: string;
                     postal_code?: string | null;
                     address?: string;
-                    phone?: string | null;
-                    contact_person?: string | null;
-                    shape?: string | null;
+                    phone?: string;
                     is_default?: boolean;
                     created_at?: string;
                     updated_at?: string;
@@ -419,6 +419,7 @@ export interface Database {
                     printing_cost: number;
                     effective_date: string;
                     created_at: string;
+                    updated_at: string;
                 };
                 Insert: {
                     id?: string;
@@ -427,6 +428,7 @@ export interface Database {
                     printing_cost: number;
                     effective_date: string;
                     created_at?: string;
+                    updated_at?: string;
                 };
                 Update: {
                     id?: string;
@@ -435,6 +437,7 @@ export interface Database {
                     printing_cost?: number;
                     effective_date?: string;
                     created_at?: string;
+                    updated_at?: string;
                 };
                 Relationships: [
                     {
@@ -450,34 +453,49 @@ export interface Database {
             orders: {
                 Row: {
                     id: string;
+                    order_id: string | null;
                     client_id: string;
                     status: string;
                     type: string;
                     event_id: string | null;
-                    delivery_address_id: string | null;
-                    note: string | null;
+                    shipment_source: string;
+                    delivery_name: string | null;
+                    delivery_postal_code: string | null;
+                    delivery_address: string | null;
+                    delivery_phone: string | null;
+                    preferred_shape: string | null;
                     created_at: string;
                     updated_at: string;
                 };
                 Insert: {
                     id?: string;
+                    order_id?: string | null;
                     client_id: string;
                     status?: string;
                     type?: string;
                     event_id?: string | null;
-                    delivery_address_id?: string | null;
-                    note?: string | null;
+                    shipment_source?: string;
+                    delivery_name?: string | null;
+                    delivery_postal_code?: string | null;
+                    delivery_address?: string | null;
+                    delivery_phone?: string | null;
+                    preferred_shape?: string | null;
                     created_at?: string;
                     updated_at?: string;
                 };
                 Update: {
                     id?: string;
+                    order_id?: string | null;
                     client_id?: string;
                     status?: string;
                     type?: string;
                     event_id?: string | null;
-                    delivery_address_id?: string | null;
-                    note?: string | null;
+                    shipment_source?: string;
+                    delivery_name?: string | null;
+                    delivery_postal_code?: string | null;
+                    delivery_address?: string | null;
+                    delivery_phone?: string | null;
+                    preferred_shape?: string | null;
                     created_at?: string;
                     updated_at?: string;
                 };
@@ -489,18 +507,27 @@ export interface Database {
                     order_id: string;
                     product_id: string;
                     quantity: number;
+                    unit_price: number;
+                    printing_cost: number;
+                    created_at: string;
                 };
                 Insert: {
                     id?: string;
                     order_id: string;
                     product_id: string;
                     quantity: number;
+                    unit_price?: number;
+                    printing_cost?: number;
+                    created_at?: string;
                 };
                 Update: {
                     id?: string;
                     order_id?: string;
                     product_id?: string;
                     quantity?: number;
+                    unit_price?: number;
+                    printing_cost?: number;
+                    created_at?: string;
                 };
                 Relationships: [];
             };
@@ -713,6 +740,44 @@ export interface Database {
                     quantity: number;
                     old_price_quantity: number;
                     updated_at: string;
+                };
+            };
+            create_order_atomic: {
+                Args: {
+                    p_client_id: string;
+                    p_type: string;
+                    p_event_id?: string | null;
+                    p_shipment_source?: string;
+                    p_delivery_name?: string | null;
+                    p_delivery_postal_code?: string | null;
+                    p_delivery_address?: string | null;
+                    p_delivery_phone?: string | null;
+                    p_preferred_shape?: string | null;
+                    p_items?: Json;
+                };
+                Returns: {
+                    id: string;
+                    clientId: string;
+                    createdAt: string;
+                    status: string;
+                    type: string;
+                    eventId: string | null;
+                    shipmentSource: string;
+                    deliveryName: string | null;
+                    deliveryPostalCode: string | null;
+                    deliveryAddress: string | null;
+                    deliveryPhone: string | null;
+                    preferredShape: string | null;
+                };
+            };
+            move_supplier_stock_to_incoming_atomic: {
+                Args: {
+                    p_product_id: string;
+                    p_schedules: Json;
+                };
+                Returns: {
+                    success: boolean;
+                    movedQuantity: number;
                 };
             };
         };

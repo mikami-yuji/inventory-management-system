@@ -27,16 +27,17 @@ const formatDateKey = (date: Date): string => {
     return `${y}-${m}-${d}`;
 };
 
-// YYYY-MM-DD 形式の文字列をローカル時刻の深夜0時に変換する
+// YYYY-MM-DD 形式の文字列またはISO文字列をローカル時刻の深夜0時に変換する
 const parseLocalDate = (dateStr: string): Date => {
-    const parts = dateStr.split(/[-/]/);
-    if (parts.length === 3) {
-        const y = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10) - 1;
-        const d = parseInt(parts[2], 10);
-        return new Date(y, m, d, 0, 0, 0, 0);
+    if (/^\d{4}[-/]\d{2}[-/]\d{2}$/.test(dateStr)) {
+        const parts = dateStr.split(/[-/]/).map(Number);
+        return new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0);
     }
-    return new Date(dateStr);
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+    }
+    return new Date();
 };
 
 // ロール袋（原反/フィルム巻）かどうか判定
