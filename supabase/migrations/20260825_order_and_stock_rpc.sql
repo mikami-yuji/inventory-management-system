@@ -273,13 +273,15 @@ BEGIN
         END IF;
 
         v_deduct_qty := LEAST(v_lot.quantity, v_remaining_to_move);
-        v_new_lot_qty := v_lot.quantity - v_deduct_qty;
-
-        UPDATE public.supplier_stock_lots
-        SET 
-            quantity = v_new_lot_qty,
-            updated_at = NOW()
-        WHERE id = v_lot.id;
+        IF v_new_lot_qty <= 0 THEN
+            DELETE FROM public.supplier_stock_lots WHERE id = v_lot.id;
+        ELSE
+            UPDATE public.supplier_stock_lots
+            SET 
+                quantity = v_new_lot_qty,
+                updated_at = NOW()
+            WHERE id = v_lot.id;
+        END IF;
 
         v_remaining_to_move := v_remaining_to_move - v_deduct_qty;
     END LOOP;

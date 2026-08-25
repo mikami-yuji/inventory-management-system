@@ -63,6 +63,9 @@ describe('supplierStockService', () => {
                 }),
                 update: jest.fn().mockReturnValue({
                     eq: jest.fn().mockResolvedValue({ error: null })
+                }),
+                delete: jest.fn().mockReturnValue({
+                    eq: jest.fn().mockResolvedValue({ error: null })
                 })
             };
 
@@ -84,8 +87,8 @@ describe('supplierStockService', () => {
                 ]
             });
 
-            // lot-1 は 0 に更新
-            expect(mockLotsQuery.update).toHaveBeenCalledWith({ quantity: 0 });
+            // lot-1 は 0 になったため削除
+            expect(mockLotsQuery.delete).toHaveBeenCalled();
             // lot-2 は 150 (200 - 50) に更新
             expect(mockLotsQuery.update).toHaveBeenCalledWith({ quantity: 150 });
             // incoming_stock が作成されたこと

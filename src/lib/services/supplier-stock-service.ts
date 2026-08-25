@@ -36,6 +36,7 @@ export const supplierStockService = {
         let query = supabase
             .from('supplier_stock_lots')
             .select('*')
+            .gt('quantity', 0)
             .order('stock_date', { ascending: true });
 
         if (productId) {
@@ -62,6 +63,7 @@ export const supplierStockService = {
      * 新規ロットの追加
      */
     async createLot(input: CreateSupplierStockLotInput): Promise<void> {
+        if (input.quantity <= 0) return;
         const supabase = createServerClient();
 
         const { error } = await supabase
@@ -79,9 +81,13 @@ export const supplierStockService = {
     },
 
     /**
-     * ロットの更新
+     * ロットの更新 (数量が0以下の場合は自動削除)
      */
     async updateLot(input: UpdateSupplierStockLotInput): Promise<void> {
+        if (input.quantity <= 0) {
+            return this.deleteLot(input.lotId);
+        }
+
         const supabase = createServerClient();
 
         const { error } = await supabase
@@ -161,13 +167,25 @@ export const supplierStockService = {
             const deductQuantity = Math.min(lot.quantity, remainingToMove);
             const newLotQuantity = lot.quantity - deductQuantity;
 
-            const { error: updateError } = await supabase
-                .from('supplier_stock_lots')
-                .update({ quantity: newLotQuantity })
-                .eq('id', lot.id);
+            if (newLotQuantity <= 0) {
+                // 0mになったロットは自動削除
+                const { error: deleteError } = await supabase
+                    .from('supplier_stock_lots')
+                    .delete()
+                    .eq('id', lot.id);
 
-            if (updateError) {
-                throw new Error(`ロットの更新に失敗しました: ${updateError.message}`);
+                if (deleteError) {
+                    throw new Error(`ロットの削除に失敗しました: ${deleteError.message}`);
+                }
+            } else {
+                const { error: updateError } = await supabase
+                    .from('supplier_stock_lots')
+                    .update({ quantity: newLotQuantity })
+                    .eq('id', lot.id);
+
+                if (updateError) {
+                    throw new Error(`ロットの更新に失敗しました: ${updateError.message}`);
+                }
             }
 
             remainingToMove -= deductQuantity;

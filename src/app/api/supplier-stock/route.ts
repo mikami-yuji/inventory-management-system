@@ -163,7 +163,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
         }
 
         const { searchParams } = new URL(request.url);
-        const lotId = searchParams.get('id');
+        const lotId = searchParams.get('lotId') || searchParams.get('id');
 
         if (!lotId) {
             return NextResponse.json({ data: null, error: 'ロットIDが必要です' }, { status: 400 });
