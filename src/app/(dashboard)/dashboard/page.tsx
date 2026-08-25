@@ -292,20 +292,26 @@ export default function DashboardPage(): React.ReactElement {
         return totalAmount;
     }, [linkedProducts, inventoryMap]);
 
-    // 長期在庫（入荷月から6ヶ月目以降）の抽出
-    const longTermLots = lots.filter(lot => {
-        if (lot.quantity <= 0) return false;
-        const arrival = new Date(lot.stockDate);
-        const now = new Date();
-        const monthsElapsed = (now.getFullYear() - arrival.getFullYear()) * 12 + now.getMonth() - arrival.getMonth();
-        return monthsElapsed >= 5;
-    })
+    // 長期在庫（入荷月から6ヶ月目以降）の抽出（有効な商品のみ）
+    const longTermLots = lots
+        .filter(lot => {
+            if (lot.quantity <= 0) return false;
+            const product = products.find(p => p.id === lot.productId);
+            // 商品マスタに存在しない孤立データや廃盤・落版は除外
+            if (!product) return false;
+            if (product.status === 'discontinued' || product.status === 'plate_removed') return false;
+
+            const arrival = new Date(lot.stockDate);
+            const now = new Date();
+            const monthsElapsed = (now.getFullYear() - arrival.getFullYear()) * 12 + now.getMonth() - arrival.getMonth();
+            return monthsElapsed >= 5;
+        })
         .sort((a, b) => new Date(a.stockDate).getTime() - new Date(b.stockDate).getTime())
         .map(lot => {
             const product = products.find(p => p.id === lot.productId);
             return {
                 ...lot,
-                productName: product?.name || '不明な商品',
+                productName: product?.name || '',
                 productWeight: product?.weight || null,
                 sku: product?.sku || ''
             };
