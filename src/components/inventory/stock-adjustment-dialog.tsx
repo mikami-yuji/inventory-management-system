@@ -168,14 +168,6 @@ export function StockAdjustmentDialog({
 
                 <form
                     onSubmit={handleSave}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                            const target = e.target as HTMLElement;
-                            if (target.tagName !== "TEXTAREA" && target.tagName !== "BUTTON") {
-                                e.preventDefault();
-                            }
-                        }
-                    }}
                     className="grid gap-4 py-4"
                 >
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -281,7 +273,7 @@ export function StockAdjustmentDialog({
                                 <Button type="button" variant="outline" onClick={() => setShowConfirmLargeChange(false)} disabled={loading}>
                                     数量を再確認する
                                 </Button>
-                                <Button type="button" variant="destructive" onClick={executeSave} disabled={loading}>
+                                <Button type="submit" variant="destructive" disabled={loading}>
                                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     この数量で確定する
                                 </Button>
