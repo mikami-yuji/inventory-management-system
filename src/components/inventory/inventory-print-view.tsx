@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import type { Product, WorkInProgress, IncomingStock, SupplierStockLot } from "@/types";
 import { calculateStockStatus, calculateStockPrediction, getPitch } from "@/lib/services";
-import { cn } from "@/lib/utils";
+import { cn, isWithinDays } from "@/lib/utils";
 import type { SaleEvent } from "@/hooks/use-sale-events";
 
 type InventoryPrintViewProps = {
@@ -564,16 +564,6 @@ function extractRegion(productName: string): string {
     }
     const firstToken = cleaned.split(/[\s　]+/)[0];
     return firstToken && firstToken.length <= 6 ? firstToken : "共通・その他";
-}
-
-function isWithinDays(dateStrOrObj: string | Date | null | undefined, days: number = 7): boolean {
-    if (!dateStrOrObj) return false;
-    const target = new Date(dateStrOrObj).getTime();
-    if (isNaN(target)) return false;
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    const diffDays = (target - now.getTime()) / (1000 * 60 * 60 * 24);
-    return diffDays >= -1 && diffDays <= days;
 }
 
 function getStatusLabel(status: string | undefined): string {

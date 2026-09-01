@@ -3,7 +3,7 @@ import { TableRow, TableCell } from "@/components/ui/table";
 import { ProductImage } from "@/components/ui/product-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, isWithinDays } from "@/lib/utils";
 import {
     Plus,
     Pencil,
@@ -304,6 +304,7 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                                     return a.date.localeCompare(b.date);
                                 })
                                 .map((evt, idx) => {
+                                    const isNear = isWithinDays(evt.date);
                                     const dateStr = evt.date
                                         ? (() => {
                                             try {
@@ -323,7 +324,12 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                                     return (
                                         <div
                                             key={idx}
-                                            className="text-[9px] text-blue-600/90 truncate max-w-[140px] ml-auto"
+                                            className={cn(
+                                                "text-[9px] truncate max-w-[140px] ml-auto transition-all",
+                                                isNear && !isPlateRemoved
+                                                    ? "bg-blue-50/90 text-blue-900 font-bold border border-blue-300 rounded px-1.5 py-0.5 shadow-sm"
+                                                    : "text-blue-600/90"
+                                            )}
                                             title={displayText}
                                         >
                                             {displayText}
@@ -390,15 +396,18 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                                             {incoming.items.map((item, idx) => {
                                                 const itemDate = item.expectedDate ? new Date(item.expectedDate) : null;
                                                 const isOverdue = itemDate ? itemDate.setHours(0, 0, 0, 0) < today.getTime() : false;
+                                                const isNear = !isOverdue && isWithinDays(item.expectedDate);
 
                                                 return (
                                                     <div
                                                         key={idx}
                                                         className={cn(
-                                                            "text-[9px] truncate max-w-[140px] ml-auto",
+                                                            "text-[9px] truncate max-w-[140px] ml-auto transition-all",
                                                             isOverdue && !isPlateRemoved
-                                                                ? "text-red-600 font-bold bg-red-50/60 px-1 py-0.2 rounded"
-                                                                : "text-slate-600"
+                                                                ? "text-red-600 font-bold bg-red-50/60 px-1 py-0.2 rounded border border-red-200"
+                                                                : isNear && !isPlateRemoved
+                                                                    ? "text-emerald-900 font-bold bg-emerald-50/90 px-1.5 py-0.5 rounded border border-emerald-300 shadow-sm"
+                                                                    : "text-slate-600"
                                                         )}
                                                         title={`${item.expectedDate ? new Date(item.expectedDate).toLocaleDateString('ja-JP') : '納期確認中'}: ${item.quantity.toLocaleString()}${isRoll ? 'm' : '枚'}${item.note ? ` (${item.note})` : ''}${isOverdue ? ' [入荷予定日超過]' : ''}`}
                                                     >
@@ -483,22 +492,34 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                             <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100" />
                         </div>
                         <div className="flex flex-col gap-0.5 mt-0.5">
-                            {wipList.map((item) => (
-                                <div key={item.id} className="text-[10px] text-slate-600 truncate max-w-[130px] ml-auto" title={item.note || undefined}>
-                                    {item.expectedCompletion ?
-                                        (() => {
-                                            const d = new Date(item.expectedCompletion);
-                                            const month = d.getMonth() + 1;
-                                            if (item.termType === 'early') return `${month}月上旬: `;
-                                            if (item.termType === 'mid') return `${month}月中旬: `;
-                                            if (item.termType === 'late') return `${month}月下旬: `;
-                                            return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: `;
-                                        })()
-                                        : '未定: '}
-                                    {item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}
-                                    {item.note && <span className="text-amber-700 ml-1">({item.note})</span>}
-                                </div>
-                            ))}
+                            {wipList.map((item) => {
+                                const isNear = isWithinDays(item.expectedCompletion);
+                                return (
+                                    <div
+                                        key={item.id}
+                                        className={cn(
+                                            "text-[10px] truncate max-w-[130px] ml-auto transition-all",
+                                            isNear && !isPlateRemoved
+                                                ? "text-amber-900 font-bold bg-amber-50/90 px-1.5 py-0.5 rounded border border-amber-300 shadow-sm"
+                                                : "text-slate-600"
+                                        )}
+                                        title={item.note || undefined}
+                                    >
+                                        {item.expectedCompletion ?
+                                            (() => {
+                                                const d = new Date(item.expectedCompletion);
+                                                const month = d.getMonth() + 1;
+                                                if (item.termType === 'early') return `${month}月上旬: `;
+                                                if (item.termType === 'mid') return `${month}月中旬: `;
+                                                if (item.termType === 'late') return `${month}月下旬: `;
+                                                return `${d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}: `;
+                                            })()
+                                            : '未定: '}
+                                        {item.quantity.toLocaleString()}{isRoll ? 'm' : '枚'}
+                                        {item.note && <span className="text-amber-700 ml-1">({item.note})</span>}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 ) : (
