@@ -289,18 +289,47 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                                     const item = event.items.find(i => i.productId === product.id);
                                     if (item && item.allocatedQuantity > 0 && (event.status === 'active' || event.status === 'upcoming')) {
                                         return [{
-                                             date: event.dates[0],
+                                             date: event.dates && event.dates.length > 0 ? event.dates[0] : "",
+                                             dates: event.dates || [],
                                              client: event.clientName,
                                              qty: item.allocatedQuantity
                                         }];
                                     }
                                     return [];
                                 })
-                                .map((evt, idx) => (
-                                    <div key={idx} className="text-[9px] text-blue-600/90 truncate max-w-[120px] ml-auto" title={`${evt.client}: ${evt.qty.toLocaleString()}枚`}>
-                                        {evt.client}: {evt.qty.toLocaleString()}枚
-                                    </div>
-                                ))}
+                                .sort((a, b) => {
+                                    if (!a.date && !b.date) return 0;
+                                    if (!a.date) return 1;
+                                    if (!b.date) return -1;
+                                    return a.date.localeCompare(b.date);
+                                })
+                                .map((evt, idx) => {
+                                    const dateStr = evt.date
+                                        ? (() => {
+                                            try {
+                                                const d = new Date(evt.date);
+                                                const m = d.getMonth() + 1;
+                                                const day = d.getDate();
+                                                const isMulti = evt.dates.length > 1;
+                                                return `${m}/${day}${isMulti ? '~' : ''}`;
+                                            } catch {
+                                                return evt.date;
+                                            }
+                                        })()
+                                        : '';
+                                    const displayText = dateStr
+                                        ? `${dateStr} ${evt.client}: ${evt.qty.toLocaleString()}枚`
+                                        : `${evt.client}: ${evt.qty.toLocaleString()}枚`;
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className="text-[9px] text-blue-600/90 truncate max-w-[140px] ml-auto"
+                                            title={displayText}
+                                        >
+                                            {displayText}
+                                        </div>
+                                    );
+                                })}
                         </div>
                     </div>
                 ) : (
