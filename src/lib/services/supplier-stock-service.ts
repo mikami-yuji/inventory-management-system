@@ -1,30 +1,30 @@
 import { createServerClient } from '@/lib/supabase';
 import type { SupplierStockLot } from '@/types';
 
-export interface CreateSupplierStockLotInput {
+export type CreateSupplierStockLotInput = {
     productId: string;
     quantity: number;
     stockDate: string;
     note?: string | null;
-}
+};
 
-export interface UpdateSupplierStockLotInput {
+export type UpdateSupplierStockLotInput = {
     lotId: string;
     quantity: number;
     stockDate: string;
     note?: string | null;
-}
+};
 
-export interface MoveToIncomingSchedule {
+export type MoveToIncomingSchedule = {
     expectedDate: string;
     quantity: number;
     note?: string;
-}
+};
 
-export interface MoveToIncomingInput {
+export type MoveToIncomingInput = {
     productId: string;
     schedules: MoveToIncomingSchedule[];
-}
+};
 
 export const supplierStockService = {
     /**

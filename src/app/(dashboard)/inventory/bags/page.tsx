@@ -3,30 +3,21 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
     Search,
-    Filter,
     Loader2,
     Plus,
-    Package,
-    TrendingDown,
     LayoutGrid,
     List,
     X,
-    AlertTriangle,
-    Calendar,
     Printer,
     Download,
     ShoppingCart,
 } from "lucide-react";
-import * as XLSX from "xlsx";
+import type { SortKey, SortOrder, TableDensity } from "@/components/inventory/bags-inventory-table";
 import {
     bagsToMeters,
     calculateStockStatus,
@@ -115,16 +106,11 @@ const getBaseProductName = (name: string): string => {
     return base.trim();
 };
 
-import type { SortKey, SortOrder, TableDensity } from "@/components/inventory/bags-inventory-table";
-
 export type QuickFilterType = 'all' | 'need_order' | 'urgent_prediction' | 'reserved' | 'supply' | 'wip_check';
 
 export default function BagsInventoryPage(): React.ReactElement {
     // 表示モード (grid | table)
     const [viewMode, setViewMode] = useState<"table" | "grid">("table");
-    // フィルターの表示・非表示 (スマホ・風景モード用)
-    const [showFilters, setShowFilters] = useState(true);
-    const [isSmallHeight, setIsSmallHeight] = useState(false);
 
     // ソート状態
     const [sortKey, setSortKey] = useState<SortKey>('default');
@@ -174,21 +160,6 @@ export default function BagsInventoryPage(): React.ReactElement {
             }
         }
     }, [sortKey, sortOrder]);
-
-    // 画面の高さが低い場合（横向きなど）は初期状態でフィルターを閉じる
-    useEffect(() => {
-        const checkHeight = () => {
-            const smallHeight = window.innerHeight < 768 || window.innerWidth > window.innerHeight;
-            setIsSmallHeight(smallHeight);
-            if (smallHeight) {
-                setShowFilters(false);
-            }
-        };
-
-        checkHeight();
-        window.addEventListener('resize', checkHeight);
-        return () => window.removeEventListener('resize', checkHeight);
-    }, []);
 
     const searchInputRef = useRef<HTMLInputElement>(null);
     const { addToCart } = useCart();
@@ -666,10 +637,12 @@ export default function BagsInventoryPage(): React.ReactElement {
         });
     }, [bagProducts, showRemovedZeroStock, quickFilter, searchQuery, weightFilter, stockFilter, originFilter, varietyFilter, statusFilter, sortKey, sortOrder, inventoryMap, saleAllocationMap, settings, predictionMap, incomingMap, wipMap, supplierStockLotsMap, supplierStockMap]);
 
-    // Excel出力
-    const handleExportExcel = useCallback((): void => {
+    // Excel出力 (xlsx を動的インポートして初期バンドルを削減)
+    const handleExportExcel = useCallback(async (): Promise<void> => {
         try {
             if (filteredProducts.length === 0) return;
+
+            const XLSX = await import("xlsx");
 
             const excelData = filteredProducts.map(p => {
                 const qty = inventoryMap.get(p.id)?.quantity || 0;

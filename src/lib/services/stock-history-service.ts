@@ -29,10 +29,10 @@ function calculateUsage(history: StockHistory[], days: number): number {
     // APIの仕様上、adjustmentの際は changeAmount を計算していない場合がある
     // よって、今回は「outgoingの合計」を使用数とする
 
-    // 修正: outgoing の total
+    // 修正: outgoing および order (発注出庫) の total
     let totalOutgoing = 0;
     for (const record of sorted) {
-        if (record.type === 'outgoing') {
+        if (record.type === 'outgoing' || record.type === 'order') {
             totalOutgoing += record.quantity;
         }
     }
@@ -83,7 +83,7 @@ function getUsageTrend(history: StockHistory[]): 'increasing' | 'decreasing' | '
 
     let prevWeekUsage = 0;
     for (const record of prevWeekHistory) {
-        if (record.type === 'outgoing') {
+        if (record.type === 'outgoing' || record.type === 'order') {
             prevWeekUsage += record.quantity;
         }
     }

@@ -47,6 +47,11 @@ SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 # 認証設定 (NextAuth)
 NEXTAUTH_SECRET=your-nextauth-secret-key
 NEXTAUTH_URL=http://localhost:3000
+
+# メール通知設定 (Resend)
+RESEND_API_KEY=re_your_api_key
+MAIL_FROM_ADDRESS=onboarding@resend.dev
+MAIL_ADMIN_ADDRESS=admin@example.com
 ```
 
 ※ ローカル開発・CI環境のビルド検証時には、接続用環境変数が未設定の場合でも安全な初期化フォールバックロジックが働くように実装されています。

@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import type { Product, Inventory, ApiResponse } from '@/types';
-import { requireAuth } from '@/lib/auth-guard';
+import { requireAuth, requireAdmin } from '@/lib/auth-guard';
 import { z } from 'zod';
 import { logError } from '@/lib/logger';
+
+// PostgREST フィルターインジェクション対策サニタイザー
+function sanitizeSearchQuery(input: string): string {
+    return input.replace(/[,():%\\`"']/g, '').trim();
+}
 
 // 在庫データ（商品情報含む）の型
 type InventoryWithProduct = Inventory & {
@@ -63,9 +68,12 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             query = query.eq('product.category', category);
         }
 
-        // 検索フィルター
+        // 検索フィルター (サニタイズ適用)
         if (search) {
-            query = query.or(`product.name.ilike.%${search}%,product.sku.ilike.%${search}%`);
+            const sanitized = sanitizeSearchQuery(search);
+            if (sanitized) {
+                query = query.or(`product.name.ilike.%${sanitized}%,product.sku.ilike.%${sanitized}%`);
+            }
         }
 
         const { data, error } = await query;
@@ -75,11 +83,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
             return NextResponse.json({ data: null, error: error.message }, { status: 500 });
         }
 
-        // 在庫アラート対象のみ抽出
+        // 在庫アラート対象のみ抽出（DBのスネークケースmin_stock_alertもフォールバック考慮）
         let result = data as unknown as InventoryWithProduct[];
         if (lowStock) {
             result = result.filter(item => {
-                const minAlert = item.product?.minStockAlert ?? 100;
+                const rawProduct = item.product as unknown as Record<string, unknown>;
+                const minAlert = (typeof rawProduct?.min_stock_alert === 'number' ? rawProduct.min_stock_alert : null)
+                    ?? item.product?.minStockAlert
+                    ?? 100;
                 return item.quantity < minAlert;
             });
         }
@@ -105,12 +116,12 @@ const updateInventorySchema = z.object({
     note: z.string().optional()
 });
 
-// PATCH: 在庫を更新（入出庫処理・アトミックRPC）
+// PATCH: 在庫を更新（管理者のみ・入出庫処理・アトミックRPC）
 export async function PATCH(request: NextRequest): Promise<NextResponse<ApiResponse<Inventory>>> {
     try {
-        const auth = await requireAuth();
+        const auth = await requireAdmin();
         if (!auth.success) {
-            return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 });
+            return auth.response as NextResponse<ApiResponse<Inventory>>;
         }
 
         const supabase = createServerClient();

@@ -1,7 +1,7 @@
 import { createServerClient } from '@/lib/supabase';
 import type { Order, OrderStatus, OrderType } from '@/types';
 
-export interface CreateOrderInput {
+export type CreateOrderInput = {
     clientId: string;
     type: OrderType;
     eventId?: string | null;
@@ -15,7 +15,7 @@ export interface CreateOrderInput {
         productId: string;
         quantity: number;
     }>;
-}
+};
 
 export const orderService = {
     /**
@@ -277,8 +277,8 @@ export const orderService = {
                     product_id: item.productId,
                     user_id: input.clientId,
                     type: 'order',
-                    quantity: newQty,
-                    note: '出荷依頼'
+                    quantity: item.quantity,
+                    note: `出荷依頼 (残: ${newQty})`
                 });
             } else if (input.shipmentSource === 'wip') {
                 await supabase.from('stock_history').insert({

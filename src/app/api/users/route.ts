@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { requireAdmin, requireAuth } from '@/lib/auth-guard';
 
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
     const auth = await requireAuth();
     if (!auth.success) {
         return auth.response;
@@ -36,7 +36,7 @@ export async function GET() {
     return NextResponse.json({ data: formattedProfiles });
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: Request): Promise<NextResponse> {
     const auth = await requireAdmin();
     if (!auth.success) {
         return auth.response;

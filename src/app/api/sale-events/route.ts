@@ -234,7 +234,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
         const { error: itemsError } = await supabase
             .from('sale_event_items')
-            .insert(eventItems)
+            .insert(eventItems);
+
+        if (itemsError) {
+            console.error('Error inserting sale event items:', itemsError);
+            return NextResponse.json({ data: null, error: itemsError.message }, { status: 500 });
+        }
 
         const mappedEvent: SaleEvent = {
             id: eventData.id,

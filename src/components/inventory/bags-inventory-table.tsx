@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BagsInventoryTableRow } from "./bags-inventory-table-row";
 import { InventoryDialogContainers } from "./inventory-dialog-containers";
 
-import { ArrowUpDown, ArrowUp, ArrowDown, Sparkles, LayoutList, StretchHorizontal } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export type SortKey = 'default' | 'name' | 'weight' | 'currentStock' | 'allocation' | 'availableStock' | 'incoming' | 'supplierStock' | 'wip' | 'status' | 'remainingDays';

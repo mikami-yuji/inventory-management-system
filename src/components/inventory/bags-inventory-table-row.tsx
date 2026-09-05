@@ -9,10 +9,6 @@ import {
     Pencil,
     Package,
     Check,
-    Info,
-    Calendar,
-    Truck,
-    Layers,
 } from "lucide-react";
 import { getPitch, calculateStockStatus } from "@/lib/services";
 import { format } from "date-fns";
@@ -22,7 +18,7 @@ import type { calculateStockPrediction } from "@/lib/services";
 import type { InventoryDialogsState } from "./use-inventory-dialogs";
 import type { TableDensity } from "./bags-inventory-table";
 
-export interface BagsInventoryTableRowProps {
+export type BagsInventoryTableRowProps = {
     product: Product;
     inventoryItem: { quantity: number; oldPriceQuantity: number; updatedAt?: string };
     allocation: { bags: number; meters: number };
@@ -40,7 +36,7 @@ export interface BagsInventoryTableRowProps {
     onIncomingStockClick: (product: Product) => void;
     onAnalyze?: (product: Product) => void;
     onAddToCart: (product: Product) => void;
-}
+};
 
 // 量目バッジのカラーリングヘルパー
 const renderWeightBadge = (weight?: number | null, isCompact?: boolean) => {
@@ -97,8 +93,6 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
 
     const currentStock = inventoryItem.quantity;
     const oldPriceQty = inventoryItem.oldPriceQuantity || 0;
-    const regularQty = Math.max(0, currentStock - oldPriceQty);
-    const updatedAt = inventoryItem.updatedAt;
 
     const supplierStock = supplierStockLots.length > 0
         ? supplierStockLots.reduce((sum, lot) => sum + lot.quantity, 0)
@@ -112,7 +106,6 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
     const isOutOfStock = status.isOutOfStock;
     const isLowStock = status.isLowStock;
     const isPlateRemoved = product.status === 'plate_removed';
-    const isDiscontinued = product.status === 'discontinued';
 
     const hasAllocation = allocation.bags > 0 || (isRoll && allocation.meters > 0);
 

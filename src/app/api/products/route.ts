@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { requireAdmin } from '@/lib/auth-guard';
 import { z } from 'zod';
 import { logError } from '@/lib/logger';
 import { normalizeProductName } from '@/lib/utils/product-name-cleaner';
@@ -202,9 +203,9 @@ const createProductSchema = z.object({
 // POST: 商品を新規作成
 export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const auth = await requireAdmin();
+        if (!auth.success) {
+            return auth.response;
         }
 
         const supabaseClient = createServerClient();
@@ -298,9 +299,9 @@ const updateProductSchema = createProductSchema.partial().extend({
 // PUT: 商品を更新
 export async function PUT(request: NextRequest): Promise<NextResponse> {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const auth = await requireAdmin();
+        if (!auth.success) {
+            return auth.response;
         }
 
         const supabaseClient = createServerClient();
@@ -385,9 +386,9 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
 // DELETE: 商品を削除（論理削除）
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const auth = await requireAdmin();
+        if (!auth.success) {
+            return auth.response;
         }
 
         const supabaseClient = createServerClient();

@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.9.15] - 2026-09-05
+### Fixed
+- **Jest / CI テストパイプラインの復旧**:
+  - `jest.config.ts` において、Windows環境およびGlobパターンの整合性を修正し、Playwright用のE2EテストがJestに巻き込まれてクラッシュする不具合を解消。全84テストが正常に通過。
+- **PostgREST Filter Injection 脆弱性の解消**:
+  - `src/app/api/inventory/route.ts` の `search` パラメータに対する制御文字サニタイズ（カンマ、括弧等の除去）を適用。
+- **在庫アラート閾値（`min_stock_alert`）の判定バグ修正**:
+  - `src/app/api/inventory/route.ts` において、DBのスネークケースとキャメルケースの不一致により常に一律100未満判定となっていた問題を修正し、個別設定値が機能するよう改善。
+- **在庫履歴（`stock_history`）のデータ不整合修正**:
+  - `src/lib/services/order-service.ts` において、自社在庫出庫時に残在庫数ではなく出庫数量（変動量）が正しく保存されるよう修正。
+- **消費量・使用傾向分析における発注出庫漏れの修正**:
+  - `src/lib/services/stock-history-service.ts` において、出庫判定に `type === 'order'` を追加し、発注による在庫消費が週間・月間使用数に正確に反映されるよう改善。
+
+### Security
+- **API認可ガードの徹底**:
+  - `src/app/api/products/route.ts`（POST/PUT/DELETE）および `src/app/api/inventory/route.ts`（PATCH）に `requireAdmin()` を適用し、一般クライアント権限からの不正なマスタ・在庫改ざんを防止。
+
+### Refactored
+- **パフォーマンスと規約準拠の向上**:
+  - `src/app/(dashboard)/inventory/bags/page.tsx` において、`xlsx` ライブラリをボタン押下時の動的インポート（遅延ロード）に切り替え、初期バンドルサイズを大幅削減。ファイル中腹の `import` 文を先頭に集約。
+  - `src/lib/services/supplier-stock-service.ts` および `src/lib/services/order-service.ts` 内の `interface` を `type` に移行（規約準拠）。
+  - `src/app/api/users/route.ts` のハンドラー関数に戻り値型 (`Promise<NextResponse>`) を明示。
+  - `eslint.config.mjs` に `coverage/**` を追加し、全ESLint警告・エラーをゼロに解消。
+  - `README.md` の環境変数仕様にメール通知（Resend）などの最新設定を追記。
+
 ## [0.9.14] - 2026-08-03
 ### Fixed
 - **ビルド時のSupabase環境変数未設定によるクラッシュの修正**:

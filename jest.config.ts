@@ -18,8 +18,12 @@ const customJestConfig: Config = {
         '^@/(.*)$': '<rootDir>/src/$1',
     },
 
-    // E2Eテスト(Playwright)はJest対象から除外
-    testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/e2e/'],
+    // 単体テスト・結合テストのみを対象にし、E2Eテスト(Playwright)はJest対象から除外
+    testMatch: [
+        '**/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
+        '**/src/**/*.{spec,test}.{js,jsx,ts,tsx}',
+    ],
+    testPathIgnorePatterns: ['/node_modules/', '/e2e/', '/.next/'],
 
 
     // カバレッジ設定

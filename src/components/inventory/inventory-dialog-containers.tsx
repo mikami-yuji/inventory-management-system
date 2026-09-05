@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Button } from "@/components/ui/button";
 import { X, Download } from "lucide-react";
 import Image from "next/image";
-import type { Product, WorkInProgress, IncomingStock, SupplierStockLot } from "@/types";
+import type { WorkInProgress, IncomingStock, SupplierStockLot } from "@/types";
 import type { SaleEvent } from "@/hooks/use-sale-events";
 import { SupplierStockDialog } from "@/components/inventory/supplier-stock-dialog";
 import { WIPDialog } from "@/components/inventory/wip-dialog";
@@ -14,7 +14,7 @@ import { StockPredictionDialog } from "@/components/inventory/stock-prediction-d
 import type { InventoryDialogsState } from "./use-inventory-dialogs";
 import type { calculateStockPrediction } from "@/lib/services";
 
-export interface InventoryDialogContainersProps {
+export type InventoryDialogContainersProps = {
     dialogs: InventoryDialogsState;
     inventoryMap: Map<string, { quantity: number; oldPriceQuantity: number; updatedAt?: string }>;
     saleAllocationMap: Map<string, { bags: number; meters: number }>;
