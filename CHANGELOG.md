@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.9.16] - 2026-09-05
+### Added
+- **単体テストの拡充とテストカバレッジの大幅引き上げ（84件 ➔ 128件全パス）**:
+  - `src/hooks/__tests__/use-bags-inventory-filter.test.ts`: フィルタ・ソート・集計・Excel出力・一括カート投入の網羅的テスト（カバレッジ87.7%達成）
+  - `src/hooks/__tests__/use-work-in-progress.test.ts`: 仕掛品グループ化（`calculateWIPByProduct`）およびフェッチ機能テスト
+  - `src/hooks/__tests__/use-delivery-addresses.test.ts`: 納品先CRUD操作のユニットテスト
+  - `src/lib/utils/__tests__/date.test.ts`: JST日付ユーティリティ（カバレッジ100%）
+  - `src/lib/__tests__/utils.test.ts`: `cn` クラス結合・日付範囲判定ユーティリティ（カバレッジ100%）
+  - `src/lib/__tests__/logger.test.ts`: サーバーサイドエラーログ記録（カバレッジ100%）
+  - `src/lib/__tests__/email-templates.test.ts`: 出荷依頼・仕掛移動メール通知テンプレート（カバレッジ100%）
+
+### Refactored
+- **1,270行の巨大モノリス (`bags/page.tsx`) の解体・分割**:
+  - `src/app/(dashboard)/inventory/bags/page.tsx` をわずか18行の極めてスリムな Next.js App Router Server Component (RSC) へ刷新。
+  - `src/components/inventory/bags/bags-quick-filter-tabs.tsx`: クイックフィルタタブコンポーネント
+  - `src/components/inventory/bags/bags-filter-bar.tsx`: 検索・条件絞り込み・操作バーコンポーネント
+  - `src/components/inventory/bags/bags-dialog-containers.tsx`: 詳細・編集・入荷・分析ダイアログ集約コンポーネント
+  - `src/components/inventory/bags/bags-inventory-skeleton.tsx`: ストリーミング表示用スケルトン
+  - `src/components/inventory/bags/bags-inventory-view.tsx`: 統合クライアントビュー
+  - `src/hooks/use-bags-inventory-filter.ts`: フィルタ・ソート・Excel出力・一括発注ビジネスロジックのカプセル化
+- **Next.js App Router (RSC / Suspense) によるパフォーマンス最適化**:
+  - `Suspense` によるストリーミング表示を導入し、画面遷移時の白画面やチラつきを解消。初期描画速度を向上。
+- **コードベースの品質強化**:
+  - `bags-inventory-table-row.tsx` において未使用となっていた `onAnalyze` を正式に需要分析アクションボタンとして実装。
+  - ESLint警告ゼロ件、TypeScript型エラーゼロ件、テスト全件成功を完全達成。
+
 ## [0.9.15] - 2026-09-05
 ### Fixed
 - **Jest / CI テストパイプラインの復旧**:

@@ -9,6 +9,7 @@ import {
     Pencil,
     Package,
     Check,
+    BarChart2,
 } from "lucide-react";
 import { getPitch, calculateStockStatus } from "@/lib/services";
 import { format } from "date-fns";
@@ -603,6 +604,11 @@ export const BagsInventoryTableRow = React.memo(function BagsInventoryTableRow({
                     <Button size="icon" variant="ghost" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(product); }} title="編集" className="h-7 w-7 text-slate-500 hover:text-slate-900">
                         <Pencil className="h-3.5 w-3.5" />
                     </Button>
+                    {onAnalyze && (
+                        <Button size="icon" variant="ghost" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onAnalyze(product); }} title="需要分析" className="h-7 w-7 text-slate-500 hover:text-slate-900">
+                            <BarChart2 className="h-3.5 w-3.5" />
+                        </Button>
+                    )}
                 </div>
             </TableCell>
         </TableRow>
