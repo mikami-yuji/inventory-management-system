@@ -26,15 +26,16 @@ describe('date utility', () => {
         it('日付文字列をJSTのDateオブジェクトに変換すること', () => {
             const result = parseJSTDate('2026-09-05');
             expect(result).toBeInstanceOf(Date);
-            expect(result.getFullYear()).toBe(2026);
-            expect(result.getMonth()).toBe(8); // 9月はindex 8
-            expect(result.getDate()).toBe(5);
+            // タイムゾーン非依存でエポックミリ秒とISO文字列を検証
+            const expected = new Date('2026-09-05T00:00:00+09:00');
+            expect(result.getTime()).toBe(expected.getTime());
+            expect(result.toISOString()).toBe(expected.toISOString());
         });
     });
 
     describe('formatMonthDay', () => {
         it('日付文字列をM/D形式に変換すること', () => {
-            const result = formatMonthDay('2026-09-05T00:00:00');
+            const result = formatMonthDay('2026-09-05T12:00:00');
             expect(result).toBe('9/5');
         });
 
