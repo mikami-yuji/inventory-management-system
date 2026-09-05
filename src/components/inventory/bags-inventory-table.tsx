@@ -35,7 +35,6 @@ export type BagsInventoryTableProps = {
     onDensityChange?: (density: TableDensity) => void;
     onEdit: (product: Product) => void;
     onIncomingStockClick: (product: Product) => void;
-    onAnalyze?: (product: Product) => void;
     onRefetch: () => void;
 };
 
@@ -56,7 +55,6 @@ export function BagsInventoryTable({
     onDensityChange,
     onEdit,
     onIncomingStockClick,
-    onAnalyze,
     onRefetch
 }: BagsInventoryTableProps): React.ReactElement {
     const dialogs = useInventoryDialogs();
@@ -318,7 +316,6 @@ export function BagsInventoryTable({
                                     dialogs={dialogs}
                                     onEdit={onEdit}
                                     onIncomingStockClick={onIncomingStockClick}
-                                    onAnalyze={onAnalyze}
                                     onAddToCart={handleAddToCart}
                                 />
                             ))

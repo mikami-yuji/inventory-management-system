@@ -1,7 +1,6 @@
 import React from "react";
 import type { Product, WorkInProgress, SupplierStockLot } from "@/types";
 import { ProductDetailDialog } from "@/components/inventory/product-detail-dialog";
-import { ProductAnalysisDialog } from "@/components/inventory/product-analysis-dialog";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import { IncomingStockDialog } from "@/components/inventory/incoming-stock-dialog";
 import {
@@ -19,9 +18,6 @@ export type BagsDialogContainersProps = {
     detailProduct: Product | null;
     detailDialogOpen: boolean;
     setDetailDialogOpen: (open: boolean) => void;
-    analysisProduct: Product | null;
-    analysisDialogOpen: boolean;
-    setAnalysisDialogOpen: (open: boolean) => void;
     editingProduct: Product | null;
     setEditingProduct: (product: Product | null) => void;
     formDialogOpen: boolean;
@@ -47,9 +43,6 @@ export function BagsDialogContainers({
     detailProduct,
     detailDialogOpen,
     setDetailDialogOpen,
-    analysisProduct,
-    analysisDialogOpen,
-    setAnalysisDialogOpen,
     editingProduct,
     setEditingProduct,
     formDialogOpen,
@@ -89,16 +82,6 @@ export function BagsDialogContainers({
                 }}
                 onSuccess={refetch}
             />
-
-            {/* 商品分析ダイアログ */}
-            {analysisProduct && (
-                <ProductAnalysisDialog
-                    product={analysisProduct}
-                    currentStock={inventoryMap.get(analysisProduct.id)?.quantity || 0}
-                    open={analysisDialogOpen}
-                    onOpenChange={setAnalysisDialogOpen}
-                />
-            )}
 
             {/* 商品フォームダイアログ */}
             <ProductFormDialog

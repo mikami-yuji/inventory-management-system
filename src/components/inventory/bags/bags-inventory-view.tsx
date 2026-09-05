@@ -271,8 +271,6 @@ export function BagsInventoryView(): React.ReactElement {
     const [incomingStockProduct, setIncomingStockProduct] = useState<Product | null>(null);
     const [detailDialogOpen, setDetailDialogOpen] = useState(false);
     const [detailProduct, setDetailProduct] = useState<Product | null>(null);
-    const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
-    const [analysisProduct, setAnalysisProduct] = useState<Product | null>(null);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
@@ -415,10 +413,6 @@ export function BagsInventoryView(): React.ReactElement {
                             setIncomingStockProduct(product);
                             setIncomingDialogOpen(true);
                         }}
-                        onAnalyze={(product): void => {
-                            setAnalysisProduct(product);
-                            setAnalysisDialogOpen(true);
-                        }}
                         onRefetch={refetch}
                     />
                 ) : (
@@ -442,9 +436,6 @@ export function BagsInventoryView(): React.ReactElement {
                 detailProduct={detailProduct}
                 detailDialogOpen={detailDialogOpen}
                 setDetailDialogOpen={setDetailDialogOpen}
-                analysisProduct={analysisProduct}
-                analysisDialogOpen={analysisDialogOpen}
-                setAnalysisDialogOpen={setAnalysisDialogOpen}
                 editingProduct={editingProduct}
                 setEditingProduct={setEditingProduct}
                 formDialogOpen={formDialogOpen}
