@@ -23,13 +23,12 @@ describe('use-delivery-addresses', () => {
         const mockAddresses: DeliveryAddress[] = [
             {
                 id: 'addr-1',
+                clientId: 'client-1',
                 name: '本社配送センター',
                 postalCode: '100-0001',
                 address: '東京都千代田区1-1',
                 phone: '03-1234-5678',
                 isDefault: true,
-                createdAt: '2026-01-01',
-                updatedAt: '2026-01-01',
             },
         ];
 

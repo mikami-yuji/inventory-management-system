@@ -23,18 +23,27 @@ describe('use-bags-inventory-filter', () => {
             const normalProduct: Product = {
                 id: 'p1',
                 name: 'コシヒカリ 5kg',
+                sku: 'BAG-001',
+                unitPrice: 50,
+                printingCost: 10,
                 category: 'bag',
                 status: 'active',
             };
             const nbProduct: Product = {
                 id: 'p2',
                 name: 'NB コシヒカリ 5kg',
+                sku: 'BAG-002',
+                unitPrice: 50,
+                printingCost: 10,
                 category: 'bag',
                 status: 'active',
             };
             const newRiceProduct: Product = {
                 id: 'p3',
                 name: '新米 あきたこまち 5kg',
+                sku: 'BAG-003',
+                unitPrice: 55,
+                printingCost: 12,
                 category: 'new_rice',
                 status: 'active',
             };
@@ -58,6 +67,9 @@ describe('use-bags-inventory-filter', () => {
             {
                 id: 'prod-1',
                 name: '新潟産 コシヒカリ 5kg',
+                sku: 'BAG-P1',
+                unitPrice: 50,
+                printingCost: 10,
                 category: 'bag',
                 status: 'active',
                 weight: 5,
@@ -68,6 +80,9 @@ describe('use-bags-inventory-filter', () => {
             {
                 id: 'prod-2',
                 name: '秋田産 あきたこまち 10kg',
+                sku: 'BAG-P2',
+                unitPrice: 60,
+                printingCost: 10,
                 category: 'bag',
                 status: 'active',
                 weight: 10,
@@ -78,6 +93,9 @@ describe('use-bags-inventory-filter', () => {
             {
                 id: 'prod-3',
                 name: '北海道産 ゆめぴりか 5kg',
+                sku: 'BAG-P3',
+                unitPrice: 70,
+                printingCost: 15,
                 category: 'bag',
                 status: 'wip_check',
                 weight: 5,
@@ -98,11 +116,11 @@ describe('use-bags-inventory-filter', () => {
         ]);
 
         const mockWipMap = new Map<string, WorkInProgress[]>([
-            ['prod-3', [{ id: 'wip-1', productId: 'prod-3', quantity: 200, status: 'in_progress', clientName: 'A社' } as WorkInProgress]],
+            ['prod-3', [{ id: 'wip-1', productId: 'prod-3', quantity: 200, status: 'in_progress', clientName: 'A社' } as unknown as WorkInProgress]],
         ]);
 
         const mockIncomingMap = new Map<string, { total: number; items: IncomingStock[] }>([
-            ['prod-1', { total: 100, items: [{ id: 'inc-1', productId: 'prod-1', quantity: 100, status: 'scheduled' } as IncomingStock] }],
+            ['prod-1', { total: 100, items: [{ id: 'inc-1', productId: 'prod-1', quantity: 100, expectedDate: '2026-09-20' } as unknown as IncomingStock] }],
         ]);
 
         const mockSupplierStockMap = new Map<string, number>([
