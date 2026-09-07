@@ -41,7 +41,7 @@ export function StockCheckConfirmation({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+            <DialogContent className="sm:max-w-3xl max-w-[95vw] w-full max-h-[90vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle>在庫報告の確認</DialogTitle>
                     <DialogDescription>

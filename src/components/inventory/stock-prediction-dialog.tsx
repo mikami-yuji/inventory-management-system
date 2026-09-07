@@ -271,7 +271,7 @@ export function StockPredictionDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-5xl max-w-[95vw] w-full max-h-[92vh] overflow-y-auto">
                 <DialogHeader className="pb-2 border-b">
                     <div className="flex items-center gap-2 mb-1">
                         <Badge variant="outline">{product.sku || '-'}</Badge>
@@ -342,7 +342,7 @@ export function StockPredictionDialog({
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                             <Card className="bg-slate-50 border border-slate-100 shadow-sm overflow-hidden">
                                 <CardHeader className="p-3 pb-1">
-                                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between gap-1">
+                                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between gap-1" title="即時利用可能在庫">
                                         <span className="truncate">即時利用可能在庫</span>
                                         {supplierStock > 0 && (
                                             <Badge variant="outline" className="text-[9px] font-normal px-1.5 py-0 border-purple-300 text-purple-700 bg-purple-50 shrink-0 whitespace-nowrap">
@@ -388,10 +388,10 @@ export function StockPredictionDialog({
                                         {product.dailyShipmentRate?.toLocaleString() || 0}
                                         <span className="text-xs sm:text-sm ml-1 font-normal">枚</span>
                                     </div>
-                                    <div className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
-                                        通常出荷ベース
+                                    <div className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-1">
+                                        <span className="whitespace-nowrap">通常出荷ベース</span>
                                         {isRoll && (
-                                            <span className="ml-1 opacity-70">
+                                            <span className="opacity-70 whitespace-nowrap">
                                                 ({dailyRateMeters.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}m相当)
                                             </span>
                                         )}
