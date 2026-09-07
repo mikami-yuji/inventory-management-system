@@ -339,56 +339,56 @@ export function StockPredictionDialog({
                         )}
 
                         {/* 予測サマリー */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <Card className="bg-slate-50 border border-slate-100 shadow-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <Card className="bg-slate-50 border border-slate-100 shadow-sm overflow-hidden">
                                 <CardHeader className="p-3 pb-1">
-                                    <CardTitle className="text-xs font-medium text-muted-foreground uppercase flex items-center justify-between">
-                                        <span>即時利用可能在庫</span>
+                                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between gap-1">
+                                        <span className="truncate">即時利用可能在庫</span>
                                         {supplierStock > 0 && (
-                                            <Badge variant="outline" className="text-[9px] font-normal px-1 py-0 border-purple-300 text-purple-700 bg-purple-50">
+                                            <Badge variant="outline" className="text-[9px] font-normal px-1.5 py-0 border-purple-300 text-purple-700 bg-purple-50 shrink-0 whitespace-nowrap">
                                                 メーカー含
                                             </Badge>
                                         )}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-3 pt-1">
-                                    <div className="text-2xl font-bold text-slate-800">
+                                    <div className="text-xl sm:text-2xl font-bold text-slate-800 tabular-nums whitespace-nowrap">
                                         {totalImmediateStock.toLocaleString()}
-                                        <span className="text-sm ml-1 font-normal text-muted-foreground">{unit}</span>
+                                        <span className="text-xs sm:text-sm ml-1 font-normal text-muted-foreground">{unit}</span>
                                     </div>
-                                    <div className="text-[11px] text-muted-foreground flex flex-col sm:flex-row sm:items-center sm:gap-x-1 mt-0.5">
-                                        <span>自社: {availableStock.toLocaleString()}{unit}</span>
+                                    <div className="text-[11px] text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 leading-tight">
+                                        <span className="whitespace-nowrap">自社: {availableStock.toLocaleString()}{unit}</span>
                                         {supplierStock > 0 && (
-                                            <span className="text-purple-700 font-medium">
+                                            <span className="whitespace-nowrap text-purple-700 font-medium">
                                                 + メーカー: {supplierStock.toLocaleString()}{unit}
                                             </span>
                                         )}
                                     </div>
                                 </CardContent>
                             </Card>
-                            <Card className="bg-blue-50/50 border border-blue-100 shadow-sm">
+                            <Card className="bg-blue-50/50 border border-blue-100 shadow-sm overflow-hidden">
                                 <CardHeader className="p-3 pb-1">
-                                    <CardTitle className="text-xs font-medium text-blue-700 uppercase">予測在庫切れ日</CardTitle>
+                                    <CardTitle className="text-xs font-medium text-blue-700 uppercase whitespace-nowrap">予測在庫切れ日</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-3 pt-1">
-                                    <div className="text-2xl font-bold text-blue-700">
+                                    <div className="text-lg sm:text-xl font-bold text-blue-700 tabular-nums whitespace-nowrap tracking-tight">
                                         {prediction.estimatedDate ? format(prediction.estimatedDate, "yyyy/MM/dd") : "充足"}
                                     </div>
-                                    <div className="text-xs text-muted-foreground">
+                                    <div className="text-xs text-muted-foreground whitespace-nowrap mt-1">
                                         {prediction.estimatedDate ? `あと ${prediction.remainingDays} 日` : "1年以上の在庫があります"}
                                     </div>
                                 </CardContent>
                             </Card>
-                            <Card className="bg-slate-50 border border-slate-100 shadow-sm">
+                            <Card className="bg-slate-50 border border-slate-100 shadow-sm overflow-hidden">
                                 <CardHeader className="p-3 pb-1">
-                                    <CardTitle className="text-xs font-medium text-muted-foreground uppercase">1日の平均消費</CardTitle>
+                                    <CardTitle className="text-xs font-medium text-muted-foreground uppercase whitespace-nowrap">1日の平均消費</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-3 pt-1">
-                                    <div className="text-2xl font-bold">
+                                    <div className="text-xl sm:text-2xl font-bold tabular-nums whitespace-nowrap">
                                         {product.dailyShipmentRate?.toLocaleString() || 0}
-                                        <span className="text-sm ml-1 font-normal">枚</span>
+                                        <span className="text-xs sm:text-sm ml-1 font-normal">枚</span>
                                     </div>
-                                    <div className="text-xs text-muted-foreground">
+                                    <div className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
                                         通常出荷ベース
                                         {isRoll && (
                                             <span className="ml-1 opacity-70">
@@ -398,13 +398,16 @@ export function StockPredictionDialog({
                                     </div>
                                 </CardContent>
                             </Card>
-                            <Card className="bg-slate-50 border border-slate-100 shadow-sm">
+                            <Card className="bg-slate-50 border border-slate-100 shadow-sm overflow-hidden">
                                 <CardHeader className="p-3 pb-1">
-                                    <CardTitle className="text-xs font-medium text-muted-foreground uppercase">リードタイム</CardTitle>
+                                    <CardTitle className="text-xs font-medium text-muted-foreground uppercase whitespace-nowrap">リードタイム</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-3 pt-1">
-                                    <div className="text-2xl font-bold">{product.productionLeadDays || 0}<span className="text-sm ml-1 font-normal">日</span></div>
-                                    <div className="text-xs text-muted-foreground">仕掛開始の目安</div>
+                                    <div className="text-xl sm:text-2xl font-bold tabular-nums whitespace-nowrap">
+                                        {product.productionLeadDays || 0}
+                                        <span className="text-xs sm:text-sm ml-1 font-normal">日</span>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mt-1 whitespace-nowrap">仕掛開始の目安</div>
                                 </CardContent>
                             </Card>
                         </div>
@@ -610,54 +613,54 @@ export function StockPredictionDialog({
                         ) : (
                             <>
                                 {/* サマリー統計 */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <Card className="bg-slate-50 border border-slate-100 shadow-sm">
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                    <Card className="bg-slate-50 border border-slate-100 shadow-sm overflow-hidden">
                                         <CardHeader className="p-3 pb-1">
-                                            <CardTitle className="text-xs font-medium text-muted-foreground">週間使用数</CardTitle>
+                                            <CardTitle className="text-xs font-medium text-muted-foreground whitespace-nowrap">週間使用数</CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-3 pt-1">
-                                            <div className="text-2xl font-bold">{historyAnalysis.weekly.toLocaleString()}<span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span></div>
+                                            <div className="text-xl sm:text-2xl font-bold tabular-nums whitespace-nowrap">{historyAnalysis.weekly.toLocaleString()}<span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span></div>
                                             {subUnit && (
-                                                <div className="text-[10px] text-muted-foreground mt-0.5">
+                                                <div className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">
                                                     約 {getSubUnitValue(historyAnalysis.weekly)} {subUnit}
                                                 </div>
                                             )}
                                         </CardContent>
                                     </Card>
-                                    <Card className="bg-slate-50 border border-slate-100 shadow-sm">
+                                    <Card className="bg-slate-50 border border-slate-100 shadow-sm overflow-hidden">
                                         <CardHeader className="p-3 pb-1">
-                                            <CardTitle className="text-xs font-medium text-muted-foreground">月間使用数</CardTitle>
+                                            <CardTitle className="text-xs font-medium text-muted-foreground whitespace-nowrap">月間使用数</CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-3 pt-1">
-                                            <div className="text-2xl font-bold">{historyAnalysis.monthly.toLocaleString()}<span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span></div>
+                                            <div className="text-xl sm:text-2xl font-bold tabular-nums whitespace-nowrap">{historyAnalysis.monthly.toLocaleString()}<span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span></div>
                                             {subUnit && (
-                                                <div className="text-[10px] text-muted-foreground mt-0.5">
+                                                <div className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">
                                                     約 {getSubUnitValue(historyAnalysis.monthly)} {subUnit}
                                                 </div>
                                             )}
                                         </CardContent>
                                     </Card>
-                                    <Card className="bg-slate-50 border border-slate-100 shadow-sm">
+                                    <Card className="bg-slate-50 border border-slate-100 shadow-sm overflow-hidden">
                                         <CardHeader className="p-3 pb-1">
-                                            <CardTitle className="text-xs font-medium text-muted-foreground">3ヶ月使用数</CardTitle>
+                                            <CardTitle className="text-xs font-medium text-muted-foreground whitespace-nowrap">3ヶ月使用数</CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-3 pt-1">
-                                            <div className="text-2xl font-bold">{historyAnalysis.quarterly.toLocaleString()}<span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span></div>
+                                            <div className="text-xl sm:text-2xl font-bold tabular-nums whitespace-nowrap">{historyAnalysis.quarterly.toLocaleString()}<span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span></div>
                                             {subUnit && (
-                                                <div className="text-[10px] text-muted-foreground mt-0.5">
+                                                <div className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">
                                                     約 {getSubUnitValue(historyAnalysis.quarterly)} {subUnit}
                                                 </div>
                                             )}
                                         </CardContent>
                                     </Card>
-                                    <Card className="bg-slate-50 border border-slate-100 shadow-sm">
+                                    <Card className="bg-slate-50 border border-slate-100 shadow-sm overflow-hidden">
                                         <CardHeader className="p-3 pb-1">
-                                            <CardTitle className="text-xs font-medium text-muted-foreground">実績1日平均</CardTitle>
+                                            <CardTitle className="text-xs font-medium text-muted-foreground whitespace-nowrap">実績1日平均</CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-3 pt-1">
-                                            <div className="text-2xl font-bold">{historyAnalysis.dailyAverage.toLocaleString()}<span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span></div>
+                                            <div className="text-xl sm:text-2xl font-bold tabular-nums whitespace-nowrap">{historyAnalysis.dailyAverage.toLocaleString()}<span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span></div>
                                             {subUnit && (
-                                                <div className="text-[10px] text-muted-foreground mt-0.5">
+                                                <div className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">
                                                     約 {((historyAnalysis.dailyAverage / (product.metersPerRoll || 400)).toFixed(2))} {subUnit}
                                                 </div>
                                             )}
