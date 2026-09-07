@@ -338,10 +338,16 @@ function TurnoverReportContent(): React.ReactElement {
     const handlePrint = useCallback((): void => {
         const originalTitle = document.title;
         document.title = `アサヒパック_在庫回転率レポート_${format(new Date(), "yyyyMMdd_HHmm")}`;
-        window.print();
-        setTimeout(() => {
+
+        const restoreTitle = (): void => {
             document.title = originalTitle;
-        }, 100);
+            window.removeEventListener("afterprint", restoreTitle);
+        };
+        window.addEventListener("afterprint", restoreTitle);
+
+        window.print();
+
+        setTimeout(restoreTitle, 1000);
     }, []);
 
     // Excel出力

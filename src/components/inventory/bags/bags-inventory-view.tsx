@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -286,9 +287,21 @@ export function BagsInventoryView(): React.ReactElement {
         ]);
     }, [refetchProducts, refetchInventory, refetchEvents, refetchWIP, refetchIncoming, refetchLots]);
 
-    // 印刷
+    // 印刷 (PDF保存)
     const handlePrint = useCallback((): void => {
+        const originalTitle = document.title;
+        document.title = `アサヒパック_在庫一覧_${format(new Date(), "yyyyMMdd_HHmm")}`;
+
+        const restoreTitle = (): void => {
+            document.title = originalTitle;
+            window.removeEventListener("afterprint", restoreTitle);
+        };
+        window.addEventListener("afterprint", restoreTitle);
+
         window.print();
+
+        // afterprint がサポートされない環境や非同期ダイアログのための安全フォールバック
+        setTimeout(restoreTitle, 1000);
     }, []);
 
     // 商品追加
