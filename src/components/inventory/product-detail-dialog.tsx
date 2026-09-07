@@ -397,6 +397,11 @@ export function ProductDetailDialog({
                 <ProductAnalysisDialog
                     product={product}
                     currentStock={currentStock}
+                    supplierStock={
+                        supplierStockLots && supplierStockLots.length > 0
+                            ? supplierStockLots.reduce((sum, lot) => sum + lot.quantity, 0)
+                            : supplierStock
+                    }
                     open={analysisOpen}
                     onOpenChange={setAnalysisOpen}
                     hasUnconfirmedWIP={prediction?.hasUnconfirmedWIP}

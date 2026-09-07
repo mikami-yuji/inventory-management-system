@@ -21,6 +21,7 @@ import { useProducts } from "@/hooks/use-products";
 import { useInventory } from "@/hooks/use-inventory";
 import { useIncomingStock } from "@/hooks/use-incoming-stock";
 import { useWorkInProgress } from "@/hooks/use-work-in-progress";
+import { useSupplierStockLots } from "@/hooks/use-supplier-stock-lots";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import * as XLSX from "xlsx";
@@ -117,12 +118,13 @@ function StockReportContent(): React.ReactElement {
 
     const { incomingStocks, loading: incomingLoading } = useIncomingStock();
     const { items: wipItems, loading: wipLoading } = useWorkInProgress('in_progress');
+    const { lotsMap: supplierStockLotsMap, loading: lotsLoading } = useSupplierStockLots();
 
     useEffect(() => {
         fetchHistory();
     }, [fetchHistory]);
 
-    const loading = productsLoading || inventoryLoading || historyLoading || incomingLoading || wipLoading;
+    const loading = productsLoading || inventoryLoading || historyLoading || incomingLoading || wipLoading || lotsLoading;
 
     // 入荷予定マップ (productId -> totalQuantity)
     const incomingMap = useMemo(() => {
@@ -177,15 +179,20 @@ function StockReportContent(): React.ReactElement {
     const reportData = useMemo(() => {
         return filteredProducts.map(product => {
             const currentStock = inventoryMap.get(product.id) || 0;
+            const lots = supplierStockLotsMap?.get(product.id) || [];
+            const supplierStock = lots.length > 0
+                ? lots.reduce((sum, lot) => sum + lot.quantity, 0)
+                : (product.supplierStock || 0);
             const productHistory = historyByProduct.get(product.id) || [];
-            const analysis = computeUsageAnalysis(productHistory, currentStock);
+            const totalStockForAnalysis = currentStock + supplierStock;
+            const analysis = computeUsageAnalysis(productHistory, totalStockForAnalysis);
 
             return {
                 product,
                 currentStock,
                 incomingStock: incomingMap.get(product.id) || 0,
                 wipStock: wipMap.get(product.id) || 0,
-                supplierStock: product.supplierStock || 0,
+                supplierStock,
                 weeklyUsage: analysis.weekly,
                 monthlyUsage: analysis.monthly,
                 daysUntilStockout: analysis.daysUntilStockout,
@@ -193,7 +200,7 @@ function StockReportContent(): React.ReactElement {
                 trend: analysis.trend,
             };
         }).filter(item => item.currentStock > 0 || item.monthlyUsage > 0 || item.incomingStock > 0 || item.wipStock > 0 || item.supplierStock > 0);
-    }, [filteredProducts, inventoryMap, historyByProduct, incomingMap, wipMap]);
+    }, [filteredProducts, inventoryMap, historyByProduct, incomingMap, wipMap, supplierStockLotsMap]);
 
     const summary = useMemo(() => {
         const totalProducts = reportData.length;
@@ -241,6 +248,7 @@ function StockReportContent(): React.ReactElement {
                     item.product.status !== 'discontinued' &&
                     item.product.status !== 'on_sale_break';
                 const isOutOfStock = item.currentStock === 0 &&
+                    (item.incomingStock + item.wipStock + item.supplierStock) === 0 &&
                     item.product.status !== 'direct_delivery' &&
                     item.product.status !== 'discontinued' &&
                     item.product.status !== 'on_sale_break';
@@ -257,7 +265,8 @@ function StockReportContent(): React.ReactElement {
                     "現在庫": item.currentStock,
                     "入荷予定": item.incomingStock,
                     "仕掛中": item.wipStock,
-                    "合計予測": item.currentStock + item.incomingStock + item.wipStock,
+                    "メーカー在庫": item.supplierStock,
+                    "合計予測": item.currentStock + item.incomingStock + item.wipStock + item.supplierStock,
                     "週使用": item.weeklyUsage,
                     "月使用": item.monthlyUsage,
                     "在庫日数": item.daysUntilStockout !== null ? `${item.daysUntilStockout}日` : "-",
@@ -277,6 +286,7 @@ function StockReportContent(): React.ReactElement {
                 { wch: 10 }, // 現在庫
                 { wch: 10 }, // 入荷予定
                 { wch: 10 }, // 仕掛中
+                { wch: 10 }, // メーカー在庫
                 { wch: 10 }, // 合計
                 { wch: 8 },  // 週使用
                 { wch: 8 },  // 月使用

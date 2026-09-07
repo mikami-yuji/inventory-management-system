@@ -7,6 +7,7 @@ import { StockPredictionDialog } from "@/components/inventory/stock-prediction-d
 type ProductAnalysisDialogProps = {
     product: Product;
     currentStock: number;
+    supplierStock?: number;
     trigger?: React.ReactNode;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
@@ -16,10 +17,13 @@ type ProductAnalysisDialogProps = {
 export function ProductAnalysisDialog({
     product,
     currentStock,
+    supplierStock,
     trigger,
     open = false,
     onOpenChange,
 }: ProductAnalysisDialogProps): React.ReactElement {
+    const resolvedSupplierStock = supplierStock !== undefined ? supplierStock : (product.supplierStock || 0);
+
     return (
         <>
             {trigger}
@@ -29,7 +33,7 @@ export function ProductAnalysisDialog({
                 open={open}
                 onOpenChange={onOpenChange || (() => {})}
                 availableStock={currentStock}
-                supplierStock={product.supplierStock || 0}
+                supplierStock={resolvedSupplierStock}
                 saleItems={[]}
                 wipItems={[]}
                 incomingItems={[]}

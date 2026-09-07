@@ -90,6 +90,15 @@ describe('calculateStockPrediction', () => {
         expect(result.remainingDays).toBe(5);
         expect(result.wipStartAlert).toBe(true);
     });
+
+    test('メーカー在庫がある場合：即時利用可能在庫として初期在庫に加算され、予測日数が延長されること', () => {
+        // 自社在庫500枚 + メーカー在庫1000枚 = 1500枚
+        // 1日100枚消費 -> 15日
+        const result = calculateStockPrediction(500, 100, 5, mockProduct, [], [], [], 1000);
+        expect(result.remainingDays).toBe(15);
+        // 15日 > (リードタイム5 + 7) = 12日 なのでアラートは解除される
+        expect(result.wipStartAlert).toBe(false);
+    });
 });
 
 describe('getPitch', () => {

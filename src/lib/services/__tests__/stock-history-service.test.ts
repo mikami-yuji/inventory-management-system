@@ -137,5 +137,22 @@ describe('stockHistoryService', () => {
                 suggestedOrderQuantity: 108
             });
         });
+
+        test('メーカー在庫を合算した実質在庫で在庫切れ日数が正しく伸びること', () => {
+            const history: StockHistory[] = [
+                createHistory('2024-01-28T10:00:00Z', 15, 'outgoing'),
+                createHistory('2024-01-26T10:00:00Z', 15, 'outgoing'),
+                createHistory('2024-01-20T10:00:00Z', 15, 'outgoing'),
+                createHistory('2024-01-18T10:00:00Z', 15, 'outgoing'),
+                createHistory('2024-01-10T10:00:00Z', 30, 'outgoing'),
+            ];
+            const physicalStock = 100;
+            const supplierStock = 200; // メーカー在庫200
+            const totalStock = physicalStock + supplierStock; // 300
+            const analysis = stockHistoryService.getUsageAnalysis(history, totalStock);
+
+            // dailyAverage = 3, totalStock = 300 -> daysUntilStockout = 100日
+            expect(analysis.daysUntilStockout).toBe(100);
+        });
     });
 });

@@ -114,10 +114,11 @@ export function StockPredictionDialog({
     // 表示期間 (日数)
     const [displayPeriod, setDisplayPeriod] = useState<number>(60);
 
-    // 過去履歴分析フック
+    // 過去履歴分析フック (メーカー在庫は即時出荷可能なため、自社有効在庫と合算して実質利用可能在庫として分析)
+    const totalImmediateStock = availableStock + supplierStock;
     const { history, analysis: historyAnalysis, loading: historyLoading } = useStockHistoryAnalysis(
         open ? product.id : undefined,
-        availableStock
+        totalImmediateStock
     );
 
     // シミュレーション実行
@@ -207,7 +208,7 @@ export function StockPredictionDialog({
     const stockLevelChartData = useMemo(() => {
         if (!history || history.length === 0) return null;
 
-        let runningStock = availableStock;
+        let runningStock = totalImmediateStock;
         const dataPoints = [];
         const sortedDesc = [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -244,7 +245,7 @@ export function StockPredictionDialog({
                 }
             ]
         };
-    }, [history, availableStock]);
+    }, [history, totalImmediateStock]);
 
     const historyChartOptions = {
         responsive: true,
@@ -338,7 +339,33 @@ export function StockPredictionDialog({
                         )}
 
                         {/* 予測サマリー */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <Card className="bg-slate-50 border border-slate-100 shadow-sm">
+                                <CardHeader className="p-3 pb-1">
+                                    <CardTitle className="text-xs font-medium text-muted-foreground uppercase flex items-center justify-between">
+                                        <span>即時利用可能在庫</span>
+                                        {supplierStock > 0 && (
+                                            <Badge variant="outline" className="text-[9px] font-normal px-1 py-0 border-purple-300 text-purple-700 bg-purple-50">
+                                                メーカー含
+                                            </Badge>
+                                        )}
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-3 pt-1">
+                                    <div className="text-2xl font-bold text-slate-800">
+                                        {totalImmediateStock.toLocaleString()}
+                                        <span className="text-sm ml-1 font-normal text-muted-foreground">{unit}</span>
+                                    </div>
+                                    <div className="text-[11px] text-muted-foreground flex flex-col sm:flex-row sm:items-center sm:gap-x-1 mt-0.5">
+                                        <span>自社: {availableStock.toLocaleString()}{unit}</span>
+                                        {supplierStock > 0 && (
+                                            <span className="text-purple-700 font-medium">
+                                                + メーカー: {supplierStock.toLocaleString()}{unit}
+                                            </span>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
                             <Card className="bg-blue-50/50 border border-blue-100 shadow-sm">
                                 <CardHeader className="p-3 pb-1">
                                     <CardTitle className="text-xs font-medium text-blue-700 uppercase">予測在庫切れ日</CardTitle>
@@ -645,9 +672,16 @@ export function StockPredictionDialog({
                                             historyAnalysis.daysUntilStockout !== null && historyAnalysis.daysUntilStockout < 14 ? "border-amber-400 bg-amber-50/50" : "bg-slate-50 border-slate-100 shadow-sm"
                                     )}>
                                         <CardHeader className="pb-2">
-                                            <CardTitle className="text-sm font-bold flex items-center gap-2">
-                                                <Calendar className="h-4 w-4" />
-                                                実績ペースでの在庫切れ予測
+                                            <CardTitle className="text-sm font-bold flex items-center justify-between">
+                                                <span className="flex items-center gap-2">
+                                                    <Calendar className="h-4 w-4" />
+                                                    実績ペースでの在庫切れ予測
+                                                </span>
+                                                {supplierStock > 0 && (
+                                                    <Badge variant="outline" className="text-[10px] font-normal border-purple-200 text-purple-700 bg-purple-50">
+                                                        メーカー在庫含む
+                                                    </Badge>
+                                                )}
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent>
@@ -665,6 +699,11 @@ export function StockPredictionDialog({
                                                     <p className="text-[11px] text-muted-foreground">
                                                         直近30日の消費ペース（1日 {historyAnalysis.dailyAverage}{unit}）が続いた場合
                                                     </p>
+                                                    {supplierStock > 0 && (
+                                                        <p className="text-[10px] text-purple-700 font-medium pt-0.5">
+                                                            ※自社在庫 ({availableStock.toLocaleString()}{unit}) + メーカー在庫 ({supplierStock.toLocaleString()}{unit}) 合計 {totalImmediateStock.toLocaleString()}{unit} を基準に算出
+                                                        </p>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <p className="text-sm text-muted-foreground py-2">データ不足のため算出できません</p>
